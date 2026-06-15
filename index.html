@@ -76,9 +76,10 @@
   .embed.active .embed-shield { display: none; }
 
   /* Marquee (CSS-animated; <marquee> is dead). Two copies + -50% = seamless. */
-  .marquee { display: block; overflow: hidden; background: #ffe6f1; border-top: 1px solid deeppink; border-bottom: 1px solid deeppink; }
+  .marquee { display: block; overflow: hidden; padding: 3px 0; background: #ffe6f1; border-top: 1px solid deeppink; border-bottom: 1px solid deeppink; }
   .marquee-track { display: inline-flex; white-space: nowrap; will-change: transform; animation: marquee 34s linear infinite; }
-  .marquee-track span { padding: 2px 2rem; color: deeppink; font-size: .85rem; font-weight: 300; letter-spacing: .02em; }
+  .marquee-track span { color: deeppink; font-size: .85rem; font-weight: 300; letter-spacing: .02em; }
+  .marquee .dot { margin: 0 .65em; font-size: .8em; vertical-align: .08em; }
   @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
   @media (prefers-reduced-motion: reduce) { .marquee-track { animation: none; } }
   .tiers { display: grid; grid-template-columns: repeat(3,1fr); gap: .8rem; margin: 1.1rem 0; }
@@ -104,8 +105,8 @@
 
 <marquee class="marquee" scrollamount="0" behavior="scroll" role="note" aria-label="Experimental preview notice">
   <div class="marquee-track">
-    <span>*** This is currently an experimental preview ***&nbsp; This framework is still under active development, improvement, and experimentation *** New features are being explored to gain parity with the major players. ***</span>
-    <span aria-hidden="true">*** This is currently an experimental preview ***&nbsp; This framework is still under active development, improvement, and experimentation *** New features are being explored to gain parity with the major players. ***</span>
+    <span><span class="dot">●</span>This is currently an experimental preview <span class="dot">●</span>This framework is still under active development, improvement, and experimentation <span class="dot">●</span>New features are being explored to gain parity with the major players&nbsp;&nbsp;</span>
+    <span aria-hidden="true"><span class="dot">●</span>This is currently an experimental preview <span class="dot">●</span>This framework is still under active development, improvement, and experimentation <span class="dot">●</span>New features are being explored to gain parity with the major players&nbsp;&nbsp;</span>
   </div>
 </marquee>
 
