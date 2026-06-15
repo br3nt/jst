@@ -39,8 +39,8 @@
   .badge.partial { color: #c87f12; }
   .badge.none { color: #c0392b; }
 
-  .main { display: flex; flex-direction: column; min-width: 0; }
-  .topbar { border-bottom: 1px solid #e3e6ef; padding: 7px 14px; display: flex; align-items: center; gap: 8px 10px; flex-wrap: wrap; }
+  .main { min-width: 0; height: 100vh; overflow-y: auto; }
+  .topbar { position: sticky; top: 0; z-index: 2; background: #fff; border-bottom: 1px solid #e3e6ef; padding: 7px 14px; display: flex; align-items: center; gap: 8px 10px; flex-wrap: wrap; }
   .topbar .title { font-weight: 600; font-size: .9rem; }
   .topbar .note { font-size: .78rem; color: #71778a; flex: 1; min-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .topbar a, .topbar button { font-size: .78rem; }
@@ -55,9 +55,9 @@
   .nav-btn[disabled] { opacity: .4; cursor: default; }
   .src { color: #3f51b5; text-decoration: none; }
   .src:hover { text-decoration: underline; }
-  iframe { flex: 1; width: 100%; border: 0; background: #fff; }
-  .srcview { flex: 1; margin: 0; overflow: auto; background: #1e2030; color: #d7d9e6; padding: 14px 16px; font-family: ui-monospace, Menlo, monospace; font-size: .82rem; line-height: 1.5; white-space: pre; }
-  .placeholder { flex: 1; display: grid; place-items: center; color: #9aa0b2; padding: 1rem; text-align: center; }
+  iframe { display: block; width: 100%; min-height: 60vh; border: 0; background: #fff; }
+  .srcview { margin: 0; overflow-x: auto; background: #1e2030; color: #d7d9e6; padding: 14px 16px; font-family: ui-monospace, Menlo, monospace; font-size: .82rem; line-height: 1.5; white-space: pre; }
+  .placeholder { min-height: 50vh; display: grid; place-items: center; color: #9aa0b2; padding: 1rem; text-align: center; }
 </style>
 </head>
 <body>
@@ -112,9 +112,9 @@
           <span class="pill $(cur.status)">$(badge(cur.status))</span>
           <span class="title">$(cur.framework): $(cur.name)</span>
           <span class="views">
-            <button class="vbtn $(vw==='preview'?'active':'')" @click="$(() => el.view = 'preview')">Preview</button>
-            <button class="vbtn $(vw==='jst'?'active':'')" @click="$(() => el.view = 'jst')">JST source</button>
-            <button class="vbtn $(vw==='original'?'active':'')" @click="$(() => el.view = 'original')">$(cur.framework) source</button>
+            <button class="vbtn $(vw==='preview'?'active':'')" @click="$(() => el.emit('setview', 'preview'))">Preview</button>
+            <button class="vbtn $(vw==='jst'?'active':'')" @click="$(() => el.emit('setview', 'jst'))">JST source</button>
+            <button class="vbtn $(vw==='original'?'active':'')" @click="$(() => el.emit('setview', 'original'))">$(cur.framework) source</button>
           </span>
           <span class="note" title="$(cur.note)">$(cur.note)</span>
           <a class="src" href="$(cur.source)" target="_blank" rel="noopener">docs ↗</a>
@@ -147,19 +147,40 @@
   const hub = document.getElementById('hub');
   let examples = [];
   let originals = {};
+  let lastFile = null;
 
   const srcUrl = file => '../framework_parity/' + file;
 
-  // Whenever the selected example changes, refresh both source views: the JST
-  // source is the example's own file; the framework source comes from the
-  // originals.json sidecar (keyed by the same file path).
-  async function setCurrent(file) {
-    hub.current = file;
+  // The hash is the single source of truth for BOTH the example and the tab,
+  // so any view is a shareable URL:  #htmx/bulk-update.html?view=jst
+  function parseHash() {
+    const raw = decodeURIComponent(location.hash.slice(1));
+    const [file, query] = raw.split('?');
+    const view = new URLSearchParams(query || '').get('view') || 'preview';
+    return { file: file || (examples[0] && examples[0].file), view };
+  }
+  function setHash(file, view) {
+    location.hash = file + (view && view !== 'preview' ? '?view=' + view : '');
+  }
+
+  // The JST source is the example's own file; the framework source comes from
+  // the originals.json sidecar. Only re-fetch when the file actually changes.
+  async function loadSources(file) {
     const o = originals[file];
     hub.originalsource = o ? o.code : '';
     hub.jstsource = '';
     try { hub.jstsource = await (await fetch(srcUrl(file))).text(); }
     catch { hub.jstsource = '(could not load source)'; }
+  }
+
+  async function applyHash() {
+    const { file, view } = parseHash();
+    hub.view = view;
+    if (file && file !== lastFile) {
+      lastFile = file;
+      hub.current = file;
+      await loadSources(file);
+    }
   }
 
   Promise.all([
@@ -172,19 +193,36 @@
     applyHash();
   });
 
-  function applyHash() {
-    const file = decodeURIComponent(location.hash.slice(1)) || (examples[0] && examples[0].file);
-    if (file) setCurrent(file);
-  }
   window.addEventListener('hashchange', applyHash);
-  hub.addEventListener('go', e => { location.hash = e.detail; });
+  hub.addEventListener('go', e => setHash(e.detail, hub.view));          // navigate, keep current tab
+  hub.addEventListener('setview', e => setHash(hub.current, e.detail));  // switch tab, keep example
 
   document.addEventListener('keydown', e => {
     if (e.target.tagName === 'INPUT') return;
     const nav = window.__nav || {};
-    if ((e.key === 'ArrowLeft' || e.key === 'k') && nav.prev) location.hash = nav.prev;
-    if ((e.key === 'ArrowRight' || e.key === 'j') && nav.next) location.hash = nav.next;
+    if ((e.key === 'ArrowLeft' || e.key === 'k') && nav.prev) setHash(nav.prev, hub.view);
+    if ((e.key === 'ArrowRight' || e.key === 'j') && nav.next) setHash(nav.next, hub.view);
   });
+
+  // Auto-size the preview iframe to its content so the whole example is visible
+  // and the right pane scrolls normally (no hidden in-iframe scrollbar). The
+  // iframe is re-created on navigation/tab changes, so wire each new one once.
+  new MutationObserver(() => {
+    const ifr = hub.querySelector('iframe');
+    if (!ifr || ifr.__wired) return;
+    ifr.__wired = true;
+    const size = () => {
+      try {
+        const h = ifr.contentDocument.documentElement.scrollHeight;
+        if (h) ifr.style.height = h + 'px';
+      } catch {}
+    };
+    ifr.addEventListener('load', () => {
+      size();
+      try { new ResizeObserver(size).observe(ifr.contentDocument.body); } catch {}
+    });
+    size();
+  }).observe(hub, { childList: true, subtree: true });
 </script>
 </body>
 </html>
