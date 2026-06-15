@@ -76,9 +76,9 @@
   .embed.active .embed-shield { display: none; }
 
   /* Marquee (CSS-animated; <marquee> is dead). Two copies + -50% = seamless. */
-  .marquee { display: block; overflow: hidden; background: #fce7f0; border-top: 2px solid #c2185b; border-bottom: 2px solid #c2185b; }
+  .marquee { display: block; overflow: hidden; background: #ffe6f1; border-top: 1px solid deeppink; border-bottom: 1px solid deeppink; }
   .marquee-track { display: inline-flex; white-space: nowrap; will-change: transform; animation: marquee 34s linear infinite; }
-  .marquee-track span { padding: 6px 2rem; color: #b0114e; font-size: .82rem; font-weight: 700; letter-spacing: .03em; }
+  .marquee-track span { padding: 2px 2rem; color: deeppink; font-size: .85rem; font-weight: 300; letter-spacing: .02em; }
   @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
   @media (prefers-reduced-motion: reduce) { .marquee-track { animation: none; } }
   .tiers { display: grid; grid-template-columns: repeat(3,1fr); gap: .8rem; margin: 1.1rem 0; }
