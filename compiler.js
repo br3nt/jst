@@ -1,3 +1,7 @@
+/*!
+ * JST — JavaScript Templates · no-build web components in plain HTML
+ * © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst
+ */
 import { parseTemplateScript } from './parser.js'
 import { interpretTemplateTokens } from './interpreter.js'
 

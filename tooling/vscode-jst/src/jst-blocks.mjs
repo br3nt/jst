@@ -1,3 +1,7 @@
+/*!
+ * JST — JavaScript Templates · no-build web components in plain HTML
+ * © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst
+ */
 // Scans a document for <script type="jst"> ... </script> blocks and returns
 // each block's inner text, declared attributes, and precise source positions
 // (0-based line/character, LSP-style) so engine errors can be mapped back.

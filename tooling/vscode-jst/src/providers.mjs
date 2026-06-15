@@ -1,3 +1,7 @@
+/*!
+ * JST — JavaScript Templates · no-build web components in plain HTML
+ * © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst
+ */
 // Tier 3 language features as pure functions over (text, position, index).
 // The LSP server (server.js) is thin glue around these; everything testable
 // lives here.

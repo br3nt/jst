@@ -1,3 +1,7 @@
+/*!
+ * JST — JavaScript Templates · no-build web components in plain HTML
+ * © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst
+ */
 import { InputReader } from './input_reader.js'
 import { Lexer } from './lexer.js'
 import { EndOfInputToken } from './tokens.js'

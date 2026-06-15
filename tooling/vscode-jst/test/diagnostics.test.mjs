@@ -1,3 +1,7 @@
+/*!
+ * JST — JavaScript Templates · no-build web components in plain HTML
+ * © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst
+ */
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { computeDiagnostics } from '../src/diagnostics.mjs';

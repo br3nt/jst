@@ -1,3 +1,7 @@
+/*!
+ * JST — JavaScript Templates · no-build web components in plain HTML
+ * © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst
+ */
 // JST language server. Thin transport glue around the tested pure modules in
 // diagnostics.mjs / providers.mjs. Not exercised by the headless test suite
 // (it needs an LSP client); the logic it delegates to is fully tested.

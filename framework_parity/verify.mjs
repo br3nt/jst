@@ -1,3 +1,7 @@
+/*!
+ * JST — JavaScript Templates · no-build web components in plain HTML
+ * © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst
+ */
 // verify.mjs — headless validation for parity examples.
 //
 // Loads each given .html file in headless Chrome and reports console errors,

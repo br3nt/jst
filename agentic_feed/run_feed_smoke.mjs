@@ -1,3 +1,7 @@
+/*!
+ * JST — JavaScript Templates · no-build web components in plain HTML
+ * © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst
+ */
 // End-to-end smoke test for the agentic feed prototype.
 // Spawns server.mjs + headless Chrome, then drives the feed like a user.
 // Run with: node agentic_feed/run_feed_smoke.mjs

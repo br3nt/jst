@@ -1,3 +1,7 @@
+/*!
+ * JST — JavaScript Templates · no-build web components in plain HTML
+ * © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst
+ */
 // Parses README.md's per-framework tables into examples.json, which index.html
 // renders. Re-run after editing the README tables: node framework_parity/build-index-data.mjs
 import fs from 'node:fs';

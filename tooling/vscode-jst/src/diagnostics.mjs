@@ -1,3 +1,7 @@
+/*!
+ * JST — JavaScript Templates · no-build web components in plain HTML
+ * © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst
+ */
 // Tier 2 diagnostics. Runs the REAL JST compiler over each template block, so
 // what the editor flags is exactly what the runtime would reject — no second
 // implementation of "valid JST" to drift out of sync. JS-level syntax errors

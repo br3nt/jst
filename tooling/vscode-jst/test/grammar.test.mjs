@@ -1,3 +1,7 @@
+/*!
+ * JST — JavaScript Templates · no-build web components in plain HTML
+ * © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst
+ */
 // Loads the JST injection grammar through the real vscode-textmate engine and
 // asserts the scopes it assigns to JST constructs. This verifies the regexes
 // and captures (the error-prone part). The grammar's HTML-injection *wiring*
