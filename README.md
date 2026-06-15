@@ -1,6 +1,7 @@
-# JST
+# &lt;JST/&gt;
 
-**Reactive web components in plain HTML. No build step.**
+**JavaScript Templates (JST)** — reactive web components in plain HTML, with
+**JavaScript itself as the templating language**. **No build step.**
 
 **It's just Web Components under the hood.** A `<script type="jst">` tag is
 compiled into a class and registered with `customElements.define()`, so every
@@ -34,12 +35,13 @@ bubbling events, and DOM morphing.
 
 ## Philosophy
 
-1. **No build step** — the browser is the toolchain.
-2. **JavaScript is the templating language** — `$(expr)`, `$ if`, `$ forEach`.
-3. **Ride the platform** — properties carry data in, `CustomEvent`s carry actions out, the DOM is morphed in place.
-4. **Props down, events up** — components are dumb renderers; state lives in the page/parent.
-5. **The server can ship components** — HATEOAS, with a component model.
-6. **Safe by default** — interpolation is HTML-escaped unless you opt out with `raw()`.
+1. **No build step** — components live in `<script type="jst">` in plain HTML; the browser is the toolchain.
+2. **JavaScript is the templating language** — `$(expr)`, `$ if`, `$ forEach`. No new DSL.
+3. **HATEOAS-first** — the server streams components and hypermedia down; the client renders the same components.
+4. **One set of templates, both sides** — the same template runs on the client or the server (the compiler is plain JS), so there's no front-end/back-end duplication.
+5. **It's just Web Components** — every `<jst-*>` is a real custom element via `customElements.define`; data in as properties, actions out as `CustomEvent`s, DOM morphed in place — no virtual DOM, no signals.
+6. **Props down, events up** — components are dumb renderers; state lives in the page/parent.
+7. **Safe by default** — interpolation is HTML-escaped unless you opt out with `raw()`.
 
 ## Try it
 
