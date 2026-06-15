@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<!--
+  Source: https://react.dev/learn/extracting-state-logic-into-a-reducer
+  Demonstrates: useReducer — state transitions consolidated into a single
+  pure reducer(state, action), driven by dispatched actions (add/change/delete).
+  JST status: (i) partial — JST has no useReducer hook, but the pattern ports
+  cleanly to plain JS: a pure reducer function lives in the page, `dispatch`
+  reassigns the page-owned state and re-broadcasts it to a dumb renderer. The
+  component just emits actions up; it never holds task state. The only thing
+  "missing" is the hook ceremony — the architecture is identical, so the
+  workaround is, in my opinion, a fully acceptable tradeoff.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JST · reducer</title>
+<script type="module" src="../../jst.js"></script>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 480px; margin: 3rem auto; }
+  li { display: flex; gap: .5rem; align-items: center; margin: .35rem 0; }
+  li input[type=text] { flex: 1; padding: 4px 6px; }
+  button { cursor: pointer; }
+  .add { display: flex; gap: .5rem; margin-bottom: 1rem; }
+  .add input { flex: 1; padding: 6px; }
+</style>
+</head>
+<body>
+<h1>Extracting state logic into a reducer</h1>
+
+<!-- Dumb renderer: tasks come down, actions go up as one bubbling event. -->
+<script type="jst" name="task-board" tasks>
+  <div class="add">
+    <input type="text" data-testid="new" placeholder="Add task"
+           @keydown="$(e => { if (e.key === 'Enter' && e.target.value.trim()) { el.emit('action', { type: 'added', text: e.target.value.trim() }); e.target.value = ''; } })">
+  </div>
+  <ul data-testid="list">
+    $ (tasks || []).forEach(task => {
+      <li>
+        <input type="checkbox" .checked="$(task.done)"
+               @change="$(e => el.emit('action', { type: 'changed', id: task.id, done: e.target.checked }))">
+        <input type="text" .value="$(task.text)"
+               @input="$(e => el.emit('action', { type: 'changed', id: task.id, text: e.target.value }))">
+        <button @click="$(() => el.emit('action', { type: 'deleted', id: task.id }))">✕</button>
+      </li>
+    $ })
+  </ul>
+</script>
+
+<task-board id="board"></task-board>
+
+<script>
+  // The pure reducer — identical to what you'd pass to useReducer.
+  let nextId = 3;
+  function reducer(tasks, action) {
+    switch (action.type) {
+      case 'added':
+        return [...tasks, { id: nextId++, text: action.text, done: false }];
+      case 'changed':
+        return tasks.map(t => t.id === action.id
+          ? { ...t, ...(action.text !== undefined ? { text: action.text } : {}), ...(action.done !== undefined ? { done: action.done } : {}) }
+          : t);
+      case 'deleted':
+        return tasks.filter(t => t.id !== action.id);
+      default:
+        return tasks;
+    }
+  }
+
+  let tasks = [
+    { id: 0, text: 'Visit Kafka Museum', done: true },
+    { id: 1, text: 'Watch a puppet show', done: false },
+    { id: 2, text: 'Lennon Wall pic', done: false },
+  ];
+  const board = document.getElementById('board');
+  function dispatch(action) { tasks = reducer(tasks, action); board.tasks = tasks; }
+  board.tasks = tasks;
+  board.addEventListener('action', e => dispatch(e.detail));
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

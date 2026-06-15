@@ -1,0 +1,18 @@
+<!-- Background work is visible: a task card with live progress morphs and a
+     cancel affordance. Server drives it entirely with attribute morphs. -->
+<script type="jst" name="task-card" title status progress>
+    <div class="task $(status)">
+        <div class="task-top">
+            <span class="task-title">⚙ $(title)</span>
+            <span class="task-status">$(status)</span>
+        </div>
+        $ if (status === 'running' || status === 'pending') {
+            <div class="bar-track"><div class="bar" style="width: $(progress || 0)%"></div></div>
+            <button class="task-cancel" @click="$(() => el.emit('task-cancel', el.id))">Cancel</button>
+        $ }
+    </div>
+</script>
+
+<feed-card persona="Hive" time="{{TIME}}">
+    <task-card id="{{ID}}" title="{{TITLE}}" status="running" progress="5"></task-card>
+</feed-card>

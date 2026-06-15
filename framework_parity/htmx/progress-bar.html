@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<!--
+  Source: https://htmx.org/examples/progress-bar/
+  Demonstrates: starting a job, then polling the server for progress and updating a bar
+  until the job completes, then showing a "Complete" / restart state.
+  JST status: (i) partial. The bar is a clean JST component driven by a `progress` prop,
+  BUT the polling is the gap: HTMX polls declaratively with hx-trigger="every 600ms" /
+  load-polling. JST has no polling trigger, so the poll loop is a hand-written setInterval
+  that stops itself at 100%.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JST · progress-bar</title>
+<script type="module" src="../../jst.js"></script>
+<script src="../../framework_parity/lib/mock-fetch.js"></script>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 30rem; margin: 3rem auto; }
+  .track { background: #eee; border-radius: 999px; height: 20px; overflow: hidden; }
+  .bar { background: #3f51b5; height: 100%; width: 0; transition: width .4s ease; }
+  button { padding: .5rem 1rem; cursor: pointer; margin-top: 1rem; }
+</style>
+</head>
+<body>
+
+<script type="jst" name="job-progress" progress state>
+  <div role="progressbar" aria-valuenow="$(progress)" class="track">
+    <div class="bar" data-testid="bar" style="width: $(progress)%"></div>
+  </div>
+  $ if (state === 'idle') {
+    <button data-testid="start" @click="$(() => el.emit('start'))">Start Job</button>
+  $ } else if (state === 'running') {
+    <p data-testid="running">Running… $(progress)%</p>
+  $ } else if (state === 'done') {
+    <p data-testid="done">Complete!</p>
+    <button data-testid="restart" @click="$(() => el.emit('start'))">Restart Job</button>
+  $ }
+</script>
+
+<h1>Progress Bar</h1>
+<job-progress id="job"></job-progress>
+
+<script>
+  let serverProgress = 0;
+  JSTMock.route('POST /api/job', () => { serverProgress = 0; return { json: { progress: 0 } }; });
+  JSTMock.route('GET /api/job', () => {
+    serverProgress = Math.min(100, serverProgress + 25);
+    return { json: { progress: serverProgress } };
+  }, { delay: 60 });
+
+  const job = document.getElementById('job');
+  job.progress = 0;
+  job.state = 'idle';
+  let poll = null;
+
+  job.addEventListener('start', async () => {
+    await fetch('/api/job', { method: 'POST' });
+    job.progress = 0;
+    job.state = 'running';
+    clearInterval(poll);
+    // Workaround: no declarative polling trigger; poll by hand until complete.
+    poll = setInterval(async () => {
+      const { progress } = await (await fetch('/api/job')).json();
+      job.progress = progress;
+      if (progress >= 100) { clearInterval(poll); job.state = 'done'; }
+    }, 200);
+  });
+
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<!--
+  Source: https://vuejs.org/examples/#fetching-data
+  Demonstrates: fetching data from an API, switching the request when a selection
+  changes, and rendering the result list.
+  JST status: (i) partial — fetching + rendering is idiomatic, but Vue's "fetch on
+  mount" relies on a lifecycle hook JST does not expose. The initial fetch is therefore
+  kicked off from the page script (and re-fetched from the @change handler), rather
+  than from inside the component. The render/escape/list parts are exact.
+  (Uses mock-fetch so it runs offline; mirrors the Vue example's GitHub commits feed.)
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JST — Fetching Data</title>
+<script type="module" src="../../jst.js"></script>
+<script src="../../framework_parity/lib/mock-fetch.js"></script>
+<style>body{font-family:sans-serif;max-width:640px;margin:2rem auto}li{margin:.4rem 0}</style>
+<script>
+  const commitsByBranch = {
+    main: [
+      { sha: 'a1b2c3d', html_url: '#a1', commit: { message: 'Fix morphing edge case', author: { name: 'Ada',  date: '2026-06-01' } } },
+      { sha: 'e4f5g6h', html_url: '#e4', commit: { message: 'Add slot fallbacks',     author: { name: 'Lin',  date: '2026-06-02' } } },
+    ],
+    dev: [
+      { sha: 'z9y8x7w', html_url: '#z9', commit: { message: 'WIP: experimental router', author: { name: 'Kai', date: '2026-06-03' } } },
+    ],
+  };
+  JSTMock.route('GET /api/commits/:branch', (req) =>
+    ({ json: commitsByBranch[req.params.branch] || [] }), { delay: 120 });
+</script>
+</head>
+<body>
+
+<script type="jst" name="commit-list" branch commits>
+  <h1>Latest commits</h1>
+  <p>
+    $ ['main','dev'].forEach(b => {
+      <label><input type="radio" name="branch" .checked="$(branch === b)"
+        @change="$(() => el.emit('branch-change', b))"> $(b)</label>
+    $ })
+  </p>
+  <p>commits for <strong>$(branch)</strong>:</p>
+  <ul id="commits">
+    $ (commits || []).forEach(c => {
+      <li>
+        <a href="$(c.html_url)" target="_blank">$(c.sha.slice(0,7))</a>
+        - <span class="msg">$(c.commit.message)</span><br>
+        by <span class="author">$(c.commit.author.name)</span>
+        at <span class="date">$(c.commit.author.date)</span>
+      </li>
+    $ })
+  </ul>
+</script>
+
+<commit-list id="app" branch="main"></commit-list>
+
+<script>
+  const app = document.getElementById('app');
+  async function loadBranch(branch) {
+    app.branch = branch;
+    app.commits = await (await fetch('/api/commits/' + branch)).json();
+  }
+  app.addEventListener('branch-change', e => loadBranch(e.detail));
+  loadBranch('main').then(() => { window.__exampleReady = true; });
+</script>
+</body>
+</html>

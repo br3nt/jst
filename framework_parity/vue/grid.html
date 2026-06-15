@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<!--
+  Source: https://vuejs.org/examples/#grid
+  Demonstrates: a data grid with text search and click-to-sort columns (toggle asc/desc).
+  JST status: ✓ exact — search text and sort key/direction are local state; the
+  filtered+sorted rows are derived inline in the template (JST's "computed" pattern).
+  No JST limitation hit.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JST — Grid</title>
+<script type="module" src="../../jst.js"></script>
+<style>
+  body{font-family:sans-serif;max-width:640px;margin:2rem auto}
+  table{border-collapse:collapse;width:100%}
+  th,td{border:1px solid #ccc;padding:8px;text-align:left}
+  th{background:#f4f4f4;cursor:pointer;user-select:none}
+  th .arrow{display:inline-block;width:0;height:0;margin-left:5px;opacity:.66}
+  th .arrow.asc{border-left:4px solid transparent;border-right:4px solid transparent;border-bottom:4px solid #000}
+  th .arrow.dsc{border-left:4px solid transparent;border-right:4px solid transparent;border-top:4px solid #000}
+</style>
+</head>
+<body>
+
+<script type="jst" name="demo-grid" columns rows query sortkey sortasc>
+  $ const cols = columns || [];
+  $ const q = (query || '').toLowerCase();
+  $ const key = sortkey || (cols[0] || '');
+  $ const asc = sortasc === false ? false : true;
+  $ let data = (rows || []).filter(row =>
+  $   cols.some(c => String(row[c]).toLowerCase().includes(q)));
+  $ data = data.slice().sort((a, b) => {
+  $   if (a[key] === b[key]) return 0;
+  $   return (a[key] > b[key] ? 1 : -1) * (asc ? 1 : -1);
+  $ });
+  $ const setSort = (c) => {
+  $   if (key === c) { el.sortasc = !asc; }
+  $   else { el.sortkey = c; el.sortasc = true; }
+  $ };
+
+  <p>Search: <input id="search" .value="$(query || '')"
+       @input="$(e => el.query = e.target.value)"></p>
+  <table>
+    <thead>
+      <tr>
+        $ cols.forEach(c => {
+          <th class="col-$(c)" @click="$(() => setSort(c))">
+            $(c.charAt(0).toUpperCase() + c.slice(1))
+            $ if (key === c) {
+              <span class="arrow $(asc ? 'asc' : 'dsc')"></span>
+            $ }
+          </th>
+        $ })
+      </tr>
+    </thead>
+    <tbody id="rows">
+      $ data.forEach(row => {
+        <tr>
+          $ cols.forEach(c => { <td>$(row[c])</td> $ })
+        </tr>
+      $ })
+      $ if (data.length === 0) {
+        <tr><td colspan="$(cols.length)">No matches.</td></tr>
+      $ }
+    </tbody>
+  </table>
+</script>
+
+<demo-grid id="app" sortasc="true"></demo-grid>
+
+<script>
+  const app = document.getElementById('app');
+  app.columns = ['name', 'power'];
+  app.rows = [
+    { name: 'Chuck Norris', power: Infinity },
+    { name: 'Bruce Lee', power: 9000 },
+    { name: 'Jackie Chan', power: 7000 },
+    { name: 'Jet Li', power: 8000 },
+  ];
+  app.sortkey = 'name';
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<!--
+  Source: https://htmx.org/examples/inline-validation/
+  Demonstrates: an email field validated by the server as the user types; a message and
+  valid/invalid styling appear inline; the form only submits when valid.
+  JST status: ✓ exact match. The input is a plain field (kept plain so typing never loses
+  focus to a re-render); on input we POST the value, and a <field-status> component renders
+  the server's verdict. Page owns validity. The submit button enables on a valid result.
+  (HTMX debounces this with `delay:...`; here validation fires per keystroke — see
+  active-search.html for the debounce gap.)
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JST · inline-validation</title>
+<script type="module" src="../../jst.js"></script>
+<script src="../../framework_parity/lib/mock-fetch.js"></script>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 30rem; margin: 3rem auto; }
+  input { padding: .4rem; width: 100%; box-sizing: border-box; }
+  input.valid { border: 2px solid #2e7d32; }
+  input.invalid { border: 2px solid #c62828; }
+  .msg.error { color: #c62828; }
+  .msg.ok { color: #2e7d32; }
+  button { padding: .5rem 1rem; margin-top: .8rem; cursor: pointer; }
+</style>
+</head>
+<body>
+
+<script type="jst" name="field-status" state message>
+  $ if (state) {
+    <div class="msg $(state === 'ok' ? 'ok' : 'error')" data-testid="msg">$(message)</div>
+  $ }
+</script>
+
+<h1>Inline Validation</h1>
+<form id="form">
+  <label>Email
+    <input type="email" id="email" data-testid="email" placeholder="test@example.com" autocomplete="off">
+  </label>
+  <field-status id="status"></field-status>
+  <button type="submit" id="submit" data-testid="submit" disabled>Submit</button>
+</form>
+<div id="result" data-testid="result"></div>
+
+<script>
+  const taken = ['joe@example.com', 'angie@example.com'];
+  JSTMock.route('POST /api/validate-email', req => {
+    const email = (req.form.email || '').trim();
+    const valid = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email);
+    if (!valid) return { json: { state: 'error', message: 'That is not a valid email.', ok: false } };
+    if (taken.includes(email.toLowerCase())) return { json: { state: 'error', message: 'That email is already taken.', ok: false } };
+    return { json: { state: 'ok', message: 'That email is available.', ok: true } };
+  }, { delay: 80 });
+
+  const email = document.getElementById('email');
+  const status = document.getElementById('status');
+  const submit = document.getElementById('submit');
+
+  email.addEventListener('input', async () => {
+    if (!email.value) { status.state = ''; submit.disabled = true; email.className = ''; return; }
+    const data = await (await fetch('/api/validate-email', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: email.value }),
+    })).json();
+    status.state = data.state;
+    status.message = data.message;
+    submit.disabled = !data.ok;
+    email.className = data.ok ? 'valid' : 'invalid';
+  });
+
+  document.getElementById('form').addEventListener('submit', e => {
+    e.preventDefault();
+    document.getElementById('result').textContent = `Registered ${email.value}!`;
+  });
+
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

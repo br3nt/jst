@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<!--
+  Source: https://react.dev/learn/responding-to-events
+  Demonstrates: event handlers, passing handler behaviour via props, and
+  event propagation / stopPropagation. (alert() is avoided so the page runs
+  cleanly headless; we append to a visible log instead.)
+  JST status: ✓ exact — @event="$(fn)" is addEventListener; el.emit bubbles
+  events up; event.stopPropagation() works as in the DOM.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JST · responding to events</title>
+<script type="module" src="../../jst.js"></script>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 520px; margin: 3rem auto; }
+  .toolbar { display: flex; gap: .5rem; padding: 1rem; background: #eef; border-radius: 10px; cursor: pointer; }
+  button { padding: 8px 14px; cursor: pointer; }
+  #log { margin-top: 1rem; font-family: monospace; font-size: .85rem; white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<h1>Responding to events</h1>
+
+<!-- The toolbar background click bubbles; inner buttons stopPropagation so
+     only their own handler fires. message is a prop = "passing handler data". -->
+<script type="jst" name="event-toolbar" message>
+  <div class="toolbar" @click="$(() => el.emit('log', 'toolbar background clicked'))">
+    <button @click="$(e => { e.stopPropagation(); el.emit('log', message + ' #1'); })">Play</button>
+    <button @click="$(e => { e.stopPropagation(); el.emit('log', message + ' #2'); })">Upload</button>
+    <button @click="$(() => el.emit('log', 'this one lets the click bubble'))">Bubbles up</button>
+  </div>
+</script>
+
+<event-toolbar id="bar" message="action"></event-toolbar>
+<div id="log" data-testid="log"></div>
+
+<script>
+  const log = document.getElementById('log');
+  document.getElementById('bar').addEventListener('log', e => {
+    log.textContent += e.detail + '\n';
+  });
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<!--
+  Source: https://htmx.org/examples/sortable/
+  Demonstrates: drag-to-reorder a list, persisting the new order to the server.
+  (HTMX's own example leans on the external SortableJS library + an hx-post on "end".)
+  JST status: ✓ match (with caveats noted). Reorder uses native HTML5 drag-and-drop wired
+  with @dragstart/@dragover/@drop in the template — the same idiomatic pattern as the
+  bundled kanban example — reordering a page-owned array and POSTing the order. Caveat:
+  JST has no keyed list reconciliation, so the post-reorder re-render is an index-based
+  morph (fine for these plain rows); a list with per-row focus/internal state could lose it.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JST · sortable</title>
+<script type="module" src="../../jst.js"></script>
+<script src="../../framework_parity/lib/mock-fetch.js"></script>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 24rem; margin: 3rem auto; }
+  ul { list-style: none; padding: 0; }
+  li { padding: .6rem .8rem; margin: .3rem 0; background: #f3f5f9; border: 1px solid #dde3ee;
+       border-radius: 6px; cursor: grab; }
+  li.drag-over { border-color: #3f51b5; background: #e8eaf6; }
+  #saved { color: #2e7d32; min-height: 1.2em; }
+</style>
+</head>
+<body>
+
+<script type="jst" name="sortable-list" items>
+  <ul data-testid="list">
+    $ (items || []).forEach(it => {
+      <li draggable="true" data-testid="item-$(it.id)"
+          @dragstart="$(e => e.dataTransfer.setData('text/plain', String(it.id)))"
+          @dragover="$(e => { e.preventDefault(); e.currentTarget.classList.add('drag-over'); })"
+          @dragleave="$(e => e.currentTarget.classList.remove('drag-over'))"
+          @drop="$(e => {
+            e.preventDefault();
+            el.emit('reorder', { draggedId: Number(e.dataTransfer.getData('text/plain')), targetId: it.id });
+          })">$(it.label)</li>
+    $ })
+  </ul>
+</script>
+
+<h1>Sortable</h1>
+<sortable-list id="list"></sortable-list>
+<div id="saved" data-testid="saved"></div>
+
+<script>
+  JSTMock.route('POST /api/order', req => ({ json: { saved: true, order: JSON.parse(req.form.order) } }), { delay: 80 });
+
+  const list = document.getElementById('list');
+  const saved = document.getElementById('saved');
+  let items = [
+    { id: 1, label: 'Item 1' }, { id: 2, label: 'Item 2' }, { id: 3, label: 'Item 3' },
+    { id: 4, label: 'Item 4' }, { id: 5, label: 'Item 5' },
+  ];
+  list.items = items;
+
+  list.addEventListener('reorder', async e => {
+    const { draggedId, targetId } = e.detail;
+    if (draggedId === targetId) return;
+    const dragged = items.find(i => i.id === draggedId);
+    items = items.filter(i => i.id !== draggedId);
+    const targetIndex = items.findIndex(i => i.id === targetId);
+    items.splice(targetIndex, 0, dragged);
+    list.items = items;
+    const res = await fetch('/api/order', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ order: JSON.stringify(items.map(i => i.id)) }),
+    });
+    const data = await res.json();
+    saved.textContent = `Saved order: ${data.order.join(', ')}`;
+  });
+
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<!--
+  Source: https://react.dev/learn/manipulating-the-dom-with-refs
+  Demonstrates: refs — (1) a DOM ref to focus an input imperatively, and
+  (2) a mutable ref value that survives across renders without causing one.
+  JST status: ✓ — both ref use-cases are covered cleanly. DOM ref:
+  el.querySelector('input').focus() after render. Mutable instance value:
+  stash it on the element (el._taps) — it persists and, because it is not a
+  declared param, mutating it does NOT trigger a re-render, exactly like
+  useRef's .current. No dedicated ref object, but nothing is lost.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JST · refs</title>
+<script type="module" src="../../jst.js"></script>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 460px; margin: 3rem auto; }
+  input { padding: 8px; font-size: 1rem; }
+  button { padding: 8px 14px; cursor: pointer; margin-left: .4rem; }
+  p { margin-top: 1rem; }
+</style>
+</head>
+<body>
+<h1>Manipulating the DOM with refs</h1>
+
+<script type="jst" name="focus-field" count>
+  <div>
+    <input data-testid="field" placeholder="I will be focused">
+    <button data-testid="focus" @click="$(() => el.querySelector('input').focus())">
+      Focus the input
+    </button>
+  </div>
+  <div style="margin-top:1rem">
+    <button data-testid="tap" @click="$(() => { el._taps = (el._taps || 0) + 1; })">
+      Tap (mutates a ref, no re-render)
+    </button>
+    <button data-testid="reveal" @click="$(() => el.count = el._taps || 0)">
+      Reveal tap count into state
+    </button>
+    <p data-testid="out">Rendered tap count (state): $(count || 0)</p>
+  </div>
+</script>
+
+<focus-field id="ff" count="0"></focus-field>
+
+<p style="color:#666; font-size:.9rem">
+  "Tap" bumps a plain property (el._taps) — like useRef's .current, it changes
+  silently. "Reveal" copies it into a param, which is the moment it re-renders.
+</p>
+
+<script>
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

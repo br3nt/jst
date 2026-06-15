@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<!--
+  Source: https://htmx.org/examples/edit-row/
+  Demonstrates: a table where clicking "Edit" turns one row into inline inputs; saving
+  PUTs the change and returns the row to display mode. Only one row edits at a time.
+  JST status: ✓ exact match. Page owns rows + a single `editingId`; the component renders
+  each row in display or edit mode from that id. Save persists via fetch and clears the id.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JST · edit-row</title>
+<script type="module" src="../../jst.js"></script>
+<script src="../../framework_parity/lib/mock-fetch.js"></script>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 40rem; margin: 3rem auto; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: .4rem .6rem; border-bottom: 1px solid #ddd; }
+  input { padding: .25rem; width: 95%; }
+  button { padding: .25rem .6rem; cursor: pointer; }
+</style>
+</head>
+<body>
+
+<script type="jst" name="people-table" rows editing-id>
+  <table>
+    <thead><tr><th>Name</th><th>Email</th><th></th></tr></thead>
+    <tbody data-testid="rows">
+      $ (rows || []).forEach(r => {
+        $ if (r.id === editingId) {
+          <tr data-testid="row-$(r.id)">
+            <td><input data-testid="name-$(r.id)" name="name" .value="$(r.name)"></td>
+            <td><input data-testid="email-$(r.id)" name="email" .value="$(r.email)"></td>
+            <td>
+              <button data-testid="save-$(r.id)" @click="$(ev => {
+                const tr = ev.target.closest('tr');
+                el.emit('save', { id: r.id, name: tr.querySelector('[name=name]').value, email: tr.querySelector('[name=email]').value });
+              })">Save</button>
+              <button @click="$(() => el.emit('cancel'))">Cancel</button>
+            </td>
+          </tr>
+        $ } else {
+          <tr data-testid="row-$(r.id)">
+            <td>$(r.name)</td><td>$(r.email)</td>
+            <td><button data-testid="edit-$(r.id)" .disabled="$(editingId != null)"
+                        @click="$(() => el.emit('edit', r.id))">Edit</button></td>
+          </tr>
+        $ }
+      $ })
+    </tbody>
+  </table>
+</script>
+
+<h1>Edit Row</h1>
+<people-table id="tbl"></people-table>
+
+<script>
+  JSTMock.route('PUT /api/person/:id', req => ({ json: { person: { id: Number(req.params.id), ...req.form } } }), { delay: 120 });
+
+  const tbl = document.getElementById('tbl');
+  let rows = [
+    { id: 1, name: 'Joe Smith', email: 'joe@smith.org' },
+    { id: 2, name: 'Angie MacDowell', email: 'angie@macdowell.org' },
+    { id: 3, name: 'Fuqua Tarkenton', email: 'fuqua@tarkenton.org' },
+  ];
+  tbl.rows = rows;
+  tbl.editingId = null;
+
+  tbl.addEventListener('edit', e => { tbl.editingId = e.detail; });
+  tbl.addEventListener('cancel', () => { tbl.editingId = null; });
+  tbl.addEventListener('save', async e => {
+    const res = await fetch(`/api/person/${e.detail.id}`, {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(e.detail),
+    });
+    const { person } = await res.json();
+    rows = rows.map(r => (r.id === person.id ? person : r));
+    tbl.rows = rows;
+    tbl.editingId = null;
+  });
+
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<!--
+  Source: https://alpinejs.dev/directives/effect
+  Demonstrates: Alpine x-effect — run a side effect that re-runs when its reactive
+  dependencies change (here: mirror count into document.title and a log).
+  JST status: (i) partial — JST has no reactive effect primitive. But the whole
+  template re-runs on every state change, so a side-effect block in the template
+  body behaves like x-effect. Difference: Alpine re-runs only when *accessed deps*
+  change; JST re-runs on ANY param change (coarse), so it can fire more often.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>x-effect</title>
+<script type="module" src="../../jst.js"></script>
+<style> body { font-family: system-ui, sans-serif; margin: 3rem; } </style>
+</head>
+<body>
+
+<script type="jst" name="x-effect-demo" count>
+  $ // side effect — re-runs every render (JST's stand-in for x-effect)
+  $ document.title = 'count = ' + count;
+  $ el.__runs = (el.__runs || 0) + 1;
+  <div>
+    <button data-testid="inc" @click="$(() => el.count = count + 1)">increment</button>
+    <p>count: <strong data-testid="value">$(count)</strong></p>
+    <p data-testid="effect">document.title is kept in sync (effect ran $(el.__runs) times)</p>
+  </div>
+</script>
+
+<h1>x-effect</h1>
+<x-effect-demo id="demo" count="0"></x-effect-demo>
+
+<script>
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

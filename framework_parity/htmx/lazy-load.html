@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<!--
+  Source: https://htmx.org/examples/lazy-load/
+  Demonstrates: a placeholder with a spinner that is replaced by server content once it
+  loads. HTMX's lazy-load fires on the "load" (reveal) event.
+  JST status: ✓ exact match. The fragment is fetched on mount; until it resolves a spinner
+  shows; on arrival the returned fragment (which itself contains a <script type="jst">) is
+  injected and JST's MutationObserver upgrades it. This is the documented late-arrival path.
+  (Note: HTMX's lazy-load triggers when the element is *revealed*; reveal-on-scroll would
+  need an IntersectionObserver — see infinite-scroll.html. Plain reveal == mount here.)
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JST · lazy-load</title>
+<script type="module" src="../../jst.js"></script>
+<script src="../../framework_parity/lib/mock-fetch.js"></script>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 32rem; margin: 3rem auto; }
+  .spinner { color: #888; }
+  .chart { height: 8rem; background: linear-gradient(90deg,#5c6bc0,#3f51b5); border-radius: 8px;
+           color: white; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; }
+</style>
+</head>
+<body>
+
+<h1>Lazy Loading</h1>
+<div id="mount" data-testid="mount"><span class="spinner" data-testid="spinner">Loading graph…</span></div>
+
+<script>
+  JSTMock.route('GET /api/graph', () => `
+    <script type="jst" name="lazy-graph" label>
+      <div class="chart" data-testid="chart">$(label)<\/div>
+    <\/script>
+    <lazy-graph label="Revenue is up 42%"></lazy-graph>
+  `, { delay: 300 });
+
+  (async () => {
+    const html = await (await fetch('/api/graph')).text();
+    document.getElementById('mount').innerHTML = html;
+    window.__exampleReady = true;
+  })();
+</script>
+</body>
+</html>

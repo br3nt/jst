@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<!--
+  Source: https://react.dev/learn/sharing-state-between-components
+  Demonstrates: lifting state up — an Accordion where only one panel is open
+  at a time. The "which panel is active" state lives in the common parent.
+  JST status: ✓ exact — this is literally JST's model ("props down, events
+  up", state owned by the page). Panels are dumb: they get `active` down and
+  emit `show` up; the page owns activeIndex and re-broadcasts it.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JST · lifting state up</title>
+<script type="module" src="../../jst.js"></script>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 480px; margin: 3rem auto; }
+  section { border: 1px solid #ddd; border-radius: 8px; padding: .5rem 1rem; margin: .5rem 0; }
+  h3 { margin: .3rem 0; }
+  button { padding: 6px 12px; cursor: pointer; }
+</style>
+</head>
+<body>
+<h1>Sharing state between components</h1>
+
+<!-- Dumb panel: active comes down, "show" goes up. -->
+<script type="jst" name="accordion-panel" title active>
+  <section>
+    <h3>$(title)</h3>
+    $ if (active) {
+      <div data-testid="body">$(slot())</div>
+    $ } else {
+      <button @click="$(() => el.emit('show'))">Show</button>
+    $ }
+  </section>
+</script>
+
+<accordion-panel id="panel-0" data-testid="panel-0" title="About">
+  With a population of about 2 million, Almaty is Kazakhstan's largest city.
+</accordion-panel>
+<accordion-panel id="panel-1" data-testid="panel-1" title="Etymology">
+  The name comes from <i>алма</i>, the Kazakh word for "apple".
+</accordion-panel>
+
+<script>
+  const panels = [document.getElementById('panel-0'), document.getElementById('panel-1')];
+  let activeIndex = 0;                       // the lifted-up state
+  function render() {
+    panels.forEach((p, i) => { p.active = i === activeIndex; });
+  }
+  panels.forEach((p, i) => {
+    p.addEventListener('show', () => { activeIndex = i; render(); });
+  });
+  render();
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

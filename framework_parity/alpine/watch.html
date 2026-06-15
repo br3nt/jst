@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<!--
+  Source: https://alpinejs.dev/magics/watch
+  Demonstrates: Alpine $watch — run a callback with (newValue, oldValue) whenever
+  a piece of state changes (here: log every change of count).
+  JST status: (i) partial — JST has no $watch primitive. Per the primer you
+  "watch" by acting in the event that changes the state: capture the old value,
+  set the new one, run your reaction. Faithful, but you must funnel every mutation
+  through one helper — there's no observer that fires on arbitrary writes.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>$watch</title>
+<script type="module" src="../../jst.js"></script>
+<style> body { font-family: system-ui, sans-serif; margin: 3rem; } #log li { font-family: monospace; } </style>
+</head>
+<body>
+
+<script type="jst" name="watch-demo" count log>
+  $ const entries = log || [];
+  <div>
+    <button data-testid="inc" @click="$(() => el.setCount(count + 1))">+1</button>
+    <button data-testid="dec" @click="$(() => el.setCount(count - 1))">−1</button>
+    <p>count: <strong data-testid="value">$(count)</strong></p>
+    <ul id="log" data-testid="log">
+      $ entries.forEach(e => {
+        <li>$(e)</li>
+      $ })
+    </ul>
+  </div>
+  ${
+    // expose a single mutation funnel that emulates $watch(count, ...)
+    el.setCount = el.setCount || function (next) {
+      const old = el.count;
+      if (next === old) return;
+      el.log = [...(el.log || []), 'count: ' + old + ' → ' + next];  // the "watcher" reaction
+      el.count = next;
+    };
+  }
+</script>
+
+<h1>$watch</h1>
+<watch-demo id="demo" count="0"></watch-demo>
+
+<script>
+  document.getElementById('demo').log = [];
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

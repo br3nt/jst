@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<!--
+  Source: https://vuejs.org/guide/essentials/computed
+  Demonstrates: a computed property derived from reactive state (publishedBooksMessage).
+  JST status: (i) partial — JST has no `computed` primitive. Derived values are
+  recomputed inline in the template with `$ const ...`. There is no memoization, but
+  since the whole component re-renders on any change the derivation runs exactly when
+  needed; functionally equivalent for this use. Acceptable tradeoff.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JST — Computed Property</title>
+<script type="module" src="../../jst.js"></script>
+</head>
+<body>
+
+<script type="jst" name="computed-demo" author>
+  $ const a = author || { name: '', books: [] };
+  $ // "computed": derived from state, recomputed each render.
+  $ const publishedBooksMessage = a.books.length > 0 ? 'Yes' : 'No';
+
+  <p>Has published books:</p>
+  <span id="published">$(publishedBooksMessage)</span>
+  <ul id="books">
+    $ a.books.forEach(b => { <li>$(b)</li> $ })
+  </ul>
+  <button id="add" @click="$(() => el.author = { ...a, books: [...a.books, 'New Book ' + (a.books.length+1)] })">
+    Add a book
+  </button>
+  <button id="clear" @click="$(() => el.author = { ...a, books: [] })">Clear books</button>
+</script>
+
+<computed-demo id="app"></computed-demo>
+
+<script>
+  document.getElementById('app').author = {
+    name: 'John Doe',
+    books: ['Vue 2 - Advanced Guide', 'Vue 3 - Basic Guide', 'Vue 4 - The Mystery'],
+  };
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

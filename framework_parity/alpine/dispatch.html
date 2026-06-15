@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<!--
+  Source: https://alpinejs.dev/magics/dispatch
+  Demonstrates: Alpine $dispatch — fire a custom DOM event (bubbling) that an
+  ancestor listens for. Here a child notifies the page of a "notify" event.
+  JST status: ✓ exact — this IS JST's core "events up" model. `el.emit(name, detail)`
+  dispatches a bubbling, composed CustomEvent; the page listens with addEventListener.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>$dispatch</title>
+<script type="module" src="../../jst.js"></script>
+<style> body { font-family: system-ui, sans-serif; margin: 3rem; } #log { background: #f4f4f8; padding: 1rem; border-radius: 8px; min-height: 2rem; } </style>
+</head>
+<body>
+
+<script type="jst" name="dispatch-demo">
+  <div>
+    <!-- Alpine's dispatch('notify', {...}) equivalent -->
+    <button data-testid="fire" @click="$(() => el.emit('notify', { msg: 'Hello from child' }))">
+      Dispatch custom event
+    </button>
+  </div>
+</script>
+
+<h1>$dispatch (custom events)</h1>
+<dispatch-demo id="demo"></dispatch-demo>
+<p>Page received: <span id="log" data-testid="log">(nothing yet)</span></p>
+
+<script>
+  document.getElementById('demo').addEventListener('notify', e => {
+    document.getElementById('log').textContent = e.detail.msg + ' @ ' + new Date().toLocaleTimeString();
+  });
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "scopeName": "jst.injection",
+  "injectionSelector": "L:text.html.basic, L:text.html.derivative",
+  "patterns": [{ "include": "#jst-block" }],
+  "repository": {
+    "jst-block": {
+      "comment": "Marks a <script type=\"jst\"> block with a distinctive scope and keeps HTML highlighting inside it. The JST islands are injected separately (jst.islands) so they also reach inside HTML tags and attribute strings.",
+      "name": "meta.embedded.block.jst",
+      "begin": "(?i)(<)(script)\\b([^>]*?\\btype\\s*=\\s*(['\"])jst\\b[^>]*?)(>)",
+      "beginCaptures": {
+        "1": { "name": "punctuation.definition.tag.begin.html" },
+        "2": { "name": "entity.name.tag.script.html" },
+        "5": { "name": "punctuation.definition.tag.end.html" }
+      },
+      "end": "(?i)(</)(script)\\s*(>)",
+      "endCaptures": {
+        "1": { "name": "punctuation.definition.tag.begin.html" },
+        "2": { "name": "entity.name.tag.script.html" },
+        "3": { "name": "punctuation.definition.tag.end.html" }
+      },
+      "patterns": [{ "include": "text.html.basic" }]
+    }
+  }
+}

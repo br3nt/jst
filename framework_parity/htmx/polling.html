@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<!--
+  Source: https://htmx.org/examples/update-other-content/ (load-polling / value-added polling)
+  Demonstrates: content that refreshes itself on an interval, and a single response that
+  updates MORE than one region of the page ("update other content").
+  JST status: (i) partial. Updating multiple regions from one response is trivially
+  idiomatic (one fetch sets props on two page-owned components). The polling itself is the
+  gap: HTMX polls declaratively with hx-trigger="every 1s" / load-polling. JST has no
+  polling/interval trigger, so the loop is a hand-written setInterval (it self-stops here).
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JST · polling</title>
+<script type="module" src="../../jst.js"></script>
+<script src="../../framework_parity/lib/mock-fetch.js"></script>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 30rem; margin: 3rem auto; }
+  .badge { display: inline-block; padding: .2rem .7rem; border-radius: 999px; color: white; }
+  .badge.up { background: #2e7d32; } .badge.down { background: #c62828; }
+  button { padding: .4rem 1rem; cursor: pointer; }
+</style>
+</head>
+<body>
+
+<script type="jst" name="metric-value" value>
+  <strong data-testid="value">$(value != null ? value : '—')</strong>
+</script>
+
+<script type="jst" name="metric-status" status>
+  <span class="badge $(status === 'up' ? 'up' : 'down')" data-testid="status">$(status || '…')</span>
+</script>
+
+<h1>Load Polling</h1>
+<p>Active users: <metric-value id="value"></metric-value> &nbsp; System: <metric-status id="status"></metric-status></p>
+<button id="stop" data-testid="stop">Stop polling</button>
+
+<script>
+  let tick = 0;
+  JSTMock.route('GET /api/metrics', () => {
+    tick++;
+    return { json: { value: 100 + tick * 7, status: tick % 3 === 0 ? 'down' : 'up' } };
+  }, { delay: 40 });
+
+  const value = document.getElementById('value');
+  const status = document.getElementById('status');
+
+  // One response updates two separate regions (the "update other content" idea).
+  async function refresh() {
+    const m = await (await fetch('/api/metrics')).json();
+    value.value = m.value;
+    status.status = m.status;
+  }
+
+  // Workaround: no declarative "every 1s" trigger; poll by hand. Self-stops after 5 ticks.
+  let polls = 0;
+  const timer = setInterval(() => { refresh(); if (++polls >= 5) clearInterval(timer); }, 500);
+  document.getElementById('stop').addEventListener('click', () => clearInterval(timer));
+
+  refresh().then(() => { window.__exampleReady = true; });
+</script>
+</body>
+</html>

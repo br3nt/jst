@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>JST - Basic Counter & Toggle</title>
+    <script type="module" src="../jst.js"></script>
+    <style>
+        body { font-family: sans-serif; max-width: 400px; margin: 3rem auto; text-align: center; background: #f9f9f9; }
+        .card { border: 1px solid #ddd; padding: 2rem; border-radius: 8px; background: white; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .count { font-size: 3.5rem; font-weight: bold; margin: 1rem 0; color: #2196f3; }
+        button { padding: 12px 24px; font-size: 1.1rem; cursor: pointer; background: #2196f3; color: white; border: none; border-radius: 6px; transition: background 0.2s; }
+        button:hover { background: #1976d2; }
+        .status { margin-top: 1.5rem; padding: 12px; border-radius: 6px; font-weight: bold; }
+        .status.active { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
+        .status.inactive { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; }
+    </style>
+</head>
+<body>
+
+<!--
+    EXAMPLE: Basic Counter
+    Attributes give initial values (count="0" parses to the number 0,
+    running="true" to a boolean). The button emits an event; the page
+    owns the state and writes it back through properties.
+-->
+<script type="jst" name="counter-display" count running>
+    <div class="card">
+        <h2>Counter Example</h2>
+        <div class="count">$(count)</div>
+        <button @click="$(() => el.emit('increment'))">+ Click to Count</button>
+
+        <div class="status $(running ? 'active' : 'inactive')">
+            The counter is currently $(running ? 'RUNNING' : 'STOPPED')
+        </div>
+        <p><small>(Params: count, running)</small></p>
+    </div>
+</script>
+
+<h1>JST Framework</h1>
+
+<counter-display id="my-counter" count="0" running="true"></counter-display>
+
+<div style="margin-top: 2.5rem; text-align: left; font-size: 0.95rem; color: #555; line-height: 1.6; background: #fffde7; padding: 1.5rem; border-radius: 8px; border-left: 5px solid #fbc02d;">
+    <strong>What is happening?</strong>
+    <p>1. The <code>&lt;counter-display&gt;</code> component is defined in a script tag.</p>
+    <p>2. The button has an <code>@click</code> binding that emits an <code>increment</code> CustomEvent.</p>
+    <p>3. The page listens for it, updates <code>counter.count</code>, and the component re-renders.</p>
+</div>
+
+<script>
+    const counter = document.getElementById('my-counter');
+
+    counter.addEventListener('increment', () => {
+        counter.count += 1;
+        // Toggle the "running" state every 5 clicks for demonstration
+        if (counter.count % 5 === 0) counter.running = !counter.running;
+    });
+</script>
+
+</body>
+</html>

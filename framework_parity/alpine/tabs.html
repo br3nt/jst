@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<!--
+  Source: https://alpinejs.dev/start-here (Alpine UI tabs pattern)
+  Demonstrates: a tabs component — click a tab to switch the active panel.
+  JST status: ✓ exact — the active tab is plain local state (`el.active = id`),
+  tab buttons get an active class via interpolation, and `$ if` picks the panel.
+  No framework gap; this is idiomatic JST.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>tabs</title>
+<script type="module" src="../../jst.js"></script>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 3rem; }
+  .tablist { display: flex; gap: .25rem; border-bottom: 2px solid #ddd; }
+  .tablist button { border: none; background: none; padding: .6rem 1rem; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; }
+  .tablist button.active { color: #3f51b5; border-bottom-color: #3f51b5; font-weight: 600; }
+  .panel { padding: 1rem 0; }
+</style>
+</head>
+<body>
+
+<script type="jst" name="tabs-widget" tabs active>
+  $ const list = tabs || [];
+  $ const current = active || (list[0] && list[0].id);
+  <div>
+    <div class="tablist" role="tablist">
+      $ list.forEach(t => {
+        <button role="tab" data-testid="tab-$(t.id)"
+                class="$(t.id === current ? 'active' : '')"
+                @click="$(() => el.active = t.id)">$(t.label)</button>
+      $ })
+    </div>
+    $ const sel = list.find(t => t.id === current);
+    <div class="panel" role="tabpanel" data-testid="panel">
+      $ if (sel) {
+        $(sel.body)
+      $ }
+    </div>
+  </div>
+</script>
+
+<h1>tabs</h1>
+<tabs-widget id="demo"></tabs-widget>
+
+<script>
+  document.getElementById('demo').tabs = [
+    { id: 'one',   label: 'Overview', body: 'The overview panel.' },
+    { id: 'two',   label: 'Specs',    body: 'The specifications panel.' },
+    { id: 'three', label: 'Reviews',  body: 'The reviews panel.' },
+  ];
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<!--
+  Source: https://react.dev/learn/passing-data-deeply-with-context
+  Demonstrates: useContext — passing a "theme" deep into a tree without every
+  intermediate component needing to know about it.
+  JST status: (i) partial — JST has NO context API. The two honest options are
+  (a) prop-drill the value through every layer, or (b) keep it in a page-level
+  store. This file shows BOTH: the theme is drilled top -> toolbar -> button
+  via .theme="$(theme)" bindings (a parent re-render re-applies the binding so
+  the change cascades down), AND it is mirrored in a page-level store object so
+  components that the page can reach are kept in sync. Neither gives React's
+  zero-boilerplate "any descendant just reads the context" — intermediate
+  components MUST forward the prop. That forwarding is the gap context removes.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JST · context (deep data)</title>
+<script type="module" src="../../jst.js"></script>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 480px; margin: 3rem auto; }
+  .panel { padding: 1rem; border-radius: 10px; }
+  .panel.light { background: #f3f4f6; color: #111; }
+  .panel.dark  { background: #1f2937; color: #f9fafb; }
+  button { padding: 6px 12px; cursor: pointer; }
+</style>
+</head>
+<body>
+<h1>Passing data deeply (context)</h1>
+
+<!-- Deep leaf: just wants the theme. In React it would read context directly;
+     here it must receive it as a prop forwarded by its parent. -->
+<script type="jst" name="themed-button" theme label>
+  <button class="$(theme)" data-testid="deep-button"
+          @click="$(() => el.emit('toggle-theme'))">
+    $(label) — theme is $(theme) (click to flip)
+  </button>
+</script>
+
+<!-- Intermediate layer: does not use theme itself, yet must forward it. -->
+<script type="jst" name="themed-toolbar" theme>
+  <div class="panel $(theme)">
+    <p>A toolbar that owns no theme state but must pass it through:</p>
+    <themed-button .theme="$(theme)" label="Toggle"></themed-button>
+  </div>
+</script>
+
+<!-- Top of the tree: holds the value (the "provider"). -->
+<script type="jst" name="themed-app" theme>
+  <themed-toolbar .theme="$(theme)"></themed-toolbar>
+</script>
+
+<themed-app id="app" theme="light"></themed-app>
+
+<script>
+  // Page-level store — the (b) approach, the closest JST has to a Provider.
+  const themeStore = { value: 'light' };
+  const app = document.getElementById('app');
+  app.theme = themeStore.value;
+
+  // The toggle event bubbles up from the deep button through the tree.
+  app.addEventListener('toggle-theme', () => {
+    themeStore.value = themeStore.value === 'light' ? 'dark' : 'light';
+    app.theme = themeStore.value;            // cascades down via .theme bindings
+  });
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<!--
+  Source: https://react.dev/learn/reacting-to-input-with-state
+  Demonstrates: controlled inputs — UI is driven by state, every keystroke
+  updates state and the view derives from it (live echo, uppercase, checkbox).
+  JST status: (i) partial — there is no two-way binding. You wire it by hand:
+  .value="$(text)" sets the property and @input="$(e => el.text = ...)" pushes
+  it back, so state is the single source of truth. Caveat: because the whole
+  component re-renders on each keystroke and morphing reuses the same <input>
+  node, focus is preserved, but editing in the MIDDLE of the field can bounce
+  the caret to the end (the input value is reassigned on every render). Append
+  typing is fine. That caret quirk is the cost of having no real controlled-
+  input primitive.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JST · controlled inputs</title>
+<script type="module" src="../../jst.js"></script>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 460px; margin: 3rem auto; }
+  input[type=text] { width: 100%; padding: 8px; font-size: 1rem; }
+  .echo { margin-top: 1rem; min-height: 1.4em; }
+  .bold { font-weight: bold; }
+  label { display: block; margin-top: .75rem; }
+</style>
+</head>
+<body>
+<h1>Reacting to input with state</h1>
+
+<!-- text + bold are the single source of truth; the view is derived. -->
+<script type="jst" name="live-form" text bold>
+  <input type="text" data-testid="field"
+         placeholder="Type something…"
+         .value="$(text || '')"
+         @input="$(e => el.text = e.target.value)">
+  <label>
+    <input type="checkbox" data-testid="bold"
+           .checked="$(!!bold)"
+           @change="$(e => el.bold = e.target.checked)">
+    Shout it
+  </label>
+  <p class="echo $(bold ? 'bold' : '')" data-testid="echo">
+    $(bold ? (text || '').toUpperCase() : (text || ''))
+  </p>
+</script>
+
+<live-form id="form" text=""></live-form>
+
+<script>
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

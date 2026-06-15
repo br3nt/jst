@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<!--
+  Source: https://react.dev/learn/rendering-lists
+  Demonstrates: rendering a list from an array (map -> <li>) and the role of
+  keys for stable identity across reorders.
+  JST status: (i) partial — list rendering itself is idiomatic (forEach in the
+  template). But JST has NO keyed reconciliation: morphing is index-based, so
+  there is no `key` prop and reordering does not preserve node identity. The
+  "Shuffle" button below proves it: uncontrolled <input> text stays glued to
+  its POSITION, not to its data row, after a shuffle (in React with proper
+  keys the inputs would travel with their items). That divergence is the gap.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JST · rendering lists</title>
+<script type="module" src="../../jst.js"></script>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 520px; margin: 3rem auto; }
+  li { margin: .4rem 0; }
+  input { margin-left: .5rem; }
+  button { margin-top: 1rem; padding: 8px 14px; cursor: pointer; }
+</style>
+</head>
+<body>
+<h1>Rendering lists</h1>
+
+<!-- Maps an array to <li>. There is no key attribute in JST. -->
+<script type="jst" name="people-list" people>
+  <ul data-testid="list">
+    $ (people || []).forEach(person => {
+      <li>
+        <b>$(person.name)</b>: $(person.accomplishment)
+        <input placeholder="scratch note">
+      </li>
+    $ })
+  </ul>
+</script>
+
+<people-list id="list"></people-list>
+<button id="shuffle">Reverse order (watch the scratch notes stay put)</button>
+
+<p style="color:#666; font-size:.9rem">
+  Type into the inputs, then reverse. The notes do NOT follow their row —
+  that is the missing-keys gap React's <code>key</code> prop solves.
+</p>
+
+<script>
+  let people = [
+    { id: 'a', name: 'Creola Katherine Johnson', accomplishment: 'spaceflight calculations' },
+    { id: 'b', name: 'Mario José Molina-Pasquel', accomplishment: 'ozone-hole chemistry' },
+    { id: 'c', name: 'Mohammad Abdus Salam', accomplishment: 'electroweak theory' },
+    { id: 'd', name: 'Percy Lavon Julian', accomplishment: 'cortisone synthesis' },
+  ];
+  const list = document.getElementById('list');
+  list.people = people;
+  document.getElementById('shuffle').addEventListener('click', () => {
+    people = people.slice().reverse();
+    list.people = people;
+  });
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

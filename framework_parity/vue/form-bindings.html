@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<!--
+  Source: https://vuejs.org/examples/#form-bindings
+  Demonstrates: v-model across text, checkbox, multiple checkboxes, radio, select,
+  and multi-select.
+  JST status: (i) partial — JST has NO v-model. Every field is wired as a manual
+  two-way binding: a .value/.checked/.selected binding for "data down" plus an
+  @input/@change handler for "data up". Functionally equivalent; just verbose.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JST — Form Bindings</title>
+<script type="module" src="../../jst.js"></script>
+<style>body{font-family:sans-serif;max-width:520px;margin:2rem auto}fieldset{margin-bottom:1rem}pre{background:#f4f4f4;padding:1rem;border-radius:6px}</style>
+</head>
+<body>
+
+<script type="jst" name="form-bindings" text checked checkednames picked selected multiselected>
+  $ const names = checkednames || [];
+  $ const multi = multiselected || [];
+  $ const toggleName = (name, on) => el.checkednames =
+  $   on ? [...names, name] : names.filter(n => n !== name);
+
+  <fieldset>
+    <legend>Text input</legend>
+    <input id="text" .value="$(text)" @input="$(e => el.text = e.target.value)">
+    <p>Message is: <strong id="text-out">$(text)</strong></p>
+  </fieldset>
+
+  <fieldset>
+    <legend>Checkbox (single)</legend>
+    <label><input id="checkbox" type="checkbox" .checked="$(checked)"
+      @change="$(e => el.checked = e.target.checked)"> $(checked ? 'true' : 'false')</label>
+  </fieldset>
+
+  <fieldset>
+    <legend>Multiple checkboxes</legend>
+    $ ['Jack','John','Mike'].forEach(name => {
+      <label><input type="checkbox" .checked="$(names.includes(name))"
+        @change="$(e => toggleName(name, e.target.checked))"> $(name)</label>
+    $ })
+    <p>Checked names: <span id="names-out">$(names.join(', '))</span></p>
+  </fieldset>
+
+  <fieldset>
+    <legend>Radio</legend>
+    <label><input type="radio" name="pick" .checked="$(picked === 'One')"
+      @change="$(() => el.picked = 'One')"> One</label>
+    <label><input type="radio" name="pick" .checked="$(picked === 'Two')"
+      @change="$(() => el.picked = 'Two')"> Two</label>
+    <p>Picked: <span id="picked-out">$(picked)</span></p>
+  </fieldset>
+
+  <fieldset>
+    <legend>Select</legend>
+    <select id="select" @change="$(e => el.selected = e.target.value)">
+      $ ['A','B','C'].forEach(opt => {
+        <option value="$(opt)" .selected="$(selected === opt)">$(opt)</option>
+      $ })
+    </select>
+    <p>Selected: <span id="select-out">$(selected)</span></p>
+  </fieldset>
+
+  <fieldset>
+    <legend>Multi-select</legend>
+    <select id="multiselect" multiple size="3"
+      @change="$(e => el.multiselected = [...e.target.selectedOptions].map(o => o.value))">
+      $ ['A','B','C'].forEach(opt => {
+        <option value="$(opt)" .selected="$(multi.includes(opt))">$(opt)</option>
+      $ })
+    </select>
+    <p>Selected: <span id="multi-out">$(multi.join(', '))</span></p>
+  </fieldset>
+
+  <pre id="state">$(JSON.stringify({text, checked, checkednames: names, picked, selected, multiselected: multi}, null, 2))</pre>
+</script>
+
+<form-bindings id="app"
+  text="Edit me"
+  checked="true"
+  checkednames='["Jack"]'
+  picked="One"
+  selected="A"
+  multiselected='["A"]'></form-bindings>
+
+<script>window.__exampleReady = true;</script>
+</body>
+</html>

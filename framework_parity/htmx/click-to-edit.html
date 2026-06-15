@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<!--
+  Source: https://htmx.org/examples/click-to-edit/
+  Demonstrates: an inline "view -> edit form -> save -> view" round-trip against a
+  (mocked) server that persists the change with PUT and returns the updated record.
+  JST status: ✓ exact match. A single <contact-card> renders either the view or the
+  edit form from an `editing` flag; page owns the contact, fetch persists, props re-render.
+  The only thing JST lacks vs HTMX is a declarative hx-put — the PUT is a 4-line handler.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JST · click-to-edit</title>
+<script type="module" src="../../jst.js"></script>
+<script src="../../framework_parity/lib/mock-fetch.js"></script>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 30rem; margin: 3rem auto; }
+  label { font-weight: 600; }
+  .row { margin: .4rem 0; }
+  input { padding: .3rem; }
+  button { padding: .4rem .8rem; cursor: pointer; }
+</style>
+</head>
+<body>
+
+<script type="jst" name="contact-card" contact editing>
+  $ const c = contact || {};
+  $ if (!editing) {
+    <div data-testid="view">
+      <div class="row"><label>First Name</label>: <span data-testid="firstName">$(c.firstName)</span></div>
+      <div class="row"><label>Last Name</label>: <span data-testid="lastName">$(c.lastName)</span></div>
+      <div class="row"><label>Email</label>: <span data-testid="email">$(c.email)</span></div>
+      <button data-testid="edit-btn" @click="$(() => el.emit('edit'))">Click To Edit</button>
+    </div>
+  $ } else {
+    <form data-testid="form" @submit="$(e => {
+      e.preventDefault();
+      el.emit('save', {
+        firstName: el.querySelector('[name=firstName]').value,
+        lastName:  el.querySelector('[name=lastName]').value,
+        email:     el.querySelector('[name=email]').value,
+      });
+    })">
+      <div class="row"><label>First Name</label><br><input name="firstName" .value="$(c.firstName || '')"></div>
+      <div class="row"><label>Last Name</label><br><input name="lastName" .value="$(c.lastName || '')"></div>
+      <div class="row"><label>Email</label><br><input name="email" .value="$(c.email || '')"></div>
+      <button type="submit" data-testid="save-btn">Save</button>
+      <button type="button" data-testid="cancel-btn" @click="$(() => el.emit('cancel'))">Cancel</button>
+    </form>
+  $ }
+</script>
+
+<h1>Click To Edit</h1>
+<contact-card id="card"></contact-card>
+
+<script>
+  JSTMock.route('PUT /api/contact/1', req => ({ json: { contact: req.form } }), { delay: 150 });
+
+  const card = document.getElementById('card');
+  let contact = { firstName: 'Joe', lastName: 'Blow', email: 'joe@blow.com' };
+  card.contact = contact;
+
+  card.addEventListener('edit', () => { card.editing = true; });
+  card.addEventListener('cancel', () => { card.editing = false; });
+  card.addEventListener('save', async e => {
+    const res = await fetch('/api/contact/1', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(e.detail),
+    });
+    contact = (await res.json()).contact;
+    card.contact = contact;
+    card.editing = false;
+  });
+
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

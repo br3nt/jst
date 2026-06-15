@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<!--
+  Source: https://react.dev/learn/state-a-components-memory
+  Demonstrates: useState — a component's private memory. Two independent
+  counters each keep their own count; clicking one does not affect the other.
+  JST status: ✓ exact — a JST param IS local state. `el.count = count + 1`
+  mutates the component's own param and re-renders, just like a setState call,
+  and each element instance has its own #params (isolated memory).
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JST · useState counter</title>
+<script type="module" src="../../jst.js"></script>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 420px; margin: 3rem auto; }
+  button { font-size: 1.1rem; padding: 10px 18px; cursor: pointer; }
+  .row { display: flex; gap: 1rem; margin-top: 1rem; }
+</style>
+</head>
+<body>
+<h1>useState counter</h1>
+
+<!-- count is declared as a param; it doubles as this component's local state. -->
+<script type="jst" name="my-counter" count>
+  <button @click="$(() => el.count = (count || 0) + 1)">
+    Clicked $(count || 0) times
+  </button>
+</script>
+
+<div class="row">
+  <my-counter id="counter-a" data-testid="counter-a" count="0"></my-counter>
+  <my-counter id="counter-b" data-testid="counter-b" count="0"></my-counter>
+</div>
+
+<p>Each counter has independent state — React's core useState lesson.</p>
+
+<script>
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

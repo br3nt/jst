@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<!--
+  Source: https://vuejs.org/examples/#modal
+  Demonstrates: a modal dialog with a fade/scale transition on open and close.
+  JST status: (i) partial — JST has no <transition> wrapper. Reproduced by keeping the
+  modal always in the DOM and toggling an `open` class; CSS transitions handle BOTH the
+  enter and the leave animation (opacity + transform). The visual result is equivalent
+  to Vue's <transition>; what's missing is Vue's automatic mount/unmount-driven hooks
+  (we trade real DOM removal for a visibility toggle). Acceptable for most modals.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JST — Modal with Transition</title>
+<script type="module" src="../../jst.js"></script>
+<style>
+  body{font-family:sans-serif}
+  .mask{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;
+        opacity:0;visibility:hidden;transition:opacity .3s ease}
+  .mask.open{opacity:1;visibility:visible}
+  .modal{background:#fff;padding:24px;border-radius:8px;width:300px;box-shadow:0 4px 20px rgba(0,0,0,.3);
+         transform:scale(.9) translateY(-20px);transition:transform .3s ease}
+  .mask.open .modal{transform:scale(1) translateY(0)}
+  button{padding:8px 14px;cursor:pointer}
+</style>
+</head>
+<body>
+
+<script type="jst" name="modal-demo" open>
+  <button id="show" @click="$(() => el.open = true)">Show Modal</button>
+  <div class="mask $(open ? 'open' : '')"
+       @click="$(e => { if (e.target === e.currentTarget) el.open = false; })">
+    <div class="modal">
+      <h3 id="modal-title">Hello from a JST modal!</h3>
+      <p>This modal animates in and out with CSS transitions.</p>
+      <button id="close" @click="$(() => el.open = false)">Close</button>
+    </div>
+  </div>
+</script>
+
+<modal-demo id="app" open="false"></modal-demo>
+
+<script>window.__exampleReady = true;</script>
+</body>
+</html>

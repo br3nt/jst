@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<!--
+  Source: https://alpinejs.dev/directives/if
+  Demonstrates: Alpine x-if — add/remove an element from the DOM based on a
+  condition (not just hide it).
+  JST status: ✓ exact — `$ if (cond) { ... }` includes/excludes markup from the
+  render, so the node is truly absent when false, matching x-if.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>x-if</title>
+<script type="module" src="../../jst.js"></script>
+<style> body { font-family: system-ui, sans-serif; margin: 3rem; } .panel { margin-top: 1rem; padding: 1rem; background: #efe; border-radius: 8px; } </style>
+</head>
+<body>
+
+<script type="jst" name="x-if-demo" open>
+  <div>
+    <button data-testid="toggle" @click="$(() => el.open = !open)">
+      $(open ? 'Remove' : 'Add')
+    </button>
+    $ if (open) {
+      <div class="panel" data-testid="panel">I only exist in the DOM when open is true.</div>
+    $ }
+  </div>
+</script>
+
+<h1>x-if</h1>
+<x-if-demo id="demo" open="false"></x-if-demo>
+
+<script>
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

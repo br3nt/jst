@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<!--
+  Source: https://htmx.org/examples/modal-custom/
+  Demonstrates: a button fetches modal content from the server; the modal fades IN over a
+  backdrop, and fades OUT on close before being removed from the DOM.
+  JST status: (i) partial. The modal is a clean JST component fed server-fetched content,
+  and the fade-IN is pure CSS (a keyframe that runs when the overlay mounts). The fade-OUT
+  is the gap: JST has no transition/animation directive (no x-transition) and its coarse
+  re-render removes the node immediately, so the exit animation needs a hand-written
+  "closing" state + setTimeout before the node is actually dropped.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JST · modal-custom</title>
+<script type="module" src="../../jst.js"></script>
+<script src="../../framework_parity/lib/mock-fetch.js"></script>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 32rem; margin: 3rem auto; }
+  button { padding: .5rem 1rem; cursor: pointer; }
+  .backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.5); display: flex;
+              align-items: center; justify-content: center; animation: fade-in .3s; }
+  .backdrop.closing { animation: fade-out .3s forwards; }
+  .modal { background: white; padding: 1.5rem 2rem; border-radius: 10px; width: min(420px, 90vw);
+           animation: zoom-in .3s; }
+  @keyframes fade-in { from { opacity: 0 } to { opacity: 1 } }
+  @keyframes fade-out { from { opacity: 1 } to { opacity: 0 } }
+  @keyframes zoom-in { from { transform: scale(.9); opacity: 0 } to { transform: scale(1); opacity: 1 } }
+</style>
+</head>
+<body>
+
+<script type="jst" name="modal-dialog" open closing title body>
+  $ if (open) {
+    <div class="backdrop $(closing ? 'closing' : '')" data-testid="backdrop"
+         @click="$(e => { if (e.target === e.currentTarget) el.emit('close'); })">
+      <div class="modal">
+        <h2 data-testid="title">$(title)</h2>
+        <p data-testid="body">$(body)</p>
+        <button data-testid="close" @click="$(() => el.emit('close'))">Close</button>
+      </div>
+    </div>
+  $ }
+</script>
+
+<h1>Custom Modal Dialog</h1>
+<button id="open" data-testid="open">Open Modal</button>
+<modal-dialog id="modal"></modal-dialog>
+
+<script>
+  JSTMock.route('GET /api/modal', () => ({ json: {
+    title: 'Modal Dialog',
+    body: 'This content was fetched from the server, then shown in an animated modal.',
+  } }), { delay: 80 });
+
+  const modal = document.getElementById('modal');
+
+  document.getElementById('open').addEventListener('click', async () => {
+    const data = await (await fetch('/api/modal')).json();
+    modal.title = data.title;
+    modal.body = data.body;
+    modal.closing = false;
+    modal.open = true;
+  });
+
+  // Workaround: play the exit animation, THEN remove (no transition directive in JST).
+  modal.addEventListener('close', () => {
+    modal.closing = true;
+    setTimeout(() => { modal.open = false; modal.closing = false; }, 300);
+  });
+
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

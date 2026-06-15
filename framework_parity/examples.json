@@ -1,0 +1,562 @@
+[
+  {
+    "framework": "HTMX",
+    "name": "click-to-edit",
+    "source": "https://htmx.org/examples/click-to-edit/",
+    "status": "exact",
+    "file": "htmx/click-to-edit.html",
+    "note": "View↔edit on an `editing` flag; PUT persists; props re-render."
+  },
+  {
+    "framework": "HTMX",
+    "name": "bulk-update",
+    "source": "https://htmx.org/examples/bulk-update/",
+    "status": "exact",
+    "file": "htmx/bulk-update.html",
+    "note": "Checkbox changes stage a draft; one POST applies all + toast."
+  },
+  {
+    "framework": "HTMX",
+    "name": "click-to-load",
+    "source": "https://htmx.org/examples/click-to-load/",
+    "status": "exact",
+    "file": "htmx/click-to-load.html",
+    "note": "Fetch next page, concat to page-owned array, re-render."
+  },
+  {
+    "framework": "HTMX",
+    "name": "delete-row",
+    "source": "https://htmx.org/examples/delete-row/",
+    "status": "partial",
+    "file": "htmx/delete-row.html",
+    "note": "Round-trip clean, but fade-out needs a `deleting` class + `setTimeout`; coarse re-render yanks the node instantly otherwise."
+  },
+  {
+    "framework": "HTMX",
+    "name": "edit-row",
+    "source": "https://htmx.org/examples/edit-row/",
+    "status": "exact",
+    "file": "htmx/edit-row.html",
+    "note": "Page owns rows + one `editingId`; other Edit buttons disabled while editing."
+  },
+  {
+    "framework": "HTMX",
+    "name": "lazy-load",
+    "source": "https://htmx.org/examples/lazy-load/",
+    "status": "exact",
+    "file": "htmx/lazy-load.html",
+    "note": "Fetched fragment ships a `<script type=\"jst\">` def + markup; auto-upgraded on insert."
+  },
+  {
+    "framework": "HTMX",
+    "name": "inline-validation",
+    "source": "https://htmx.org/examples/inline-validation/",
+    "status": "exact",
+    "file": "htmx/inline-validation.html",
+    "note": "Plain input (keeps focus) POSTs per keystroke; `<field-status>` renders verdict."
+  },
+  {
+    "framework": "HTMX",
+    "name": "infinite-scroll",
+    "source": "https://htmx.org/examples/infinite-scroll/",
+    "status": "partial",
+    "file": "htmx/infinite-scroll.html",
+    "note": "Data/append idiomatic, but the trigger is a hand-wired IntersectionObserver re-attached after each render (no `revealed` trigger)."
+  },
+  {
+    "framework": "HTMX",
+    "name": "active-search",
+    "source": "https://htmx.org/examples/active-search/",
+    "status": "partial",
+    "file": "htmx/active-search.html",
+    "note": "Results component clean, but debounce is a hand-written `setTimeout` (no `delay:` modifier)."
+  },
+  {
+    "framework": "HTMX",
+    "name": "progress-bar",
+    "source": "https://htmx.org/examples/progress-bar/",
+    "status": "partial",
+    "file": "htmx/progress-bar.html",
+    "note": "Bar is prop-driven, but polling is a hand-written `setInterval` (no `every Ns`)."
+  },
+  {
+    "framework": "HTMX",
+    "name": "value-select (cascading)",
+    "source": "https://htmx.org/examples/value-select/",
+    "status": "exact",
+    "file": "htmx/value-select.html",
+    "note": "`change` fetches models, sets a prop on `<model-select>`."
+  },
+  {
+    "framework": "HTMX",
+    "name": "tabs-hateoas",
+    "source": "https://htmx.org/examples/tabs-hateoas/",
+    "status": "exact",
+    "file": "htmx/tabs-hateoas.html",
+    "note": "Each tab fetch returns a fresh component def + markup; auto-upgraded. Pure HATEOAS — JST's core strength."
+  },
+  {
+    "framework": "HTMX",
+    "name": "dialogs (custom modal)",
+    "source": "https://htmx.org/examples/modal-custom/",
+    "status": "partial",
+    "file": "htmx/modal-custom.html",
+    "note": "Server-fed modal + fade-in clean; fade-out needs a `closing` state + `setTimeout` (no transition directive)."
+  },
+  {
+    "framework": "HTMX",
+    "name": "sortable",
+    "source": "https://htmx.org/examples/sortable/",
+    "status": "exact",
+    "file": "htmx/sortable.html",
+    "note": "Native HTML5 DnD via `@dragstart/@dragover/@drop`; reorders a page array + POSTs order. (Index-based morph — see keyed-list gap.)"
+  },
+  {
+    "framework": "HTMX",
+    "name": "keyboard-shortcuts",
+    "source": "https://htmx.org/examples/keyboard-shortcuts/",
+    "status": "partial",
+    "file": "htmx/keyboard-shortcuts.html",
+    "note": "Result panel clean, but global shortcut is a hand-written `document.addEventListener` (`@event` only binds template elements)."
+  },
+  {
+    "framework": "HTMX",
+    "name": "polling / update-other-content",
+    "source": "https://htmx.org/examples/update-other-content/",
+    "status": "partial",
+    "file": "htmx/polling.html",
+    "note": "One response updating two regions is idiomatic; polling itself is a hand-written `setInterval`."
+  },
+  {
+    "framework": "Alpine.js",
+    "name": "x-data + counter",
+    "source": "https://alpinejs.dev/directives/data",
+    "status": "exact",
+    "file": "alpine/data.html",
+    "note": "Params are reactive scope; `el.count = count + 1` updates own state."
+  },
+  {
+    "framework": "Alpine.js",
+    "name": "x-text",
+    "source": "https://alpinejs.dev/directives/text",
+    "status": "exact",
+    "file": "alpine/text.html",
+    "note": "`$(expr)` escaped text interpolation."
+  },
+  {
+    "framework": "Alpine.js",
+    "name": "x-html",
+    "source": "https://alpinejs.dev/directives/html",
+    "status": "exact",
+    "file": "alpine/html.html",
+    "note": "`$(raw(expr))` opts out of escaping."
+  },
+  {
+    "framework": "Alpine.js",
+    "name": "x-bind (class & attrs)",
+    "source": "https://alpinejs.dev/directives/bind",
+    "status": "exact",
+    "file": "alpine/bind.html",
+    "note": "Interpolation in attribute value and name position."
+  },
+  {
+    "framework": "Alpine.js",
+    "name": "x-on (events + key modifiers)",
+    "source": "https://alpinejs.dev/directives/on",
+    "status": "partial",
+    "file": "alpine/on.html",
+    "note": "`@event` covers listeners exactly, but no `.enter`/`.prevent`/`.stop` sugar — done by hand."
+  },
+  {
+    "framework": "Alpine.js",
+    "name": "x-model (text/checkbox/select)",
+    "source": "https://alpinejs.dev/directives/model",
+    "status": "partial",
+    "file": "alpine/model.html",
+    "note": "No two-way binding; wired both directions per field. *(behaviourally verified)*"
+  },
+  {
+    "framework": "Alpine.js",
+    "name": "x-show",
+    "source": "https://alpinejs.dev/directives/show",
+    "status": "exact",
+    "file": "alpine/show.html",
+    "note": "`style=\"$(open?'':'display:none')\"` keeps node mounted."
+  },
+  {
+    "framework": "Alpine.js",
+    "name": "x-if",
+    "source": "https://alpinejs.dev/directives/if",
+    "status": "exact",
+    "file": "alpine/if.html",
+    "note": "`$ if (cond) { … }` includes/excludes from render."
+  },
+  {
+    "framework": "Alpine.js",
+    "name": "x-for",
+    "source": "https://alpinejs.dev/directives/for",
+    "status": "exact",
+    "file": "alpine/for.html",
+    "note": "`$ items.forEach(...)`. (No keyed reconciliation — see gap.)"
+  },
+  {
+    "framework": "Alpine.js",
+    "name": "x-transition",
+    "source": "https://alpinejs.dev/directives/transition",
+    "status": "partial",
+    "file": "alpine/transition.html",
+    "note": "CSS transition on a toggled class; can't animate true insert/remove."
+  },
+  {
+    "framework": "Alpine.js",
+    "name": "x-ref + $refs",
+    "source": "https://alpinejs.dev/directives/ref",
+    "status": "partial",
+    "file": "alpine/ref.html",
+    "note": "No `$refs` registry; `el.querySelector(...)` instead."
+  },
+  {
+    "framework": "Alpine.js",
+    "name": "x-init",
+    "source": "https://alpinejs.dev/directives/init",
+    "status": "partial",
+    "file": "alpine/init.html",
+    "note": "No template init hook; one-time guard + `queueMicrotask`."
+  },
+  {
+    "framework": "Alpine.js",
+    "name": "x-effect",
+    "source": "https://alpinejs.dev/directives/effect",
+    "status": "partial",
+    "file": "alpine/effect.html",
+    "note": "Effect = template body, but coarse (any param change), not dep-tracked."
+  },
+  {
+    "framework": "Alpine.js",
+    "name": "$dispatch",
+    "source": "https://alpinejs.dev/magics/dispatch",
+    "status": "exact",
+    "file": "alpine/dispatch.html",
+    "note": "`el.emit(name, detail)` bubbling CustomEvent."
+  },
+  {
+    "framework": "Alpine.js",
+    "name": "$store (global)",
+    "source": "https://alpinejs.dev/globals/alpine-store",
+    "status": "partial",
+    "file": "alpine/store.html",
+    "note": "Shared object passed via props; manually re-published to subscribers."
+  },
+  {
+    "framework": "Alpine.js",
+    "name": "$watch",
+    "source": "https://alpinejs.dev/magics/watch",
+    "status": "partial",
+    "file": "alpine/watch.html",
+    "note": "No watch; funnel mutations through one setter that captures old→new."
+  },
+  {
+    "framework": "Alpine.js",
+    "name": "x-cloak",
+    "source": "https://alpinejs.dev/directives/cloak",
+    "status": "exact",
+    "file": "alpine/cloak.html",
+    "note": "**Better:** custom-element `:not(:defined){display:none}` — zero JS."
+  },
+  {
+    "framework": "Alpine.js",
+    "name": "x-teleport",
+    "source": "https://alpinejs.dev/directives/teleport",
+    "status": "partial",
+    "file": "alpine/teleport.html",
+    "note": "No teleport; hoisted modal to a body-level component driven by events."
+  },
+  {
+    "framework": "Alpine.js",
+    "name": "dropdown (click-outside)",
+    "source": "https://alpinejs.dev/component/dropdown",
+    "status": "partial",
+    "file": "alpine/dropdown.html",
+    "note": "Open/close idiomatic, but no `@click.outside` — guarded `document` listener."
+  },
+  {
+    "framework": "Alpine.js",
+    "name": "tabs",
+    "source": "https://alpinejs.dev/start-here",
+    "status": "exact",
+    "file": "alpine/tabs.html",
+    "note": "Active tab is local state; no gap."
+  },
+  {
+    "framework": "Vue",
+    "name": "Hello World",
+    "source": "https://vuejs.org/examples/#hello-world",
+    "status": "partial",
+    "file": "vue/hello-world.html",
+    "note": "Reactive text exact; the v-model input is manual `.value` + `@input`."
+  },
+  {
+    "framework": "Vue",
+    "name": "Handling Input",
+    "source": "https://vuejs.org/examples/#handling-input",
+    "status": "exact",
+    "file": "vue/handling-input.html",
+    "note": "\"methods\" are plain functions from `@click`."
+  },
+  {
+    "framework": "Vue",
+    "name": "Attribute Bindings",
+    "source": "https://vuejs.org/examples/#attribute-bindings",
+    "status": "exact",
+    "file": "vue/attribute-bindings.html",
+    "note": "Interpolation + `.disabled` prop binding."
+  },
+  {
+    "framework": "Vue",
+    "name": "Conditionals & Loops",
+    "source": "https://vuejs.org/examples/#conditionals-and-loops",
+    "status": "exact",
+    "file": "vue/conditionals-and-loops.html",
+    "note": "`$ if/else`, `$ forEach`."
+  },
+  {
+    "framework": "Vue",
+    "name": "Form Bindings (v-model)",
+    "source": "https://vuejs.org/examples/#form-bindings",
+    "status": "partial",
+    "file": "vue/form-bindings.html",
+    "note": "All field types manual two-way. *(behaviourally verified in TodoMVC)*"
+  },
+  {
+    "framework": "Vue",
+    "name": "Simple Component (props)",
+    "source": "https://vuejs.org/examples/#simple-component",
+    "status": "exact",
+    "file": "vue/simple-component.html",
+    "note": "Primitives via attrs, rich via `.todo=\"$(item)\"`."
+  },
+  {
+    "framework": "Vue",
+    "name": "Component events ($emit)",
+    "source": "https://vuejs.org/guide/components/events",
+    "status": "exact",
+    "file": "vue/component-events.html",
+    "note": "`el.emit` + `addEventListener`."
+  },
+  {
+    "framework": "Vue",
+    "name": "Computed",
+    "source": "https://vuejs.org/guide/essentials/computed",
+    "status": "partial",
+    "file": "vue/computed.html",
+    "note": "Derive inline with `$ const`; no memoization."
+  },
+  {
+    "framework": "Vue",
+    "name": "Watchers",
+    "source": "https://vuejs.org/guide/essentials/watchers",
+    "status": "partial",
+    "file": "vue/watchers.html",
+    "note": "Side effect runs in the mutating handler."
+  },
+  {
+    "framework": "Vue",
+    "name": "Lifecycle",
+    "source": "https://vuejs.org/guide/essentials/lifecycle",
+    "status": "partial",
+    "file": "vue/lifecycle.html",
+    "note": "`mounted` approximable; **no unmounted** hook."
+  },
+  {
+    "framework": "Vue",
+    "name": "Slots (default + named)",
+    "source": "https://vuejs.org/guide/components/slots",
+    "status": "exact",
+    "file": "vue/slots.html",
+    "note": "`$(slot())`, `$(slot('name','fallback'))` native."
+  },
+  {
+    "framework": "Vue",
+    "name": "provide / inject",
+    "source": "https://vuejs.org/guide/components/provide-inject",
+    "status": "partial",
+    "file": "vue/provide-inject.html",
+    "note": "`el.closest()` to read ancestor; not auto-reactive."
+  },
+  {
+    "framework": "Vue",
+    "name": "Template refs",
+    "source": "https://vuejs.org/guide/essentials/template-refs",
+    "status": "partial",
+    "file": "vue/template-refs.html",
+    "note": "`el.querySelector(...)` after render."
+  },
+  {
+    "framework": "Vue",
+    "name": "Class & Style bindings",
+    "source": "https://vuejs.org/guide/essentials/class-and-style",
+    "status": "exact",
+    "file": "vue/class-and-style.html",
+    "note": "No object/array sugar, but expression-built strings cover it."
+  },
+  {
+    "framework": "Vue",
+    "name": "Fetching Data",
+    "source": "https://vuejs.org/examples/#fetching-data",
+    "status": "partial",
+    "file": "vue/fetching-data.html",
+    "note": "Fetch/render exact; initial fetch page-driven (no onMounted)."
+  },
+  {
+    "framework": "Vue",
+    "name": "Markdown Editor",
+    "source": "https://vuejs.org/examples/#markdown",
+    "status": "partial",
+    "file": "vue/markdown.html",
+    "note": "`$(raw())` renders md; preview updated imperatively (controlled textarea resets caret)."
+  },
+  {
+    "framework": "Vue",
+    "name": "Grid (sort/search)",
+    "source": "https://vuejs.org/examples/#grid",
+    "status": "exact",
+    "file": "vue/grid.html",
+    "note": "Local state; filtered/sorted rows derived inline."
+  },
+  {
+    "framework": "Vue",
+    "name": "TodoMVC",
+    "source": "https://vuejs.org/examples/#todomvc",
+    "status": "partial",
+    "file": "vue/todomvc.html",
+    "note": "Full feature set; edit-focus needs a queued re-focus; manual two-way throughout. *(behaviourally verified)*"
+  },
+  {
+    "framework": "Vue",
+    "name": "List transitions",
+    "source": "https://vuejs.org/examples/#list-transition",
+    "status": "partial",
+    "file": "vue/list-transition.html",
+    "note": "CSS handles ENTER; **LEAVE and FLIP move not reproducible**."
+  },
+  {
+    "framework": "Vue",
+    "name": "Modal with transition",
+    "source": "https://vuejs.org/examples/#modal",
+    "status": "partial",
+    "file": "vue/modal.html",
+    "note": "No `<transition>`; kept in DOM, class toggled, CSS does enter+leave."
+  },
+  {
+    "framework": "React",
+    "name": "useState (counter)",
+    "source": "https://react.dev/learn/state-a-components-memory",
+    "status": "exact",
+    "file": "react/state-counter.html",
+    "note": "A param is local state; instances independent. *(verified)*"
+  },
+  {
+    "framework": "React",
+    "name": "Passing props",
+    "source": "https://react.dev/learn/passing-props-to-a-component",
+    "status": "exact",
+    "file": "react/passing-props.html",
+    "note": "Rich via `.person`, primitives via attrs."
+  },
+  {
+    "framework": "React",
+    "name": "Rendering lists (keys)",
+    "source": "https://react.dev/learn/rendering-lists",
+    "status": "partial",
+    "file": "react/rendering-lists.html",
+    "note": "Rendering idiomatic, but **no `key`** — input text sticks to position, not data, on reorder. *(gap proven in headless run)*"
+  },
+  {
+    "framework": "React",
+    "name": "Conditional rendering",
+    "source": "https://react.dev/learn/conditional-rendering",
+    "status": "exact",
+    "file": "react/conditional-rendering.html",
+    "note": "`$ if/else`; empty branch = \"render null\"."
+  },
+  {
+    "framework": "React",
+    "name": "Responding to events",
+    "source": "https://react.dev/learn/responding-to-events",
+    "status": "exact",
+    "file": "react/responding-to-events.html",
+    "note": "`@event` + `el.emit`; stopPropagation works."
+  },
+  {
+    "framework": "React",
+    "name": "Controlled inputs",
+    "source": "https://react.dev/learn/reacting-to-input-with-state",
+    "status": "partial",
+    "file": "react/controlled-inputs.html",
+    "note": "Manual `.value` + `@input`; mid-string edits can bounce the caret."
+  },
+  {
+    "framework": "React",
+    "name": "Lifting state up",
+    "source": "https://react.dev/learn/sharing-state-between-components",
+    "status": "exact",
+    "file": "react/lifting-state-up.html",
+    "note": "JST's native model."
+  },
+  {
+    "framework": "React",
+    "name": "Effects + fetching",
+    "source": "https://react.dev/learn/synchronizing-with-effects",
+    "status": "partial",
+    "file": "react/effects-fetching.html",
+    "note": "Guarded render block + stale-response guard; **no unmount cleanup**."
+  },
+  {
+    "framework": "React",
+    "name": "Context (useContext)",
+    "source": "https://react.dev/learn/passing-data-deeply-with-context",
+    "status": "partial",
+    "file": "react/context.html",
+    "note": "Prop-drill + page store; intermediates must forward."
+  },
+  {
+    "framework": "React",
+    "name": "Refs (useRef)",
+    "source": "https://react.dev/learn/manipulating-the-dom-with-refs",
+    "status": "exact",
+    "file": "react/refs.html",
+    "note": "DOM ref via `querySelector`; mutable ref via `el._x`."
+  },
+  {
+    "framework": "React",
+    "name": "Children / composition",
+    "source": "https://react.dev/learn/passing-props-to-a-component#passing-jsx-as-children",
+    "status": "exact",
+    "file": "react/children-composition.html",
+    "note": "`$(slot())` + named slots 1:1."
+  },
+  {
+    "framework": "React",
+    "name": "useReducer",
+    "source": "https://react.dev/learn/extracting-state-logic-into-a-reducer",
+    "status": "partial",
+    "file": "react/reducer.html",
+    "note": "Plain `reducer(state, action)` in the page; dispatch reassigns."
+  },
+  {
+    "framework": "React",
+    "name": "Thinking in React (filter table)",
+    "source": "https://react.dev/learn/thinking-in-react",
+    "status": "partial",
+    "file": "react/thinking-in-react.html",
+    "note": "Maps perfectly; inherits the controlled-input caveat."
+  },
+  {
+    "framework": "React",
+    "name": "Tic-tac-toe (time travel)",
+    "source": "https://react.dev/learn/tutorial-tic-tac-toe",
+    "status": "exact",
+    "file": "react/tic-tac-toe.html",
+    "note": "Immutable history + currentMove in page; board is a dumb renderer. *(verified incl. time travel)*"
+  }
+]

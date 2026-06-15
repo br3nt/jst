@@ -1,0 +1,91 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "scopeName": "jst.islands",
+  "comment": "Injected into anything carrying meta.embedded.block.jst (set by jst.injection). This selector reaches inside HTML tags and attribute-value strings, so $(...) highlights inside @event=\"...\" / .prop=\"...\" too.",
+  "injectionSelector": "L:meta.embedded.block.jst",
+  "patterns": [{ "include": "#jst-islands" }],
+  "repository": {
+    "jst-islands": {
+      "patterns": [
+        { "include": "#jst-escaped" },
+        { "include": "#jst-expression" },
+        { "include": "#jst-code-block" },
+        { "include": "#jst-line-directive" },
+        { "include": "#jst-identifier" },
+        { "include": "#jst-binding-attribute" }
+      ]
+    },
+
+    "jst-escaped": {
+      "match": "\\$\\$",
+      "name": "constant.character.escape.dollar.jst"
+    },
+
+    "jst-expression": {
+      "begin": "(\\$)(\\()",
+      "beginCaptures": {
+        "1": { "name": "punctuation.definition.template-expression.begin.jst" },
+        "2": { "name": "punctuation.section.parens.begin.jst" }
+      },
+      "end": "(\\))",
+      "endCaptures": {
+        "1": { "name": "punctuation.section.parens.end.jst" }
+      },
+      "applyEndPatternLast": true,
+      "contentName": "meta.embedded.jst.expression",
+      "patterns": [{ "include": "source.js" }]
+    },
+
+    "jst-code-block": {
+      "begin": "(\\$)(\\{)",
+      "beginCaptures": {
+        "1": { "name": "punctuation.definition.template-expression.begin.jst" },
+        "2": { "name": "punctuation.section.braces.begin.jst" }
+      },
+      "end": "(\\})",
+      "endCaptures": {
+        "1": { "name": "punctuation.section.braces.end.jst" }
+      },
+      "applyEndPatternLast": true,
+      "contentName": "meta.embedded.jst.code",
+      "patterns": [{ "include": "source.js" }]
+    },
+
+    "jst-line-directive": {
+      "begin": "(\\$)(?=[ \\t])",
+      "beginCaptures": {
+        "1": { "name": "punctuation.definition.template-expression.begin.jst" }
+      },
+      "end": "(?=$)|(?=<[a-zA-Z/])",
+      "contentName": "meta.embedded.jst.code",
+      "patterns": [{ "include": "source.js" }]
+    },
+
+    "jst-identifier": {
+      "match": "(\\$)([A-Za-z_$][\\w$]*)",
+      "captures": {
+        "1": { "name": "punctuation.definition.template-expression.begin.jst" },
+        "2": { "name": "variable.other.jst" }
+      }
+    },
+
+    "jst-binding-attribute": {
+      "comment": "Owns the whole .prop=\"...\" / @event=\"...\" binding, including the quoted value, so the embedded JS is highlighted by source.js directly instead of inheriting HTML's attribute-string scope (which made it render as a flat string).",
+      "begin": "([.@])([A-Za-z_$][\\w$-]*)\\s*(=)\\s*([\"'])",
+      "beginCaptures": {
+        "1": { "name": "punctuation.definition.jst.binding" },
+        "2": { "name": "entity.other.attribute-name.jst" },
+        "3": { "name": "punctuation.separator.key-value.html" },
+        "4": { "name": "punctuation.definition.string.begin.html" }
+      },
+      "end": "\\4",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.string.end.html" }
+      },
+      "patterns": [
+        { "include": "#jst-expression" },
+        { "include": "#jst-code-block" }
+      ]
+    }
+  }
+}

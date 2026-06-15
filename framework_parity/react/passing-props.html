@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<!--
+  Source: https://react.dev/learn/passing-props-to-a-component
+  Demonstrates: passing props down. A <user-card> receives a rich person
+  object and forwards parts of it (plus a primitive size) to a child
+  <user-avatar>. Props flow one-way, parent -> child.
+  JST status: ✓ exact — rich data via .person="$(...)" property binding,
+  primitives via plain attributes (size="64" parses to a number).
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JST · passing props</title>
+<script type="module" src="../../jst.js"></script>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 480px; margin: 3rem auto; }
+  .card { display: flex; gap: 1rem; align-items: center; border: 1px solid #ddd; border-radius: 12px; padding: 1rem; margin: .75rem 0; }
+  .avatar { border-radius: 50%; display: grid; place-items: center; color: white; font-weight: bold; flex: none; }
+  h3 { margin: 0; }
+  p { margin: .2rem 0 0; color: #666; }
+</style>
+</head>
+<body>
+<h1>Passing props</h1>
+
+<!-- Leaf component: receives a person object + numeric size prop. -->
+<script type="jst" name="user-avatar" person size>
+  $ const p = person || {};
+  $ const px = (size || 48) + 'px';
+  <div class="avatar" style="width:$(px); height:$(px); background:$(p.color || '#888')">
+    $((p.name || '?').slice(0, 1))
+  </div>
+</script>
+
+<!-- Container: forwards the object down and sets a primitive size prop. -->
+<script type="jst" name="user-card" person>
+  $ const p = person || {};
+  <div class="card">
+    <user-avatar .person="$(p)" size="56"></user-avatar>
+    <div>
+      <h3>$(p.name)</h3>
+      <p>$(p.role)</p>
+    </div>
+  </div>
+</script>
+
+<div id="people"></div>
+
+<script>
+  const people = [
+    { name: 'Ada Lovelace', role: 'Mathematician', color: '#3f51b5' },
+    { name: 'Grace Hopper', role: 'Computer scientist', color: '#e91e63' },
+    { name: 'Linus Torvalds', role: 'Kernel hacker', color: '#43a047' },
+  ];
+  const mount = document.getElementById('people');
+  people.forEach((person, i) => {
+    const card = document.createElement('user-card');
+    card.setAttribute('data-testid', 'card-' + i);
+    card.person = person;          // rich object passed as a property
+    mount.appendChild(card);
+  });
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

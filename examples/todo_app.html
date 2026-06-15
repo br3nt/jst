@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>JST - Reactive Todo App</title>
+    <script type="module" src="../jst.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f5f5; color: #333; max-width: 550px; margin: 3rem auto; }
+        section { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
+        h1 { margin-top: 0; font-weight: 300; text-align: center; color: #e91e63; }
+
+        .todo-input-group { display: flex; gap: 10px; margin-bottom: 1.5rem; }
+        input[type="text"] { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 6px; outline: none; }
+        button.primary { background: #e91e63; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; }
+
+        .todo-item { display: flex; align-items: center; padding: 12px 0; border-bottom: 1px solid #eee; transition: all 0.2s; }
+        .todo-item:last-child { border-bottom: none; }
+        .todo-item.done span { text-decoration: line-through; color: #aaa; }
+        .todo-item input[type="checkbox"] { width: 20px; height: 20px; margin-right: 15px; cursor: pointer; }
+        .todo-item .text { flex: 1; font-size: 1.1rem; }
+        .todo-item button.del { opacity: 0; background: none; border: none; color: #ff5252; cursor: pointer; font-size: 1.2rem; }
+        .todo-item:hover button.del { opacity: 1; }
+
+        .filters { display: flex; justify-content: center; gap: 15px; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #eee; }
+        .filters button { background: none; border: none; color: #888; cursor: pointer; padding: 5px 10px; border-radius: 4px; }
+        .filters button.active { color: #e91e63; font-weight: bold; background: #fff0f5; }
+
+        .explanation { margin-top: 2rem; font-size: 0.9rem; color: #666; line-height: 1.5; background: #fffde7; padding: 1rem; border-radius: 8px; border-left: 4px solid #fbc02d; }
+    </style>
+</head>
+<body>
+
+<!--
+    JST COMPONENT: todo-item
+    A dumb renderer. It holds no state and knows no business logic:
+    the item flows in as a property, actions flow out as bubbling events.
+-->
+<script type="jst" name="todo-item" item>
+    <div class="todo-item $(item.done ? 'done' : '')">
+        <input type="checkbox" .checked="$(item.done)" @change="$(() => el.emit('toggle', item))">
+        <span class="text">$(item.text)</span>
+        <button class="del" @click="$(() => el.emit('remove', item))">×</button>
+    </div>
+</script>
+
+<!--
+    JST COMPONENT: todo-list
+    Iterates over the todo array and applies the current filter.
+    Each item is passed to <todo-item> as a real object via .item="$(item)".
+-->
+<script type="jst" name="todo-list" items filter>
+    $ const todos = items || [];
+    $ const filtered = todos.filter(t => {
+    $   if (filter === 'active') return !t.done;
+    $   if (filter === 'completed') return t.done;
+    $   return true;
+    $ });
+
+    <div class="list-container">
+        $ filtered.forEach(item => {
+            <todo-item .item="$(item)"></todo-item>
+        $ })
+
+        $ if (filtered.length === 0) {
+            <p style="text-align:center; color:#999; padding: 20px;">No items match this filter.</p>
+        $ }
+    </div>
+</script>
+
+<section>
+    <h1>JST Todo App</h1>
+
+    <div class="todo-input-group">
+        <input type="text" id="new-todo" placeholder="What needs to be done?" onkeydown="if(event.key==='Enter') addTodo()">
+        <button class="primary" onclick="addTodo()">Add</button>
+    </div>
+
+    <todo-list id="main-list" filter="all"></todo-list>
+
+    <div class="filters">
+        <button id="btn-all" class="active" onclick="setFilter('all')">All</button>
+        <button id="btn-active" onclick="setFilter('active')">Active</button>
+        <button id="btn-completed" onclick="setFilter('completed')">Completed</button>
+    </div>
+</section>
+
+<div class="explanation">
+    <strong>Props down, events up:</strong><br>
+    The page owns the <code>todos</code> array. Data flows <em>down</em> by assigning
+    <code>list.items = todos</code> (a real array — no globals, no eval), and actions flow
+    <em>up</em> as bubbling <code>CustomEvent</code>s (<code>toggle</code>, <code>remove</code>)
+    that the page listens for. Components hold no state and no business logic.
+    Interpolated text is HTML-escaped, so try adding <code>&lt;img src=x onerror=alert(1)&gt;</code> as a todo.
+</div>
+
+<script>
+    const todos = [
+        { text: "Pass rich data as properties", done: true },
+        { text: "Bubble actions as CustomEvents", done: true },
+        { text: "Escape output by default", done: false },
+    ];
+
+    const list = document.getElementById('main-list');
+    list.items = todos;
+
+    list.addEventListener('toggle', event => {
+        event.detail.done = !event.detail.done;
+        list.items = todos;
+    });
+
+    list.addEventListener('remove', event => {
+        todos.splice(todos.indexOf(event.detail), 1);
+        list.items = todos;
+    });
+
+    function addTodo() {
+        const input = document.getElementById('new-todo');
+        if (!input.value.trim()) return;
+        todos.push({ text: input.value, done: false });
+        input.value = '';
+        list.items = todos;
+    }
+
+    function setFilter(filter) {
+        list.setAttribute('filter', filter);
+        document.querySelectorAll('.filters button').forEach(b => b.classList.remove('active'));
+        document.getElementById('btn-' + filter).classList.add('active');
+    }
+</script>
+
+</body>
+</html>

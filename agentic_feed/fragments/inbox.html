@@ -1,0 +1,22 @@
+<!-- Inbox fragment: category counts morph in place as items are filed. -->
+<script type="jst" name="inbox-card" counts>
+    $ const tally = counts || {};
+    <div class="doc">
+        <h3>Inbox</h3>
+        <div class="inbox-counts">
+            $ Object.entries(tally).forEach(([category, count]) => {
+                <span class="chip">$(category) <strong>$(count)</strong></span>
+            $ })
+        </div>
+        <div class="doc-form">$(slot('form'))</div>
+    </div>
+</script>
+
+<feed-card persona="Hive" time="{{TIME}}">
+    <inbox-card id="inbox-doc" counts='{{COUNTS}}'>
+        <affordance-form slot="form" doc-id="inbox" action="capture_item" submit-label="Capture"
+            fields='[{"name":"item","label":"Brain dump","type":"textarea"},
+                     {"name":"category","label":"Category","type":"select",
+                      "options":["Auto","Home","Work","Journal","Ideas","Errands"]}]'></affordance-form>
+    </inbox-card>
+</feed-card>

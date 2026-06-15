@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JST - Slots & Composition</title>
+
+  <script type="module" src="../jst.js"></script>
+
+  <style>
+    body { font-family: sans-serif; max-width: 600px; margin: 3rem auto; background: #fafafa; }
+    .card { border: 1px solid #ddd; border-radius: 10px; background: white; margin-bottom: 1.5rem; overflow: hidden; }
+    .card h2 { margin: 0; padding: 12px 16px; background: #3f51b5; color: white; font-size: 1.1rem; }
+    .card-body { padding: 16px; }
+    .card-footer { padding: 10px 16px; background: #f5f5f5; border-top: 1px solid #eee; font-size: 0.85rem; color: #777; }
+  </style>
+</head>
+<body>
+
+<h1>Slots & Composition</h1>
+<p>
+  A component's original child nodes are captured on connect and projected
+  wherever the template asks for them: <code>$(slot())</code> for the default
+  slot, <code>$(slot('name', 'fallback'))</code> for named slots.
+</p>
+
+<script type="jst" name="card-box" title>
+    <div class="card">
+        <h2>$(title)</h2>
+        <div class="card-body">$(slot())</div>
+        <footer class="card-footer">$(slot('footer', 'No footer provided'))</footer>
+    </div>
+</script>
+
+<card-box title="Default + named slots">
+    <p>This paragraph was written <em>inside</em> the <code>&lt;card-box&gt;</code> tag
+       and projected into the card body.</p>
+    <ul>
+        <li>Lists work too</li>
+        <li>Any markup, really</li>
+    </ul>
+    <span slot="footer">A custom footer, marked with <code>slot="footer"</code></span>
+</card-box>
+
+<card-box title="Fallback content">
+    <p>This card has no footer content, so the fallback text shows below.</p>
+</card-box>
+
+</body>
+</html>

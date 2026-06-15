@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<!--
+  Source: https://htmx.org/examples/tabs-hateoas/
+  Demonstrates: HATEOAS tabs — clicking a tab fetches a server fragment that contains BOTH
+  the tab strip (with the active tab marked) and the tab body, and swaps the whole thing.
+  JST status: ✓ exact match. Each tab click fetches a fragment that ships a fresh
+  <script type="jst"> definition + markup; it's injected into the mount and JST's
+  MutationObserver upgrades it. This is exactly the "server returns components" model JST
+  is built for. The injection (innerHTML into a mount) is the documented late-arrival path.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JST · tabs-hateoas</title>
+<script type="module" src="../../jst.js"></script>
+<script src="../../framework_parity/lib/mock-fetch.js"></script>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 36rem; margin: 3rem auto; }
+  .tabs { display: flex; gap: .25rem; border-bottom: 2px solid #3f51b5; }
+  .tabs button { border: none; background: #eee; padding: .5rem 1rem; cursor: pointer; }
+  .tabs button.active { background: #3f51b5; color: white; }
+  .body { padding: 1rem; border: 1px solid #ddd; border-top: none; }
+</style>
+</head>
+<body>
+
+<h1>Tabs (HATEOAS)</h1>
+<div id="mount" data-testid="mount"></div>
+
+<script>
+  const TABS = { 1: 'Commodore 64', 2: 'Apple ][', 3: 'IBM PC' };
+  const BODY = {
+    1: 'The Commodore 64 is an 8-bit home computer introduced in 1982.',
+    2: 'The Apple ][ is an 8-bit home computer, one of the first highly successful mass-produced microcomputers.',
+    3: 'The IBM PC is the first computer released in the IBM PC model line.',
+  };
+  // Each request returns a self-contained fragment: a fresh component def + usage,
+  // marking the active tab — pure HATEOAS.
+  JSTMock.route('GET /api/tab/:id', req => {
+    const id = req.params.id;
+    const buttons = Object.entries(TABS).map(([k, label]) =>
+      `<button class="${k === id ? 'active' : ''}" data-testid="tab-${k}" @click="$(() => el.emit('select', '${k}'))">${label}<\/button>`
+    ).join('');
+    return `
+      <script type="jst" name="tab-panel-${id}">
+        <div class="tabs">${buttons}<\/div>
+        <div class="body" data-testid="body">${BODY[id]}<\/div>
+      <\/script>
+      <tab-panel-${id}></tab-panel-${id}>
+    `;
+  }, { delay: 80 });
+
+  const mount = document.getElementById('mount');
+
+  async function showTab(id) {
+    mount.innerHTML = await (await fetch(`/api/tab/${id}`)).text();
+  }
+
+  // Tab clicks bubble out of the injected component as a 'select' event.
+  mount.addEventListener('select', e => showTab(e.detail));
+
+  showTab('1').then(() => { window.__exampleReady = true; });
+</script>
+</body>
+</html>

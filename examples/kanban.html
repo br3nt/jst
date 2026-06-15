@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JST Kanban</title>
+<script type="module" src="../jst.js"></script>
+<style>
+    * { box-sizing: border-box; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: #eef1f5; color: #2b2f36; margin: 0; padding: 1.5rem 2rem; }
+    h1 { font-weight: 300; margin: 0 0 1rem; color: #3f51b5; }
+
+    /* panel chrome */
+    .panel { background: white; border-radius: 12px; box-shadow: 0 8px 24px rgba(20, 30, 60, 0.08); margin-bottom: 1.5rem; overflow: hidden; }
+    .panel-header { padding: 12px 18px; background: #3f51b5; color: white; }
+    .panel-header h2 { margin: 0; font-size: 1.05rem; font-weight: 500; }
+    .panel-body { padding: 16px 18px; }
+    .panel-footer { padding: 10px 18px; background: #f6f7fb; border-top: 1px solid #e8eaf2; font-size: 0.82rem; color: #777; }
+
+    /* toolbar */
+    .toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .toolbar input[type="search"] { flex: 1; min-width: 180px; padding: 9px 12px; border: 1px solid #d4d9e4; border-radius: 8px; outline: none; }
+    .toolbar select { padding: 9px 10px; border: 1px solid #d4d9e4; border-radius: 8px; background: white; }
+    .toolbar .tag-filter { background: #e8eaf6; border: 1px solid #c5cae9; color: #3f51b5; border-radius: 999px; padding: 7px 14px; cursor: pointer; }
+    button.primary { background: #3f51b5; color: white; border: none; padding: 9px 18px; border-radius: 8px; cursor: pointer; }
+    button.primary:hover { background: #35459c; }
+
+    /* board */
+    .board { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; align-items: start; }
+    .column { background: #f3f5f9; border: 1px solid #e4e8f0; border-radius: 10px; padding: 10px; }
+    .column-header { display: flex; justify-content: space-between; align-items: center; padding: 2px 6px 10px; }
+    .column-header h2 { margin: 0; font-size: 0.95rem; color: #4a5160; text-transform: uppercase; letter-spacing: 0.04em; }
+    .column-count { background: #dde3ee; color: #4a5160; border-radius: 999px; padding: 2px 9px; font-size: 0.8rem; font-weight: bold; }
+    .column-cards { display: flex; flex-direction: column; gap: 8px; min-height: 60px; }
+    .column-empty { text-align: center; color: #aab2c0; font-size: 0.85rem; border: 2px dashed #dde3ee; border-radius: 8px; padding: 16px 8px; margin: 0; }
+
+    /* cards */
+    .card { background: white; border-radius: 8px; border: 1px solid #e4e8f0; border-left: 4px solid #b0bec5; padding: 10px 12px; cursor: grab; box-shadow: 0 1px 3px rgba(20,30,60,0.06); }
+    .card:hover { box-shadow: 0 4px 10px rgba(20,30,60,0.12); }
+    .card.prio-high { border-left-color: #e53935; }
+    .card.prio-medium { border-left-color: #fb8c00; }
+    .card.prio-low { border-left-color: #43a047; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 6px; }
+    .card-title { font-weight: 600; font-size: 0.92rem; }
+    .card-del { opacity: 0; border: none; background: none; color: #e53935; cursor: pointer; font-size: 1rem; line-height: 1; }
+    .card:hover .card-del { opacity: 1; }
+    .card-desc { margin: 6px 0 0; font-size: 0.82rem; color: #6b7280; }
+    .card-tags { margin-top: 8px; display: flex; gap: 5px; flex-wrap: wrap; }
+    .tag { background: #e8eaf6; border: none; color: #3f51b5; border-radius: 999px; padding: 2px 9px; font-size: 0.74rem; cursor: pointer; }
+    .tag:hover { background: #c5cae9; }
+
+    /* editor dialog */
+    .overlay { position: fixed; inset: 0; background: rgba(25, 30, 50, 0.45); display: flex; align-items: center; justify-content: center; z-index: 10; }
+    .dialog { background: white; border-radius: 12px; padding: 22px; width: min(480px, 92vw); box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+    .dialog h2 { margin: 0 0 14px; font-weight: 500; color: #3f51b5; }
+    .dialog label { display: block; font-size: 0.82rem; color: #555; margin-bottom: 12px; }
+    .dialog input, .dialog textarea, .dialog select { display: block; width: 100%; margin-top: 4px; padding: 8px 10px; border: 1px solid #d4d9e4; border-radius: 8px; font: inherit; }
+    .dialog textarea { resize: vertical; min-height: 64px; }
+    .dialog-row { display: flex; gap: 12px; }
+    .dialog-row label { flex: 1; }
+    .dialog-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 6px; }
+    .dialog-actions button { padding: 9px 18px; border-radius: 8px; border: 1px solid #d4d9e4; background: white; cursor: pointer; }
+
+    /* insights */
+    .insights-cta { text-align: center; margin-bottom: 1.5rem; }
+    .stat-row { display: flex; gap: 22px; margin-bottom: 14px; }
+    .stat { font-size: 0.9rem; color: #555; }
+    .stat strong { font-size: 1.5rem; color: #3f51b5; margin-right: 4px; }
+    .bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .bar-label { width: 110px; font-size: 0.82rem; color: #4a5160; text-align: right; }
+    .bar-track { flex: 1; background: #eef1f7; border-radius: 999px; height: 14px; overflow: hidden; }
+    .bar { background: linear-gradient(90deg, #5c6bc0, #3f51b5); height: 100%; border-radius: 999px; transition: width 0.4s; }
+    .bar-count { width: 28px; font-size: 0.82rem; font-weight: bold; color: #3f51b5; }
+</style>
+</head>
+<body>
+
+<h1>JST Kanban</h1>
+
+<!-- ====================================================================
+     ui-panel: generic chrome with a default slot and a named footer slot.
+     ==================================================================== -->
+<script type="jst" name="ui-panel" heading>
+    <section class="panel">
+        <header class="panel-header"><h2>$(heading)</h2></header>
+        <div class="panel-body">$(slot())</div>
+        <footer class="panel-footer">$(slot('footer', 'JST demo'))</footer>
+    </section>
+</script>
+
+<!-- ====================================================================
+     board-toolbar: search, priority filter, active tag chip, add button.
+     Holds no state — every input emits an event the page acts on.
+     ==================================================================== -->
+<script type="jst" name="board-toolbar" filter>
+    $ const f = filter || {};
+    <div class="toolbar">
+        <input type="search" class="search" placeholder="Search cards…"
+               .value="$(f.text || '')"
+               @input="$(event => el.emit('search', event.target.value))">
+
+        <select class="priority" .value="$(f.priority || '')"
+                @change="$(event => el.emit('priority', event.target.value))">
+            <option value="">All priorities</option>
+            <option value="high">High</option>
+            <option value="medium">Medium</option>
+            <option value="low">Low</option>
+        </select>
+
+        $ if (f.tag) {
+            <button class="tag-filter" @click="$(() => el.emit('tag', ''))">#$(f.tag) ✕</button>
+        $ }
+
+        <button class="primary add" @click="$(() => el.emit('add'))">+ New card</button>
+    </div>
+</script>
+
+<!-- ====================================================================
+     kanban-card: a dumb renderer. The card object flows in as a property;
+     clicks, deletes, tag-filters and drags flow out as events.
+     ==================================================================== -->
+<script type="jst" name="kanban-card" card>
+    <div class="card prio-$(card.priority)" draggable="true"
+         @dragstart="$(event => event.dataTransfer.setData('text/plain', String(card.id)))"
+         @click="$(() => el.emit('edit', card))">
+        <div class="card-top">
+            <span class="card-title">$(card.title)</span>
+            <button class="card-del" title="Delete"
+                    @click="$(event => { event.stopPropagation(); el.emit('remove', card); })">✕</button>
+        </div>
+        $ if (card.description) {
+            <p class="card-desc">$(card.description)</p>
+        $ }
+        $ if (card.tags && card.tags.length) {
+            <div class="card-tags">
+                $ card.tags.forEach(tag => {
+                    <button class="tag" @click="$(event => { event.stopPropagation(); el.emit('tag', tag); })">#$(tag)</button>
+                $ })
+            </div>
+        $ }
+    </div>
+</script>
+
+<!-- ====================================================================
+     kanban-column: header with live count, native drop target,
+     renders each card by passing the live object via .card="$(card)".
+     ==================================================================== -->
+<script type="jst" name="kanban-column" column cards>
+    <div class="column"
+         @dragover="$(event => event.preventDefault())"
+         @drop="$(event => {
+             event.preventDefault();
+             const cardId = Number(event.dataTransfer.getData('text/plain'));
+             el.emit('card-drop', { cardId, columnId: column.id });
+         })">
+        <header class="column-header">
+            <h2>$(column.title)</h2>
+            <span class="column-count">$(cards.length)</span>
+        </header>
+        <div class="column-cards">
+            $ cards.forEach(card => {
+                <kanban-card .card="$(card)"></kanban-card>
+            $ })
+            $ if (cards.length === 0) {
+                <p class="column-empty">Drop cards here</p>
+            $ }
+        </div>
+    </div>
+</script>
+
+<!-- ====================================================================
+     kanban-board: applies the composed filters, deals cards to columns.
+     ==================================================================== -->
+<script type="jst" name="kanban-board" cards columns filter>
+    $ const f = filter || {};
+    $ const text = (f.text || '').toLowerCase();
+    $ const visible = (cards || []).filter(card =>
+    $     (!text
+    $         || card.title.toLowerCase().includes(text)
+    $         || (card.description || '').toLowerCase().includes(text))
+    $     && (!f.priority || card.priority === f.priority)
+    $     && (!f.tag || (card.tags || []).includes(f.tag))
+    $ );
+    <div class="board">
+        $ (columns || []).forEach(column => {
+            <kanban-column .column="$(column)"
+                           .cards="$(visible.filter(card => card.column === column.id))"></kanban-column>
+        $ })
+    </div>
+</script>
+
+<!-- ====================================================================
+     card-editor: modal form. Renders nothing while closed. Reads its own
+     fields on save and emits the result — the page decides what to do.
+     ==================================================================== -->
+<script type="jst" name="card-editor" card columns open>
+    $ if (open) {
+    $   const c = card || {};
+        <div class="overlay" @click="$(event => { if (event.target === event.currentTarget) el.emit('cancel'); })">
+            <div class="dialog">
+                <h2>$(c.id ? 'Edit card' : 'New card')</h2>
+                <label>Title
+                    <input class="f-title" .value="$(c.title || '')" placeholder="What needs doing?">
+                </label>
+                <label>Description
+                    <textarea class="f-desc" .value="$(c.description || '')"></textarea>
+                </label>
+                <div class="dialog-row">
+                    <label>Priority
+                        <select class="f-priority" .value="$(c.priority || 'medium')">
+                            <option value="high">High</option>
+                            <option value="medium">Medium</option>
+                            <option value="low">Low</option>
+                        </select>
+                    </label>
+                    <label>Column
+                        <select class="f-column" .value="$(c.column || (columns && columns[0] ? columns[0].id : ''))">
+                            $ (columns || []).forEach(col => {
+                                <option value="$(col.id)">$(col.title)</option>
+                            $ })
+                        </select>
+                    </label>
+                </div>
+                <label>Tags (comma separated)
+                    <input class="f-tags" .value="$((c.tags || []).join(', '))">
+                </label>
+                <div class="dialog-actions">
+                    <button @click="$(() => el.emit('cancel'))">Cancel</button>
+                    <button class="primary" @click="$(() => el.emit('save', {
+                        id: c.id,
+                        title: el.querySelector('.f-title').value.trim(),
+                        description: el.querySelector('.f-desc').value.trim(),
+                        priority: el.querySelector('.f-priority').value,
+                        column: el.querySelector('.f-column').value,
+                        tags: el.querySelector('.f-tags').value.split(',').map(t => t.trim()).filter(Boolean),
+                    }))">Save</button>
+                </div>
+            </div>
+        </div>
+    $ }
+</script>
+
+<!-- ==================== page markup ==================== -->
+
+<ui-panel heading="Filters">
+    <board-toolbar id="toolbar"></board-toolbar>
+    <span slot="footer">Try searching, filtering by priority, or clicking a card's tag. Card titles are escaped — try naming one <code>&lt;img src=x onerror=alert(1)&gt;</code>.</span>
+</ui-panel>
+
+<ui-panel heading="Sprint Board">
+    <kanban-board id="board"></kanban-board>
+    <span slot="footer">Drag cards between columns. Click a card to edit it. State lives in the page and persists to localStorage — components are dumb renderers.</span>
+</ui-panel>
+
+<div class="insights-cta">
+    <button class="primary" id="load-insights" onclick="loadInsights()">Load insights panel from server</button>
+</div>
+<div id="insights-mount"></div>
+
+<card-editor id="editor"></card-editor>
+
+<!-- ==================== page state & wiring ==================== -->
+<script>
+    const columns = [
+        { id: 'backlog', title: 'Backlog' },
+        { id: 'progress', title: 'In Progress' },
+        { id: 'review', title: 'Review' },
+        { id: 'done', title: 'Done' },
+    ];
+
+    const seedCards = [
+        { id: 1, title: 'Design the data model', description: 'Cards, columns, filters.', priority: 'high', tags: ['design'], column: 'done' },
+        { id: 2, title: 'Build drag & drop', description: 'Native HTML5 DnD, no library.', priority: 'high', tags: ['feature'], column: 'review' },
+        { id: 3, title: 'Card editor dialog', description: 'Props down, events up.', priority: 'medium', tags: ['feature', 'ui'], column: 'progress' },
+        { id: 4, title: 'Search & filters', description: 'Text, priority and tag filters compose.', priority: 'medium', tags: ['feature'], column: 'progress' },
+        { id: 5, title: 'Server-loaded insights panel', description: 'Component definition arrives over the network.', priority: 'low', tags: ['htmx'], column: 'backlog' },
+        { id: 6, title: 'Write the README', description: '', priority: 'low', tags: ['docs'], column: 'backlog' },
+        { id: 7, title: 'Ship it', description: '', priority: 'high', tags: ['release'], column: 'backlog' },
+    ];
+
+    const stored = localStorage.getItem('jst-kanban');
+    const cards = stored ? JSON.parse(stored) : seedCards;
+    let nextId = cards.reduce((max, card) => Math.max(max, card.id), 0) + 1;
+
+    const filters = { text: '', priority: '', tag: '' };
+
+    const board = document.getElementById('board');
+    const toolbar = document.getElementById('toolbar');
+    const editor = document.getElementById('editor');
+    let statsElement = null;
+
+    function sync() {
+        localStorage.setItem('jst-kanban', JSON.stringify(cards));
+        board.cards = cards;
+        board.columns = columns;
+        board.filter = { ...filters };
+        toolbar.filter = { ...filters };
+        if (statsElement) {
+            statsElement.cards = cards;
+            statsElement.columns = columns;
+        }
+    }
+
+    // --- events bubbling up from the board ---
+    board.addEventListener('card-drop', event => {
+        const card = cards.find(c => c.id === event.detail.cardId);
+        if (card) { card.column = event.detail.columnId; sync(); }
+    });
+
+    board.addEventListener('edit', event => {
+        editor.card = event.detail;
+        editor.columns = columns;
+        editor.open = true;
+    });
+
+    board.addEventListener('remove', event => {
+        cards.splice(cards.indexOf(event.detail), 1);
+        sync();
+    });
+
+    board.addEventListener('tag', event => {
+        filters.tag = event.detail;
+        sync();
+    });
+
+    // --- events from the toolbar ---
+    toolbar.addEventListener('search', event => { filters.text = event.detail; sync(); });
+    toolbar.addEventListener('priority', event => { filters.priority = event.detail; sync(); });
+    toolbar.addEventListener('tag', event => { filters.tag = event.detail || ''; sync(); });
+    toolbar.addEventListener('add', () => {
+        editor.card = null;
+        editor.columns = columns;
+        editor.open = true;
+    });
+
+    // --- events from the editor ---
+    editor.addEventListener('cancel', () => { editor.open = false; });
+    editor.addEventListener('save', event => {
+        const data = event.detail;
+        if (!data.title) return;
+
+        if (data.id) {
+            Object.assign(cards.find(c => c.id === data.id), data);
+        } else {
+            cards.push({ ...data, id: nextId++ });
+        }
+
+        editor.open = false;
+        sync();
+    });
+
+    // --- the htmx story: fetch a fragment that DEFINES a new component ---
+    async function loadInsights() {
+        const button = document.getElementById('load-insights');
+        button.disabled = true;
+        button.textContent = 'Loading…';
+
+        const response = await fetch('./kanban_insights.html');
+        document.getElementById('insights-mount').innerHTML = await response.text();
+
+        // The fragment's <script type="jst"> is auto-registered by the
+        // MutationObserver; setting properties before the element upgrades
+        // is safe — they're captured when the upgrade happens.
+        statsElement = document.getElementById('insights-stats');
+        sync();
+        button.remove();
+    }
+
+    function resetDemo() {
+        localStorage.removeItem('jst-kanban');
+        location.reload();
+    }
+
+    sync();
+</script>
+
+</body>
+</html>

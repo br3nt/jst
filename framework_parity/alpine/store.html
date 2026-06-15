@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<!--
+  Source: https://alpinejs.dev/globals/alpine-store
+  Demonstrates: Alpine $store — global reactive state shared across components.
+  Two independent components read/write one shared counter and stay in sync.
+  JST status: (i) partial — JST has no built-in store. The primer's model is to
+  keep shared state as a plain page object, pass it down via properties, and on
+  each change re-assign it to every subscriber to re-render. Reproduces the
+  behaviour but you wire the propagation yourself (no automatic reactivity).
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>$store</title>
+<script type="module" src="../../jst.js"></script>
+<style> body { font-family: system-ui, sans-serif; margin: 3rem; } .card { display: inline-block; border: 1px solid #ccc; border-radius: 8px; padding: 1rem; margin: .5rem; } </style>
+</head>
+<body>
+
+<!-- Both components render the shared store and emit an 'inc' event to mutate it -->
+<script type="jst" name="store-view" label store>
+  $ const s = store || { count: 0 };
+  <div class="card">
+    <h3>$(label)</h3>
+    <p>shared count: <strong class="count">$(s.count)</strong></p>
+    <button @click="$(() => el.emit('inc'))">+1 from here</button>
+  </div>
+</script>
+
+<h1>$store (global state)</h1>
+<store-view id="a" label="Component A"></store-view>
+<store-view id="b" label="Component B"></store-view>
+
+<script>
+  // the "store"
+  const store = { count: 0 };
+  const views = [document.getElementById('a'), document.getElementById('b')];
+
+  function publish() { views.forEach(v => { v.store = { ...store }; }); }
+
+  views.forEach(v => v.addEventListener('inc', () => { store.count++; publish(); }));
+
+  publish();
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

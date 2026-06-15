@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<!--
+  Source: https://alpinejs.dev/directives/cloak
+  Demonstrates: Alpine x-cloak — hide markup until the framework has initialised,
+  preventing a flash of un-rendered template.
+  JST status: ✓ exact (cleaner, even) — JST components are real custom elements,
+  so the standard CSS `:not(:defined)` selector hides them until jst.js upgrades
+  them. No attribute to remove, no JS — the platform does it.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>x-cloak</title>
+<script type="module" src="../../jst.js"></script>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 3rem; }
+  /* the x-cloak equivalent: undefined custom elements are hidden */
+  cloak-demo:not(:defined) { display: none; }
+</style>
+</head>
+<body>
+
+<script type="jst" name="cloak-demo" user>
+  <div data-testid="content">Welcome back, $(user)! (you never saw raw template text)</div>
+</script>
+
+<h1>x-cloak</h1>
+<cloak-demo id="demo" user="Ada"></cloak-demo>
+
+<script>
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

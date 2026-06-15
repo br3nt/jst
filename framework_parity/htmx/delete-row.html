@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<!--
+  Source: https://htmx.org/examples/delete-row/
+  Demonstrates: deleting a table row via DELETE, with the row fading out before removal.
+  JST status: (i) partial. The deletion round-trip is clean and idiomatic, BUT the
+  fade-out-then-remove animation is a workaround: JST's coarse re-render would yank the
+  node instantly, so we stage a `deleting` set, re-render with a CSS .deleting class, and
+  use a setTimeout to actually drop the row from state after the transition. HTMX gets this
+  declaratively (hx-swap "swap" timing + CSS). The timer is the only non-idiomatic bit.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JST · delete-row</title>
+<script type="module" src="../../jst.js"></script>
+<script src="../../framework_parity/lib/mock-fetch.js"></script>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 36rem; margin: 3rem auto; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: .4rem .6rem; border-bottom: 1px solid #ddd; }
+  tr { transition: opacity .4s ease; }
+  tr.deleting { opacity: 0; }
+  button { padding: .25rem .6rem; cursor: pointer; }
+</style>
+</head>
+<body>
+
+<script type="jst" name="contact-table" rows deleting>
+  $ const del = deleting || {};
+  <table>
+    <thead><tr><th>Name</th><th>Email</th><th>Status</th><th></th></tr></thead>
+    <tbody data-testid="rows">
+      $ (rows || []).forEach(r => {
+        <tr data-testid="row-$(r.id)" class="$(del[r.id] ? 'deleting' : '')">
+          <td>$(r.name)</td><td>$(r.email)</td><td>$(r.status)</td>
+          <td><button data-testid="del-$(r.id)" @click="$(() => el.emit('remove', r.id))">Delete</button></td>
+        </tr>
+      $ })
+    </tbody>
+  </table>
+</script>
+
+<h1>Delete Row</h1>
+<contact-table id="tbl"></contact-table>
+
+<script>
+  JSTMock.route('DELETE /api/contact/:id', () => ({ status: 200, body: '' }), { delay: 100 });
+
+  const tbl = document.getElementById('tbl');
+  let rows = [
+    { id: 1, name: 'Joe Smith', email: 'joe@smith.org', status: 'Active' },
+    { id: 2, name: 'Angie MacDowell', email: 'angie@macdowell.org', status: 'Active' },
+    { id: 3, name: 'Fuqua Tarkenton', email: 'fuqua@tarkenton.org', status: 'Active' },
+  ];
+  let deleting = {};
+  tbl.rows = rows;
+  tbl.deleting = deleting;
+
+  tbl.addEventListener('remove', async e => {
+    const id = e.detail;
+    await fetch(`/api/contact/${id}`, { method: 'DELETE' });
+    // Workaround: mark for fade, then drop from state after the CSS transition.
+    deleting = { ...deleting, [id]: true };
+    tbl.deleting = deleting;
+    setTimeout(() => {
+      rows = rows.filter(r => r.id !== id);
+      tbl.rows = rows;
+    }, 400);
+  });
+
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

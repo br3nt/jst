@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>JST - Reverse & Append</title>
+    <script type="module" src="../jst.js"></script>
+    <style>
+        body { font-family: sans-serif; max-width: 600px; margin: 3rem auto; line-height: 1.6; }
+        .example-box { border: 1px solid #ccc; padding: 20px; margin-bottom: 2rem; border-radius: 8px; background: white; }
+        h2 { margin-top: 0; color: #333; }
+        code { background: #eee; padding: 2px 4px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+<script type="jst" name="jst-reverse" text>
+    <div class="example-box">
+        <h2>Example 1: String Manipulation</h2>
+        <p>Original: <code>$(text)</code></p>
+        <p>Reversed: <strong>$(text.split('').reverse().join(''))</strong></p>
+    </div>
+</script>
+
+<script type="jst" name="jst-append" items>
+    <div class="example-box">
+        <h2>Example 2: List Management</h2>
+        <ul>
+            $ (items || []).forEach(item => {
+                <li>Item: $(item)</li>
+            $ })
+        </ul>
+        $ if (!items || items.length === 0) {
+            <p><em>The list is currently empty.</em></p>
+        $ }
+    </div>
+</script>
+
+<h1>Data Manipulation Examples</h1>
+
+<jst-reverse text="Hello JST World"></jst-reverse>
+<jst-append id="append-list"></jst-append>
+
+<div style="margin-top: 20px;">
+    <button onclick="addItem()">Add Random Number</button>
+    <button onclick="clearItems()">Clear List</button>
+</div>
+
+<script>
+    let myData = ["Initial Item"];
+
+    const appendList = document.getElementById('append-list');
+    appendList.items = myData;
+
+    function addItem() {
+        myData.push(Math.floor(Math.random() * 100));
+        appendList.items = myData;
+    }
+
+    function clearItems() {
+        myData = [];
+        appendList.items = myData;
+    }
+</script>
+
+</body>
+</html>

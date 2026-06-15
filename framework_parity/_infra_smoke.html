@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>infra smoke</title>
+<script type="module" src="../jst.js"></script>
+<script src="../framework_parity/lib/mock-fetch.js"></script>
+</head>
+<body>
+<div id="out"></div>
+<button id="go" onclick="load()">load</button>
+<script>
+  // A mocked endpoint returns an HTML fragment that DEFINES a new JST component
+  // and uses it — proving the "server returns JST, browser registers + renders" path.
+  JSTMock.route('GET /api/widget', () => `
+    <script type="jst" name="smoke-widget" label>
+      <span class="w">[$(label)]<\/span>
+    <\/script>
+    <smoke-widget label="hello"></smoke-widget>
+  `, { delay: 50 });
+
+  // And a JSON endpoint.
+  JSTMock.route('GET /api/num', () => ({ json: { value: 41 } }));
+
+  async function load() {
+    const html = await (await fetch('/api/widget')).text();
+    document.getElementById('out').insertAdjacentHTML('beforeend', html);
+    const num = await (await fetch('/api/num')).json();
+    document.getElementById('out').insertAdjacentHTML('beforeend', `<b id="n">${num.value + 1}</b>`);
+  }
+
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<!--
+  Source: https://vuejs.org/guide/components/provide-inject
+  Demonstrates: an ancestor "provides" a value that a deeply nested descendant
+  "injects" without prop drilling.
+  JST status: (i) partial — JST has no provide/inject DI. Reproduced by having the
+  descendant walk up the DOM with el.closest('theme-provider') and read the ancestor's
+  param property. This avoids prop drilling (the point of inject) for the READ.
+  LIMITATION: it is NOT reactive — when the provider's value changes, the already-
+  rendered descendant does not re-render (JST morph skips managed custom-element
+  children). To propagate a change you must re-trigger the descendant's render. We
+  demonstrate that by reassigning the descendant's own `tick` param on theme change.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JST — Provide / Inject</title>
+<script type="module" src="../../jst.js"></script>
+<style>.light{background:#fff;color:#222}.dark{background:#222;color:#eee}div[class]{padding:10px;border:1px solid #999;margin:6px}</style>
+</head>
+<body>
+
+<!-- Deepest descendant "injects" by reading the nearest provider ancestor. -->
+<script type="jst" name="theme-button" tick>
+  $ const provider = el.closest('theme-provider');
+  $ const theme = provider ? provider.theme : 'light';
+  <div class="$(theme)">
+    <p>Injected theme: <strong id="injected">$(theme)</strong></p>
+    <button id="toggle" @click="$(() => provider && provider.setTheme(theme === 'light' ? 'dark' : 'light'))">
+      Toggle theme (mutates the provider)
+    </button>
+  </div>
+</script>
+
+<script type="jst" name="middle-layer" >
+  <div><p>I am an intermediate layer that passes nothing down.</p>$(slot())</div>
+</script>
+
+<!-- Ancestor "provides" theme. setTheme re-pokes descendants so the read re-runs. -->
+<script type="jst" name="theme-provider" theme>
+  <div>
+    <p>Provider theme is: <strong id="provider-theme">$(theme)</strong></p>
+    $(slot())
+  </div>
+</script>
+
+<theme-provider id="app" theme="light">
+  <middle-layer>
+    <theme-button id="btn" tick="0"></theme-button>
+  </middle-layer>
+</theme-provider>
+
+<script>
+  const provider = document.getElementById('app');
+  // Give the provider an imperative API; reassigning the descendant's param forces
+  // the inject read to re-run (manual reactivity for the cross-tree value).
+  provider.setTheme = (t) => {
+    provider.theme = t;
+    const btn = document.getElementById('btn');
+    btn.tick = (btn.tick || 0) + 1;
+  };
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<!--
+  Source: https://react.dev/learn/conditional-rendering
+  Demonstrates: if/else in markup, returning nothing, and ternary class/text.
+  A packing list shows a ✔ on packed items; an empty list renders nothing.
+  JST status: ✓ exact — `$ if (...) { ... $ } else { ... $ }` is the native
+  control flow, and a branch that emits no markup is the "render null" case.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JST · conditional rendering</title>
+<script type="module" src="../../jst.js"></script>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 460px; margin: 3rem auto; }
+  li.packed { color: #2e7d32; }
+  button { margin-top: 1rem; padding: 8px 14px; cursor: pointer; }
+</style>
+</head>
+<body>
+<h1>Conditional rendering</h1>
+
+<!-- Branch per item; the whole component renders nothing when empty. -->
+<script type="jst" name="packing-list" items show-packed>
+  $ const list = (items || []).filter(i => showPacked || !i.packed);
+  $ if (list.length === 0) {
+    <p data-testid="empty"><em>Nothing to show.</em></p>
+  $ } else {
+    <ul data-testid="list">
+      $ list.forEach(item => {
+        $ if (item.packed) {
+          <li class="packed">$(item.name) ✔</li>
+        $ } else {
+          <li>$(item.name)</li>
+        $ }
+      $ })
+    </ul>
+  $ }
+</script>
+
+<packing-list id="pl" show-packed="true"></packing-list>
+<button id="toggle">Hide packed items</button>
+
+<script>
+  const items = [
+    { name: 'Space suit', packed: true },
+    { name: 'Helmet with a golden leaf', packed: true },
+    { name: 'Photo of Tam', packed: false },
+  ];
+  const pl = document.getElementById('pl');
+  pl.items = items;
+  let showPacked = true;
+  document.getElementById('toggle').addEventListener('click', (e) => {
+    showPacked = !showPacked;
+    pl.showPacked = showPacked;
+    e.target.textContent = showPacked ? 'Hide packed items' : 'Show packed items';
+  });
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

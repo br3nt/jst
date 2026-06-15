@@ -1,0 +1,28 @@
+<!-- Weight tracker fragment. The <script type="jst"> definition ships with
+     the FIRST use of this fragment; the server strips it on later uses.
+     Data rides in as a JSON attribute; the affordance form is slotted in
+     so fragment authors compose cards from the core kit. -->
+<script type="jst" name="weight-card" entries unit>
+    $ const list = entries || [];
+    $ const latest = list[list.length - 1];
+    $ const max = Math.max(...list.map(entry => entry.kg), 1);
+    <div class="doc">
+        <h3>Weight tracker</h3>
+        $ if (latest) {
+            <p class="metric"><strong>$(latest.kg)</strong> $(unit || 'kg') <span class="muted">logged $(latest.date)</span></p>
+        $ }
+        <div class="spark">
+            $ list.slice(-14).forEach(entry => {
+                <div class="spark-bar" style="height: $(Math.round(entry.kg / max * 100))%" title="$(entry.date): $(entry.kg)"></div>
+            $ })
+        </div>
+        <div class="doc-form">$(slot('form'))</div>
+    </div>
+</script>
+
+<feed-card persona="Hive" time="{{TIME}}">
+    <weight-card id="weight-doc" entries='{{ENTRIES}}' unit="kg">
+        <affordance-form slot="form" doc-id="weight" action="log_weight" submit-label="Log weight"
+            fields='[{"name":"kg","label":"Today (kg)","type":"number"}]'></affordance-form>
+    </weight-card>
+</feed-card>

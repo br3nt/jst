@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<!--
+  Source: https://vuejs.org/examples/#conditionals-and-loops
+  Demonstrates: v-if / v-else and v-for.
+  JST status: ✓ exact — `$ if (...) {` / `$ } else {` and `$ arr.forEach(...)` are
+  first-class control flow in JST templates.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JST — Conditionals and Loops</title>
+<script type="module" src="../../jst.js"></script>
+</head>
+<body>
+
+<script type="jst" name="cond-loops" show list>
+  $ if (show) {
+    <p id="bool-msg">Now you see me</p>
+  $ } else {
+    <p id="bool-msg">Now you don't</p>
+  $ }
+  <button id="toggle" @click="$(() => el.show = !show)">Toggle</button>
+
+  <ul id="list">
+    $ (list || []).forEach((item, i) => {
+      <li>$(i + 1). $(item)</li>
+    $ })
+  </ul>
+</script>
+
+<cond-loops id="app" show="true" list='["Foo","Bar","Baz"]'></cond-loops>
+
+<script>window.__exampleReady = true;</script>
+</body>
+</html>

@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JST — components in plain HTML, no build step</title>
+<meta name="description" content="JST is a tiny framework for building reactive web components directly in HTML, with no build step. Plain HTML and JavaScript, real custom elements, server-streamable components.">
+<script type="module" src="jst.js"></script>
+<style>
+  :root { --ink:#1b2030; --muted:#6b7280; --accent:#3f51b5; --accent2:#5c6bc0; --bg:#f7f8fc; --line:#e3e6ef; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: system-ui, -apple-system, Segoe UI, sans-serif; color:var(--ink); line-height:1.6; background:#fff; }
+  a { color: var(--accent); }
+  .wrap { max-width: 920px; margin: 0 auto; padding: 0 1.25rem; }
+  code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+  header.hero { background: linear-gradient(160deg,#eef0fb,#f7f8fc); border-bottom:1px solid var(--line); padding: 4rem 0 3rem; }
+  .hero h1 { font-size: 3rem; margin:0; letter-spacing:-.02em; }
+  .hero .tag { font-size:1.35rem; color:var(--muted); margin:.4rem 0 1.6rem; font-weight:300; }
+  .hero .cta { display:flex; gap:.75rem; flex-wrap:wrap; }
+  .btn { display:inline-block; padding:.6rem 1.2rem; border-radius:8px; text-decoration:none; font-weight:600; border:1px solid var(--accent); }
+  .btn.primary { background:var(--accent); color:#fff; }
+  .btn.ghost { color:var(--accent); background:#fff; }
+
+  section { padding: 2.6rem 0; border-bottom:1px solid var(--line); }
+  section h2 { font-size:1.5rem; margin:0 0 .6rem; }
+  .lede { color:var(--muted); font-size:1.05rem; max-width:60ch; }
+
+  .demo { display:grid; grid-template-columns:1fr 1fr; gap:1.25rem; margin-top:1.5rem; align-items:start; }
+  .demo .panel { background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:1rem 1.25rem; }
+  .demo .panel h3 { margin:.2rem 0 .6rem; font-size:.85rem; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); }
+  pre.code { margin:0; background:#1e2030; color:#d7d9e6; padding:1rem; border-radius:8px; overflow:auto; font-size:.85rem; line-height:1.5; }
+  pre.code .k { color:#c792ea; } pre.code .s { color:#c3e88d; } pre.code .t { color:#89ddff; } pre.code .c { color:#7a82a8; }
+  .demo-btn { font:inherit; font-size:1.05rem; padding:.7rem 1.3rem; border:none; border-radius:8px; background:var(--accent); color:#fff; cursor:pointer; }
+  .demo-btn:hover { background:#35459c; }
+  .demo-note { font-size:.85rem; color:var(--muted); margin-top:.75rem; }
+
+  .grid3 { display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; margin-top:1.4rem; }
+  .card { border:1px solid var(--line); border-radius:10px; padding:1.1rem 1.2rem; background:#fff; }
+  .card h3 { margin:.1rem 0 .4rem; font-size:1.02rem; }
+  .card p { margin:0; color:var(--muted); font-size:.92rem; }
+  .card .who { font-size:.78rem; text-transform:uppercase; letter-spacing:.05em; color:var(--accent2); font-weight:700; }
+
+  ul.principles { list-style:none; padding:0; margin:1.2rem 0 0; display:grid; gap:.9rem; }
+  ul.principles li { padding-left:1.6rem; position:relative; }
+  ul.principles li::before { content:"▸"; position:absolute; left:0; color:var(--accent); }
+  ul.principles b { color:var(--ink); }
+
+  .links { display:flex; gap:1rem; flex-wrap:wrap; margin-top:1rem; }
+  footer { padding:2.5rem 0; color:var(--muted); font-size:.9rem; }
+  table.pos { width:100%; border-collapse:collapse; margin-top:1.2rem; font-size:.92rem; }
+  table.pos th, table.pos td { text-align:left; padding:.5rem .6rem; border-bottom:1px solid var(--line); vertical-align:top; }
+  table.pos th { color:var(--muted); font-weight:600; }
+  @media (max-width:680px){ .demo,.grid3{grid-template-columns:1fr;} .hero h1{font-size:2.2rem;} }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <h1>JST</h1>
+    <p class="tag">Reactive components in plain HTML. No build step.</p>
+    <div class="cta">
+      <a class="btn primary" href="#try">Try it</a>
+      <a class="btn ghost" href="framework_parity/index.html">See it vs HTMX · Alpine · Vue · React →</a>
+    </div>
+  </div>
+</header>
+
+<section id="what">
+  <div class="wrap">
+    <h2>What it is</h2>
+    <p class="lede">
+      JST turns a <code>&lt;script type="jst"&gt;</code> tag into a real custom element.
+      You write components in ordinary HTML, with JavaScript as the templating language —
+      no compiler, no bundler, no JSX, no virtual DOM. Drop one <code>&lt;script&gt;</code>
+      on a page and you have reactive, composable components.
+    </p>
+  </div>
+</section>
+
+<section id="try">
+  <div class="wrap">
+    <h2>Running on this page, right now</h2>
+    <p class="lede">The button below is a JST component — defined and rendered by the same
+      <code>jst.js</code> this page loads. View source: it's all here, nothing built.</p>
+
+    <!-- A live JST component, defined inline. -->
+    <script type="jst" name="jst-demo-counter" count>
+      <button class="demo-btn" @click="$(() => el.count = (count || 0) + 1)">
+        Clicked $(count || 0) time$(count === 1 ? '' : 's')
+      </button>
+    </script>
+
+    <div class="demo">
+      <div class="panel">
+        <h3>Live</h3>
+        <jst-demo-counter count="0"></jst-demo-counter>
+        <p class="demo-note">Local state via <code>el.count = …</code> re-renders the component. No framework state object, no hooks.</p>
+      </div>
+      <div class="panel">
+        <h3>Source</h3>
+<pre class="code"><span class="t">&lt;script</span> <span class="k">type</span>=<span class="s">"jst"</span> <span class="k">name</span>=<span class="s">"jst-demo-counter"</span> count<span class="t">&gt;</span>
+  <span class="t">&lt;button</span> <span class="k">@click</span>=<span class="s">"$(() =&gt; el.count = count + 1)"</span><span class="t">&gt;</span>
+    Clicked $(count) times
+  <span class="t">&lt;/button&gt;</span>
+<span class="t">&lt;/script&gt;</span>
+
+<span class="t">&lt;jst-demo-counter</span> count=<span class="s">"0"</span><span class="t">&gt;&lt;/jst-demo-counter&gt;</span></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="hole">
+  <div class="wrap">
+    <h2>The hole it fills</h2>
+    <p class="lede">JST started from a question: <em>what would a front-end SSR component look
+      like?</em> Could the server send down components, like HTMX — but with real client-side
+      interactivity, like Alpine — without a build step, a virtual DOM, or signals?</p>
+
+    <table class="pos">
+      <tr><th>Tool</th><th>Strength</th><th>The gap JST targets</th></tr>
+      <tr><td><b>HTMX</b></td><td>Server returns HTML; hypermedia-driven.</td><td>No client-side interactivity without a round-trip; introduces its own attribute language.</td></tr>
+      <tr><td><b>Alpine</b></td><td>Sprinkle client interactivity into HTML.</td><td>No server-streamed components; ad-hoc scopes and stores.</td></tr>
+      <tr><td><b>React / Vue</b></td><td>Powerful component models.</td><td>Build step, virtual DOM, framework runtime, JSX/SFC tooling.</td></tr>
+      <tr><td><b>JST</b></td><td colspan="2">Components in plain HTML that the <b>server can stream down</b> (a fetched fragment can define <em>and</em> use a component — it auto-registers), with <b>full client interactivity</b>, <b>no build</b>, and <b>no virtual DOM or signals</b> — it rides the platform: custom elements, properties, events, DOM morphing.</td></tr>
+    </table>
+
+    <p class="lede" style="margin-top:1.2rem">We tested that claim: <a href="framework_parity/index.html">70 canonical examples</a>
+      from HTMX, Alpine, Vue and React, rebuilt in JST. 35 were exact matches, 35 needed a
+      documented workaround, none were impossible. The gaps are catalogued honestly.</p>
+  </div>
+</section>
+
+<section id="philosophy">
+  <div class="wrap">
+    <h2>Philosophy</h2>
+    <ul class="principles">
+      <li><b>No build step.</b> Components live in <code>&lt;script type="jst"&gt;</code> in plain HTML. The browser is the toolchain.</li>
+      <li><b>JavaScript is the templating language.</b> <code>$(expr)</code> to interpolate, <code>$ if</code> / <code>$ forEach</code> for control flow. No new DSL to learn.</li>
+      <li><b>Ride the platform.</b> Real custom elements. Rich data flows as <em>properties</em>; actions flow out as bubbling <em>CustomEvents</em>. The DOM is patched in place by morphing — no virtual DOM, no signals.</li>
+      <li><b>Props down, events up.</b> Components are dumb renderers; state lives in the page or a parent, recursively. Easy to reason about, easy to test.</li>
+      <li><b>The server can ship components.</b> A fetched HTML fragment can carry a brand-new component definition and markup using it; JST registers it on arrival. HATEOAS, with a component model.</li>
+      <li><b>Safe by default.</b> Interpolation is HTML-escaped unless you opt out with <code>raw()</code>.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="explore">
+  <div class="wrap">
+    <h2>Explore</h2>
+    <div class="grid3">
+      <a class="card" href="examples/kanban.html" style="text-decoration:none;color:inherit">
+        <div class="who">Demo</div><h3>Kanban board →</h3>
+        <p>Nested components, native drag &amp; drop, a modal editor, filters, and a server-fetched insights panel.</p>
+      </a>
+      <a class="card" href="examples/todo_app.html" style="text-decoration:none;color:inherit">
+        <div class="who">Demo</div><h3>Todo app →</h3>
+        <p>Props down, events up, escaping by default — the canonical small app.</p>
+      </a>
+      <a class="card" href="framework_parity/index.html" style="text-decoration:none;color:inherit">
+        <div class="who">Study</div><h3>Framework parity →</h3>
+        <p>70 HTMX / Alpine / Vue / React examples rebuilt in JST, with an honest gap analysis.</p>
+      </a>
+    </div>
+    <div class="links">
+      <a href="framework_parity/README.md">Read the parity report</a> ·
+      <a href="examples/slots.html">Slots &amp; composition</a> ·
+      <a href="tooling/vscode-jst/README.md">VS Code tooling</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    JST — an exploration in no-build, platform-native components.
+    Built with itself; this page's counter is a JST component.
+  </div>
+</footer>
+
+<script>
+  // (No page script needed — the demo counter holds its own state.)
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<!--
+  Source: https://react.dev/learn/tutorial-tic-tac-toe
+  Demonstrates: the full tutorial — squares lift their clicks to a board, the
+  board lifts state to the game, and the game keeps a history array for time
+  travel (jump to any past move).
+  JST status: ✓ exact — this is JST's home turf. The page owns history +
+  currentMove (immutable updates, slice() on play), the board is a dumb
+  renderer fed the current squares, and a move-list emits "jump" events.
+  No hacks; the immutable-history + time-travel design is exactly React's.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JST · tic-tac-toe</title>
+<script type="module" src="../../jst.js"></script>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 480px; margin: 3rem auto; display: flex; gap: 2rem; }
+  .board-row { display: flex; }
+  .square { width: 48px; height: 48px; font-size: 1.4rem; font-weight: bold; background: #fff; border: 1px solid #999; cursor: pointer; }
+  .status { margin-bottom: .5rem; font-weight: bold; }
+  ol { padding-left: 1.2rem; }
+  ol button { cursor: pointer; }
+</style>
+</head>
+<body>
+
+<!-- Board: 9 squares come down, each click goes up as "play" with its index. -->
+<script type="jst" name="game-board" squares>
+  <div data-testid="board">
+    $ [0, 1, 2].forEach(row => {
+      <div class="board-row">
+        $ [0, 1, 2].forEach(col => {
+          $ const i = row * 3 + col;
+          <button class="square" data-i="$(i)" @click="$(() => el.emit('play', i))">$((squares || [])[i] || '')</button>
+        $ })
+      </div>
+    $ })
+  </div>
+</script>
+
+<!-- Move list for time travel. -->
+<script type="jst" name="move-list" count current>
+  <ol data-testid="moves">
+    $ Array.from({ length: count || 0 }).forEach((_, m) => {
+      <li>
+        <button @click="$(() => el.emit('jump', m))">
+          $(m === 0 ? 'Go to game start' : 'Go to move #' + m)$(m === current ? ' (current)' : '')
+        </button>
+      </li>
+    $ })
+  </ol>
+</script>
+
+<div>
+  <div class="status" id="status" data-testid="status"></div>
+  <game-board id="board"></game-board>
+</div>
+<div>
+  <h3>History</h3>
+  <move-list id="moves"></move-list>
+</div>
+
+<script>
+  const LINES = [
+    [0,1,2],[3,4,5],[6,7,8],
+    [0,3,6],[1,4,7],[2,5,8],
+    [0,4,8],[2,4,6],
+  ];
+  function calcWinner(sq) {
+    for (const [a,b,c] of LINES) {
+      if (sq[a] && sq[a] === sq[b] && sq[a] === sq[c]) return sq[a];
+    }
+    return null;
+  }
+
+  let history = [Array(9).fill(null)];   // page-owned state
+  let currentMove = 0;
+
+  const board = document.getElementById('board');
+  const moves = document.getElementById('moves');
+  const status = document.getElementById('status');
+
+  function current() { return history[currentMove]; }
+
+  function render() {
+    const sq = current();
+    board.squares = sq;
+    moves.count = history.length;
+    moves.current = currentMove;
+    const winner = calcWinner(sq);
+    if (winner) status.textContent = 'Winner: ' + winner;
+    else if (currentMove === 9) status.textContent = 'Draw!';
+    else status.textContent = 'Next player: ' + (currentMove % 2 === 0 ? 'X' : 'O');
+  }
+
+  board.addEventListener('play', e => {
+    const i = e.detail;
+    const sq = current();
+    if (sq[i] || calcWinner(sq)) return;          // ignore filled / finished
+    const next = sq.slice();
+    next[i] = currentMove % 2 === 0 ? 'X' : 'O';
+    history = history.slice(0, currentMove + 1).concat([next]);  // immutable history
+    currentMove = history.length - 1;
+    render();
+  });
+
+  moves.addEventListener('jump', e => { currentMove = e.detail; render(); });
+
+  render();
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+<!--
+    Server-rendered fragment, htmx-style.
+
+    It ships the DEFINITION of a component the page has never seen
+    (<kanban-stats>) together with markup that uses it. When this fragment is
+    inserted into the document, JST's MutationObserver registers the template
+    and the markup upgrades and renders. It can also reuse components the page
+    already has, like <ui-panel>.
+-->
+
+<script type="jst" name="kanban-stats" cards columns>
+    $ const all = cards || [];
+    $ const cols = columns || [];
+    $ const countFor = id => all.filter(card => card.column === id).length;
+    $ const max = Math.max(1, ...cols.map(col => countFor(col.id)));
+
+    <div class="stats">
+        <div class="stat-row">
+            <div class="stat"><strong>$(all.length)</strong> cards</div>
+            <div class="stat"><strong>$(countFor('done'))</strong> done</div>
+            <div class="stat"><strong>$(all.filter(card => card.priority === 'high').length)</strong> high priority</div>
+        </div>
+        <div class="chart">
+            $ cols.forEach(col => {
+                <div class="bar-row">
+                    <span class="bar-label">$(col.title)</span>
+                    <div class="bar-track"><div class="bar" style="width: $(Math.round(countFor(col.id) / max * 100))%"></div></div>
+                    <span class="bar-count">$(countFor(col.id))</span>
+                </div>
+            $ })
+        </div>
+    </div>
+</script>
+
+<ui-panel heading="Board Insights">
+    <kanban-stats id="insights-stats"></kanban-stats>
+    <span slot="footer">This panel's component definition was fetched from the server <em>after</em> page load — and it live-updates as you change the board.</span>
+</ui-panel>

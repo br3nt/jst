@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<!--
+  Source: https://htmx.org/examples/bulk-update/
+  Demonstrates: toggling many rows' checkboxes, then POSTing all of them at once;
+  the server applies the changes and returns a toast summarising activations/deactivations.
+  JST status: ✓ exact match. Page owns users; the table is a dumb renderer; checkbox
+  changes stage a draft, "Bulk Update" POSTs it, the response drives state + a toast.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JST · bulk-update</title>
+<script type="module" src="../../jst.js"></script>
+<script src="../../framework_parity/lib/mock-fetch.js"></script>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 36rem; margin: 3rem auto; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: .4rem .6rem; border-bottom: 1px solid #ddd; }
+  #toast { margin-top: 1rem; color: #2e7d32; min-height: 1.2em; }
+  button { padding: .4rem .8rem; cursor: pointer; margin-top: .8rem; }
+</style>
+</head>
+<body>
+
+<script type="jst" name="user-table" users draft>
+  $ const d = draft || {};
+  <table>
+    <thead><tr><th>Name</th><th>Email</th><th>Active</th></tr></thead>
+    <tbody>
+      $ (users || []).forEach(u => {
+        <tr data-testid="row-$(u.id)">
+          <td>$(u.name)</td>
+          <td>$(u.email)</td>
+          <td><input type="checkbox" data-testid="cb-$(u.id)"
+                     .checked="$(d[u.id] !== undefined ? d[u.id] : u.active)"
+                     @change="$(e => el.emit('toggle', { id: u.id, active: e.target.checked }))"></td>
+        </tr>
+      $ })
+    </tbody>
+  </table>
+  <button data-testid="apply" @click="$(() => el.emit('apply'))">Bulk Update</button>
+</script>
+
+<h1>Bulk Update</h1>
+<user-table id="tbl"></user-table>
+<div id="toast" data-testid="toast"></div>
+
+<script>
+  JSTMock.route('POST /api/users', req => {
+    const desired = JSON.parse(req.form.changes);
+    let activated = 0, deactivated = 0;
+    users.forEach(u => {
+      if (desired[u.id] !== undefined && desired[u.id] !== u.active) {
+        desired[u.id] ? activated++ : deactivated++;
+      }
+    });
+    return { json: { activated, deactivated, users: users.map(u => ({ ...u, active: desired[u.id] ?? u.active })) } };
+  }, { delay: 120 });
+
+  const tbl = document.getElementById('tbl');
+  const toast = document.getElementById('toast');
+  let users = [
+    { id: 1, name: 'Joe Smith', email: 'joe@smith.org', active: true },
+    { id: 2, name: 'Angie MacDowell', email: 'angie@macdowell.org', active: true },
+    { id: 3, name: 'Fuqua Tarkenton', email: 'fuqua@tarkenton.org', active: false },
+    { id: 4, name: 'Kim Yee', email: 'kim@yee.org', active: false },
+  ];
+  let draft = {};
+  tbl.users = users;
+  tbl.draft = draft;
+
+  tbl.addEventListener('toggle', e => {
+    draft = { ...draft, [e.detail.id]: e.detail.active };
+    tbl.draft = draft;
+  });
+
+  tbl.addEventListener('apply', async () => {
+    const res = await fetch('/api/users', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ changes: JSON.stringify(draft) }),
+    });
+    const data = await res.json();
+    users = data.users;
+    draft = {};
+    tbl.users = users;
+    tbl.draft = draft;
+    toast.textContent = `Activated ${data.activated} and deactivated ${data.deactivated} users.`;
+  });
+
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

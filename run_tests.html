@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>JST Framework Unit Tests</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #1e1e1e; color: #d4d4d4; }
+        .test { margin: 10px 0; padding: 15px; border-left: 5px solid #444; background: #252526; border-radius: 0 4px 4px 0; }
+        .test-passed { border-left-color: #4ec9b0; }
+        .test-failed { border-left-color: #f48771; }
+        .test-name { font-weight: bold; margin-bottom: 8px; color: #9cdcfe; font-size: 1.1rem; }
+        .test-error-description { color: #f48771; margin-top: 10px; white-space: pre-wrap; background: #3c3c3c; padding: 10px; border-radius: 4px; }
+        header { border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 20px; }
+        h1 { color: #ce9178; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>JST Engine Verification</h1>
+        <p>Running internal lexer, interpreter and runtime tests...</p>
+    </header>
+    <div id="browser-test-summary"
+         data-status="running"
+         data-total="0"
+         data-passed="0"
+         data-failed="0">Running browser tests...</div>
+    <div id="test-results"></div>
+
+    <script type="module">
+        import { TestSuite, isEqual } from './test_suite.js';
+        import { parseTemplateScript } from './parser.js';
+        import { interpretTemplateTokens } from './interpreter.js';
+        import {
+            registerCustomElementFromTemplate,
+            resetJstForTests,
+        } from './jst.js';
+
+        const resultsContainer = document.getElementById('test-results');
+        const summaryElement = document.getElementById('browser-test-summary');
+        const suite = new TestSuite(resultsContainer);
+        let uniqueCounter = 0;
+        window.__jstTestSummary = {
+            status: 'running',
+            total: 0,
+            passed: 0,
+            failed: 0,
+        };
+
+        const nextName = (prefix) => `${prefix}-${++uniqueCounter}`;
+        const flushRender = async () => {
+            // Drain the microtask queue (renders), then once more for renders
+            // queued by other renders (parent -> child cascades).
+            await new Promise(resolve => setTimeout(resolve, 0));
+            await new Promise(resolve => setTimeout(resolve, 0));
+        };
+
+        const createTemplate = ({ name, attributes = [], body }) => {
+            const template = document.createElement('script');
+            template.type = 'jst';
+            template.setAttribute('name', name);
+            attributes.forEach(attr => template.setAttribute(attr, ''));
+            template.innerHTML = body;
+            return template;
+        };
+
+        const withConsoleSpy = async (method, testFn) => {
+            const original = console[method];
+            const calls = [];
+            console[method] = (...args) => {
+                calls.push(args);
+                return original.apply(console, args);
+            };
+
+            try {
+                await testFn(calls);
+            } finally {
+                console[method] = original;
+            }
+        };
+
+        const updateSummary = (status = 'running') => {
+            const tests = Array.from(document.querySelectorAll('#test-results > .test'));
+            const passed = tests.filter(test => test.classList.contains('test-passed')).length;
+            const failed = tests.filter(test => test.classList.contains('test-failed')).length;
+            const total = tests.length;
+
+            window.__jstTestSummary = { status, total, passed, failed };
+            summaryElement.dataset.status = status;
+            summaryElement.dataset.total = String(total);
+            summaryElement.dataset.passed = String(passed);
+            summaryElement.dataset.failed = String(failed);
+            summaryElement.textContent = `${status.toUpperCase()}: ${passed}/${total} passed, ${failed} failed`;
+        };
+
+        const runSuite = async () => {
+        suite.test("Lexer: Line Directive Boundary", (t) => {
+            t.case("Correctly isolates consecutive $ lines", () => {
+                const script = "$ const a = 1;\n$ const b = 2;";
+                const program = parseTemplateScript(script);
+                const body = interpretTemplateTokens(program.tokens);
+
+                const hasIllegalDollar = /const a = 1;.*\$.*const b = 2;/s.test(body);
+                isEqual(false, hasIllegalDollar, "Generated body should not contain $ between JS lines");
+            });
+        });
+
+        suite.test("Lexer: Strings Inside Expressions", (t) => {
+            t.case("Parens inside string literals do not unbalance $(...)", () => {
+                const script = "$(text.split(')').length)";
+                const program = parseTemplateScript(script);
+                const body = interpretTemplateTokens(program.tokens);
+
+                isEqual(true, body.includes("text.split(')').length"), "Expression should survive a paren inside a string");
+            });
+
+            t.case("Angle brackets inside strings do not end a $ line", () => {
+                const script = "$ const s = \"<div>\" + name;";
+                const program = parseTemplateScript(script);
+                const body = interpretTemplateTokens(program.tokens);
+
+                isEqual(true, body.includes('const s = "<div>" + name;'), "Line directive should keep '<div>' inside the string");
+            });
+        });
+
+        suite.test("Interpreter: JS Token Merging", (t) => {
+            t.case("Merges adjacent JS tokens with whitespace/newlines", () => {
+                const script = "$ if (true) {\n$   return 'ok';\n$ }";
+                const program = parseTemplateScript(script);
+                const body = interpretTemplateTokens(program.tokens);
+
+                isEqual(true, body.includes("if (true)"), "Should contain 'if' statement");
+                isEqual(true, body.includes("return 'ok'"), "Should contain 'return' statement");
+                isEqual(false, body.includes("$"), "Should not contain any literal JST markers ($)");
+            });
+        });
+
+        suite.test("Interpreter: Escaped Interpolation", (t) => {
+            t.case("Wraps expressions in the escape helper", () => {
+                const script = "Value: $(val)";
+                const program = parseTemplateScript(script);
+                const body = interpretTemplateTokens(program.tokens);
+
+                isEqual(true, body.includes('lines.push("Value: ")'), "Should isolate static HTML prefix");
+                isEqual(true, body.includes("lines.push(__esc(val))"), "Should escape interpolated expressions");
+            });
+        });
+
+        suite.test("Interpreter: Property And Event Bindings", (t) => {
+            t.case("Compiles .prop= to a property binding", () => {
+                const script = '<x-thing .data="$(value)"></x-thing>';
+                const program = parseTemplateScript(script);
+                const body = interpretTemplateTokens(program.tokens);
+
+                isEqual(true, body.includes('__bind("prop", "data", (value))'), "Should emit a prop binding");
+                isEqual(false, body.includes('.data='), "Should strip the .prop= source from output HTML");
+            });
+
+            t.case("Compiles @event= to an event binding", () => {
+                const script = '<button @click="$(handler)">go</button>';
+                const program = parseTemplateScript(script);
+                const body = interpretTemplateTokens(program.tokens);
+
+                isEqual(true, body.includes('__bind("event", "click", (handler))'), "Should emit an event binding");
+            });
+        });
+
+        await suite.testAsync("JST Runtime: Templates Added Later Auto-Register", async () => {
+            const componentName = nextName('x-late');
+            const template = createTemplate({
+                name: componentName,
+                attributes: ['msg'],
+                body: `<div>$(msg)</div>`,
+            });
+
+            document.body.appendChild(template);
+            await flushRender();
+
+            try {
+                isEqual(true, !!customElements.get(componentName), 'Expected MutationObserver to register the late template');
+            } finally {
+                template.remove();
+            }
+        });
+
+        await suite.testAsync("JST Runtime: Duplicate Template Names", async () => {
+            const componentName = nextName('x-duplicate');
+            const first = createTemplate({
+                name: componentName,
+                attributes: ['value'],
+                body: `<div>First $(value)</div>`,
+            });
+            const second = createTemplate({
+                name: componentName,
+                attributes: ['value'],
+                body: `<div>Second $(value)</div>`,
+            });
+
+            await withConsoleSpy('warn', async (calls) => {
+                registerCustomElementFromTemplate(first);
+                registerCustomElementFromTemplate(second);
+
+                isEqual(1, calls.length, 'Expected a single duplicate-template warning');
+                isEqual(true, String(calls[0][0]).includes(`Duplicate template name "${componentName}"`), 'Expected duplicate-template warning text');
+            });
+        });
+
+        await suite.testAsync("JST Runtime: Existing Custom Element Warning", async () => {
+            const componentName = nextName('x-existing');
+            customElements.define(componentName, class extends HTMLElement {});
+
+            const template = createTemplate({
+                name: componentName,
+                attributes: ['value'],
+                body: `<div>$(value)</div>`,
+            });
+
+            await withConsoleSpy('warn', async (calls) => {
+                registerCustomElementFromTemplate(template);
+
+                isEqual(1, calls.length, 'Expected a single existing-element warning');
+                isEqual(true, String(calls[0][0]).includes(`<${componentName}> is already registered`), 'Expected existing-element warning text');
+            });
+        });
+
+        await suite.testAsync("JST Runtime: Interpolations Are Escaped", async () => {
+            const componentName = nextName('x-escape');
+            registerCustomElementFromTemplate(createTemplate({
+                name: componentName,
+                attributes: ['text'],
+                body: `<div class="out">$(text)</div>`,
+            }));
+
+            const element = document.createElement(componentName);
+            element.text = '<img src=x onerror="window.__pwned = true">';
+            document.body.appendChild(element);
+            await flushRender();
+
+            try {
+                isEqual(null, element.querySelector('img'), 'Expected no element to be created from interpolated text');
+                isEqual('<img src=x onerror="window.__pwned = true">', element.querySelector('.out').textContent, 'Expected the literal text to be visible');
+                isEqual(undefined, window.__pwned, 'Expected no script execution from interpolated markup');
+            } finally {
+                element.remove();
+                delete window.__pwned;
+            }
+        });
+
+        await suite.testAsync("JST Runtime: raw() Opts Out Of Escaping", async () => {
+            const componentName = nextName('x-raw');
+            registerCustomElementFromTemplate(createTemplate({
+                name: componentName,
+                attributes: ['html'],
+                body: `<div class="out">$(raw(html))</div>`,
+            }));
+
+            const element = document.createElement(componentName);
+            element.html = '<b class="bold">bold</b>';
+            document.body.appendChild(element);
+            await flushRender();
+
+            try {
+                isEqual('bold', element.querySelector('.bold')?.textContent, 'Expected raw() HTML to be parsed as markup');
+            } finally {
+                element.remove();
+            }
+        });
+
+        await suite.testAsync("JST Runtime: JSON-Like Attribute Parsing", async () => {
+            const componentName = nextName('x-json');
+            registerCustomElementFromTemplate(createTemplate({
+                name: componentName,
+                attributes: ['count', 'active', 'label'],
+                body: `<div class="out">$(label): $(count + 1) $(active ? 'on' : 'off')</div>`,
+            }));
+
+            const element = document.createElement(componentName);
+            element.setAttribute('count', '2');
+            element.setAttribute('active', 'true');
+            element.setAttribute('label', 'Total');
+            document.body.appendChild(element);
+            await flushRender();
+
+            try {
+                isEqual('Total: 3 on', element.querySelector('.out').textContent, 'Expected numbers and booleans to parse, plain text to stay a string');
+            } finally {
+                element.remove();
+            }
+        });
+
+        await suite.testAsync("JST Runtime: Kebab-Case Attrs Map To CamelCase Params", async () => {
+            const componentName = nextName('x-kebab');
+            registerCustomElementFromTemplate(createTemplate({
+                name: componentName,
+                attributes: ['user-name'],
+                body: `<div class="out">$(userName)</div>`,
+            }));
+
+            const element = document.createElement(componentName);
+            element.setAttribute('user-name', 'Brent');
+            document.body.appendChild(element);
+            await flushRender();
+
+            try {
+                isEqual('Brent', element.querySelector('.out').textContent, 'Expected user-name attr to populate userName param');
+
+                element.userName = 'Updated';
+                await flushRender();
+                isEqual('Updated', element.querySelector('.out').textContent, 'Expected camelCase property to drive the same param');
+            } finally {
+                element.remove();
+            }
+        });
+
+        await suite.testAsync("JST Runtime: Properties Set Before Upgrade Are Kept", async () => {
+            const componentName = nextName('x-preupgrade');
+
+            // Create the element BEFORE the component is defined
+            const element = document.createElement(componentName);
+            element.items = [{ label: 'early' }];
+
+            registerCustomElementFromTemplate(createTemplate({
+                name: componentName,
+                attributes: ['items'],
+                body: `<div class="out">$(items[0].label)</div>`,
+            }));
+
+            document.body.appendChild(element);
+            await flushRender();
+
+            try {
+                isEqual('early', element.querySelector('.out').textContent, 'Expected pre-upgrade property value to survive the upgrade');
+            } finally {
+                element.remove();
+            }
+        });
+
+        await suite.testAsync("JST Runtime: .prop Bindings Pass Rich Data To Children", async () => {
+            const childName = nextName('x-bind-child');
+            const parentName = nextName('x-bind-parent');
+
+            registerCustomElementFromTemplate(createTemplate({
+                name: childName,
+                attributes: ['data'],
+                body: `<div class="label">$(data ? data.label : 'none')</div>`,
+            }));
+
+            registerCustomElementFromTemplate(createTemplate({
+                name: parentName,
+                attributes: ['value'],
+                body: `<${childName} .data="$(value)"></${childName}>`,
+            }));
+
+            const element = document.createElement(parentName);
+            element.value = { label: 'hello' };
+            document.body.appendChild(element);
+            await flushRender();
+
+            try {
+                isEqual('hello', element.querySelector('.label').textContent, 'Expected object to flow into child via .prop binding');
+                isEqual(false, element.innerHTML.includes('jst-bind'), 'Expected binding markers to be stripped from the DOM');
+
+                element.value = { label: 'world' };
+                await flushRender();
+                isEqual('world', element.querySelector('.label').textContent, 'Expected re-render to re-apply the binding');
+            } finally {
+                element.remove();
+            }
+        });
+
+        await suite.testAsync("JST Runtime: @event Bindings And emit()", async () => {
+            const componentName = nextName('x-emitter');
+            registerCustomElementFromTemplate(createTemplate({
+                name: componentName,
+                attributes: ['count'],
+                body: `<button class="btn" @click="$(() => el.emit('poke', { count }))">go</button>`,
+            }));
+
+            const element = document.createElement(componentName);
+            element.setAttribute('count', '7');
+
+            let received = null;
+            element.addEventListener('poke', event => { received = event.detail; });
+
+            document.body.appendChild(element);
+            await flushRender();
+
+            try {
+                element.querySelector('.btn').click();
+                isEqual(7, received?.count, 'Expected emitted CustomEvent detail to reach the listener');
+            } finally {
+                element.remove();
+            }
+        });
+
+        await suite.testAsync("JST Runtime: Re-Renders Do Not Duplicate Event Listeners", async () => {
+            const componentName = nextName('x-once');
+            registerCustomElementFromTemplate(createTemplate({
+                name: componentName,
+                attributes: ['count'],
+                body: `<div>$(count)<button class="btn" @click="$(() => el.emit('fired'))">go</button></div>`,
+            }));
+
+            const element = document.createElement(componentName);
+            element.setAttribute('count', '1');
+
+            let fired = 0;
+            element.addEventListener('fired', () => { fired++; });
+
+            document.body.appendChild(element);
+            await flushRender();
+
+            element.setAttribute('count', '2');
+            await flushRender();
+            element.setAttribute('count', '3');
+            await flushRender();
+
+            try {
+                element.querySelector('.btn').click();
+                isEqual(1, fired, 'Expected exactly one listener after multiple re-renders');
+            } finally {
+                element.remove();
+            }
+        });
+
+        await suite.testAsync("JST Runtime: Default Slot Projection", async () => {
+            const componentName = nextName('x-card');
+            registerCustomElementFromTemplate(createTemplate({
+                name: componentName,
+                attributes: ['title'],
+                body: `<div class="card"><h2 class="title">$(title)</h2><div class="body">$(slot())</div></div>`,
+            }));
+
+            const element = document.createElement(componentName);
+            element.setAttribute('title', 'Hello');
+            element.innerHTML = '<p class="inner">Original content</p>';
+            document.body.appendChild(element);
+            await flushRender();
+
+            try {
+                const inner = element.querySelector('.body .inner');
+                isEqual('Original content', inner?.textContent, 'Expected author content projected into the slot');
+
+                element.setAttribute('title', 'Changed');
+                await flushRender();
+
+                isEqual('Changed', element.querySelector('.title').textContent, 'Expected title to update');
+                isEqual(inner, element.querySelector('.body .inner'), 'Expected the same projected node to survive re-renders');
+            } finally {
+                element.remove();
+            }
+        });
+
+        await suite.testAsync("JST Runtime: Slotted Children Stay Reachable Until First Render", async () => {
+            const componentName = nextName('x-reachable');
+            registerCustomElementFromTemplate(createTemplate({
+                name: componentName,
+                attributes: [],
+                body: `<div class="wrap">$(slot())</div>`,
+            }));
+
+            const targetId = nextName('reach-target');
+            const element = document.createElement(componentName);
+            element.innerHTML = `<p id="${targetId}">content</p>`;
+            document.body.appendChild(element);
+
+            // Synchronously after insertion — before the first render — the
+            // author content must still be reachable in the document.
+            const found = document.getElementById(targetId);
+            isEqual(true, !!found, 'Expected author content reachable before first render');
+
+            await flushRender();
+
+            try {
+                isEqual(found, element.querySelector(`.wrap #${targetId}`), 'Expected the same node projected into the slot');
+            } finally {
+                element.remove();
+            }
+        });
+
+        await suite.testAsync("JST Runtime: Named Slots With Fallback", async () => {
+            const componentName = nextName('x-named-slot');
+            registerCustomElementFromTemplate(createTemplate({
+                name: componentName,
+                attributes: [],
+                body: `<footer class="f">$(slot('footer', 'Default footer'))</footer>`,
+            }));
+
+            const withContent = document.createElement(componentName);
+            withContent.innerHTML = '<span slot="footer">Custom footer</span>';
+            const withoutContent = document.createElement(componentName);
+
+            document.body.appendChild(withContent);
+            document.body.appendChild(withoutContent);
+            await flushRender();
+
+            try {
+                isEqual('Custom footer', withContent.querySelector('.f').textContent.trim(), 'Expected named slot content to be projected');
+                isEqual('Default footer', withoutContent.querySelector('.f').textContent.trim(), 'Expected fallback content when nothing is slotted');
+            } finally {
+                withContent.remove();
+                withoutContent.remove();
+            }
+        });
+
+        await suite.testAsync("JST Runtime: Preserves DOM Nodes Across Rerenders", async () => {
+            const componentName = nextName('x-preserve');
+            registerCustomElementFromTemplate(createTemplate({
+                name: componentName,
+                attributes: ['value'],
+                body: `<label>Value <input class="field" value="$(value)"></label>`,
+            }));
+
+            const element = document.createElement(componentName);
+            element.setAttribute('value', 'hello');
+            document.body.appendChild(element);
+            await flushRender();
+
+            try {
+                const originalInput = element.querySelector('.field');
+                originalInput.focus();
+                isEqual(originalInput, document.activeElement, 'Expected input to receive focus before rerender');
+
+                element.setAttribute('value', 'world');
+                await flushRender();
+
+                isEqual(originalInput, element.querySelector('.field'), 'Expected the same input node after rerender');
+                isEqual(originalInput, document.activeElement, 'Expected focus to be preserved after rerender');
+            } finally {
+                element.remove();
+            }
+        });
+
+        await suite.testAsync("JST Runtime: Parent Rerenders Do Not Clear Child Custom Elements", async () => {
+            const childName = nextName('x-child');
+            const parentName = nextName('x-parent');
+
+            registerCustomElementFromTemplate(createTemplate({
+                name: childName,
+                attributes: ['text'],
+                body: `<div class="child-text">$(text)</div>`,
+            }));
+
+            registerCustomElementFromTemplate(createTemplate({
+                name: parentName,
+                attributes: ['mode'],
+                body: `<section><${childName} text="hello"></${childName}><p class="mode">$(mode)</p></section>`,
+            }));
+
+            const element = document.createElement(parentName);
+            element.setAttribute('mode', 'a');
+            document.body.appendChild(element);
+            await flushRender();
+
+            try {
+                const child = element.querySelector(childName);
+                isEqual('hello', child.querySelector('.child-text').textContent, 'Expected child component to render initially');
+
+                element.setAttribute('mode', 'b');
+                await flushRender();
+
+                isEqual('hello', child.querySelector('.child-text').textContent, 'Expected child component content to survive parent rerender');
+                isEqual('b', element.querySelector('.mode').textContent, 'Expected parent content to update');
+            } finally {
+                element.remove();
+            }
+        });
+        };
+
+        try {
+            await runSuite();
+            updateSummary('passed');
+        } catch (error) {
+            console.error('JST test harness aborted', error);
+            updateSummary('failed');
+        }
+    </script>
+</body>
+</html>

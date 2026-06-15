@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<!--
+  Source: https://alpinejs.dev/directives/html
+  Demonstrates: Alpine x-html — set innerHTML from an expression (trusted markup).
+  JST status: ✓ exact — `$(raw(expr))` opts out of escaping to inject HTML, the
+  direct analogue of x-html. The escaped `$(expr)` is shown alongside to contrast.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>x-html</title>
+<script type="module" src="../../jst.js"></script>
+<style> body { font-family: system-ui, sans-serif; margin: 3rem; } .box { border: 1px solid #ccc; padding: 1rem; border-radius: 8px; margin: .5rem 0; } </style>
+</head>
+<body>
+
+<script type="jst" name="x-html-demo" markup>
+  <div>
+    <div class="box">x-html (raw, rendered): <span data-testid="raw">$(raw(markup))</span></div>
+    <div class="box">escaped default (safe): <span data-testid="escaped">$(markup)</span></div>
+  </div>
+</script>
+
+<h1>x-html</h1>
+<!-- trusted markup string flows in; raw() renders it as real DOM -->
+<x-html-demo id="demo" markup="Some &lt;b&gt;bold&lt;/b&gt; and &lt;em&gt;italic&lt;/em&gt; text"></x-html-demo>
+
+<script>
+  // Pass via property to keep the literal HTML intact for the raw() demo.
+  document.getElementById('demo').markup = 'Some <b>bold</b> and <em>italic</em> text';
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

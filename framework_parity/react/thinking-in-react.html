@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<!--
+  Source: https://react.dev/learn/thinking-in-react
+  Demonstrates: the filterable product table — a SearchBar (text + checkbox)
+  and a ProductTable, with the filter state lifted to their common parent and
+  the table derived from it. Combines lifting state + controlled inputs +
+  conditional/list rendering.
+  JST status: (i) partial — the architecture maps perfectly (page owns
+  filterText/inStockOnly; search-bar emits, product-table renders), but it
+  inherits the controlled-input caveat: the search field is driven by state
+  via .value + @input, so mid-string edits can bounce the caret to the end.
+  Append-typing (the common case) is smooth. Everything else is idiomatic JST.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JST · thinking in react</title>
+<script type="module" src="../../jst.js"></script>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 420px; margin: 3rem auto; }
+  input[type=text] { width: 100%; padding: 8px; box-sizing: border-box; }
+  label { display: block; margin: .5rem 0; }
+  table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+  th, td { text-align: left; padding: 4px 8px; border-bottom: 1px solid #eee; }
+  .out { color: #d32f2f; }
+</style>
+</head>
+<body>
+<h1>Thinking in React</h1>
+
+<!-- Controlled search bar; state is lifted to the page. -->
+<script type="jst" name="search-bar" filter-text in-stock>
+  <div>
+    <input type="text" data-testid="search" placeholder="Search…"
+           .value="$(filterText || '')"
+           @input="$(e => el.emit('search', e.target.value))">
+    <label>
+      <input type="checkbox" data-testid="instock"
+             .checked="$(!!inStock)"
+             @change="$(e => el.emit('stock', e.target.checked))">
+      Only show products in stock
+    </label>
+  </div>
+</script>
+
+<!-- Pure renderer: products + filter come down, nothing comes up. -->
+<script type="jst" name="product-table" products filter-text in-stock>
+  $ const ft = (filterText || '').toLowerCase();
+  $ let lastCat = null;
+  <table>
+    <thead><tr><th>Name</th><th>Price</th></tr></thead>
+    <tbody data-testid="rows">
+      $ (products || []).forEach(p => {
+        $ const matches = p.name.toLowerCase().includes(ft) && (!inStock || p.stocked);
+        $ if (matches) {
+          $ if (p.category !== lastCat) {
+            $ lastCat = p.category;
+            <tr><th colspan="2">$(p.category)</th></tr>
+          $ }
+          <tr>
+            <td class="$(p.stocked ? '' : 'out')">$(p.name)</td>
+            <td>$(p.price)</td>
+          </tr>
+        $ }
+      $ })
+    </tbody>
+  </table>
+</script>
+
+<search-bar id="bar"></search-bar>
+<product-table id="table"></product-table>
+
+<script>
+  const PRODUCTS = [
+    { category: 'Fruits', price: '$1', stocked: true, name: 'Apple' },
+    { category: 'Fruits', price: '$1', stocked: true, name: 'Dragonfruit' },
+    { category: 'Fruits', price: '$2', stocked: false, name: 'Passionfruit' },
+    { category: 'Vegetables', price: '$2', stocked: true, name: 'Spinach' },
+    { category: 'Vegetables', price: '$4', stocked: false, name: 'Pumpkin' },
+    { category: 'Vegetables', price: '$1', stocked: true, name: 'Peas' },
+  ];
+
+  // The lifted-up shared state.
+  const state = { filterText: '', inStock: false };
+  const bar = document.getElementById('bar');
+  const table = document.getElementById('table');
+
+  function sync() {
+    bar.filterText = state.filterText;
+    bar.inStock = state.inStock;
+    table.products = PRODUCTS;
+    table.filterText = state.filterText;
+    table.inStock = state.inStock;
+  }
+  bar.addEventListener('search', e => { state.filterText = e.detail; sync(); });
+  bar.addEventListener('stock', e => { state.inStock = e.detail; sync(); });
+  sync();
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<!--
+  Source: https://alpinejs.dev/directives/show
+  Demonstrates: Alpine x-show — toggle an element's visibility (display) while
+  keeping it in the DOM.
+  JST status: ✓ exact — bind the inline style: style="$(open ? '' : 'display:none')".
+  The node stays mounted (unlike x-if), matching x-show semantics.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>x-show</title>
+<script type="module" src="../../jst.js"></script>
+<style> body { font-family: system-ui, sans-serif; margin: 3rem; } .panel { margin-top: 1rem; padding: 1rem; background: #eef; border-radius: 8px; } </style>
+</head>
+<body>
+
+<script type="jst" name="x-show-demo" open>
+  <div>
+    <button data-testid="toggle" @click="$(() => el.open = !open)">
+      $(open ? 'Hide' : 'Show')
+    </button>
+    <!-- stays in DOM; only display toggles -->
+    <div class="panel" data-testid="panel" style="$(open ? '' : 'display:none')">
+      I am toggled with display, but always present in the DOM.
+    </div>
+  </div>
+</script>
+
+<h1>x-show</h1>
+<x-show-demo id="demo" open="true"></x-show-demo>
+
+<script>
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

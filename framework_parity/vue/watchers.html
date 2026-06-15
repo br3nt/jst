@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<!--
+  Source: https://vuejs.org/guide/essentials/watchers
+  Demonstrates: watching a reactive value (the question) and running an async side
+  effect (fetch an answer) with debounce when it changes.
+  JST status: (i) partial — JST has no `watch`. The "watcher" is reproduced by acting
+  inside the @input handler that mutates the state: debounce, then fetch. This is the
+  documented JST pattern ("watch by acting in the event that changes state"). The
+  tradeoff: the side effect lives at every mutation site rather than centrally; for a
+  single input that is fine.
+  (Uses mock-fetch for the yes/no API so it runs offline.)
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JST — Watchers</title>
+<script type="module" src="../../jst.js"></script>
+<script src="../../framework_parity/lib/mock-fetch.js"></script>
+<script>
+  // Stand-in for https://yesno.wtf/api
+  JSTMock.route('GET /api/yesno', () => ({ json: { answer: 'yes' } }), { delay: 150 });
+</script>
+</head>
+<body>
+
+<script type="jst" name="watch-demo" question answer loading>
+  $ // The "watcher": runs whenever `question` is mutated through this handler.
+  $ const onInput = (e) => {
+  $   el.question = e.target.value;
+  $   clearTimeout(el.__t);
+  $   if (!el.question.includes('?')) { el.answer = 'Questions usually contain a question mark. ;-)'; return; }
+  $   el.answer = 'Thinking...'; el.loading = true;
+  $   el.__t = setTimeout(async () => {
+  $     const res = await (await fetch('/api/yesno')).json();
+  $     el.answer = res.answer; el.loading = false;
+  $   }, 300);
+  $ };
+  <p>Ask a yes/no question:
+    <input id="question" .value="$(question || '')" @input="$(onInput)"></p>
+  <p id="answer">$(answer || '')</p>
+</script>
+
+<watch-demo id="app" answer="I cannot give you an answer until you ask a question!"></watch-demo>
+
+<script>window.__exampleReady = true;</script>
+</body>
+</html>

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<!--
+  Source: https://vuejs.org/guide/components/slots
+  Demonstrates: default slot, named slots, and fallback (default) slot content.
+  JST status: ✓ exact — $(slot()) projects the default child nodes, $(slot('name'))
+  projects nodes marked slot="name", and $(slot('name','fallback')) supplies fallback.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JST — Slots</title>
+<script type="module" src="../../jst.js"></script>
+<style>.card{border:1px solid #ccc;border-radius:8px;margin:1rem 0}.h{background:#eee;padding:8px}.b{padding:12px}.f{padding:8px;color:#777;border-top:1px solid #eee}</style>
+</head>
+<body>
+
+<script type="jst" name="fancy-card" >
+  <div class="card">
+    <div class="h">$(slot('header', 'Default Header'))</div>
+    <div class="b">$(slot())</div>
+    <div class="f">$(slot('footer', 'Default Footer'))</div>
+  </div>
+</script>
+
+<!-- All three slots provided -->
+<fancy-card id="full">
+  <span slot="header">Custom Header</span>
+  <p>This is the default-slot body content.</p>
+  <span slot="footer">Custom Footer</span>
+</fancy-card>
+
+<!-- Only default slot provided -> header/footer use fallback -->
+<fancy-card id="fallback">
+  <p>Only a body here; header and footer fall back to defaults.</p>
+</fancy-card>
+
+<script>window.__exampleReady = true;</script>
+</body>
+</html>

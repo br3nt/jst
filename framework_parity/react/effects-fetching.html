@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<!--
+  Source: https://react.dev/learn/synchronizing-with-effects
+  Demonstrates: useEffect for data fetching that re-runs when a dependency
+  (the selected person id) changes, with the classic "ignore stale response"
+  race guard.
+  JST status: (i) partial — JST exposes NO lifecycle hooks (connectedCallback /
+  disconnectedCallback are private to the framework), so there is no real
+  useEffect and, crucially, NO unmount cleanup. We approximate an effect by
+  running a guarded side-effect inside a ${} render block: it compares the
+  current dep to the last one (el._lastId) and fires the fetch only when it
+  changes — equivalent to useEffect([personId]). The stale-response guard
+  (myId === el._lastId) stands in for the effect cleanup function. What we
+  CANNOT do is run teardown when the element is removed from the DOM; that is
+  a genuine gap (e.g. you could not auto-close a subscription on unmount).
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JST · effects + fetching</title>
+<script type="module" src="../../jst.js"></script>
+<script src="../../framework_parity/lib/mock-fetch.js"></script>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 460px; margin: 3rem auto; }
+  button { padding: 6px 12px; cursor: pointer; margin-right: .4rem; }
+  .bio { margin-top: 1rem; padding: 1rem; border: 1px solid #ddd; border-radius: 8px; }
+</style>
+</head>
+<body>
+<h1>Synchronizing with effects (fetch)</h1>
+
+<script>
+  // Front-end "backend": returns a bio for a person id, with latency.
+  JSTMock.route('GET /api/bio/:id', req => {
+    const db = {
+      '1': { name: 'Alice', bio: 'Builds compilers for fun.' },
+      '2': { name: 'Bob', bio: 'Collects vintage synthesizers.' },
+      '3': { name: 'Taylor', bio: 'Writes haiku about TCP.' },
+    };
+    return { json: db[req.params.id] || { name: '?', bio: 'unknown' } };
+  }, { delay: 250 });
+</script>
+
+<!-- The effect lives in the ${} block, guarded so it runs once per id change. -->
+<script type="jst" name="bio-card" person-id bio loading>
+  ${
+    if (el._lastId !== personId) {
+      el._lastId = personId;
+      el.loading = true;
+      el.bio = null;
+      const myId = personId;                      // captured per "effect" run
+      fetch('/api/bio/' + personId)
+        .then(r => r.json())
+        .then(data => {
+          if (el._lastId === myId) {              // ignore stale responses
+            el.bio = data;
+            el.loading = false;
+          }
+        });
+    }
+  }
+  $ if (loading) {
+    <p data-testid="status">Loading person $(personId)…</p>
+  $ } else if (bio) {
+    <div class="bio" data-testid="bio">
+      <strong>$(bio.name)</strong>
+      <p>$(bio.bio)</p>
+    </div>
+  $ }
+</script>
+
+<p>
+  <button onclick="pick(1)">Alice</button>
+  <button onclick="pick(2)">Bob</button>
+  <button onclick="pick(3)">Taylor</button>
+</p>
+<bio-card id="card" person-id="1"></bio-card>
+
+<script>
+  const card = document.getElementById('card');
+  function pick(id) { card.personId = id; }   // changing the dep re-runs the effect
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

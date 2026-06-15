@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<!--
+  Source: https://alpinejs.dev/directives/ref
+  Demonstrates: Alpine x-ref + $refs — grab a DOM node imperatively (focus it,
+  read its value) without a query selector string scattered around.
+  JST status: (i) partial — JST has no x-ref/$refs registry. The equivalent is
+  `el.querySelector('.thing')` from inside a handler (the component root is `el`).
+  Works identically in effect, but it's a selector lookup rather than a named ref.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>x-ref</title>
+<script type="module" src="../../jst.js"></script>
+<style> body { font-family: system-ui, sans-serif; margin: 3rem; } input { padding: .4rem; } </style>
+</head>
+<body>
+
+<script type="jst" name="x-ref-demo" msg>
+  <div>
+    <!-- "ref" target -->
+    <input data-testid="field" class="target" placeholder="I get focused / read">
+    <button data-testid="focus" @click="$(() => el.querySelector('.target').focus())">Focus the input</button>
+    <button data-testid="read" @click="$(() => el.msg = el.querySelector('.target').value)">Read its value</button>
+    <p>Last read: <strong data-testid="out">$(msg || '—')</strong></p>
+  </div>
+</script>
+
+<h1>x-ref + $refs (via el.querySelector)</h1>
+<x-ref-demo id="demo" msg=""></x-ref-demo>
+
+<script>
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

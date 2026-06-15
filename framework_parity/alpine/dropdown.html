@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<!--
+  Source: https://alpinejs.dev/component/dropdown
+  Demonstrates: a dropdown that toggles open and closes when you click outside it
+  (Alpine: @click + @click.outside).
+  JST status: (i) partial — open/close as local state is idiomatic, but JST has no
+  @click.outside modifier. Workaround: register ONE document click listener
+  (guarded so it's added once) and close when the event target is outside `el`.
+  Behaviour matches; the outside-click wiring is manual imperative code.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>dropdown</title>
+<script type="module" src="../../jst.js"></script>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 3rem; }
+  .menu { margin-top: .3rem; border: 1px solid #ccc; border-radius: 8px; width: 180px; box-shadow: 0 6px 18px rgba(0,0,0,.12); }
+  .menu button { display: block; width: 100%; text-align: left; border: none; background: none; padding: .6rem 1rem; cursor: pointer; }
+  .menu button:hover { background: #eef; }
+</style>
+</head>
+<body>
+
+<script type="jst" name="dropdown-menu" open choice>
+  ${
+    // @click.outside stand-in: one document listener, added once
+    if (!el.__outside) {
+      el.__outside = e => { if (el.open && !el.contains(e.target)) el.open = false; };
+      document.addEventListener('click', el.__outside);
+    }
+  }
+  <div style="position:relative; display:inline-block;">
+    <button data-testid="toggle" @click="$(() => el.open = !open)">
+      $(choice || 'Choose…') ▾
+    </button>
+    $ if (open) {
+      <div class="menu" data-testid="menu">
+        $ ['Edit', 'Duplicate', 'Delete'].forEach(item => {
+          <button @click="$(() => { el.choice = item; el.open = false; })">$(item)</button>
+        $ })
+      </div>
+    $ }
+  </div>
+</script>
+
+<h1>dropdown (click outside to close)</h1>
+<dropdown-menu id="demo" open="false"></dropdown-menu>
+<p data-testid="hint">Click the button, then click anywhere outside to close.</p>
+
+<script>
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

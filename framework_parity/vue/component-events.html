@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<!--
+  Source: https://vuejs.org/guide/components/events
+  Demonstrates: a child component emitting an event ($emit) that the parent handles.
+  JST status: ✓ exact — el.emit('name', detail) dispatches a bubbling CustomEvent;
+  the parent listens with addEventListener. This is JST's core "events up" model.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JST — Component Events</title>
+<script type="module" src="../../jst.js"></script>
+</head>
+<body>
+
+<!-- Child emits 'enlarge-text' on click; holds no state. -->
+<script type="jst" name="blog-post" title>
+  <div class="blog-post">
+    <h4>$(title)</h4>
+    <button @click="$(() => el.emit('enlarge-text'))">Enlarge text</button>
+  </div>
+</script>
+
+<!-- Parent owns fontSize, listens for the event, re-renders. -->
+<script type="jst" name="blog-app" posts fontsize>
+  $ const size = fontsize || 1;
+  <div id="blog" style="font-size: $(size)em" @enlarge-text="$(() => el.fontsize = size + 0.1)">
+    $ (posts || []).forEach(post => {
+      <blog-post title="$(post.title)"></blog-post>
+    $ })
+  </div>
+  <p id="size-readout">font size: $(size.toFixed(1))em</p>
+</script>
+
+<blog-app id="app" fontsize="1"></blog-app>
+
+<script>
+  document.getElementById('app').posts = [
+    { id: 1, title: 'My journey with Vue' },
+    { id: 2, title: 'Blogging with Vue' },
+    { id: 3, title: 'Why Vue is so fun' },
+  ];
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

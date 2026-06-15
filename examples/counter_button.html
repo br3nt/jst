@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Counter button example</title>
+
+  <script type="module" src="../jst.js"></script>
+
+  <style>
+    body { font-family: sans-serif; padding: 2rem; background: #fafafa; }
+    section { margin-bottom: 3rem; border: 1px solid #ddd; padding: 1.5rem; border-radius: 10px; background: white; }
+    h2 { margin-top: 0; color: #333; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+    .controls { margin-top: 1rem; display: flex; gap: 10px; }
+    button { padding: 8px 16px; cursor: pointer; border-radius: 4px; border: 1px solid #ccc; background: #fff; }
+    button:hover { background: #f0f0f0; }
+    .counter-box { padding: 10px; background: #e3f2fd; border-radius: 5px; display: inline-block; }
+  </style>
+</head>
+<body>
+
+  <h1>Interactive Counter Components</h1>
+
+  <!--
+    EXAMPLE 1: Display-only component.
+    The page updates the `count` property; the component just renders it.
+    count="0" is parsed as a number, so arithmetic works.
+  -->
+  <section>
+    <h2>1. Property Updates</h2>
+
+    <script type="jst" name="jst-counter" count>
+        <div class="counter-box">
+            <strong>Counter Value:</strong> $(count)
+        </div>
+    </script>
+
+    <jst-counter id="counter-1" count="0"></jst-counter>
+
+    <div class="controls">
+        <button onclick="document.getElementById('counter-1').count += 1">+ Increment</button>
+    </div>
+  </section>
+
+  <!--
+    EXAMPLE 2: Multiple synchronized instances.
+    Both components update together because the page pushes the same value
+    to each one's `count` property.
+  -->
+  <section>
+    <h2>2. Synchronized Components</h2>
+    <p>Both components below update together because they share the same state source.</p>
+
+    <jst-counter class="sync-counter" count="10"></jst-counter>
+    <jst-counter class="sync-counter" count="10"></jst-counter>
+
+    <div class="controls">
+        <button onclick="incrementSync()">+ Increment All</button>
+    </div>
+
+    <script>
+      let syncCount = 10;
+      function incrementSync() {
+        syncCount += 10;
+        document.querySelectorAll('.sync-counter').forEach(el => el.count = syncCount);
+      }
+    </script>
+  </section>
+
+  <!--
+    EXAMPLE 3: Component with its own controls.
+    The buttons live in the template, but the component still holds no state:
+    it emits a `change` event with the value it wants, and the page decides.
+  -->
+  <section>
+    <h2>3. Events Up, Properties Down</h2>
+
+    <script type="jst" name="counter-controls" count>
+        <div class="counter-box">
+            <button @click="$(() => el.emit('change', count - 1))">−</button>
+            <strong style="margin: 0 12px;">$(count)</strong>
+            <button @click="$(() => el.emit('change', count + 1))">+</button>
+        </div>
+    </script>
+
+    <counter-controls id="counter-3" count="100"></counter-controls>
+
+    <script>
+      const counter3 = document.getElementById('counter-3');
+      counter3.addEventListener('change', event => {
+        counter3.count = event.detail;
+      });
+    </script>
+  </section>
+
+</body>
+</html>

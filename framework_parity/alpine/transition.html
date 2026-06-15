@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<!--
+  Source: https://alpinejs.dev/directives/transition
+  Demonstrates: Alpine x-transition — animate an element entering/leaving.
+  JST status: (i) partial — JST has NO transition directive. Substitute with a
+  CSS transition: keep the node mounted (like x-show) and toggle a class that
+  animates opacity/transform. This gives smooth enter AND leave because the node
+  never leaves the DOM, but it can't animate true insert/remove (x-if) the way
+  Alpine's enter/leave hooks do.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>x-transition</title>
+<script type="module" src="../../jst.js"></script>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 3rem; }
+  .box {
+    margin-top: 1rem; padding: 1.5rem; background: #3f51b5; color: white; border-radius: 8px;
+    transition: opacity .4s ease, transform .4s ease;
+  }
+  .box.hidden { opacity: 0; transform: translateY(-10px) scale(.97); pointer-events: none; }
+</style>
+</head>
+<body>
+
+<script type="jst" name="x-transition-demo" open>
+  <div>
+    <button data-testid="toggle" @click="$(() => el.open = !open)">$(open ? 'Leave' : 'Enter')</button>
+    <!-- CSS transition stands in for x-transition's enter/leave -->
+    <div class="box $(open ? '' : 'hidden')" data-testid="box">I fade + slide using a CSS transition.</div>
+  </div>
+</script>
+
+<h1>x-transition (CSS substitute)</h1>
+<x-transition-demo id="demo" open="true"></x-transition-demo>
+
+<script>
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<!--
+  Source: https://react.dev/learn/passing-props-to-a-component#passing-jsx-as-children
+  Demonstrates: composition — passing JSX as children. A generic <ui-card>
+  wraps whatever markup you nest inside it, plus a named "footer" region.
+  JST status: ✓ exact — $(slot()) projects the default children and
+  $(slot('footer', fallback)) projects nodes marked slot="footer" with a
+  fallback. This is React's children / named-slot composition, one-to-one.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JST · children composition</title>
+<script type="module" src="../../jst.js"></script>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 480px; margin: 3rem auto; }
+  .card { border: 1px solid #ddd; border-radius: 12px; overflow: hidden; margin: 1rem 0; }
+  .card h3 { margin: 0; padding: .75rem 1rem; background: #6366f1; color: white; }
+  .card .body { padding: 1rem; }
+  .card .footer { padding: .5rem 1rem; background: #f3f4f6; font-size: .85rem; color: #555; }
+</style>
+</head>
+<body>
+<h1>Passing JSX as children</h1>
+
+<!-- Generic wrapper that knows nothing about its contents. -->
+<script type="jst" name="ui-card" title>
+  <div class="card">
+    <h3>$(title)</h3>
+    <div class="body" data-testid="body">$(slot())</div>
+    <div class="footer" data-testid="footer">$(slot('footer', 'No footer provided'))</div>
+  </div>
+</script>
+
+<ui-card title="Welcome" data-testid="card-1">
+  <p>Arbitrary <strong>nested markup</strong> goes straight into the body.</p>
+  <button onclick="this.textContent='clicked!'">A real button</button>
+  <span slot="footer">Pushed into the named footer slot.</span>
+</ui-card>
+
+<ui-card title="Fallback demo" data-testid="card-2">
+  <p>This card provides no footer, so the slot fallback shows.</p>
+</ui-card>
+
+<script>
+  window.__exampleReady = true;
+</script>
+</body>
+</html>
