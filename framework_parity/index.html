@@ -18,7 +18,7 @@
   .layout { display: grid; grid-template-columns: 300px 1fr; height: 100%; }
 
   /* Marquee (CSS-animated). Two copies + -50% = seamless. */
-  .marquee { flex: none; overflow: hidden; background: #fce7f0; border-top: 2px solid #c2185b; border-bottom: 2px solid #c2185b; }
+  .marquee { display: block; flex: none; overflow: hidden; background: #fce7f0; border-top: 2px solid #c2185b; border-bottom: 2px solid #c2185b; }
   .marquee-track { display: inline-flex; white-space: nowrap; will-change: transform; animation: marquee 34s linear infinite; }
   .marquee-track span { padding: 6px 2rem; color: #b0114e; font-size: .82rem; font-weight: 700; letter-spacing: .03em; }
   @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
@@ -69,12 +69,12 @@
 </head>
 <body>
 
-<div class="marquee" role="note" aria-label="Experimental preview notice">
+<marquee class="marquee" scrollamount="0" behavior="scroll" role="note" aria-label="Experimental preview notice">
   <div class="marquee-track">
     <span>*** This is currently an experimental preview ***&nbsp; This framework is still under active development, improvement, and experimentation *** New features are being explored to gain parity with the major players. ***</span>
     <span aria-hidden="true">*** This is currently an experimental preview ***&nbsp; This framework is still under active development, improvement, and experimentation *** New features are being explored to gain parity with the major players. ***</span>
   </div>
-</div>
+</marquee>
 
 <script type="jst" name="parity-hub" items current query status view jstsource originalsource>
   $ const all = items || [];
