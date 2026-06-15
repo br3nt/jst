@@ -15,7 +15,7 @@
   }
   :root { --ink:#1b2030; --muted:#6b7280; --accent:#3f51b5; --accent2:#5c6bc0; --bg:#f7f8fc; --line:#e3e6ef; }
   * { box-sizing: border-box; }
-  body { margin:0; font-family: system-ui, -apple-system, Segoe UI, sans-serif; color:var(--ink); line-height:1.5; background:#fff; }
+  body { margin:0; font-family: system-ui, -apple-system, Segoe UI, sans-serif; color:var(--ink); line-height:1.5; background:#fff; overflow-x:hidden; }
   a { color: var(--accent); }
   .wrap { max-width: 920px; margin: 0 auto; padding: 0 1.25rem; }
   code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
@@ -66,7 +66,8 @@
   .example { margin-top: 1.5rem; }
   .example h3 { margin: 0 0 .2rem; font-size: 1.05rem; }
   .example .blurb { margin: 0 0 .6rem; color: var(--muted); font-size: .92rem; }
-  .demo-frame { width: 100%; border: 1px solid var(--line); border-radius: 3px; display: block; background: #fff; min-height: 200px; }
+  .demo-frame { display: block; width: 100%; border: 0; background: transparent; min-height: 120px; }
+  .breakout { width: 100vw; margin-left: calc(50% - 50vw); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
   .tiers { display: grid; grid-template-columns: repeat(3,1fr); gap: .8rem; margin: 1.1rem 0; }
   .tier { border: 1px solid var(--line); border-radius: 3px; padding: .75rem .9rem; }
   .tier h4 { margin: 0 0 .3rem; font-size: .95rem; }
@@ -207,21 +208,21 @@
       <p class="blurb">A three-level component tree (board → column → card), native drag &amp; drop,
         a modal editor, composable filters, and an insights panel whose component definition is
         fetched from the "server" at runtime. <a class="src" href="examples/kanban.html" target="_blank" rel="noopener">open ↗</a></p>
-      <iframe class="demo-frame" data-autosize src="examples/kanban.html" loading="lazy" title="Kanban board"></iframe>
+      <iframe class="demo-frame breakout" data-autosize src="examples/kanban.html" loading="lazy" title="Kanban board"></iframe>
     </div>
 
     <div class="example">
       <h3>Todo app</h3>
       <p class="blurb">Props down, events up: the page owns the list, components are dumb renderers,
         and interpolation is escaped by default. <a class="src" href="examples/todo_app.html" target="_blank" rel="noopener">open ↗</a></p>
-      <iframe class="demo-frame" data-autosize src="examples/todo_app.html" loading="lazy" title="Todo app"></iframe>
+      <iframe class="demo-frame breakout" data-autosize src="examples/todo_app.html" loading="lazy" title="Todo app"></iframe>
     </div>
 
     <div class="example">
       <h3>Slots &amp; composition</h3>
       <p class="blurb">Light-DOM slots: a component projects the author's children via
         <code>$(slot())</code> and named <code>$(slot('name', 'fallback'))</code>. <a class="src" href="examples/slots.html" target="_blank" rel="noopener">open ↗</a></p>
-      <iframe class="demo-frame" data-autosize src="examples/slots.html" loading="lazy" title="Slots and composition"></iframe>
+      <iframe class="demo-frame breakout" data-autosize src="examples/slots.html" loading="lazy" title="Slots and composition"></iframe>
     </div>
   </div>
 </section>
@@ -252,7 +253,8 @@
 <footer>
   <div class="wrap">
     JST — an exploration in no-build, platform-native components.
-    Built with itself; this page's counter is a JST component.
+    Built with itself: the demo above, the three embedded examples, and the
+    comparison browser are all JST components.
   </div>
 </footer>
 
