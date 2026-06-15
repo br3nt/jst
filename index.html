@@ -16,7 +16,11 @@
 
   header.hero { background: linear-gradient(160deg,#eef0fb,#f7f8fc); border-bottom:1px solid var(--line); padding: 4rem 0 3rem; }
   .hero h1 { font-size: 3rem; margin:0; letter-spacing:-.02em; }
-  .hero .tag { font-size:1.35rem; color:var(--muted); margin:.4rem 0 1.6rem; font-weight:300; }
+  .hero .tag { font-size:1.35rem; color:var(--muted); margin:.4rem 0 .7rem; font-weight:300; }
+  .hero .sub { font-size:1.02rem; color:var(--ink); max-width:60ch; margin:0 0 1.6rem; }
+  .hero .sub code { background:#e7e9f7; padding:.05rem .3rem; border-radius:4px; }
+  .platform-note { background:var(--bg); border:1px solid var(--line); border-left:4px solid var(--accent); border-radius:8px; padding:.9rem 1.1rem; margin-top:1.4rem; font-size:.95rem; }
+  .platform-note code { background:#e7e9f7; padding:.05rem .3rem; border-radius:4px; }
   .hero .cta { display:flex; gap:.75rem; flex-wrap:wrap; }
   .btn { display:inline-block; padding:.6rem 1.2rem; border-radius:8px; text-decoration:none; font-weight:600; border:1px solid var(--accent); }
   .btn.primary { background:var(--accent); color:#fff; }
@@ -60,6 +64,7 @@
   <div class="wrap">
     <h1>JST</h1>
     <p class="tag">Reactive components in plain HTML. No build step.</p>
+    <p class="sub">It's just <strong>Web Components</strong> under the hood — every <code>&lt;jst-*&gt;</code> is a real custom element from the platform's own <code>customElements.define</code>. No framework runtime to learn around it.</p>
     <div class="cta">
       <a class="btn primary" href="#try">Try it</a>
       <a class="btn ghost" href="framework_parity/index.html">See it vs HTMX · Alpine · Vue · React →</a>
@@ -71,11 +76,20 @@
   <div class="wrap">
     <h2>What it is</h2>
     <p class="lede">
-      JST turns a <code>&lt;script type="jst"&gt;</code> tag into a real custom element.
-      You write components in ordinary HTML, with JavaScript as the templating language —
-      no compiler, no bundler, no JSX, no virtual DOM. Drop one <code>&lt;script&gt;</code>
-      on a page and you have reactive, composable components.
+      JST is a thin layer over the <strong>Web Components</strong> platform. A
+      <code>&lt;script type="jst"&gt;</code> tag is compiled into a class and registered with
+      <code>customElements.define()</code> — so your <code>&lt;jst-*&gt;</code> tags are
+      <em>genuine custom elements</em>, not a framework's virtual stand-ins. You write them in
+      ordinary HTML with JavaScript as the templating language — no compiler, no bundler, no JSX,
+      no virtual DOM.
     </p>
+    <div class="platform-note">
+      Because they're real custom elements, they behave like the platform: they show up in
+      DevTools as <code>&lt;jst-counter&gt;</code>, you set data with plain properties
+      (<code>el.count = 5</code>), you listen with <code>addEventListener</code>, they work
+      inside any framework or none, and they upgrade automatically when their definition arrives —
+      even from the server. JST adds rendering and ergonomics; the <em>component</em> is the browser's.
+    </div>
   </div>
 </section>
 
@@ -96,7 +110,7 @@
       <div class="panel">
         <h3>Live</h3>
         <jst-demo-counter count="0"></jst-demo-counter>
-        <p class="demo-note">Local state via <code>el.count = …</code> re-renders the component. No framework state object, no hooks.</p>
+        <p class="demo-note">It's a real custom element: open DevTools and it's <code>&lt;jst-demo-counter&gt;</code>; type <code>document.querySelector('jst-demo-counter').count = 9</code> in the console and watch it re-render. Local state via <code>el.count = …</code>, no framework state object, no hooks.</p>
       </div>
       <div class="panel">
         <h3>Source</h3>
@@ -139,7 +153,7 @@
     <ul class="principles">
       <li><b>No build step.</b> Components live in <code>&lt;script type="jst"&gt;</code> in plain HTML. The browser is the toolchain.</li>
       <li><b>JavaScript is the templating language.</b> <code>$(expr)</code> to interpolate, <code>$ if</code> / <code>$ forEach</code> for control flow. No new DSL to learn.</li>
-      <li><b>Ride the platform.</b> Real custom elements. Rich data flows as <em>properties</em>; actions flow out as bubbling <em>CustomEvents</em>. The DOM is patched in place by morphing — no virtual DOM, no signals.</li>
+      <li><b>It's just Web Components.</b> Every <code>&lt;jst-*&gt;</code> is a real custom element registered with <code>customElements.define</code>. Rich data flows in as <em>properties</em>, actions out as bubbling <em>CustomEvents</em>, and the DOM is patched in place by morphing — no virtual DOM, no signals, no shadow-DOM lock-in.</li>
       <li><b>Props down, events up.</b> Components are dumb renderers; state lives in the page or a parent, recursively. Easy to reason about, easy to test.</li>
       <li><b>The server can ship components.</b> A fetched HTML fragment can carry a brand-new component definition and markup using it; JST registers it on arrival. HATEOAS, with a component model.</li>
       <li><b>Safe by default.</b> Interpolation is HTML-escaped unless you opt out with <code>raw()</code>.</li>

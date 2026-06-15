@@ -2,9 +2,12 @@
 
 **Reactive web components in plain HTML. No build step.**
 
-JST turns a `<script type="jst">` tag into a real custom element. You write
-components in ordinary HTML with JavaScript as the templating language — no
-compiler, no bundler, no JSX, no virtual DOM, no signals.
+**It's just Web Components under the hood.** A `<script type="jst">` tag is
+compiled into a class and registered with `customElements.define()`, so every
+`<jst-*>` is a *genuine custom element* — inspectable in DevTools, scriptable
+with plain properties and `addEventListener`, and usable inside any framework or
+none. You write them in ordinary HTML with JavaScript as the templating
+language — no compiler, no bundler, no JSX, no virtual DOM, no signals.
 
 ```html
 <script type="module" src="jst.js"></script>
