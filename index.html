@@ -6,7 +6,13 @@
 <title>JST — components in plain HTML, no build step</title>
 <meta name="description" content="JST is a tiny framework for building reactive web components directly in HTML, with no build step. Plain HTML and JavaScript, real custom elements, server-streamable components.">
 <script type="module" src="jst.js"></script>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
 <style>
+  /* Self-hosted (no CDN, works offline) — used for the wordmark. */
+  @font-face {
+    font-family: 'JetBrains Mono'; font-style: normal; font-weight: 700; font-display: swap;
+    src: url('fonts/jetbrains-mono-700.woff2') format('woff2');
+  }
   :root { --ink:#1b2030; --muted:#6b7280; --accent:#3f51b5; --accent2:#5c6bc0; --bg:#f7f8fc; --line:#e3e6ef; }
   * { box-sizing: border-box; }
   body { margin:0; font-family: system-ui, -apple-system, Segoe UI, sans-serif; color:var(--ink); line-height:1.5; background:#fff; }
@@ -15,7 +21,9 @@
   code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
 
   header.hero { background: linear-gradient(160deg,#eef0fb,#f7f8fc); border-bottom:1px solid var(--line); padding: 2.4rem 0 1.9rem; }
-  .hero h1 { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 2.3rem; margin:0; letter-spacing:-.01em; color:var(--accent); }
+  .hero h1 { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 2.5rem; margin:0; letter-spacing:-.02em; font-weight:700; color:var(--accent); }
+  .hero h1::before { content:"<"; color:#aab2e6; }
+  .hero h1::after { content:"/>"; color:#aab2e6; }
   .hero .tag { font-size:1.12rem; color:var(--ink); margin:.35rem 0 .5rem; font-weight:400; }
   .hero .sub { font-size:.98rem; color:var(--muted); max-width:62ch; margin:0 0 1rem; }
   .hero .sub code { background:#e7e9f7; padding:.05rem .3rem; border-radius:3px; }
@@ -62,7 +70,7 @@
 
 <header class="hero">
   <div class="wrap">
-    <h1>&lt;JST/&gt;</h1>
+    <h1>JST</h1>
     <p class="tag"><strong>JavaScript Templates (JST)</strong> — reactive components in plain HTML, with <strong>JavaScript itself as the templating language</strong>. No build step.</p>
     <p class="sub">It's just <strong>Web Components</strong> under the hood — every <code>&lt;jst-*&gt;</code> is a real custom element from the platform's own <code>customElements.define</code>. JST renders them; what you ship is standard custom elements.</p>
     <div class="cta">
