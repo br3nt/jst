@@ -63,7 +63,15 @@
   table.pos { width:100%; border-collapse:collapse; margin-top:1rem; font-size:.9rem; }
   table.pos th, table.pos td { text-align:left; padding:.4rem .55rem; border-bottom:1px solid var(--line); vertical-align:top; }
   table.pos th { color:var(--muted); font-weight:600; }
-  @media (max-width:680px){ .demo,.grid3{grid-template-columns:1fr;} .hero h1{font-size:1.9rem;} }
+  .example { margin-top: 1.5rem; }
+  .example h3 { margin: 0 0 .2rem; font-size: 1.05rem; }
+  .example .blurb { margin: 0 0 .6rem; color: var(--muted); font-size: .92rem; }
+  .demo-frame { width: 100%; border: 1px solid var(--line); border-radius: 3px; display: block; background: #fff; min-height: 200px; }
+  .tiers { display: grid; grid-template-columns: repeat(3,1fr); gap: .8rem; margin: 1.1rem 0; }
+  .tier { border: 1px solid var(--line); border-radius: 3px; padding: .75rem .9rem; }
+  .tier h4 { margin: 0 0 .3rem; font-size: .95rem; }
+  .tier p { margin: 0; color: var(--muted); font-size: .88rem; }
+  @media (max-width:680px){ .demo,.grid3,.tiers{grid-template-columns:1fr;} .hero h1{font-size:1.9rem;} }
 </style>
 </head>
 <body>
@@ -74,7 +82,8 @@
     <p class="tag"><strong>JavaScript Templates (JST)</strong> — reactive components in plain HTML, with <strong>JavaScript itself as the templating language</strong>. No build step.</p>
     <p class="sub">It's just <strong>Web Components</strong> under the hood — every <code>&lt;jst-*&gt;</code> is a real custom element from the platform's own <code>customElements.define</code>. JST renders them; what you ship is standard custom elements.</p>
     <div class="cta">
-      <a class="btn primary" href="framework_parity/index.html">See it vs HTMX · Alpine · Vue · React →</a>
+      <a class="btn primary" href="#examples">Examples ↓</a>
+      <a class="btn ghost" href="framework_parity/index.html">Compare vs HTMX · Alpine · Vue · React →</a>
     </div>
   </div>
 </header>
@@ -187,27 +196,55 @@
   </div>
 </section>
 
-<section id="explore">
+<section id="examples">
   <div class="wrap">
-    <h2>Explore</h2>
-    <div class="grid3">
-      <a class="card" href="examples/kanban.html" style="text-decoration:none;color:inherit">
-        <div class="who">Demo</div><h3>Kanban board →</h3>
-        <p>Nested components, native drag &amp; drop, a modal editor, filters, and a server-fetched insights panel.</p>
-      </a>
-      <a class="card" href="examples/todo_app.html" style="text-decoration:none;color:inherit">
-        <div class="who">Demo</div><h3>Todo app →</h3>
-        <p>Props down, events up, escaping by default — the canonical small app.</p>
-      </a>
-      <a class="card" href="framework_parity/index.html" style="text-decoration:none;color:inherit">
-        <div class="who">Study</div><h3>Framework parity →</h3>
-        <p>70 HTMX / Alpine / Vue / React examples rebuilt in JST, with an honest gap analysis.</p>
-      </a>
+    <h2>Examples</h2>
+    <p class="lede">Each of these is running live below — real JST components on this page, in
+      isolated frames. View source on any of them: it's plain HTML and <code>jst.js</code>.</p>
+
+    <div class="example">
+      <h3>Kanban board</h3>
+      <p class="blurb">A three-level component tree (board → column → card), native drag &amp; drop,
+        a modal editor, composable filters, and an insights panel whose component definition is
+        fetched from the "server" at runtime. <a class="src" href="examples/kanban.html" target="_blank" rel="noopener">open ↗</a></p>
+      <iframe class="demo-frame" data-autosize src="examples/kanban.html" loading="lazy" title="Kanban board"></iframe>
     </div>
+
+    <div class="example">
+      <h3>Todo app</h3>
+      <p class="blurb">Props down, events up: the page owns the list, components are dumb renderers,
+        and interpolation is escaped by default. <a class="src" href="examples/todo_app.html" target="_blank" rel="noopener">open ↗</a></p>
+      <iframe class="demo-frame" data-autosize src="examples/todo_app.html" loading="lazy" title="Todo app"></iframe>
+    </div>
+
+    <div class="example">
+      <h3>Slots &amp; composition</h3>
+      <p class="blurb">Light-DOM slots: a component projects the author's children via
+        <code>$(slot())</code> and named <code>$(slot('name', 'fallback'))</code>. <a class="src" href="examples/slots.html" target="_blank" rel="noopener">open ↗</a></p>
+      <iframe class="demo-frame" data-autosize src="examples/slots.html" loading="lazy" title="Slots and composition"></iframe>
+    </div>
+  </div>
+</section>
+
+<section id="tooling">
+  <div class="wrap">
+    <h2>VS Code tooling</h2>
+    <p class="lede">Because JST is plain HTML + JavaScript, the editor experience rides existing
+      tools rather than reinventing them. The <a href="tooling/vscode-jst/README.md">extension</a>
+      adds three tiers — all tested headlessly.</p>
+    <div class="tiers">
+      <div class="tier"><h4>Syntax highlighting</h4><p>TextMate injection grammars highlight <code>$(…)</code>, <code>$ …</code> and <code>.prop</code>/<code>@event</code> inside <code>&lt;script type="jst"&gt;</code>, delegating the embedded JS to the editor's own <code>source.js</code>.</p></div>
+      <div class="tier"><h4>Diagnostics</h4><p>Runs the <em>real</em> JST compiler over each template, so an editor squiggle is exactly what the runtime would reject. Embedded-JS syntax errors are caught by V8 itself.</p></div>
+      <div class="tier"><h4>Language server</h4><p>Cross-file go-to-definition (a <code>&lt;my-card&gt;</code> tag → its <code>&lt;script type="jst" name="my-card"&gt;</code>), hover with a component's params, completion, and document symbols.</p></div>
+    </div>
+<pre class="code"><span class="c">&lt;!-- the grammar highlights these as embedded JS --&gt;</span>
+<span class="t">&lt;script</span> <span class="k">type</span>=<span class="s">"jst"</span> <span class="k">name</span>=<span class="s">"todo-item"</span> item<span class="t">&gt;</span>
+  <span class="t">&lt;li</span> <span class="k">@click</span>=<span class="s">"$(() =&gt; el.emit('toggle', item))"</span><span class="t">&gt;</span>$(item.title)<span class="t">&lt;/li&gt;</span>
+<span class="t">&lt;/script&gt;</span></pre>
     <div class="links">
-      <a href="framework_parity/README.md">Read the parity report</a> ·
-      <a href="examples/slots.html">Slots &amp; composition</a> ·
-      <a href="tooling/vscode-jst/README.md">VS Code tooling</a>
+      <a href="tooling/vscode-jst/README.md">Tooling README</a> ·
+      <a href="https://github.com/br3nt/jst">GitHub repo ↗</a> ·
+      <a href="framework_parity/index.html">Framework parity study</a>
     </div>
   </div>
 </section>
@@ -220,7 +257,20 @@
 </footer>
 
 <script>
-  // (No page script needed — the demo counter holds its own state.)
+  // The hero demo holds its own state; the only page logic is sizing the
+  // embedded example frames to their content so each example shows in full.
+  document.querySelectorAll('iframe[data-autosize]').forEach(ifr => {
+    const size = () => {
+      try {
+        const h = ifr.contentDocument.documentElement.scrollHeight;
+        if (h) ifr.style.height = h + 'px';
+      } catch {}
+    };
+    ifr.addEventListener('load', () => {
+      size();
+      try { new ResizeObserver(size).observe(ifr.contentDocument.body); } catch {}
+    });
+  });
   window.__exampleReady = true;
 </script>
 </body>
