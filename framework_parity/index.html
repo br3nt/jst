@@ -13,9 +13,16 @@
 <script type="module" src="../jst.js"></script>
 <style>
   * { box-sizing: border-box; }
-  body { margin: 0; font-family: system-ui, sans-serif; color: #1c2030; height: 100vh; overflow: hidden; }
-  parity-hub { display: block; height: 100vh; }
-  .layout { display: grid; grid-template-columns: 300px 1fr; height: 100vh; }
+  body { margin: 0; font-family: system-ui, sans-serif; color: #1c2030; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+  parity-hub { display: block; flex: 1; min-height: 0; }
+  .layout { display: grid; grid-template-columns: 300px 1fr; height: 100%; }
+
+  /* Marquee (CSS-animated). Two copies + -50% = seamless. */
+  .marquee { flex: none; overflow: hidden; background: #fce7f0; border-top: 2px solid #c2185b; border-bottom: 2px solid #c2185b; }
+  .marquee-track { display: inline-flex; white-space: nowrap; will-change: transform; animation: marquee 34s linear infinite; }
+  .marquee-track span { padding: 6px 2rem; color: #b0114e; font-size: .82rem; font-weight: 700; letter-spacing: .03em; }
+  @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+  @media (prefers-reduced-motion: reduce) { .marquee-track { animation: none; } }
 
   .sidebar { border-right: 1px solid #e3e6ef; background: #f7f8fc; display: flex; flex-direction: column; min-height: 0; }
   .sidebar-head { padding: 10px 14px 8px; border-bottom: 1px solid #e3e6ef; }
@@ -39,7 +46,7 @@
   .badge.partial { color: #c87f12; }
   .badge.none { color: #c0392b; }
 
-  .main { min-width: 0; height: 100vh; overflow-y: auto; }
+  .main { min-width: 0; height: 100%; overflow-y: auto; }
   .topbar { position: sticky; top: 0; z-index: 2; background: #fff; border-bottom: 1px solid #e3e6ef; padding: 7px 14px; display: flex; align-items: center; gap: 8px 10px; flex-wrap: wrap; }
   .topbar .title { font-weight: 600; font-size: .9rem; }
   .topbar .note { font-size: .78rem; color: #71778a; flex: 1; min-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -61,6 +68,13 @@
 </style>
 </head>
 <body>
+
+<div class="marquee" role="note" aria-label="Experimental preview notice">
+  <div class="marquee-track">
+    <span>*** This is currently an experimental preview ***&nbsp; This framework is still under active development, improvement, and experimentation *** New features are being explored to gain parity with the major players. ***</span>
+    <span aria-hidden="true">*** This is currently an experimental preview ***&nbsp; This framework is still under active development, improvement, and experimentation *** New features are being explored to gain parity with the major players. ***</span>
+  </div>
+</div>
 
 <script type="jst" name="parity-hub" items current query status view jstsource originalsource>
   $ const all = items || [];
