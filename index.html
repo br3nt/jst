@@ -64,7 +64,7 @@
   <div class="wrap">
     <h1>&lt;JST/&gt;</h1>
     <p class="tag"><strong>JavaScript Templates (JST)</strong> — reactive components in plain HTML, with <strong>JavaScript itself as the templating language</strong>. No build step.</p>
-    <p class="sub">It's just <strong>Web Components</strong> under the hood — every <code>&lt;jst-*&gt;</code> is a real custom element from the platform's own <code>customElements.define</code>. No framework runtime to learn around it.</p>
+    <p class="sub">It's just <strong>Web Components</strong> under the hood — every <code>&lt;jst-*&gt;</code> is a real custom element from the platform's own <code>customElements.define</code>. JST renders them; what you ship is standard custom elements.</p>
     <div class="cta">
       <a class="btn primary" href="#try">Try it</a>
       <a class="btn ghost" href="framework_parity/index.html">See it vs HTMX · Alpine · Vue · React →</a>
@@ -72,30 +72,9 @@
   </div>
 </header>
 
-<section id="what">
-  <div class="wrap">
-    <h2>What it is</h2>
-    <p class="lede">
-      JST is a thin layer over the <strong>Web Components</strong> platform. A
-      <code>&lt;script type="jst"&gt;</code> tag is compiled into a class and registered with
-      <code>customElements.define()</code> — so your <code>&lt;jst-*&gt;</code> tags are
-      <em>genuine custom elements</em>, not a framework's virtual stand-ins. You write them in
-      ordinary HTML with JavaScript as the templating language — no compiler, no bundler, no JSX,
-      no virtual DOM.
-    </p>
-    <div class="platform-note">
-      Because they're real custom elements, they behave like the platform: they show up in
-      DevTools as <code>&lt;jst-counter&gt;</code>, you set data with plain properties
-      (<code>el.count = 5</code>), you listen with <code>addEventListener</code>, they work
-      inside any framework or none, and they upgrade automatically when their definition arrives —
-      even from the server. JST adds rendering and ergonomics; the <em>component</em> is the browser's.
-    </div>
-  </div>
-</section>
-
 <section id="try">
   <div class="wrap">
-    <h2>Running on this page, right now</h2>
+    <h2>This is JST</h2>
     <p class="lede">The button below is a JST component — defined and rendered by the same
       <code>jst.js</code> this page loads. View source: it's all here, nothing built.</p>
 
@@ -126,6 +105,27 @@
   </div>
 </section>
 
+<section id="what">
+  <div class="wrap">
+    <h2>How does it work?</h2>
+    <p class="lede">
+      JST is a thin layer over the <strong>Web Components</strong> platform. A
+      <code>&lt;script type="jst"&gt;</code> tag is compiled into a class and registered with
+      <code>customElements.define()</code> — so your <code>&lt;jst-*&gt;</code> tags are
+      <em>genuine custom elements</em>, not a framework's virtual stand-ins. You write them in
+      ordinary HTML with JavaScript as the templating language — no compiler, no bundler, no JSX,
+      no virtual DOM.
+    </p>
+    <div class="platform-note">
+      Because they're real custom elements, they behave like the platform: they show up in
+      DevTools as <code>&lt;jst-counter&gt;</code>, you set data with plain properties
+      (<code>el.count = 5</code>), you listen with <code>addEventListener</code>, they work
+      inside any framework or none, and they upgrade automatically when their definition arrives —
+      even from the server. JST adds rendering and ergonomics; the <em>component</em> is the browser's.
+    </div>
+  </div>
+</section>
+
 <section id="hole">
   <div class="wrap">
     <h2>The hole it fills</h2>
@@ -149,23 +149,19 @@
 
 <section id="shared">
   <div class="wrap">
-    <h2>One set of components — front end <em>and</em> back end</h2>
-    <p class="lede">Most stacks force a choice that duplicates your views: render on the server
-      (classic SSR), or split into a JSON API plus a separate front-end app (a SPA, or several).
-      Either way, <em>how a thing looks</em> — and the logic to build it — ends up living in two
-      places that drift apart.</p>
-    <p class="lede">A JST component is just a <code>&lt;script type="jst"&gt;</code> definition —
-      portable text. The <strong>same</strong> template renders on the client, and the
-      <strong>server can send that very template down</strong>, where it registers and renders on
-      arrival. JST's compiler is plain JavaScript, so the same templates can render on the server
-      too. Dynamically generated HTML can come from the front end <em>or</em> the back end, from
-      <strong>one</strong> source — no duplicated views, no API-vs-UI split.</p>
-    <div class="platform-note"><strong>HATEOAS-first.</strong> Because both sides speak the same
-      components, the server can stream hypermedia — HTML carrying its own next actions — built
-      from the exact components the client already knows. See the
-      <a href="framework_parity/htmx/tabs-hateoas.html">tabs</a> and
-      <a href="framework_parity/htmx/lazy-load.html">lazy-load</a> examples, and the
-      agentic-feed prototype.</div>
+    <h2>Hypertext as your API — not JSON</h2>
+    <p class="lede">A typical web app is a JSON API plus a separate client that turns that JSON back
+      into HTML — every screen defined twice and kept in sync by hand. JST takes the older idea
+      (HATEOAS): a response <em>is</em> the UI — HTML that carries its own next actions.</p>
+    <p class="lede">The part HTMX can't do: a JST response is HTML containing real
+      <code>&lt;script type="jst"&gt;</code> components, so it brings its own <strong>front-end
+      interactivity</strong> — the browser registers and runs the JS on arrival. You get HTMX's
+      "the server just returns HTML" simplicity <strong>and</strong> real client-side behaviour in
+      the very same response. No JSON contract, no parallel client app, no duplicated views.</p>
+    <div class="platform-note"><strong>And you may not need a backend at all.</strong> JST is just
+      static files and the browser — no API, no server-side code, no build. The same components a
+      server <em>could</em> stream down run perfectly well entirely on the client, so a whole app
+      can be a folder of static files. (This site is exactly that.)</div>
   </div>
 </section>
 
@@ -175,8 +171,8 @@
     <ul class="principles">
       <li><b>No build step.</b> Components live in <code>&lt;script type="jst"&gt;</code> in plain HTML. The browser is the toolchain — nothing to compile, bundle, or transpile.</li>
       <li><b>JavaScript is the templating language.</b> <code>$(expr)</code> to interpolate, <code>$ if</code> / <code>$ forEach</code> for control flow. No new DSL — if you know JavaScript, you know JST.</li>
-      <li><b>HATEOAS-first.</b> The server streams components and hypermedia down; the client renders the same components. Responses describe their own next actions.</li>
-      <li><b>One set of templates, both sides.</b> The same template runs on the client or the server — write the view once, no front-end/back-end duplication.</li>
+      <li><b>Hypertext as the API.</b> Responses are HTML carrying their own UI and next actions — not JSON a client must re-render. Like HTMX, but the response brings its own front-end interactivity.</li>
+      <li><b>No backend required.</b> A JST app is just static files; the same components run on the client, stream down from a server, or ship as a folder of files. No JSON contract, no parallel client app.</li>
       <li><b>It's just Web Components.</b> Every <code>&lt;jst-*&gt;</code> is a real custom element via <code>customElements.define</code>. Data in as <em>properties</em>, actions out as bubbling <em>CustomEvents</em>, DOM patched by morphing — no virtual DOM, no signals, no shadow-DOM lock-in.</li>
       <li><b>Props down, events up.</b> Components are dumb renderers; state lives in the page or a parent, recursively.</li>
       <li><b>Safe by default.</b> Interpolation is HTML-escaped unless you opt out with <code>raw()</code>.</li>

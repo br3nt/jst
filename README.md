@@ -37,8 +37,8 @@ bubbling events, and DOM morphing.
 
 1. **No build step** — components live in `<script type="jst">` in plain HTML; the browser is the toolchain.
 2. **JavaScript is the templating language** — `$(expr)`, `$ if`, `$ forEach`. No new DSL.
-3. **HATEOAS-first** — the server streams components and hypermedia down; the client renders the same components.
-4. **One set of templates, both sides** — the same template runs on the client or the server (the compiler is plain JS), so there's no front-end/back-end duplication.
+3. **Hypertext as the API** — responses are HTML carrying their own UI and next actions, not JSON a client must re-render. Like HTMX, but the response brings its own front-end interactivity.
+4. **No backend required** — a JST app is just static files; the same components run on the client or stream down from a server.
 5. **It's just Web Components** — every `<jst-*>` is a real custom element via `customElements.define`; data in as properties, actions out as `CustomEvent`s, DOM morphed in place — no virtual DOM, no signals.
 6. **Props down, events up** — components are dumb renderers; state lives in the page/parent.
 7. **Safe by default** — interpolation is HTML-escaped unless you opt out with `raw()`.

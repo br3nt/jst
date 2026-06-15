@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <!--
   Browsable hub for the framework-parity study. Itself built in JST (dogfood):
-  a <parity-hub> component renders the sidebar + viewer from examples.json.
-  Serve the repo root and open /framework_parity/index.html.
+  a <parity-hub> component renders the sidebar + viewer from examples.json,
+  with a Preview / JST-source / framework-source toggle (originals.json).
 -->
 <html lang="en">
 <head>
@@ -14,51 +14,58 @@
   * { box-sizing: border-box; }
   body { margin: 0; font-family: system-ui, sans-serif; color: #1c2030; height: 100vh; overflow: hidden; }
   parity-hub { display: block; height: 100vh; }
-  .layout { display: grid; grid-template-columns: 320px 1fr; height: 100vh; }
+  .layout { display: grid; grid-template-columns: 300px 1fr; height: 100vh; }
 
   .sidebar { border-right: 1px solid #e3e6ef; background: #f7f8fc; display: flex; flex-direction: column; min-height: 0; }
-  .sidebar-head { padding: 14px 16px 10px; border-bottom: 1px solid #e3e6ef; }
-  .sidebar-head h1 { font-size: 1rem; margin: 0 0 4px; color: #3a4256; }
-  .sidebar-head .tally { font-size: .78rem; color: #8a90a2; }
-  .filter { width: 100%; padding: 8px 10px; border: 1px solid #d6dae6; border-radius: 7px; font: inherit; margin-top: 8px; }
-  .status-filters { display: flex; gap: 6px; margin-top: 8px; }
-  .status-filters button { flex: 1; padding: 5px; border: 1px solid #d6dae6; background: #fff; border-radius: 6px; cursor: pointer; font-size: .78rem; }
+  .sidebar-head { padding: 10px 14px 8px; border-bottom: 1px solid #e3e6ef; }
+  .home { display: inline-block; font-size: .78rem; color: #3f51b5; text-decoration: none; margin-bottom: 6px; }
+  .home:hover { text-decoration: underline; }
+  .sidebar-head h1 { font-size: .95rem; margin: 0 0 3px; color: #3a4256; }
+  .sidebar-head .tally { font-size: .76rem; color: #8a90a2; }
+  .filter { width: 100%; padding: 6px 9px; border: 1px solid #d6dae6; border-radius: 3px; font: inherit; margin-top: 7px; }
+  .status-filters { display: flex; gap: 5px; margin-top: 7px; }
+  .status-filters button { flex: 1; padding: 4px; border: 1px solid #d6dae6; background: #fff; border-radius: 3px; cursor: pointer; font-size: .78rem; }
   .status-filters button.active { background: #3f51b5; color: #fff; border-color: #3f51b5; }
 
-  .list { overflow-y: auto; flex: 1; padding: 6px 0 40px; }
-  .group-title { font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: #9aa0b2; padding: 12px 16px 4px; position: sticky; top: 0; background: #f7f8fc; }
-  .item { display: flex; align-items: center; gap: 8px; padding: 6px 16px; cursor: pointer; border: none; background: none; width: 100%; text-align: left; font: inherit; color: #2a3040; }
+  .list { overflow-y: auto; flex: 1; padding: 4px 0 36px; }
+  .group-title { font-size: .7rem; text-transform: uppercase; letter-spacing: .06em; color: #9aa0b2; padding: 11px 14px 3px; position: sticky; top: 0; background: #f7f8fc; }
+  .item { display: flex; align-items: center; gap: 8px; padding: 5px 14px; cursor: pointer; border: none; background: none; width: 100%; text-align: left; font: inherit; color: #2a3040; }
   .item:hover { background: #eceefb; }
   .item.active { background: #e2e6fb; font-weight: 600; }
-  .item .name { flex: 1; font-size: .85rem; }
-  .badge { font-size: .72rem; width: 20px; text-align: center; flex: none; }
+  .item .name { flex: 1; font-size: .84rem; }
+  .badge { font-size: .72rem; width: 18px; text-align: center; flex: none; }
   .badge.exact { color: #1f9d57; }
   .badge.partial { color: #c87f12; }
   .badge.none { color: #c0392b; }
 
   .main { display: flex; flex-direction: column; min-width: 0; }
-  .topbar { border-bottom: 1px solid #e3e6ef; padding: 10px 16px; display: flex; align-items: center; gap: 12px; }
-  .topbar .title { font-weight: 600; }
-  .topbar .note { font-size: .8rem; color: #71778a; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .topbar a, .topbar button { font-size: .8rem; }
-  .topbar .pill { padding: 2px 8px; border-radius: 999px; font-size: .72rem; }
+  .topbar { border-bottom: 1px solid #e3e6ef; padding: 7px 14px; display: flex; align-items: center; gap: 8px 10px; flex-wrap: wrap; }
+  .topbar .title { font-weight: 600; font-size: .9rem; }
+  .topbar .note { font-size: .78rem; color: #71778a; flex: 1; min-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .topbar a, .topbar button { font-size: .78rem; }
+  .pill { padding: 2px 7px; border-radius: 3px; font-size: .72rem; }
   .pill.exact { background: #e3f6ec; color: #1f9d57; }
   .pill.partial { background: #fdf1dd; color: #c87f12; }
   .pill.none { background: #fae3df; color: #c0392b; }
-  .nav-btn { padding: 4px 10px; border: 1px solid #d6dae6; background: #fff; border-radius: 6px; cursor: pointer; }
+  .views { display: flex; gap: 4px; }
+  .vbtn { padding: 3px 9px; border: 1px solid #d6dae6; background: #fff; border-radius: 3px; cursor: pointer; }
+  .vbtn.active { background: #3f51b5; color: #fff; border-color: #3f51b5; }
+  .nav-btn { padding: 3px 9px; border: 1px solid #d6dae6; background: #fff; border-radius: 3px; cursor: pointer; }
   .nav-btn[disabled] { opacity: .4; cursor: default; }
   .src { color: #3f51b5; text-decoration: none; }
   .src:hover { text-decoration: underline; }
   iframe { flex: 1; width: 100%; border: 0; background: #fff; }
-  .placeholder { flex: 1; display: grid; place-items: center; color: #9aa0b2; }
+  .srcview { flex: 1; margin: 0; overflow: auto; background: #1e2030; color: #d7d9e6; padding: 14px 16px; font-family: ui-monospace, Menlo, monospace; font-size: .82rem; line-height: 1.5; white-space: pre; }
+  .placeholder { flex: 1; display: grid; place-items: center; color: #9aa0b2; padding: 1rem; text-align: center; }
 </style>
 </head>
 <body>
 
-<script type="jst" name="parity-hub" items current query status>
+<script type="jst" name="parity-hub" items current query status view jstsource originalsource>
   $ const all = items || [];
   $ const q = (query || '').toLowerCase();
   $ const sf = status || 'all';
+  $ const vw = view || 'preview';
   $ const shown = all.filter(it => (sf === 'all' || it.status === sf) && (!q || (it.framework + ' ' + it.name).toLowerCase().includes(q)));
   $ const frameworks = ['HTMX', 'Alpine.js', 'Vue', 'React'];
   $ const cur = all.find(it => it.file === current) || shown[0] || all[0];
@@ -72,7 +79,8 @@
   <div class="layout">
     <aside class="sidebar">
       <div class="sidebar-head">
-        <h1>JST parity — examples</h1>
+        <a class="home" href="../index.html">← JST home</a>
+        <h1>Framework parity — 70 examples</h1>
         <div class="tally">$(all.filter(i => i.status==='exact').length) exact · $(all.filter(i => i.status==='partial').length) partial · $(all.length) total</div>
         <input class="filter" placeholder="Filter examples…" @input="$(e => el.query = e.target.value)">
         <div class="status-filters">
@@ -102,13 +110,29 @@
         <div class="topbar">
           <span class="pill $(cur.status)">$(badge(cur.status))</span>
           <span class="title">$(cur.framework): $(cur.name)</span>
+          <span class="views">
+            <button class="vbtn $(vw==='preview'?'active':'')" @click="$(() => el.view = 'preview')">Preview</button>
+            <button class="vbtn $(vw==='jst'?'active':'')" @click="$(() => el.view = 'jst')">JST source</button>
+            <button class="vbtn $(vw==='original'?'active':'')" @click="$(() => el.view = 'original')">$(cur.framework) source</button>
+          </span>
           <span class="note" title="$(cur.note)">$(cur.note)</span>
-          <a class="src" href="$(cur.source)" target="_blank" rel="noopener">source ↗</a>
+          <a class="src" href="$(cur.source)" target="_blank" rel="noopener">docs ↗</a>
           <a class="src" href="../framework_parity/$(cur.file)" target="_blank" rel="noopener">open ↗</a>
-          <button class="nav-btn" $(prev ? '' : 'disabled') @click="$(() => prev && el.emit('go', prev.file))">‹ prev</button>
-          <button class="nav-btn" $(next ? '' : 'disabled') @click="$(() => next && el.emit('go', next.file))">next ›</button>
+          <button class="nav-btn" $(prev ? '' : 'disabled') @click="$(() => prev && el.emit('go', prev.file))">‹</button>
+          <button class="nav-btn" $(next ? '' : 'disabled') @click="$(() => next && el.emit('go', next.file))">›</button>
         </div>
-        <iframe src="../framework_parity/$(cur.file)" title="$(cur.name)"></iframe>
+
+        $ if (vw === 'jst') {
+          <pre class="srcview">$(jstsource || 'loading…')</pre>
+        $ } else if (vw === 'original') {
+          $ if (originalsource) {
+            <pre class="srcview">$(originalsource)</pre>
+          $ } else {
+            <div class="placeholder">The original $(cur.framework) source for this example hasn't been captured yet.</div>
+          $ }
+        $ } else {
+          <iframe src="../framework_parity/$(cur.file)" title="$(cur.name)"></iframe>
+        $ }
       $ } else {
         <div class="placeholder">No examples match the filter.</div>
       $ }
@@ -116,29 +140,44 @@
   </div>
 </script>
 
-<parity-hub id="hub" status="all"></parity-hub>
+<parity-hub id="hub" status="all" view="preview"></parity-hub>
 
 <script>
   const hub = document.getElementById('hub');
+  let examples = [];
+  let originals = {};
 
-  fetch('../framework_parity/examples.json')
-    .then(r => r.json())
-    .then(items => {
-      hub.items = items;
-      applyHash();
-    });
+  const srcUrl = file => '../framework_parity/' + file;
 
-  // Hash routing: #htmx/click-to-edit.html  → linkable, shareable, back/forward.
+  // Whenever the selected example changes, refresh both source views: the JST
+  // source is the example's own file; the framework source comes from the
+  // originals.json sidecar (keyed by the same file path).
+  async function setCurrent(file) {
+    hub.current = file;
+    const o = originals[file];
+    hub.originalsource = o ? o.code : '';
+    hub.jstsource = '';
+    try { hub.jstsource = await (await fetch(srcUrl(file))).text(); }
+    catch { hub.jstsource = '(could not load source)'; }
+  }
+
+  Promise.all([
+    fetch('../framework_parity/examples.json').then(r => r.json()).catch(() => []),
+    fetch('../framework_parity/originals.json').then(r => r.ok ? r.json() : {}).catch(() => ({})),
+  ]).then(([items, orig]) => {
+    examples = items;
+    originals = orig || {};
+    hub.items = items;
+    applyHash();
+  });
+
   function applyHash() {
-    const file = decodeURIComponent(location.hash.slice(1));
-    if (file) hub.current = file;
+    const file = decodeURIComponent(location.hash.slice(1)) || (examples[0] && examples[0].file);
+    if (file) setCurrent(file);
   }
   window.addEventListener('hashchange', applyHash);
-
-  // Sidebar / prev / next clicks set the hash (single source of truth).
   hub.addEventListener('go', e => { location.hash = e.detail; });
 
-  // Keyboard nav: ← / → (or j / k) move between visible examples.
   document.addEventListener('keydown', e => {
     if (e.target.tagName === 'INPUT') return;
     const nav = window.__nav || {};
