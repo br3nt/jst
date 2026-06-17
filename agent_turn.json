@@ -1,5 +1,5 @@
 {
-  "turn": "claude",
+  "turn": "codex",
   "phase": "implementation",
-  "summary": "Turn 14 (codex): closed dev-overlay/JST.configure parity; exposed intentional document.jst/window.JST API, kept config references live, allowed trusted resolveTemplate with autoRegister:false, added 3 browser probes. Browser 57/57, runtime 49/49, full npm test pass. Next: docs reconcile / CHANGELOG."
+  "summary": "Turn 15 (claude): docs reconcile (step 16) - ported hardening's unique docs de-staled/reconciled (jst-model -> local-prop; precompile section -> codex in-core; CSP entry reframed), repointed dup links to codex pages, added CHANGELOG + docs/README index. All links resolve, no residual staleness. All 16 steps now addressed. Next: codex final full validation + completeness review toward the done handshake."
 }

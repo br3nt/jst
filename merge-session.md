@@ -839,3 +839,68 @@ trust-boundary design and the documented `JST.configure(...)` shape.
 
 ### Handoff
 Over to **claude** for docs reconcile / CHANGELOG.
+
+---
+
+## Turn 15 — claude — docs reconcile + CHANGELOG + index (step 16)
+
+### 1. Previous commit review
+Reviewed Codex's Turn 14 (dev-overlay / configure parity). Accepted: exposing
+`document.jst` / `window.JST` deliberately, keeping config references live, the
+`autoRegister:false` + trusted-`resolveTemplate` combination, and the three probes
+(57/57) are all sound and match the trust-boundary design.
+
+### 2. Approach
+Codex's substrate already had 3 docs (`production.md`, `decision-guide.md`,
+`hateoas-fragments.md`). I ported Hardening's **unique** pages and skipped the
+duplicates (Hardening's `production-path.md` / `server-fragments.md` →
+re-pointed every link to Codex's `production.md` / `hateoas-fragments.md`), so
+there's one canonical page per topic.
+
+### 3. What changed
+- Ported (de-staled/reconciled): `controlled-components.md`, `no-store-no-proxy.md`,
+  `security-model.md`, `install.md`, `browser-support.md`, `known-gaps.md`,
+  `use-jst-when.md`, `avoid-jst-when.md`.
+- **Reconciled to the merged runtime:**
+  - `controlled-components.md`: rewrote the `jst-model` section from events-up
+    ("emits `text`") to the agreed **local host-property** semantics (read/write
+    `el[prop]`; explicit `.value` + emit for owned state). `el.emit` / "events up"
+    elsewhere is correct and kept.
+  - `known-gaps.md`: rewrote the precompile section — it described Hardening's
+    `scripts/precompile.mjs` + `precompile/register.mjs` **innerHTML shim** (wrong
+    for this tree). The merged precompile is Codex's in-core `tools/precompile.mjs`
+    + `registerPrecompiledTemplate`, which renders through the normal runtime, so
+    morphing/keyed/form-state/SSR/modifiers are preserved. Also fixed the stale
+    "in progress" label vocabulary.
+  - `avoid-jst-when.md`: the "strict CSP" entry said precompile was "in progress /
+    not a fit" — reframed: strict CSP **is** supported via precompile; the only
+    real tension is strict-CSP *and* zero-build at once.
+- Added `CHANGELOG.md` (merged 0.1.0 reflecting both branches + agreed semantics).
+- Added `docs/README.md` index linking all docs + the HATEOAS demo + parity study.
+
+### 4. Validation
+- All internal `.md` links across `docs/` resolve; index references
+  (`demo/hateoas`, `framework_parity`, `CHANGELOG.md`) all exist.
+- Residual-staleness sweep clean (no `scripts/precompile` / `precompile/register` /
+  "being added" / "until it ships" left; all `jst-model` mentions use local-prop
+  framing).
+- Parity `README.md` / `JST_PRIMER.md`: no stale capability claims (Codex fixed the
+  primer's `jst-model` in Turn 14) — nothing to change.
+- Docs are `.md` (not loaded by the test suites), so node/browser/example/parity
+  gates are unaffected.
+
+### 5. Plan status — all 16 steps now addressed
+Steps 1–16 are complete or explicitly converged. Remaining before the `done`
+handshake: a final end-to-end `npm test` (incl. tooling deps) and a completeness
+pass. Optional polish: a link to `demo/hateoas/` from the root `index.html`
+landing page (the docs index already links it).
+
+### 6. Next recommended turn (codex)
+Run a **final full validation + completeness review**: `npm ci --prefix
+tooling/vscode-jst` then `npm test` end-to-end, and check the integration branch
+against the Turn 1 ownership table / 16-step plan. If everything passes and you're
+satisfied, state your agreement that the merge is complete and hand back — I'll
+do my own final pass and, if we concur, set `agent_turn.json` to `done`.
+
+### Handoff
+Over to **codex** for final validation + completeness review.
