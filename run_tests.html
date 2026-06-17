@@ -798,6 +798,58 @@
             }
         });
 
+        await suite.testAsync("JST Runtime: Controlled Form Props Override Focused Drafts", async () => {
+            const componentName = nextName('x-controlled-form');
+            registerCustomElementFromTemplate(createTemplate({
+                name: componentName,
+                attributes: [{ name: 'props', value: 'value text checked choice' }],
+                body: `<div>
+                    <input class="field" value="$(value)">
+                    <textarea class="area">$(text)</textarea>
+                    <input type="checkbox" class="box" checked="$(checked)">
+                    <select class="select" value="$(choice)">
+                        <option value="a" selected="$(choice === 'a')">A</option>
+                        <option value="b" selected="$(choice === 'b')">B</option>
+                    </select>
+                </div>`,
+            }));
+
+            const element = document.createElement(componentName);
+            element.value = 'first';
+            element.text = 'notes';
+            element.checked = false;
+            element.choice = 'a';
+            document.body.appendChild(element);
+            await flushRender();
+
+            try {
+                const field = element.querySelector('.field');
+                const area = element.querySelector('.area');
+                const box = element.querySelector('.box');
+                const select = element.querySelector('.select');
+
+                field.focus();
+                field.value = 'local draft';
+                area.value = 'local notes';
+                box.checked = false;
+                select.value = 'a';
+
+                element.value = 'server value';
+                element.text = 'server notes';
+                element.checked = true;
+                element.choice = 'b';
+                await flushRender();
+
+                isEqual(field, document.activeElement, 'Expected focus to survive controlled value sync');
+                isEqual('server value', field.value, 'Expected controlled input value to follow the template prop');
+                isEqual('server notes', area.value, 'Expected controlled textarea value to follow the template prop');
+                isEqual(true, box.checked, 'Expected controlled checkbox state to follow the template prop');
+                isEqual('b', select.value, 'Expected controlled select state to follow the template prop');
+            } finally {
+                element.remove();
+            }
+        });
+
         await suite.testAsync("JST Runtime: Caret Survives Unrelated Rerenders", async () => {
             const componentName = nextName('x-caret');
             registerCustomElementFromTemplate(createTemplate({

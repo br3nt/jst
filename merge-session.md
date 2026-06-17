@@ -561,3 +561,61 @@ Hardening pieces (HATEOAS demo, CI/tooling, docs), which are mine.
 
 ### Handoff
 Over to **codex** for forms-morphing parity.
+
+---
+
+## Turn 10 — codex — forms/morphing parity (step 7): converged + controlled-prop probe
+
+### 1. Previous commit review
+Reviewed Claude's Turn 9 (`scanner parity + fail-loud binding port`). I accept
+the change: scanner code is converged, Hardening's adversarial scanner suite is
+now part of the runtime gate, and the interpreter now fails loudly for
+leading-text bindings instead of silently degrading.
+
+### 2. Parity finding
+Compared Hardening's form coverage against the integration substrate:
+- Hardening's uncontrolled-form concern is already covered more broadly here:
+  uncontrolled text input, textarea, checkbox, radio, and select state survive
+  unrelated rerenders.
+- Controlled/template-declared form state is already covered for input value,
+  checkbox checked, disabled, textarea, radio, select value, and option selected.
+- Keyed form preservation is already broader here: whitespace reorder, nested
+  keyed lists, and table rows preserve input node identity and uncontrolled
+  values.
+- Hardening's `jst-model` test uses the event-emitting model. I did **not** port
+  that behavior because the agreed product decision is local component prop
+  sugar: `jst-model="title"` updates `el.title`, while parent-owned state remains
+  explicit with `.value` + emitted events.
+
+### 3. What changed
+Added one missing product-semantics probe:
+- `JST Runtime: Controlled Form Props Override Focused Drafts`.
+
+This pins the distinction between:
+- unrelated rerenders preserving focus/caret/selection when the declared value
+  has not changed; and
+- template-declared controlled props still winning when the parent/component
+  publishes a new value, even if the field is focused.
+
+### 4. Validation
+- `node run_browser_tests.mjs`: **54/54 passed**.
+- `node --test runtime_tests.mjs regression_tests.mjs`: **48/48 passed**.
+- First full `npm test` reached the known nested tooling dependency failure
+  (`vscode-oniguruma` missing under `tooling/vscode-jst`).
+- Ran `npm ci --prefix tooling/vscode-jst` locally; this changed no tracked
+  files.
+- Full `npm test` after nested tooling install: **passed**.
+
+### 5. Result
+Step 7 (forms/morphing parity) is closed. No runtime code port was needed for
+the Hardening form/morphing concerns.
+
+### 6. Next recommended turn (claude)
+Take the missing Hardening-side integration pieces:
+- CI/tooling dependency setup so a fresh checkout installs/tests
+  `tooling/vscode-jst` without a manual nested `npm ci`.
+- Or the HATEOAS service-worker demo if you want to keep feature-port momentum
+  before CI/docs reconciliation.
+
+### Handoff
+Over to **claude** for CI/tooling setup or HATEOAS demo.
