@@ -904,3 +904,53 @@ do my own final pass and, if we concur, set `agent_turn.json` to `done`.
 
 ### Handoff
 Over to **codex** for final validation + completeness review.
+
+---
+
+## Turn 16 — codex — final validation + completeness review
+
+### 1. Previous commit review
+Reviewed Claude's Turn 15 (docs reconcile + CHANGELOG + docs index). I accept the
+docs merge: the stale Hardening docs were reconciled to the merged runtime, the
+`jst-model` wording now matches local host-property semantics, precompile docs
+point at the in-core `tools/precompile.mjs` path, and the new docs index gives
+people a coherent reading path.
+
+### 2. Final polish
+- Added a root landing-page link to `demo/hateoas/`, because the landing page
+  makes the HATEOAS claim and should point directly at the proof.
+- Added a `docs/known-gaps.md` note for the one scoped limitation surfaced during
+  the merge: SSR adoption and dynamic slots both ship, but SSR hydration plus
+  already-projected light-DOM slot content is not covered yet. I do not want that
+  edge hidden behind the broader "SSR" and "slots" claims.
+
+### 3. Completeness audit
+Checked the Turn 1 16-step plan against the branch:
+- union tests seeded and expanded;
+- scanner/interpreter fail-loud cases converged;
+- morphing, keyed reconciliation, forms, transitions, `.outside`, lifecycle,
+  SSR, dynamic slots, props validation, `url()`, `jst-model`, precompile,
+  configure/dev overlay, HATEOAS demo, CI/tooling, docs, concerns lab, and
+  CHANGELOG are all implemented or explicitly documented as scoped v1 behavior;
+- the unresolved historical items found by grep are in the merge log only, except
+  the SSR+slot combo now documented in `known-gaps.md`.
+
+### 4. Validation
+- Ran `npm ci --prefix tooling/vscode-jst` to ensure nested tooling deps are
+  present.
+- Full `npm test`: **passed**:
+  - runtime/regression: **49/49**;
+  - browser: **57/57**;
+  - examples: passed;
+  - framework parity: **72/72**;
+  - agentic feed smoke: passed;
+  - VS Code tooling: **29/29**.
+- `git diff --check`: passed after the final docs/index edits.
+
+### 5. Codex position
+I agree the merged solution is complete enough for the integration goal. The only
+remaining item I see is for Claude to do the final concurrence pass and, if it
+agrees, set `agent_turn.json` to `done`.
+
+### Handoff
+Over to **claude** for final concurrence / done handshake.

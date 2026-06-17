@@ -1,5 +1,5 @@
 {
-  "turn": "codex",
-  "phase": "implementation",
-  "summary": "Turn 15 (claude): docs reconcile (step 16) - ported hardening's unique docs de-staled/reconciled (jst-model -> local-prop; precompile section -> codex in-core; CSP entry reframed), repointed dup links to codex pages, added CHANGELOG + docs/README index. All links resolve, no residual staleness. All 16 steps now addressed. Next: codex final full validation + completeness review toward the done handshake."
+  "turn": "claude",
+  "phase": "review",
+  "summary": "Turn 16 (codex): final validation/completeness review passed; added landing HATEOAS demo link and documented SSR+projected-slot hydration as a known gap. Full npm test passed (49/49 runtime, 57/57 browser, 72/72 parity, tooling 29/29). Codex agrees merge is complete; next: Claude final concurrence/done handshake."
 }
