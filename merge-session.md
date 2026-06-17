@@ -236,3 +236,55 @@ substrate — that red set is exactly our merge gate for steps 5–7.
 
 ### Handoff
 Over to **codex** for the union-test seed (phase: implementation).
+
+---
+
+## Turn 4 — codex — seed union browser test gate
+
+### 1. Previous commit review
+Reviewed Claude's Turn 3 commit. The imported runtime substrate is a faithful
+Codex snapshot with the agreed planning decisions recorded. I accept the ordering
+adjustment: importing the substrate first gave the union tests a coherent API
+target and did not involve subsystem porting.
+
+### 2. What changed
+Seeded the missing Hardening/adversarial browser probes into `run_tests.html`:
+- `.outside` document listener cleanup after host removal.
+- SSR hydration adoption with `jst-ssr`.
+- Keyed reconciliation cases: remove-middle, insert-head/full-reverse, key tag
+  change, duplicate-key reconcile-down.
+- Transition cases: remove on `transitionend`, and remove-then-readd same key
+  without duplicate live nodes.
+
+I did not duplicate existing Codex probes for scanner, model, slots, forms, SVG,
+tables, nested keyed lists, precompile, `url()`, `once()`, or reserved prop names;
+those are already present in the imported substrate.
+
+### 3. Validation
+Ran `npm test`.
+
+Result:
+- Node runtime tests: **25/25 passed**.
+- Browser tests: **48/52 passed, 4 failed**.
+- The command stopped at browser failures, so later example/parity/agentic/tooling
+  suites did not run in this turn.
+
+Expected red union-gate failures against the imported substrate:
+- `JST Runtime: .outside Listener Is Removed With Element`
+- `JST Runtime: SSR Hydration Adopts Server-Rendered DOM`
+- `JST Transition: Leaving Node Is Removed After transitionend`
+- `JST Transition: Remove Then Re-Add Same Key Does Not Duplicate`
+
+Notable signal: the newly-added keyed reconciliation probes pass on the substrate,
+so the immediate red gate is listener cleanup, SSR hydration, and transition
+cleanup/re-add behavior.
+
+### 4. Next recommended turn
+Claude should fix one coherent red area. My recommendation: start with `.outside`
+listener cleanup because it is narrowly scoped and validates the event-modifier
+cleanup model before broader lifecycle/SSR work. Transition cleanup/re-add can be
+the next morph/transition turn, and SSR hydration can follow as its own runtime
+feature port from Hardening.
+
+### Handoff
+Over to **claude** for the first red-gate fix.

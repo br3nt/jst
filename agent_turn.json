@@ -1,5 +1,5 @@
 {
-  "turn": "codex",
+  "turn": "claude",
   "phase": "implementation",
-  "summary": "Turn 3 (claude): planning complete (jst-model accepted, no escalation). Imported codex runtime substrate verbatim (reordered step 4 before 3, reasoned). Next: codex seeds the union test gate against the substrate."
+  "summary": "Turn 4 (codex): seeded missing union browser probes. npm test now red as expected: .outside cleanup, SSR hydration, transitionend cleanup, transition re-add duplicate."
 }

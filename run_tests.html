@@ -498,6 +498,28 @@
             }
         });
 
+        await suite.testAsync("JST Runtime: .outside Listener Is Removed With Element", async () => {
+            const componentName = nextName('x-outside-cleanup');
+            registerCustomElementFromTemplate(createTemplate({
+                name: componentName,
+                attributes: [],
+                body: `<button class="inside" type="button" @click.outside="$(() => el.emit('outside-after-remove'))">inside</button>`,
+            }));
+
+            const element = document.createElement(componentName);
+            let fired = 0;
+            element.addEventListener('outside-after-remove', () => { fired++; });
+
+            document.body.appendChild(element);
+            await flushRender();
+
+            element.remove();
+            document.body.click();
+            await flushRender();
+
+            isEqual(0, fired, 'Expected document-level .outside listener to be cleaned up when host is removed');
+        });
+
         await suite.testAsync("JST Runtime: jst-model Updates Local Prop State", async () => {
             const componentName = nextName('x-model');
             registerCustomElementFromTemplate(createTemplate({
@@ -571,6 +593,33 @@
                 isEqual('b,c', element.choices.join(','), 'Expected jst-model to update multi-select props');
             } finally {
                 element.remove();
+            }
+        });
+
+        await suite.testAsync("JST Runtime: SSR Hydration Adopts Server-Rendered DOM", async () => {
+            const componentName = nextName('x-ssr');
+            registerCustomElementFromTemplate(createTemplate({
+                name: componentName,
+                attributes: [{ name: 'props', value: 'label' }],
+                body: `<p class="out">$(label)</p>`,
+            }));
+
+            const host = document.createElement('div');
+            host.innerHTML = `<${componentName} label="Hi" jst-ssr><p class="out">Hi</p></${componentName}>`;
+            const element = host.firstElementChild;
+            const serverNode = element.querySelector('.out');
+            document.body.appendChild(host);
+            await flushRender();
+
+            try {
+                isEqual(serverNode, element.querySelector('.out'), 'Expected hydration to adopt the existing node, not replace it');
+                isEqual(false, element.hasAttribute('jst-ssr'), 'Expected the jst-ssr marker to be removed after hydration');
+
+                element.label = 'Updated';
+                await flushRender();
+                isEqual('Updated', element.querySelector('.out').textContent, 'Expected the hydrated component to stay reactive');
+            } finally {
+                host.remove();
             }
         });
 
@@ -906,6 +955,119 @@
             }
         });
 
+        const makeKeyedListTemplate = (componentName) => createTemplate({
+            name: componentName,
+            attributes: [{ name: 'props', value: 'items' }],
+            body: `<ul>
+                $ (items || []).forEach(item => {
+                    $ if (item.tag === 'div') {
+                        <div jst-key="$(item.id)" data-k="$(item.id)">$(item.label)</div>
+                    $ } else {
+                        <li jst-key="$(item.id)" data-k="$(item.id)">$(item.label)</li>
+                    $ }
+                $ })
+            </ul>`,
+        });
+
+        await suite.testAsync("JST Keyed: Remove From Middle Reuses Survivors", async () => {
+            const componentName = nextName('x-keyed-middle');
+            registerCustomElementFromTemplate(makeKeyedListTemplate(componentName));
+
+            const element = document.createElement(componentName);
+            element.items = [{ id: 'a', label: 'A' }, { id: 'b', label: 'B' }, { id: 'c', label: 'C' }];
+            document.body.appendChild(element);
+            await flushRender();
+
+            try {
+                const a = element.querySelector('[data-k="a"]');
+                const c = element.querySelector('[data-k="c"]');
+                a.__jstIdentity = 'A';
+                c.__jstIdentity = 'C';
+
+                element.items = [{ id: 'a', label: 'A' }, { id: 'c', label: 'C' }];
+                await flushRender();
+
+                isEqual('a,c', Array.from(element.querySelectorAll('[data-k]')).map(node => node.getAttribute('data-k')).join(','), 'Expected middle keyed node to be removed');
+                isEqual('A', element.querySelector('[data-k="a"]').__jstIdentity, 'Expected leading survivor to be reused');
+                isEqual('C', element.querySelector('[data-k="c"]').__jstIdentity, 'Expected trailing survivor to be reused');
+                isEqual(2, element.querySelectorAll('[data-k]').length, 'Expected exactly two keyed nodes');
+            } finally {
+                element.remove();
+            }
+        });
+
+        await suite.testAsync("JST Keyed: Insert At Head And Reverse Preserve Identity", async () => {
+            const componentName = nextName('x-keyed-head');
+            registerCustomElementFromTemplate(makeKeyedListTemplate(componentName));
+
+            const element = document.createElement(componentName);
+            element.items = [{ id: 'b', label: 'B' }, { id: 'c', label: 'C' }];
+            document.body.appendChild(element);
+            await flushRender();
+
+            try {
+                element.querySelector('[data-k="b"]').__jstIdentity = 'B';
+                element.querySelector('[data-k="c"]').__jstIdentity = 'C';
+
+                element.items = [{ id: 'a', label: 'A' }, { id: 'b', label: 'B' }, { id: 'c', label: 'C' }];
+                await flushRender();
+                isEqual('a,b,c', Array.from(element.querySelectorAll('[data-k]')).map(node => node.getAttribute('data-k')).join(','), 'Expected head insert order');
+                isEqual('B', element.querySelector('[data-k="b"]').__jstIdentity, 'Expected existing middle node to survive head insert');
+
+                element.items = [{ id: 'c', label: 'C' }, { id: 'b', label: 'B' }, { id: 'a', label: 'A' }];
+                await flushRender();
+                isEqual('c,b,a', Array.from(element.querySelectorAll('[data-k]')).map(node => node.getAttribute('data-k')).join(','), 'Expected reversed order');
+                isEqual('C', element.querySelector('[data-k="c"]').__jstIdentity, 'Expected C to survive reverse');
+                isEqual('B', element.querySelector('[data-k="b"]').__jstIdentity, 'Expected B to survive reverse');
+            } finally {
+                element.remove();
+            }
+        });
+
+        await suite.testAsync("JST Keyed: Key With Changed Tag Is Replaced Cleanly", async () => {
+            const componentName = nextName('x-keyed-tag');
+            registerCustomElementFromTemplate(makeKeyedListTemplate(componentName));
+
+            const element = document.createElement(componentName);
+            element.items = [{ id: 'a', label: 'A', tag: 'li' }, { id: 'b', label: 'B', tag: 'li' }];
+            document.body.appendChild(element);
+            await flushRender();
+
+            try {
+                element.items = [{ id: 'a', label: 'A', tag: 'div' }, { id: 'b', label: 'B', tag: 'li' }];
+                await flushRender();
+
+                const aNodes = element.querySelectorAll('[data-k="a"]');
+                isEqual(1, aNodes.length, 'Expected exactly one node for changed key');
+                isEqual('DIV', aNodes[0]?.tagName, 'Expected changed key to use the new tag');
+                isEqual('a,b', Array.from(element.querySelectorAll('[data-k]')).map(node => node.getAttribute('data-k')).join(','), 'Expected keyed order to stay intact');
+                isEqual(2, element.querySelectorAll('[data-k]').length, 'Expected no stale keyed duplicates');
+            } finally {
+                element.remove();
+            }
+        });
+
+        await suite.testAsync("JST Keyed: Duplicate Keys Do Not Crash And Reconcile Down", async () => {
+            const componentName = nextName('x-keyed-duplicate');
+            registerCustomElementFromTemplate(makeKeyedListTemplate(componentName));
+
+            const element = document.createElement(componentName);
+            element.items = [{ id: 'a', label: 'A1' }, { id: 'a', label: 'A2' }];
+            document.body.appendChild(element);
+            await flushRender();
+
+            try {
+                isEqual(2, element.querySelectorAll('[data-k="a"]').length, 'Expected duplicate keys to render both nodes');
+
+                element.items = [{ id: 'a', label: 'A1b' }];
+                await flushRender();
+
+                isEqual(1, element.querySelectorAll('[data-k="a"]').length, 'Expected duplicate keyed list to reconcile down');
+            } finally {
+                element.remove();
+            }
+        });
+
         await suite.testAsync("JST Runtime: jst-key Preserves Node Identity On Reorder", async () => {
             const componentName = nextName('x-keyed-list');
             registerCustomElementFromTemplate(createTemplate({
@@ -1214,6 +1376,77 @@
             } finally {
                 element.remove();
                 style.remove();
+            }
+        });
+
+        await suite.testAsync("JST Transition: Leaving Node Is Removed After transitionend", async () => {
+            const style = document.createElement('style');
+            style.textContent = `.fade-leave-active { transition: opacity 30ms linear; } .fade-leave-from { opacity: 1; } .fade-leave-to { opacity: 0; }`;
+            document.head.appendChild(style);
+
+            const componentName = nextName('x-transition-end');
+            registerCustomElementFromTemplate(createTemplate({
+                name: componentName,
+                attributes: [{ name: 'props', value: 'items' }],
+                body: `<ul>
+                    $ items.forEach(item => {
+                        <li jst-key="$(item)" jst-transition="fade" data-k="$(item)">$(item)</li>
+                    $ })
+                </ul>`,
+            }));
+
+            const frame = () => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+            const element = document.createElement(componentName);
+            element.items = ['a', 'b'];
+            document.body.appendChild(element);
+            await flushRender();
+
+            try {
+                element.items = ['b'];
+                await flushRender();
+                const leaving = element.querySelector('[data-k="a"]');
+                isEqual(true, !!leaving && leaving.hasAttribute('data-jst-leaving'), 'Expected leaving node to be held and marked');
+
+                await frame();
+                await new Promise(resolve => setTimeout(resolve, 0));
+                leaving.dispatchEvent(new Event('transitionend'));
+                await new Promise(resolve => setTimeout(resolve, 0));
+
+                isEqual(0, element.querySelectorAll('[data-k="a"]').length, 'Expected leaving node to be removed after transitionend');
+                isEqual('b', element.querySelector('[data-k="b"]')?.getAttribute('data-k'), 'Expected survivor to remain');
+            } finally {
+                element.remove();
+                style.remove();
+            }
+        });
+
+        await suite.testAsync("JST Transition: Remove Then Re-Add Same Key Does Not Duplicate", async () => {
+            const componentName = nextName('x-transition-readd');
+            registerCustomElementFromTemplate(createTemplate({
+                name: componentName,
+                attributes: [{ name: 'props', value: 'items' }],
+                body: `<ul>
+                    $ items.forEach(item => {
+                        <li jst-key="$(item)" jst-transition="fade" data-k="$(item)">$(item)</li>
+                    $ })
+                </ul>`,
+            }));
+
+            const element = document.createElement(componentName);
+            element.items = ['a'];
+            document.body.appendChild(element);
+            await flushRender();
+
+            try {
+                element.items = [];
+                await flushRender();
+                element.items = ['a'];
+                await flushRender();
+
+                const live = Array.from(element.querySelectorAll('[data-k="a"]')).filter(node => !node.hasAttribute('data-jst-leaving'));
+                isEqual(1, live.length, 'Expected exactly one live node after re-adding a leaving key');
+            } finally {
+                element.remove();
             }
         });
 
