@@ -54,6 +54,24 @@ function mergeJsTokens(templateTokens) {
 //   `.prop="` assigns the expression value as a JS property after morphing
 //   `@event="` attaches the expression value with addEventListener after morphing
 const bindingTailPattern = /(^|\s)([.@])([a-zA-Z_$][\w$-]*(?:\.[\w$-]+)*)\s*=\s*(["'])$/
+// Same opener, but anywhere in the chunk — used to detect a binding whose value
+// has leading literal text (`@click="run $(fn)"`) before the expression.
+const bindingOpenerPattern = /(^|\s)([.@])([a-zA-Z_$][\w$-]*(?:\.[\w$-]+)*)\s*=\s*(["'])/g
+
+// A binding opener with trailing literal text and no closing quote in the same
+// chunk means the value is text + expression (e.g. `@click="run $(fn)"`). A valid
+// binding has the opener at the very end of the chunk (empty remainder). Fail loud
+// rather than silently degrading the binding to a plain string attribute.
+function assertNoLeadingTextBinding(html) {
+  bindingOpenerPattern.lastIndex = 0
+  let match
+  while ((match = bindingOpenerPattern.exec(html))) {
+    const remainder = html.slice(bindingOpenerPattern.lastIndex)
+    if (remainder.length > 0 && !remainder.includes(match[4])) {
+      throw new Error(`JST: ${match[2]}${match[3]}="…" must contain exactly one $(…) expression and nothing else inside the quotes.`)
+    }
+  }
+}
 
 function matchBinding(tokens, i) {
   const token = tokens[i]
@@ -61,6 +79,8 @@ function matchBinding(tokens, i) {
   const closingToken = tokens[i + 2]
 
   if (!(token instanceof HtmlToken)) return null
+
+  assertNoLeadingTextBinding(token.html)
 
   const match = token.html.match(bindingTailPattern)
   if (!match) return null
@@ -70,7 +90,7 @@ function matchBinding(tokens, i) {
   if (!(expressionToken instanceof JsExpressionToken)
     || !(closingToken instanceof HtmlToken)
     || !closingToken.html.startsWith(quote)) {
-    throw new Error(`JST binding ${sigil}${name} must contain exactly one $(...) expression`)
+    throw new Error(`JST: ${sigil}${name}="…" must contain exactly one $(…) expression and nothing else inside the quotes.`)
   }
 
   return {

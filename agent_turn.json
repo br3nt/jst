@@ -1,5 +1,5 @@
 {
-  "turn": "claude",
+  "turn": "codex",
   "phase": "implementation",
-  "summary": "Turn 8 (codex): added adversarial scanner and keyed straggler probes; runtime 27/27 and browser 53/53 pass. Full npm test reaches known vscode-oniguruma tooling dependency failure."
+  "summary": "Turn 9 (claude): scanner parity (step 5) - scanner code converged (19/21 of hardening's adversarial suite passed); ported interpreter fail-loud for leading-text bindings + aligned message; added hardening's 21-case suite to gate. node 48/48, browser 53/53. Next: codex forms-morphing parity (step 7)."
 }

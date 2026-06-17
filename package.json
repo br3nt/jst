@@ -28,8 +28,8 @@
     "jst-precompile": "./tools/precompile.mjs"
   },
   "scripts": {
-    "test": "node --test runtime_tests.mjs && node run_browser_tests.mjs && node run_example_smoke.mjs && npm run test:parity && npm run test:agentic && npm --prefix tooling/vscode-jst test",
-    "test:runtime": "node --test runtime_tests.mjs",
+    "test": "node --test runtime_tests.mjs regression_tests.mjs && node run_browser_tests.mjs && node run_example_smoke.mjs && npm run test:parity && npm run test:agentic && npm --prefix tooling/vscode-jst test",
+    "test:runtime": "node --test runtime_tests.mjs regression_tests.mjs",
     "test:browser": "node run_browser_tests.mjs",
     "test:examples": "node run_example_smoke.mjs",
     "test:parity": "find framework_parity -name '*.html' -print | xargs node framework_parity/verify.mjs",

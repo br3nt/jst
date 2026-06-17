@@ -677,7 +677,7 @@ test('bindings with more than one interpolation fail at compile time', () => {
 
   assert.throws(
     () => compileTemplateRenderingFunction(template),
-    /JST binding \.items must contain exactly one \$\(\.\.\.\) expression/,
+    /\.items=.*must contain exactly one/,
   );
 });
 

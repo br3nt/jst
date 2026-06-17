@@ -493,3 +493,71 @@ dependency setup.
 ### Handoff
 Over to **claude** for scanner parity review or the next subsystem if scanner is
 already converged.
+
+---
+
+## Turn 9 — claude — scanner parity review (step 5): converged + fail-loud port
+
+### 1. Previous commit review
+Reviewed Codex's Turn 8 (`adversarial scanner + straggler probes`). Probes are
+green on the substrate; I accept the reframing of step 5 as a parity review.
+
+### 2. Parity method + finding
+Ran Hardening's **own** 21-case adversarial scanner suite (`regression_tests.mjs`)
+against the **integration** scanner (export surfaces are compatible). Result
+before any change: **19/21 pass**. So the scanner *code* (`input_reader.js`,
+`lexer.js`) is at parity — every scanner-level case (regex-vs-division,
+`<`-tag-vs-less-than, template-literal `${}` nesting, comments, `$item1` digits,
+`$ line` edges) already passes. **No scanner-file port needed.** (Confirms Codex's
+Turn 8 signal, and shows the substrate scanner is stronger than my pre-merge
+review assumed.) Note: I deliberately did **not** port Hardening's `compiler.js`
+— it still contains the broken `expandModelSugar` (regex-over-source jst-model);
+the substrate correctly omits it.
+
+The 2 failures were **interpreter-level binding fail-loud gaps**, not scanner:
+- **Real gap:** `@click="run $(fn)"` (literal text before the expression) silently
+  degraded to plain HTML — the substrate's tail pattern is end-anchored and never
+  saw it. Ported Hardening's `assertNoLeadingTextBinding` (+ `bindingOpenerPattern`)
+  into `interpreter.js`.
+- **Message gap:** the multi-interpolation case (`.items="$(a)$(b)"`) already
+  *threw* in the substrate, but with a terser message. Aligned it to Hardening's
+  more descriptive `… must contain exactly one $(…) expression and nothing else
+  inside the quotes.`
+
+### 3. What changed
+- `interpreter.js`: added `assertNoLeadingTextBinding`; aligned the malformed-binding error message.
+- `regression_tests.mjs`: added Hardening's full 21-case adversarial suite to the gate (purely additive new file).
+- `package.json`: `test` / `test:runtime` now run `runtime_tests.mjs regression_tests.mjs`.
+- `runtime_tests.mjs`: reconciled one duplicate assertion — Codex's "more than one
+  interpolation" test asserted the old message; relaxed it to `/\.items=.*must
+  contain exactly one/` so both suites agree on the canonical message.
+
+### 4. Validation
+- `node --test runtime_tests.mjs regression_tests.mjs`: **48/48** (27 + 21).
+- `node run_browser_tests.mjs`: **53/53**.
+- examples / parity (72/72) / agentic: all pass.
+- Tooling: same known `vscode-oniguruma` dep gap (CI turn).
+
+### 5. Discoveries for later turns
+- **Step 8 export gap is already fixed in the substrate:** `package.json` `files`
+  already lists `tools/precompile.mjs` and `exports` includes `./precompile`. So
+  step 8 is "verify precompile build/tests," not "fix the npm-pack gap" (that was
+  a Hardening-branch problem the Codex substrate doesn't have).
+- **Step 9 (props reserved names) appears already satisfied:** the substrate's
+  `props ... reject helper and JS keyword names` test passes — confirm it rejects
+  `class`/`el`/`raw` and treat as done.
+- **Pattern:** the Codex substrate is more complete than my pre-merge review
+  assumed; several "Hardening contributions" are already present/converged. The
+  clearly-missing Hardening pieces are: HATEOAS service-worker demo (step 14), CI
+  + tooling-dep install (step 15), and docs reconcile (step 16).
+
+### 6. Next recommended turn (codex)
+Take **forms-morphing parity (step 7)** — your morph/forms substrate, your best
+context. Mirror my method: run/add Hardening's uncontrolled-form probes
+(checkbox/radio/select/textarea preserved across rerender; controlled =
+template-declared) against the substrate; if all green, mark step 7 converged; if
+a gap appears, fix it. After that the remaining work is mostly the missing
+Hardening pieces (HATEOAS demo, CI/tooling, docs), which are mine.
+
+### Handoff
+Over to **codex** for forms-morphing parity.
