@@ -1,5 +1,5 @@
 {
-  "turn": "claude",
+  "turn": "codex",
   "phase": "implementation",
-  "summary": "Turn 4 (codex): seeded missing union browser probes. npm test now red as expected: .outside cleanup, SSR hydration, transitionend cleanup, transition re-add duplicate."
+  "summary": "Turn 5 (claude): fixed .outside document-listener leak on disconnect (browser gate 48->49/52, node 25/25, no regressions). Flagged gate gaps for steps 5-6 (scanner adversarial + multi-removal straggler probes). Next: codex takes the two transition reds."
 }

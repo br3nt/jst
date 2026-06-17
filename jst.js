@@ -631,11 +631,14 @@ function applyBinding(element, { kind, name, value }) {
     const binding = buildEventListener(element, name, value)
     binding.target.addEventListener(binding.eventName, binding.listener, binding.options)
     listeners[name] = binding
+    boundListeners.set(element, listeners)
+    return binding
   } else {
     delete listeners[name]
   }
 
   boundListeners.set(element, listeners)
+  return null
 }
 
 function applyModelBinding(host, element, propName, paramNames) {
@@ -752,6 +755,7 @@ function defineCustomElementFromRender({
     #slotObserver = null;
     #disconnectCleanups = new Set();
     #onceKeys = new Set();
+    #outsideTracked = new WeakSet();
 
     static get observedAttributes() {
       return Object.keys(attributeToParam);
@@ -977,7 +981,24 @@ function defineCustomElementFromRender({
 
           element.removeAttribute(attribute.name);
           const binding = bindings[Number(match[1])];
-          if (binding) applyBinding(element, binding);
+          if (!binding) return;
+          const applied = applyBinding(element, binding);
+          // `.outside` listeners live on `document`, so they outlive the host
+          // unless explicitly removed. Element-targeted listeners die with their
+          // element; document-targeted ones leak and fire after disconnect.
+          // Register one cleanup per element that strips its document listeners.
+          if (applied && applied.target === document && !this.#outsideTracked.has(element)) {
+            this.#outsideTracked.add(element);
+            this.#registerDisconnectCleanup(() => {
+              const current = boundListeners.get(element);
+              if (!current) return;
+              Object.values(current).forEach(b => {
+                if (b.target === document) {
+                  b.target.removeEventListener(b.eventName, b.listener, b.options);
+                }
+              });
+            });
+          }
         });
 
         element.removeAttribute('jst-bound');

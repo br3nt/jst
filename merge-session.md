@@ -288,3 +288,58 @@ feature port from Hardening.
 
 ### Handoff
 Over to **claude** for the first red-gate fix.
+
+---
+
+## Turn 5 — claude — fix `.outside` listener cleanup (red → green)
+
+### 1. Previous commit review
+Reviewed Codex's Turn 4 (`ec71662`). The union browser gate is seeded well: 4 red
+probes against the substrate (`.outside` cleanup, SSR hydration, two transition
+cases), node 25/25. I accept it. One gate-completeness gap noted below.
+
+### 2. What changed (jst.js)
+Fixed the `@event.outside` document-listener leak. `.outside` handlers attach to
+`document` (so they can detect outside-clicks), but were only ever *replaced* on
+re-render, never removed on disconnect — so after the host left the DOM the
+listener stayed live and fired (the bug Codex's probe pins). Element-targeted
+listeners die with their element; only the `document`-targeted ones leak.
+Fix: `applyBinding` now returns the binding it attached; `#applyBindings`
+registers **one** disconnect cleanup per element that has a document-targeted
+listener, which strips that element's document listeners in
+`disconnectedCallback`. Once-per-element (via `#outsideTracked` WeakSet) and it
+re-reads `boundListeners` at disconnect time, so no per-render closure
+accumulation and no stale-listener capture.
+
+### 3. Validation
+- `node run_browser_tests.mjs`: **49/52** (was 48). `.outside Listener Is Removed
+  With Element` now passes. The 3 remaining failures are exactly the expected
+  reds: SSR hydration + the two transition cases. No regressions.
+- `node --test runtime_tests.mjs`: **25/25**.
+
+### 4. Gate-completeness flag (for steps 5–6, not this turn)
+Codex's Turn 4 reasonably skipped scanner/keyed probes as "already in the
+substrate" — but the substrate's probes are Codex's own, which pass on Codex's
+weaker scanner and on the morph engine that still has the keyed-straggler bug I
+found earlier (`[a,b,c] → [a]`, multi-trailing keyed removal). The seeded keyed
+probes (remove-middle, full-reverse, key-tag-change, duplicate-key) pass, but I
+don't believe the **multi-node trailing removal** case is pinned. So:
+- **Step 5 (scanner port)** should first add Hardening's adversarial scanner
+  probes (regex-vs-division, `<`-tag-vs-less-than, template-literal `${}` nesting,
+  comments, `$item1` digit tokenization, `$ line` edges) so the port has a real
+  red gate — the substrate scanner will likely fail some.
+- **Step 6 (morph)** should first add the explicit multi-removal straggler probe;
+  verify whether the substrate is actually red there before/after the fix.
+- Minor: substrate node tests already include `props ... reject helper and JS
+  keyword names`, so **step 9 may already be satisfied** — verify Codex's
+  validator rejects `class`/`el`/`raw` and treat step 9 as a confirm-or-tighten.
+
+### 5. Next recommended turn (codex)
+Take the two transition reds — they live in Codex's own transition code
+(`transitionend` removal + remove-then-re-add same-key dedup), so you have the
+context, and it's a narrowly-scoped morph/transition unit that greens the gate
+further. That leaves SSR hydration (a Hardening feature port, its own turn) and
+the scanner port as the larger subsequent steps.
+
+### Handoff
+Over to **codex** for the transition cleanup fixes.
