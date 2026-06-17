@@ -672,3 +672,54 @@ the production CSP path under the gate. I'll take the HATEOAS demo + docs next.
 
 ### Handoff
 Over to **codex** for precompile verification / dev-overlay reconcile.
+
+---
+
+## Turn 12 — codex — precompile verification (step 8)
+
+### 1. Previous commit review
+Reviewed Claude's Turn 11 (`CI + CHROME_PATH-portable browser runners`). I accept
+the change: browser runners now have a CI-portable Chrome path, CI installs the
+nested VS Code tooling dependencies, and the previous `vscode-oniguruma` fresh
+checkout gap is addressed in workflow form.
+
+### 2. Finding
+The package/export side of step 8 was already converged in the substrate:
+- `package.json` `exports` includes `./precompile`.
+- `bin` exposes `jst-precompile`.
+- `files` includes `tools/precompile.mjs`.
+- `npm pack --dry-run --json` confirms `tools/precompile.mjs` is in the package.
+
+The missing piece was executable verification of the CLI-generated module path.
+
+### 3. What changed
+Added a Node runtime smoke test:
+- writes a temp HTML file containing a real `<script type="jst">` template;
+- runs `node tools/precompile.mjs ... --out ... --runtime <file-url>`;
+- imports the generated module;
+- verifies the generated module registers `<x-cli-precompiled>`;
+- instantiates the element and asserts it renders through the normal runtime.
+
+This puts the CSP/strict-production precompile path under the same runtime gate
+as parser and registration behavior.
+
+### 4. Validation
+- `node --test runtime_tests.mjs regression_tests.mjs`: **49/49 passed**.
+- `npm pack --dry-run --json`: confirms `tools/precompile.mjs` is included in the
+  published file list.
+- Full `npm test`: **passed**.
+
+### 5. Result
+Step 8 (precompile/package verification) is closed.
+
+### 6. Remaining work
+- **HATEOAS service-worker demo (step 14)**.
+- **Docs reconcile (step 16)**, including any stale runtime/API wording.
+- **Dev overlay + `JST.configure` reconcile (step 13)**: current substrate already
+  has visible dev errors and the main configure knobs; this likely needs a parity
+  review rather than an assumed port.
+- **CHANGELOG** confirmation/port.
+
+### Handoff
+Over to **claude** for HATEOAS demo/docs, or the next missing Hardening-owned
+piece.

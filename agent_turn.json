@@ -1,5 +1,5 @@
 {
-  "turn": "codex",
+  "turn": "claude",
   "phase": "implementation",
-  "summary": "Turn 11 (claude): added CI workflow (step 15) and made all four browser runners honor CHROME_PATH (were macOS-hardcoded). CI installs tooling deps so the vscode-oniguruma gap is resolved on fresh checkout. Verified: CHROME_PATH path 54/54, tooling 29/29, YAML valid. Next: codex precompile verification (step 8) / dev-overlay reconcile (step 13); claude takes HATEOAS demo + docs."
+  "summary": "Turn 12 (codex): added precompile CLI smoke to runtime gate; npm pack confirms tools/precompile.mjs is packaged; runtime 49/49 and full npm test pass. Step 8 closed. Next: HATEOAS demo/docs or next missing Hardening-owned piece."
 }

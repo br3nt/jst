@@ -4,8 +4,17 @@
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { execFile } from 'node:child_process';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { promisify } from 'node:util';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { compileTemplateRenderingFunction } from './compiler.js';
 import { parseTemplateScript } from './parser.js';
+
+const execFileAsync = promisify(execFile);
+const repoRoot = path.dirname(fileURLToPath(import.meta.url));
 
 function createTemplate({ name, attributes = [], innerHTML }) {
   const templateAttributes = [
@@ -586,6 +595,48 @@ test('precompiled templates register without runtime compilation', async () => {
     assert.match(element.innerHTML, /Hello JST/);
   } finally {
     runtime.cleanup();
+  }
+});
+
+test('precompile CLI output registers renderable templates', async () => {
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'jst-precompile-'));
+  const input = path.join(tmpDir, 'components.html');
+  const output = path.join(tmpDir, 'templates.mjs');
+  const runtimeSpecifier = new URL(`./jst.js?precompile-cli=${Date.now()}-${Math.random()}`, import.meta.url).href;
+
+  fs.writeFileSync(input, `
+    <script type="jst" name="x-cli-precompiled" props="name count">
+      <p class="out">Hello, $(name)! Count: $(count)</p>
+    </script>
+  `);
+
+  try {
+    const { stdout } = await execFileAsync(
+      process.execPath,
+      ['tools/precompile.mjs', input, '--out', output, '--runtime', runtimeSpecifier],
+      { cwd: repoRoot },
+    );
+    assert.match(stdout, /Wrote 1 precompiled JST template/);
+
+    const runtime = await loadRuntime([]);
+    try {
+      await import(`${pathToFileURL(output).href}?test=${Date.now()}-${Math.random()}`);
+
+      const PrecompiledClass = runtime.customElements.get('x-cli-precompiled');
+      assert.ok(PrecompiledClass, 'expected generated module to register the custom element');
+
+      const element = new PrecompiledClass();
+      element.setAttribute('name', 'JST');
+      element.setAttribute('count', '2');
+      runtime.connect(element);
+      await flushRenders();
+
+      assert.match(element.innerHTML, /Hello, JST! Count: 2/);
+    } finally {
+      runtime.cleanup();
+    }
+  } finally {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
   }
 });
 
