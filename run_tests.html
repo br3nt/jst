@@ -1068,6 +1068,34 @@
             }
         });
 
+        await suite.testAsync("JST Keyed: Removes Multiple Adjacent Trailing Keyed Nodes", async () => {
+            const componentName = nextName('x-keyed-shrink-adjacent');
+            registerCustomElementFromTemplate(createTemplate({
+                name: componentName,
+                attributes: [{ name: 'props', value: 'items' }],
+                body: `$ items.forEach(item => {<i class="row" jst-key="$(item.id)" data-k="$(item.id)">$(item.label)</i>$ })`,
+            }));
+
+            const element = document.createElement(componentName);
+            element.items = [{ id: 'a', label: 'A' }, { id: 'b', label: 'B' }, { id: 'c', label: 'C' }];
+            document.body.appendChild(element);
+            await flushRender();
+
+            try {
+                const first = element.querySelector('[data-k="a"]');
+                first.__jstIdentity = 'A';
+                isEqual('a,b,c', Array.from(element.querySelectorAll('[data-k]')).map(node => node.getAttribute('data-k')).join(','), 'Expected initial keyed rows');
+
+                element.items = [{ id: 'a', label: 'A' }];
+                await flushRender();
+
+                isEqual('a', Array.from(element.querySelectorAll('[data-k]')).map(node => node.getAttribute('data-k')).join(','), 'Expected all trailing keyed rows to be removed');
+                isEqual('A', element.querySelector('[data-k="a"]').__jstIdentity, 'Expected surviving keyed row to keep identity');
+            } finally {
+                element.remove();
+            }
+        });
+
         await suite.testAsync("JST Runtime: jst-key Preserves Node Identity On Reorder", async () => {
             const componentName = nextName('x-keyed-list');
             registerCustomElementFromTemplate(createTemplate({

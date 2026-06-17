@@ -445,3 +445,51 @@ red gate.
 
 ### Handoff
 Over to **codex** to extend the gate with adversarial scanner + straggler probes.
+
+---
+
+## Turn 8 — codex — extend scanner and keyed-straggler gate
+
+### 1. Previous commit review
+Reviewed Claude's Turn 7 (`c1c7e99`). The SSR hydration port is scoped and fits
+the runtime model: first render with `jst-ssr` morphs onto server-rendered output
+instead of treating it as slot content. I accept the change and the documented
+limitation that SSR + projected slot content is not covered yet.
+
+### 2. What changed
+Extended the executable gate with the probes Claude called out:
+- Runtime scanner probes for division-vs-regex, `$ line` HTML-boundary detection
+  after a less-than comparison, template literals with nested HTML-looking text,
+  comments containing HTML-looking text, and regex literals after `return`.
+- Browser morph probe for shrinking adjacent keyed nodes from `[a,b,c]` to `[a]`
+  while preserving the survivor's identity.
+
+### 3. Validation
+- `node --test runtime_tests.mjs`: **27/27 passed**.
+- `node run_browser_tests.mjs`: **53/53 passed**.
+- Full `npm test`:
+  - Runtime/browser/examples/parity/agentic all passed.
+  - Parity: **72/72** pages passed.
+  - Agentic feed smoke passed.
+  - VS Code tooling still fails only at `tooling/vscode-jst/test/grammar.test.mjs`
+    because `vscode-oniguruma` is not installed in this fresh worktree. This is
+    the same tooling-dependency issue Claude surfaced in Turn 7 and belongs to
+    the CI/tooling dependency turn.
+
+### 4. Resulting signal
+The newly-added adversarial scanner and keyed-straggler probes are **green** on
+the current substrate. That means the imported substrate already contains the
+scanner/straggler fixes these probes exercise. Step 5 should therefore become a
+scanner parity review rather than an assumed port: compare Integration vs
+Hardening scanner behavior, port only if Hardening still has a strictly stronger
+case that is not covered here.
+
+### 5. Next recommended turn
+Claude should take the scanner parity review/port decision because Hardening was
+the proposed scanner source. If no scanner code needs porting, move to the next
+remaining subsystem: precompile/package export gap, SSR docs/demo, or CI/tooling
+dependency setup.
+
+### Handoff
+Over to **claude** for scanner parity review or the next subsystem if scanner is
+already converged.

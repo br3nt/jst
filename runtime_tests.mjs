@@ -621,6 +621,16 @@ test('balanced expressions ignore delimiters inside regex literals and comments'
   assert.equal(commentProgram.tokens[0].expression, '{ a: 1 /* } */ }');
 });
 
+test('balanced expressions distinguish division from regex literals', () => {
+  const divisionProgram = parseTemplateScript('$(items.map(x => (x.total / x.count)).filter(x => x > 1).length)');
+  assert.equal(divisionProgram.tokens[0].constructor.name, 'JsExpressionToken');
+  assert.equal(divisionProgram.tokens[0].expression, 'items.map(x => (x.total / x.count)).filter(x => x > 1).length');
+
+  const mixedProgram = parseTemplateScript('$(items.filter(x => x.path / 2 && /\\)/.test(x.label)).length)');
+  assert.equal(mixedProgram.tokens[0].constructor.name, 'JsExpressionToken');
+  assert.equal(mixedProgram.tokens[0].expression, 'items.filter(x => x.path / 2 && /\\)/.test(x.label)).length');
+});
+
 test('balanced expressions handle nested template literals', () => {
   const program = parseTemplateScript('$(`a ${ b ? `c)` : `d` } e`)');
 
@@ -636,6 +646,26 @@ test('$ line directives distinguish less-than operators from HTML boundaries', (
   const regexProgram = parseTemplateScript('$ const r = /<x>/.test(s)\n<span>ok</span>');
   assert.equal(regexProgram.tokens[0].constructor.name, 'JsCodeToken');
   assert.equal(regexProgram.tokens[0].code, 'const r = /<x>/.test(s)');
+
+  const boundaryProgram = parseTemplateScript('$ const ok = a < b; <span>ok</span>');
+  assert.equal(boundaryProgram.tokens[0].constructor.name, 'JsCodeToken');
+  assert.equal(boundaryProgram.tokens[0].code.trimEnd(), 'const ok = a < b;');
+  assert.equal(boundaryProgram.tokens[1].constructor.name, 'HtmlToken');
+  assert.equal(boundaryProgram.tokens[1].html, '<span>ok</span>');
+});
+
+test('$ line directives skip JS strings templates regexes and comments', () => {
+  const templateProgram = parseTemplateScript('$ const text = `x ${items.map(v => `<${v}>`).join("")}`;\n<span>ok</span>');
+  assert.equal(templateProgram.tokens[0].constructor.name, 'JsCodeToken');
+  assert.equal(templateProgram.tokens[0].code, 'const text = `x ${items.map(v => `<${v}>`).join("")}`;');
+
+  const commentProgram = parseTemplateScript('$ const x = 1; /* <not-html> */\n<span>ok</span>');
+  assert.equal(commentProgram.tokens[0].constructor.name, 'JsCodeToken');
+  assert.equal(commentProgram.tokens[0].code, 'const x = 1; /* <not-html> */');
+
+  const regexAfterKeywordProgram = parseTemplateScript('$ if (items.some(item => { return /<tag>/.test(item.html) })) {\n<span>ok</span>');
+  assert.equal(regexAfterKeywordProgram.tokens[0].constructor.name, 'JsCodeToken');
+  assert.equal(regexAfterKeywordProgram.tokens[0].code, 'if (items.some(item => { return /<tag>/.test(item.html) })) {');
 });
 
 test('bindings with more than one interpolation fail at compile time', () => {

@@ -1,5 +1,5 @@
 {
-  "turn": "codex",
+  "turn": "claude",
   "phase": "implementation",
-  "summary": "Turn 7 (claude): ported jst-ssr hydration. Union runtime gate FULLY GREEN (node 25, browser 52). Surfaced a tooling-deps issue (missing node_modules -> grammar.test.mjs; for the CI turn). Next: codex extends gate with adversarial scanner + multi-removal straggler probes."
+  "summary": "Turn 8 (codex): added adversarial scanner and keyed straggler probes; runtime 27/27 and browser 53/53 pass. Full npm test reaches known vscode-oniguruma tooling dependency failure."
 }
