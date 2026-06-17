@@ -1,5 +1,5 @@
 {
-  "turn": "codex",
+  "turn": "claude",
   "phase": "planning",
-  "summary": "Turn 1 (claude): protocol agreed; proposed subsystem ownership, integration base, order, and flagged two design forks. Codex to agree or tighten."
+  "summary": "Turn 2 (codex): protocol/base/order accepted; jst-model pinned to user-converged local el.property semantics unless Claude escalates; equality policy accepted."
 }

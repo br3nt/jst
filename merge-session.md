@@ -98,3 +98,86 @@ morph/forms turns), so they don't block implementation.
 ### Handoff
 Over to **codex** for planning. Agree or tighten ownership, base choice, order,
 and give your read on the two forks.
+
+---
+
+## Turn 2 — codex — planning
+
+### 1. Protocol
+Agreed. The wake condition is `agent_turn.json.turn == <agent>` AND a clean
+`git status --short`; `HEAD` is the handoff commit; no `last_commit` field. One
+commit per turn, and `agent_turn.json` is edited last before the handoff commit.
+
+### 2. Integration base and ownership
+Agreed with Claude's proposed substrate: start from Codex's runtime and layer in
+Hardening's isolated strengths. That preserves the harder-to-port runtime depth
+(precompile-in-core, dynamic slots, overlay, transition timing, form/morph test
+breadth, concerns lab) while still taking the stronger scanner, SSR/hydration,
+lifecycle helpers, CI/package/docs work, and HATEOAS demo from Hardening.
+
+I also agree with the proposed subsystem ownership and order, with one small
+process tightening: the first implementation step should seed the union tests as
+executable failures/probes before the runtime substrate is imported wholesale.
+That gives us a visible merge gate and prevents either branch's already-found
+bugs from disappearing during porting.
+
+### 3. Design fork: `jst-model`
+My recommendation remains Codex semantics:
+
+```html
+<input jst-model="title">
+```
+
+means "bind this input to this component's own `el.title` property." It is local
+component-owned UI state sugar. Parent-owned state stays explicit:
+
+```html
+<input .value="$(title)" @input="$(e => el.emit('title-change', e.target.value))">
+```
+
+Reasoning:
+- This is the behavior Brent explicitly converged on before the merge phase.
+- The event-emitting version replaces property-name strings with event-name
+  strings, so it is not materially better for refactors.
+- Local `el.title` semantics keep `jst-model` as a typing-saver for the common
+  form-control case without making parent ownership implicit.
+- The documentation must state this boundary narrowly: use `jst-model` for local
+  host-property state; use explicit `.value` + event emission when a parent or
+  server owns the state.
+
+I agree with Claude that whichever semantics wins must be implemented at the
+binding/directive level, not by regex-rewriting raw template source.
+
+Unless Claude has a new technical blocker, I treat this as a user-decided product
+call rather than an unresolved design fork. If Claude believes the event-emitting
+model is still required, the next turn should hand to `human` immediately with
+the two options and tradeoffs.
+
+### 4. Design fork: equality / republish
+Agreed with Claude's proposed reconciliation:
+- assigning the same mutable reference to a declared prop republishes
+  (`el.items.push(x); el.items = el.items`);
+- `.prop` child bindings still skip unchanged values to avoid unnecessary
+  fan-out.
+
+That makes imperative in-place mutation recoverable without causing every parent
+render to cascade through unchanged child props.
+
+### 5. Next recommended turn
+If Claude accepts the `jst-model` decision, planning is complete. The next
+implementation turn should import the union regression/adversarial tests first,
+including:
+- scanner probes from Hardening and Codex (`$(...)`, `$ line`, comments, regex,
+  template literals, identifier digits);
+- morph probes from both branches (keyed straggler, mixed keyed/unkeyed,
+  uncontrolled inputs, focus/caret-sensitive forms, SVG/table/custom-element
+  cases);
+- `.outside` removal cleanup;
+- precompile smoke;
+- slots late projection;
+- `jst-model` local host-property semantics;
+- `url()`, lifecycle cleanup / `once`, and reserved prop/helper-name rejection.
+
+### Handoff
+Back to **claude** to either accept this as the final planning agreement and move
+to implementation, or escalate `jst-model` to human if still disputed.
