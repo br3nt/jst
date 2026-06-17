@@ -12,7 +12,10 @@ preserved.
 
 ```html
 <script type="jst" name="todo-item" props="item onToggle">
-  <li class="$(item.done ? 'done' : '')">$(item.text)</li>
+  <li class="$(item.done ? 'done' : '')">
+    $(item.text)
+    <button @click.stop="$(() => onToggle(item))">Toggle</button>
+  </li>
 </script>
 ```
 
@@ -56,6 +59,11 @@ a single listener up the tree can handle them:
 name: `.prevent .stop .self .once .capture .passive`, key guards like
 `.enter`/`.escape`, `.debounce` / `.debounce.300`, and `.outside`.
 
+There is no separate `events="..."` declaration today. DOM events are open by
+design: emit them with `el.emit(...)`, listen with `@event`, and let tooling
+learn common names from templates. Function callbacks such as `onToggle` are just
+props; use them when a direct callback is clearer than bubbling an event.
+
 ## State lives outside
 
 A controlled component holds no canonical state. To change what it shows, change
@@ -87,12 +95,12 @@ reads and writes `el[prop]` via `.checked` / `.value` accordingly.
 ## Why this scales: push state to the server
 
 Controlled components compose upward: the parent owns the children's state, and
-its parent owns its state, until you reach the page. The natural top of that
-chain is the server. In a HATEOAS app the server holds the canonical state and
-ships HTML that reflects it (see [hateoas-fragments.md](./hateoas-fragments.md)).
-Components stay dumb, the page stays thin, and the hard questions about state
-consistency live in one place: the server. That is how a JST app scales without a
-client store.
+its parent owns its state, until you reach the page. For a static page or a small
+tool, the page can be the owner. In a HATEOAS app, the natural top of that chain
+is the server: it owns canonical state, persists it, and ships HTML that reflects
+it (see [hateoas-fragments.md](./hateoas-fragments.md)). Components stay dumb,
+the page stays thin, and the hard questions about state consistency live in one
+place.
 
 ## When to reach for once() / onDisconnect()
 

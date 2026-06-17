@@ -56,11 +56,13 @@ setupFn)` and `onDisconnect(fn)`, for the rare component that owns a resource
 (see [controlled-components.md](./controlled-components.md)). There is nothing to
 get the deps wrong on, because there are no deps.
 
-### No store
+### No client store
 
-State lives in the page or on the server, not in a client container. Components
-are controlled: props down, events up. The natural owner of canonical state is
-the server in a HATEOAS app (see [hateoas-fragments.md](./hateoas-fragments.md)).
+State lives in the page or on the server, not in a framework-owned client
+container. Components are controlled: props down, events up. In a small static
+app, the page may own state directly. In a HATEOAS app, the server is usually the
+canonical owner because it already owns persistence, validation, permissions, and
+resource URLs (see [hateoas-fragments.md](./hateoas-fragments.md)).
 
 ## Just plain JS and the platform
 

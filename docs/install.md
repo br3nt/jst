@@ -54,6 +54,25 @@ python3 -m http.server 8000
 # then open http://localhost:8000/
 ```
 
+## Direct `file://` mode
+
+The current runtime is an ES module build. Chrome and several other browsers
+block external module imports from `file://`, so a plain page like this will not
+load directly from disk:
+
+```html
+<script type="module" src="./jst.js"></script>
+```
+
+There are three practical paths:
+
+- Use a tiny local static server during development (`python3 -m http.server`).
+- Use precompiled production mode for strict CSP and release builds.
+- Add a future classic/global build such as `jst.global.js` for truly
+  file-openable demos. That build would wrap internals in an IIFE and expose only
+  the deliberate `window.JST` API. It is not the primary runtime in this branch
+  yet.
+
 ## Running the tests
 
 From the repo root:

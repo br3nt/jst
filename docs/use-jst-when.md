@@ -4,6 +4,13 @@ JST is a no-build web-components framework. It shines when HTML is the contract
 between server and client and you want interactive behaviour without a bundler,
 a virtual DOM, or a client-side state store. Here are the niches it fits.
 
+The strongest pitch is not "smaller React." It is that the backend and frontend
+can speak the same UI format. The server can return HTML, the browser can render
+that HTML, and if the response includes a new JST component definition, the
+component can register and become interactive when it arrives. That removes a
+layer of duplicated DTO/view-model/template work for apps that are naturally
+resourceful and hypermedia-shaped.
+
 ## Static sites and docs
 
 You have HTML files and you want a few interactive widgets: a copy button, a
@@ -49,6 +56,10 @@ fragment can both define a `<script type="jst">` component and use it in the sam
 response. JST auto-registers new templates via a `MutationObserver`, so the
 fragment upgrades itself the moment it lands in the DOM. See
 [hateoas-fragments.md](./hateoas-fragments.md).
+
+Use ordinary links and forms for whole-resource navigation. Add fragment swaps
+only where they improve the interaction. JST should complement RESTful routing,
+not replace it with deep client routing.
 
 ## HTML fragments that bring their own behaviour
 

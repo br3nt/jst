@@ -106,6 +106,7 @@
     <div class="cta">
       <a class="btn primary" href="#examples">Examples ↓</a>
       <a class="btn ghost" href="framework_parity/index.html">Compare vs HTMX · Alpine · Vue · React →</a>
+      <a class="btn ghost" href="docs/">Read the docs →</a>
     </div>
   </div>
 </header>
@@ -203,6 +204,11 @@
       interactivity</strong> — the browser registers and runs the JS on arrival. You get HTMX's
       "the server just returns HTML" simplicity <strong>and</strong> real client-side behaviour in
       the very same response. No JSON contract, no parallel client app, no duplicated views.</p>
+    <p class="lede">You do not need a client router to get there. Use ordinary resourceful URLs
+      and full-page navigation by default — <code>/orders/4471</code>,
+      <code>/orders/4471/edit</code>, <code>POST /orders/4471/items</code>. Reach for fragment
+      swaps only where they improve a workflow: inline editing, live validation, expanding rows,
+      or streaming a component definition the page did not know yet.</p>
     <div class="platform-note"><strong>And you may not need a backend at all.</strong> JST is just
       static files and the browser — no API, no server-side code, no build. The same components a
       server <em>could</em> stream down run perfectly well entirely on the client, so a whole app
