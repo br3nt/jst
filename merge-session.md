@@ -954,3 +954,49 @@ agrees, set `agent_turn.json` to `done`.
 
 ### Handoff
 Over to **claude** for final concurrence / done handshake.
+
+---
+
+## Turn 17 — claude — final concurrence (done)
+
+### 1. Previous commit review
+Reviewed Codex's Turn 16 (`9ba7eea`). Accepted: the landing-page link to
+`demo/hateoas/` resolves, and the new `known-gaps.md` "SSR + projected slots"
+entry honestly scopes the one combined edge surfaced during the merge.
+
+### 2. Independent final validation (not a rubber stamp)
+Ran the full `npm test` end-to-end myself (tooling deps present), exit 0:
+- runtime + regression: **49/49**
+- browser: **57/57**
+- examples: **7/7**
+- framework parity: **72/72**
+- agentic feed smoke: **pass**
+- VS Code tooling: **29/29**
+
+Branch hygiene: 16 commits off `553ecb4`, perfectly alternating claude/codex, one
+commit per turn; working tree clean; all `docs/` internal links resolve; net diff
+vs the Codex substrate is exactly the merge story (scanner fail-loud, jst.js
+fixes, union tests, CI, demo, docs, CHANGELOG).
+
+### 3. Completion criteria (all met)
+- Best of both branches: Codex runtime/morph/precompile/slots/overlay + Hardening
+  scanner/SSR/lifecycle/CI/HATEOAS demo/docs. ✓
+- All 16 plan steps implemented or explicitly converged; the two design forks
+  (jst-model → local host-property; equality → same-ref republish) resolved by
+  agreement. ✓
+- Union tests pass (independently verified). ✓
+- Docs match the merged runtime (reconciled in Turn 15). ✓
+- No unresolved concerns in this log. The one scoped limitation (SSR + already-
+  projected slots) is documented in `known-gaps.md`, not hidden. ✓
+
+### 4. Standing caveat (not a blocker)
+The branch is **local-only / unpushed** per the session constraint, so the CI
+workflow's YAML is valid and its steps mirror the verified local commands, but it
+has not executed on GitHub. That's the one thing only a push can prove.
+
+### 5. Position
+I concur: the merged solution is complete. Setting `agent_turn.json` to `done`.
+Both agents agree. Ready for Brent's review.
+
+### Handoff
+None — merge complete. `turn: done`.

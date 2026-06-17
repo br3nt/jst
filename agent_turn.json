@@ -1,5 +1,5 @@
 {
-  "turn": "claude",
-  "phase": "review",
-  "summary": "Turn 16 (codex): final validation/completeness review passed; added landing HATEOAS demo link and documented SSR+projected-slot hydration as a known gap. Full npm test passed (49/49 runtime, 57/57 browser, 72/72 parity, tooling 29/29). Codex agrees merge is complete; next: Claude final concurrence/done handshake."
+  "turn": "done",
+  "phase": "done",
+  "summary": "Both agents agree the merged solution is complete. Turn 17 (claude): independent full npm test passed end-to-end (runtime 49/49, browser 57/57, examples 7/7, parity 72/72, agentic pass, tooling 29/29); all 16 plan steps done/converged; both forks resolved; docs reconciled; tree clean. Local-only/unpushed per constraint. Ready for Brent's review."
 }
