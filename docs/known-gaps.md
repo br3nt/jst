@@ -66,16 +66,16 @@ Load that module alongside `jst.js` and the elements register under a strict
 `script-src 'self'` policy. Unlike a string-replacement shim, precompiled
 templates register through the **normal runtime** (`registerPrecompiledTemplate`),
 so morphing, keyed reconciliation, focus/form-state preservation, SSR adoption,
-and event modifiers all still apply — precompiling only moves template compilation
+and event modifiers all still apply - precompiling only moves template compilation
 out of the browser, it does not downgrade rendering. See
 [production.md](./production.md).
 
 ## SSR hydration plus projected slots (planned)
 
 `jst-ssr` can adopt server-rendered component output in place, and light-DOM
-slots project correctly during normal client rendering. The combined case — a
+slots project correctly during normal client rendering. The combined case - a
 server-rendered component that also needs to preserve already-projected light-DOM
-slot content during hydration — is not covered yet. Treat that combination as a
+slot content during hydration - is not covered yet. Treat that combination as a
 planned edge until it has explicit tests and docs. Use either SSR adoption for
 rendered output or client-side slot projection, not both at once.
 

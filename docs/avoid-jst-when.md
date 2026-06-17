@@ -35,7 +35,7 @@ blocks. Strict CSP itself is supported: `tools/precompile.mjs` compiles template
 ahead of time so they register under `script-src 'self'` with no `new Function`
 (see [production.md](./production.md) and [known-gaps.md](./known-gaps.md)). The
 catch is that precompiling is a build step. If you want strict CSP *and* refuse
-any build step, those two goals conflict — pick one.
+any build step, those two goals conflict - pick one.
 
 ## You want a big ecosystem
 

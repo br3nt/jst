@@ -40,7 +40,7 @@ release integrates two parallel hardening efforts into one runtime.
   guards, `.debounce[.ms]`, and `.outside` (document-level, cleaned up on
   disconnect).
 - **`jst-model` local form sugar.** Binds a control to the component's own host
-  property (read `el[prop]`, write `el[prop]` on input) — local component-owned
+  property (read `el[prop]`, write `el[prop]` on input) - local component-owned
   UI state. Parent/server-owned state stays explicit with `.value` + emitted
   events, keeping the boundary props-down / events-up.
 - **`url()`, `raw()` / `unsafeHTML()` helpers** for URL-scheme sanitizing and
@@ -57,7 +57,7 @@ release integrates two parallel hardening efforts into one runtime.
   SSR, and modifiers are all preserved under `script-src 'self'`.
 - **Dev-mode error overlay** (`.jst-error`) and contained, fail-loud render/compile
   errors.
-- **HATEOAS service-worker demo** (`demo/hateoas/`) — HTML fragments that carry
+- **HATEOAS service-worker demo** (`demo/hateoas/`) - HTML fragments that carry
   their own auto-registering `<script type="jst">` definitions.
 - **CI** (`.github/workflows/ci.yml`): node + browser + examples + parity +
   agentic + VS Code tooling, with a real Chrome gate via `CHROME_PATH`.
@@ -65,10 +65,10 @@ release integrates two parallel hardening efforts into one runtime.
 ### Fixed
 
 - **Fail-loud lexer/compiler.** Malformed bindings throw at compile time instead
-  of silently degrading — including `.prop`/`@event` values with more than one
-  `$(…)` expression or literal text around the expression. Compile errors are
+  of silently degrading - including `.prop`/`@event` values with more than one
+  `$(...)` expression or literal text around the expression. Compile errors are
   contained to the offending component rather than taking down the page.
-- **JS-token-aware scanner.** `$(…)` / `${…}` and the `$ line` directive skip
+- **JS-token-aware scanner.** `$(...)` / `${...}` and the `$ line` directive skip
   strings, template literals (with nested `${}`), regexes, and comments;
   regex-vs-division and `<`-tag-vs-less-than are resolved by the previous
   significant token. Identifiers with trailing digits (`$item1`) lex correctly.

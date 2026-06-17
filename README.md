@@ -43,21 +43,30 @@ be interactive once it lands in the browser. A fetched fragment can include both
 
 ## Component API
 
+For a practical walkthrough, see [docs/writing-jst.md](docs/writing-jst.md).
+
 Props are declared in the case-preserving `props` attribute:
 
 ```html
-<script type="jst" name="todo-item" props="item onToggle">
+<script type="jst" name="todo-item" props="item">
   <li jst-key="$(item.id)">
-    <button @click.stop="$(onToggle)">Done</button>
+    <button @click.stop="$(() => el.emit('toggle', item))">Done</button>
     $(item.text)
   </li>
 </script>
 
-<todo-item .item="$(todo)" .on-toggle="$(toggleTodo)"></todo-item>
+<todo-item id="first-todo"></todo-item>
+
+<script>
+  const row = document.getElementById('first-todo');
+  row.item = { id: 1, text: 'Write docs' };
+  row.addEventListener('toggle', event => console.log(event.detail));
+</script>
 ```
 
-- `props="item onToggle"` declares the bare locals available in the template.
-- Each prop is also a property on the element: `el.item`, `el.onToggle`.
+- `props="item"` declares the bare locals available in the template.
+- Each prop is also a property on the element: `el.item` here, or `el.onToggle`
+  when `onToggle` is declared.
 - External HTML attributes use platform casing rules, so multi-word call sites
   use kebab-case: `on-toggle` maps to `onToggle`.
 - Plain attributes pass JSON-ish primitives (`count="1"`, `open="true"`).
@@ -66,8 +75,10 @@ Props are declared in the case-preserving `props` attribute:
   stay quiet.
 - When the next value depends on the current value inside an event handler, read
   the live element property: `el.count = (el.count || 0) + 1`.
-- `.prop="$(expr)"` passes rich JavaScript values without stringifying.
-- `@event="$(fn)"` attaches listeners; modifiers are supported:
+- In ordinary HTML, use normal JavaScript property assignment and
+  `addEventListener`. Inside a JST template, `.prop="$(expr)"` passes rich
+  JavaScript values without stringifying.
+- Inside a JST template, `@event="$(fn)"` attaches listeners; modifiers are supported:
   `.prevent`, `.stop`, `.self`, `.outside`, `.once`, `.capture`, `.passive`,
   key filters like `.enter`, and `.debounce.300`.
 - `jst-model="title"` is local form shorthand: read from `title` and update

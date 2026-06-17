@@ -204,6 +204,9 @@
     <h2>Contents</h2>
     <a href="#pitch">Pitch</a>
     <a href="#install">Install</a>
+    <a href="#quick-start">Quick start</a>
+    <a href="#syntax">Syntax</a>
+    <a href="#data-flow">Data flow</a>
     <a href="#file-mode">File mode</a>
     <a href="#components">Components</a>
     <a href="#hateoas">HATEOAS</a>
@@ -250,6 +253,80 @@
 # open http://localhost:8000/</code></pre>
     </section>
 
+    <section id="quick-start">
+      <h2>Write your first component</h2>
+      <p>A component is a <code>&lt;script type="jst"&gt;</code> block. The <code>name</code> becomes the custom element tag. The <code>props</code> list declares the values you can use in the template.</p>
+      <pre><code>&lt;script type="jst" name="hello-name" props="name count"&gt;
+  &lt;p&gt;Hello, &lt;strong&gt;$(name)&lt;/strong&gt;.&lt;/p&gt;
+  &lt;button @click="$(() =&gt; el.count = (el.count || 0) + 1)"&gt;
+    Clicked $(count || 0) times
+  &lt;/button&gt;
+&lt;/script&gt;
+
+&lt;hello-name name="JST" count="0"&gt;&lt;/hello-name&gt;</code></pre>
+      <p>Inside the template, <code>name</code> and <code>count</code> are JavaScript locals. <code>el</code> is the custom element instance. Assigning <code>el.count</code> updates the prop and schedules a render.</p>
+      <p><a href="writing-jst.md">Read the full authoring guide</a>.</p>
+    </section>
+
+    <section id="syntax">
+      <h2>Template syntax</h2>
+      <table>
+        <tr><th>Syntax</th><th>Meaning</th></tr>
+        <tr><td><code>$(expr)</code></td><td>Evaluate JavaScript and HTML-escape the result.</td></tr>
+        <tr><td><code>$identifier</code></td><td>Shorthand for a single identifier interpolation.</td></tr>
+        <tr><td><code>$ statement</code></td><td>Run a JavaScript statement line.</td></tr>
+        <tr><td><code>${ ... }</code></td><td>Run a JavaScript block.</td></tr>
+        <tr><td><code>.prop="$(expr)"</code></td><td>Set a JavaScript property on a rendered element.</td></tr>
+        <tr><td><code>@event="$(fn)"</code></td><td>Add an event listener.</td></tr>
+        <tr><td><code>jst-key="$(id)"</code></td><td>Preserve DOM identity in lists.</td></tr>
+        <tr><td><code>jst-model="prop"</code></td><td>Local form shorthand: read/write <code>el[prop]</code>.</td></tr>
+        <tr><td><code>$(slot())</code></td><td>Project the component's original children.</td></tr>
+      </table>
+      <pre><code>&lt;script type="jst" name="todo-list" props="items filter"&gt;
+  $ const visible = (items || []).filter(item =&gt; {
+  $   if (filter === 'done') return item.done;
+  $   if (filter === 'active') return !item.done;
+  $   return true;
+  $ });
+
+  &lt;ul&gt;
+    $ visible.forEach(item =&gt; {
+      &lt;li jst-key="$(item.id)"&gt;$(item.text)&lt;/li&gt;
+    $ })
+  &lt;/ul&gt;
+&lt;/script&gt;</code></pre>
+    </section>
+
+    <section id="data-flow">
+      <h2>Pass data and handle actions</h2>
+      <p>Top-level HTML can pass simple values as attributes. Rich values are assigned as element properties from page JavaScript, or passed with <code>.prop</code> inside another JST template.</p>
+      <pre><code>&lt;todo-list id="todos"&gt;&lt;/todo-list&gt;
+
+&lt;script&gt;
+  const list = document.getElementById('todos');
+  list.items = [{ id: 1, text: 'Write docs', done: false }];
+
+  list.addEventListener('toggle', event =&gt; {
+    list.items = list.items.map(item =&gt;
+      item.id === event.detail.id ? { ...item, done: !item.done } : item
+    );
+  });
+&lt;/script&gt;</code></pre>
+      <p>Inside JST templates, <code>.item="$(item)"</code> passes the real object and <code>@toggle="$(fn)"</code> attaches a real listener:</p>
+      <pre><code>&lt;script type="jst" name="todo-list" props="items"&gt;
+  $ (items || []).forEach(item =&gt; {
+    &lt;todo-item
+      jst-key="$(item.id)"
+      .item="$(item)"
+      @toggle="$(event =&gt; el.emit('toggle', event.detail))"&gt;
+    &lt;/todo-item&gt;
+  $ })
+&lt;/script&gt;</code></pre>
+      <div class="callout">
+        <code>.prop</code> and <code>@event</code> are JST template syntax. They are compiled only inside <code>&lt;script type="jst"&gt;</code>, not in raw top-level HTML.
+      </div>
+    </section>
+
     <section id="file-mode">
       <h2>Direct file mode</h2>
       <p>The current runtime is an ES module build. Chrome blocks external module imports from <code>file://</code>, so direct disk-opened pages need either a local static server or a future classic/global build.</p>
@@ -263,16 +340,31 @@
 
     <section id="components">
       <h2>Components</h2>
-      <p>Declare props explicitly. Inside the template, props are bare JavaScript locals and element properties.</p>
-      <pre><code>&lt;script type="jst" name="todo-item" props="item onToggle"&gt;
+      <p>Declare props explicitly. Inside the template, props are bare JavaScript locals and element properties. From ordinary HTML, assign rich values with normal JavaScript:</p>
+      <pre><code>&lt;script type="jst" name="todo-item" props="item"&gt;
   &lt;li class="$(item.done ? 'done' : '')"&gt;
     $(item.text)
-    &lt;button @click.stop="$(() =&gt; onToggle(item))"&gt;Toggle&lt;/button&gt;
+    &lt;button @click.stop="$(() =&gt; el.emit('toggle', item))"&gt;Toggle&lt;/button&gt;
   &lt;/li&gt;
 &lt;/script&gt;
 
-&lt;todo-item .item="$(todo)" .onToggle="$(handleToggle)"&gt;&lt;/todo-item&gt;</code></pre>
-      <p>No separate <code>events="..."</code> declaration is required. Emit DOM events with <code>el.emit(...)</code>, listen with <code>@event</code>, and pass direct callbacks as ordinary props when that is clearer.</p>
+&lt;todo-item id="row"&gt;&lt;/todo-item&gt;
+
+&lt;script&gt;
+  const row = document.getElementById('row');
+  row.item = { id: 1, text: 'Write docs', done: false };
+  row.addEventListener('toggle', event =&gt; console.log(event.detail));
+&lt;/script&gt;</code></pre>
+      <p>Inside another JST template, <code>.item="$(item)"</code> passes rich data and <code>@toggle="$(fn)"</code> attaches a listener. No separate <code>events="..."</code> declaration is required.</p>
+      <pre><code>&lt;script type="jst" name="todo-list" props="items"&gt;
+  $ (items || []).forEach(item =&gt; {
+    &lt;todo-item
+      jst-key="$(item.id)"
+      .item="$(item)"
+      @toggle="$(event =&gt; el.emit('toggle', event.detail))"&gt;
+    &lt;/todo-item&gt;
+  $ })
+&lt;/script&gt;</code></pre>
     </section>
 
     <section id="hateoas">
@@ -350,6 +442,7 @@
       <p>The Markdown references remain useful as source documents:</p>
       <ul>
         <li><a href="decision-guide.md">Decision guide</a></li>
+        <li><a href="writing-jst.md">Writing JST</a></li>
         <li><a href="use-jst-when.md">Use JST when...</a> / <a href="avoid-jst-when.md">Avoid JST when...</a></li>
         <li><a href="controlled-components.md">Controlled components</a></li>
         <li><a href="hateoas-fragments.md">HATEOAS fragments</a></li>

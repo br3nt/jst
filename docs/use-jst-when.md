@@ -24,7 +24,7 @@ the components inline. No bundler, no `node_modules`, no watch process.
   <button @click="$(() => navigator.clipboard.writeText(text))">Copy</button>
 </script>
 
-<copy-button .text="$('npm i jst')"></copy-button>
+<copy-button text="npm i jst"></copy-button>
 ```
 
 The components are real custom elements, so they keep working if you later move
@@ -40,9 +40,13 @@ to react. State stays where it already lives: in the page and on the server.
 ```html
 <article>
   <h1>Order #4471</h1>
-  <line-items .items="$(...)"></line-items>
-  <quantity-stepper .value="$(qty)"></quantity-stepper>
+  <line-items id="order-lines"></line-items>
+  <quantity-stepper value="2"></quantity-stepper>
 </article>
+
+<script>
+  document.getElementById('order-lines').items = orderItems;
+</script>
 ```
 
 Each island is a controlled component: data flows in as properties, actions flow

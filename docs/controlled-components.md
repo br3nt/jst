@@ -25,8 +25,20 @@ element (`el.item`). From outside, pass data in two ways:
 - Attributes for simple values, kebab-case maps to camelCase:
   `<todo-item on-toggle="...">`. Attribute strings that look like JSON are
   parsed, so `count="0"` arrives as a number.
-- Property bindings for rich values (objects, arrays, functions):
-  `.item="$(obj)"`, `.onToggle="$(fn)"`.
+- JavaScript properties for rich values (objects, arrays, functions):
+  `element.item = obj`, `element.onToggle = fn`.
+
+```html
+<todo-item id="todo-1"></todo-item>
+
+<script>
+  const row = document.getElementById('todo-1');
+  row.item = todo;
+  row.onToggle = handleToggle;
+</script>
+```
+
+Inside another JST template, use property bindings:
 
 ```html
 <todo-item .item="$(todo)" .onToggle="$(handleToggle)"></todo-item>
@@ -41,13 +53,21 @@ A component reports what happened by emitting a bubbling, composed
 <script type="jst" name="todo-item" props="item">
   <li>
     $(item.text)
-    <button @click="$(() => el.emit('remove', item))">×</button>
+    <button @click="$(() => el.emit('remove', item))">x</button>
   </li>
 </script>
 ```
 
-The page (or a parent component) listens. Because events bubble and are composed,
-a single listener up the tree can handle them:
+The page can listen with normal DOM APIs:
+
+```js
+document.querySelector('todo-list').addEventListener('remove', event => {
+  removeTodo(event.detail.id);
+});
+```
+
+A parent JST component can listen with `@event`. Because events bubble and are
+composed, a single listener up the tree can handle them:
 
 ```html
 <ul @remove="$(e => removeTodo(e.detail.id))">
@@ -85,7 +105,7 @@ assigning a fresh value for immutable-style updates.
 <input jst-model="text">
 ```
 
-reads `el.text` into the field and writes `el.text` back on input — local,
+reads `el.text` into the field and writes `el.text` back on input - local,
 component-owned UI state (a draft value), not hidden parent state. When a parent
 or the server owns the value, stay explicit: bind `.value="$(text)"` and report
 changes with `@input="$(e => el.emit('text-change', e.target.value))"`, so the
