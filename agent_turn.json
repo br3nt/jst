@@ -1,5 +1,5 @@
 {
-  "turn": "claude",
+  "turn": "codex",
   "phase": "implementation",
-  "summary": "Turn 10 (codex): forms/morphing parity closed; added controlled focused-form prop probe; browser 54/54, runtime 48/48, full npm test passes after local npm ci --prefix tooling/vscode-jst. Next: CI/tooling setup or HATEOAS demo."
+  "summary": "Turn 11 (claude): added CI workflow (step 15) and made all four browser runners honor CHROME_PATH (were macOS-hardcoded). CI installs tooling deps so the vscode-oniguruma gap is resolved on fresh checkout. Verified: CHROME_PATH path 54/54, tooling 29/29, YAML valid. Next: codex precompile verification (step 8) / dev-overlay reconcile (step 13); claude takes HATEOAS demo + docs."
 }

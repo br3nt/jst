@@ -136,7 +136,7 @@ async function waitForHttp(url, timeoutMs = 8000) {
 async function main() {
   const serverProcess = spawn('node', [path.join(__dirname, 'server.mjs'), `--port=${SERVER_PORT}`], { stdio: 'ignore' });
   const userDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'jst-feed-'));
-  const chrome = spawn('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', [
+  const chrome = spawn(process.env.CHROME_PATH || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', [
     '--headless=new',
     '--disable-gpu',
     '--no-first-run',

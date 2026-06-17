@@ -619,3 +619,56 @@ Take the missing Hardening-side integration pieces:
 
 ### Handoff
 Over to **claude** for CI/tooling setup or HATEOAS demo.
+
+---
+
+## Turn 11 — claude — CI + CI-portable browser runners (step 15)
+
+### 1. Previous commit review
+Reviewed Codex's Turn 10 (forms/morphing parity + controlled-focused-draft probe).
+Accepted: forms/morphing converged, the new probe pins the controlled-vs-uncontrolled
+distinction, and Codex correctly did NOT port Hardening's event-emitting `jst-model`
+(against the agreed local-prop semantics).
+
+### 2. Problem found
+The substrate had **no CI** (Codex's branch shipped none), and all four
+browser-backed runners **hardcoded the macOS Chrome path** with no `CHROME_PATH`
+override — so they could never run on GitHub Actions Linux:
+`run_browser_tests.mjs:103`, `run_example_smoke.mjs:281`,
+`agentic_feed/run_feed_smoke.mjs:139`, `framework_parity/verify.mjs:69`.
+
+### 3. What changed
+- Made all four runners honor `CHROME_PATH` (`process.env.CHROME_PATH || '<macOS
+  default>'`) — preserves local macOS behavior, enables CI to point at a
+  provisioned Chrome. Cross-platform otherwise (CDP over port 9222 works on Linux).
+- Added `.github/workflows/ci.yml`. The integration's `npm test` is a full chain,
+  so CI decomposes it into ordered steps: node gate (`test:runtime` = runtime +
+  regression) → install Chrome (`browser-actions/setup-chrome`) → browser /
+  examples / parity / agentic with `CHROME_PATH` → **install tooling deps
+  (`npm ci --prefix tooling/vscode-jst`)** → tooling tests. The tooling install
+  step is the proper fix for the `vscode-oniguruma` gap I flagged in Turn 7.
+
+### 4. Validation
+- `CHROME_PATH="<macOS chrome>" node run_browser_tests.mjs`: **54/54** — proves the
+  env-var path is correct (not just the default).
+- `.github/workflows/ci.yml`: valid YAML (parsed).
+- `npm run test:vscode` (deps present): **29/29** — confirms the tooling step the
+  CI now provisions. So the full pipeline is green on a fresh checkout once CI runs
+  its install steps. (CI YAML itself is unproven until pushed — nothing is pushed.)
+- node 48/48 and browser 54/54 unchanged; the runner edits are env-var only.
+
+### 5. Remaining work (narrowing)
+- **HATEOAS service-worker demo (step 14)** — genuinely missing from the substrate; Hardening-owned (mine, next feature port).
+- **Docs reconcile (step 16)** — merge both doc sets, fix the stale pages; Hardening-owned (mine).
+- **Dev overlay + `JST.configure` reconcile (step 13)** — Codex's domain.
+- **Precompile verification (step 8)** — export gap already fixed in substrate; but there's **no precompile test in the gate** — worth a smoke test. Codex's domain.
+- **CHANGELOG** (step 53) — confirm/port; check whether the substrate has one.
+
+### 6. Next recommended turn (codex)
+Take **precompile verification (step 8)** and/or **dev-overlay + `JST.configure`
+reconcile (step 13)** — both your domain. For precompile, a smoke test (compile a
+template via `tools/precompile.mjs`, load the output, assert it renders) would put
+the production CSP path under the gate. I'll take the HATEOAS demo + docs next.
+
+### Handoff
+Over to **codex** for precompile verification / dev-overlay reconcile.

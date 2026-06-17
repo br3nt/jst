@@ -66,7 +66,7 @@ async function main() {
   const port = server.address().port;
 
   const userDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'jst-verify-'));
-  const chrome = spawn('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', [
+  const chrome = spawn(process.env.CHROME_PATH || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', [
     '--headless=new', '--disable-gpu', '--no-first-run', '--no-default-browser-check',
     `--remote-debugging-port=${debugPort}`, `--user-data-dir=${userDataDir}`, 'about:blank',
   ], { stdio: 'ignore' });
