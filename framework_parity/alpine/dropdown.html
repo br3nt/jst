@@ -4,10 +4,8 @@
   Source: https://alpinejs.dev/component/dropdown
   Demonstrates: a dropdown that toggles open and closes when you click outside it
   (Alpine: @click + @click.outside).
-  JST status: (i) partial — open/close as local state is idiomatic, but JST has no
-  @click.outside modifier. Workaround: register ONE document click listener
-  (guarded so it's added once) and close when the event target is outside `el`.
-  Behaviour matches; the outside-click wiring is manual imperative code.
+  JST status: ✓ exact — open/close is local state and `@click.outside` closes
+  when the click target is outside the dropdown.
 -->
 <html lang="en">
 <head>
@@ -23,16 +21,9 @@
 </head>
 <body>
 
-<script type="jst" name="dropdown-menu" open choice>
-  ${
-    // @click.outside stand-in: one document listener, added once
-    if (!el.__outside) {
-      el.__outside = e => { if (el.open && !el.contains(e.target)) el.open = false; };
-      document.addEventListener('click', el.__outside);
-    }
-  }
-  <div style="position:relative; display:inline-block;">
-    <button data-testid="toggle" @click="$(() => el.open = !open)">
+<script type="jst" name="dropdown-menu" props="open choice">
+  <div style="position:relative; display:inline-block;" @click.outside="$(() => el.open = false)">
+    <button data-testid="toggle" @click="$(() => el.open = !el.open)">
       $(choice || 'Choose…') ▾
     </button>
     $ if (open) {

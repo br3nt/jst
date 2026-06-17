@@ -4,9 +4,8 @@
   Source: https://alpinejs.dev/directives/on
   Demonstrates: Alpine x-on / @ — event listeners, plus key modifiers
   (@keydown.enter) and event modifiers (.prevent).
-  JST status: (i) partial — `@event="$(fn)"` covers listeners exactly, but JST
-  has NO modifier sugar (.enter/.prevent/.stop). You re-implement them by hand:
-  check `e.key === 'Enter'` and call `e.preventDefault()` inside the handler.
+  JST status: ✓ exact — `@event.mod="$(fn)"` covers listeners, key filters,
+  `.prevent`, `.stop`, and friends directly.
 -->
 <html lang="en">
 <head>
@@ -17,25 +16,20 @@
 </head>
 <body>
 
-<script type="jst" name="x-on-demo" items draft>
+<script type="jst" name="x-on-demo" props="items draft">
   $ const list = items || [];
-  <form @submit="$(e => { e.preventDefault(); /* .prevent done manually */ })">
+  <form @submit.prevent="$(() => {})">
     <input data-testid="field" placeholder="Add item, press Enter"
-           .value="$(draft || '')"
-           @input="$(e => el.draft = e.target.value)"
-           @keydown="$(e => {
-             /* @keydown.enter implemented manually — JST has no key modifiers */
-             if (e.key === 'Enter') {
-               e.preventDefault();
-               const v = (el.draft || '').trim();
-               if (v) { el.items = [...list, v]; el.draft = ''; }
-             }
+           jst-model="draft"
+           @keydown.enter.prevent="$(e => {
+             const v = (el.draft || '').trim();
+             if (v) { el.items = [...list, v]; el.draft = ''; }
            })">
     <button type="button" data-testid="clear" @click="$(() => el.items = [])">Clear</button>
   </form>
   <ul data-testid="list">
     $ list.forEach(i => {
-      <li>$(i)</li>
+      <li jst-key="$(i)">$(i)</li>
     $ })
   </ul>
 </script>

@@ -4,12 +4,8 @@
   Source: https://react.dev/learn/rendering-lists
   Demonstrates: rendering a list from an array (map -> <li>) and the role of
   keys for stable identity across reorders.
-  JST status: (i) partial — list rendering itself is idiomatic (forEach in the
-  template). But JST has NO keyed reconciliation: morphing is index-based, so
-  there is no `key` prop and reordering does not preserve node identity. The
-  "Shuffle" button below proves it: uncontrolled <input> text stays glued to
-  its POSITION, not to its data row, after a shuffle (in React with proper
-  keys the inputs would travel with their items). That divergence is the gap.
+  JST status: ✓ exact — list rendering is idiomatic, and `jst-key` preserves DOM
+  identity when rows reorder.
 -->
 <html lang="en">
 <head>
@@ -26,11 +22,11 @@
 <body>
 <h1>Rendering lists</h1>
 
-<!-- Maps an array to <li>. There is no key attribute in JST. -->
-<script type="jst" name="people-list" people>
+<!-- Maps an array to keyed <li> nodes. -->
+<script type="jst" name="people-list" props="people">
   <ul data-testid="list">
     $ (people || []).forEach(person => {
-      <li>
+      <li jst-key="$(person.id)">
         <b>$(person.name)</b>: $(person.accomplishment)
         <input placeholder="scratch note">
       </li>
@@ -39,11 +35,11 @@
 </script>
 
 <people-list id="list"></people-list>
-<button id="shuffle">Reverse order (watch the scratch notes stay put)</button>
+<button id="shuffle">Reverse order (scratch notes follow their rows)</button>
 
 <p style="color:#666; font-size:.9rem">
-  Type into the inputs, then reverse. The notes do NOT follow their row —
-  that is the missing-keys gap React's <code>key</code> prop solves.
+  Type into the inputs, then reverse. The notes follow their rows because the
+  list items carry stable <code>jst-key</code> values.
 </p>
 
 <script>

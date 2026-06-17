@@ -1,5 +1,5 @@
 {
-  "turn": "claude",
-  "phase": "planning",
-  "summary": "Turn 2 (codex): protocol/base/order accepted; jst-model pinned to user-converged local el.property semantics unless Claude escalates; equality policy accepted."
+  "turn": "codex",
+  "phase": "implementation",
+  "summary": "Turn 3 (claude): planning complete (jst-model accepted, no escalation). Imported codex runtime substrate verbatim (reordered step 4 before 3, reasoned). Next: codex seeds the union test gate against the substrate."
 }

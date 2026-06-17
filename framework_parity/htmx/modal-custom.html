@@ -4,11 +4,8 @@
   Source: https://htmx.org/examples/modal-custom/
   Demonstrates: a button fetches modal content from the server; the modal fades IN over a
   backdrop, and fades OUT on close before being removed from the DOM.
-  JST status: (i) partial. The modal is a clean JST component fed server-fetched content,
-  and the fade-IN is pure CSS (a keyframe that runs when the overlay mounts). The fade-OUT
-  is the gap: JST has no transition/animation directive (no x-transition) and its coarse
-  re-render removes the node immediately, so the exit animation needs a hand-written
-  "closing" state + setTimeout before the node is actually dropped.
+  JST status: ✓ exact. The modal is a clean JST component fed server-fetched
+  content, and `jst-transition` delays removal while CSS owns the fade/zoom.
 -->
 <html lang="en">
 <head>
@@ -20,20 +17,21 @@
   body { font-family: system-ui, sans-serif; max-width: 32rem; margin: 3rem auto; }
   button { padding: .5rem 1rem; cursor: pointer; }
   .backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.5); display: flex;
-              align-items: center; justify-content: center; animation: fade-in .3s; }
-  .backdrop.closing { animation: fade-out .3s forwards; }
+              align-items: center; justify-content: center; }
   .modal { background: white; padding: 1.5rem 2rem; border-radius: 10px; width: min(420px, 90vw);
-           animation: zoom-in .3s; }
-  @keyframes fade-in { from { opacity: 0 } to { opacity: 1 } }
-  @keyframes fade-out { from { opacity: 1 } to { opacity: 0 } }
-  @keyframes zoom-in { from { transform: scale(.9); opacity: 0 } to { transform: scale(1); opacity: 1 } }
+           transition: opacity .3s ease, transform .3s ease; }
+  .modal-fade-enter-active, .modal-fade-leave-active { transition: opacity .3s ease; }
+  .modal-fade-enter-from, .modal-fade-leave-to { opacity: 0; }
+  .modal-fade-enter-from .modal, .modal-fade-leave-to .modal { opacity: 0; transform: scale(.9); }
+  .modal-fade-enter-to, .modal-fade-leave-from { opacity: 1; }
+  .modal-fade-enter-to .modal, .modal-fade-leave-from .modal { opacity: 1; transform: scale(1); }
 </style>
 </head>
 <body>
 
-<script type="jst" name="modal-dialog" open closing title body>
+<script type="jst" name="modal-dialog" props="open title body">
   $ if (open) {
-    <div class="backdrop $(closing ? 'closing' : '')" data-testid="backdrop"
+    <div class="backdrop" jst-transition="modal-fade" data-testid="backdrop"
          @click="$(e => { if (e.target === e.currentTarget) el.emit('close'); })">
       <div class="modal">
         <h2 data-testid="title">$(title)</h2>
@@ -60,14 +58,11 @@
     const data = await (await fetch('/api/modal')).json();
     modal.title = data.title;
     modal.body = data.body;
-    modal.closing = false;
     modal.open = true;
   });
 
-  // Workaround: play the exit animation, THEN remove (no transition directive in JST).
   modal.addEventListener('close', () => {
-    modal.closing = true;
-    setTimeout(() => { modal.open = false; modal.closing = false; }, 300);
+    modal.open = false;
   });
 
   window.__exampleReady = true;

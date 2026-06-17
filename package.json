@@ -1,0 +1,40 @@
+{
+  "name": "@br3nt/jst",
+  "version": "0.1.0",
+  "description": "JavaScript Templates: no-build reactive web components in plain HTML.",
+  "type": "module",
+  "private": false,
+  "license": "MIT",
+  "files": [
+    "jst.js",
+    "compiler.js",
+    "interpreter.js",
+    "lexer.js",
+    "parser.js",
+    "input_reader.js",
+    "tokens.js",
+    "utils.js",
+    "tools/precompile.mjs",
+    "README.md",
+    "SECURITY.md",
+    "docs"
+  ],
+  "exports": {
+    ".": "./jst.js",
+    "./compiler": "./compiler.js",
+    "./precompile": "./tools/precompile.mjs"
+  },
+  "bin": {
+    "jst-precompile": "./tools/precompile.mjs"
+  },
+  "scripts": {
+    "test": "node --test runtime_tests.mjs && node run_browser_tests.mjs && node run_example_smoke.mjs && npm run test:parity && npm run test:agentic && npm --prefix tooling/vscode-jst test",
+    "test:runtime": "node --test runtime_tests.mjs",
+    "test:browser": "node run_browser_tests.mjs",
+    "test:examples": "node run_example_smoke.mjs",
+    "test:parity": "find framework_parity -name '*.html' -print | xargs node framework_parity/verify.mjs",
+    "test:agentic": "node agentic_feed/run_feed_smoke.mjs",
+    "test:vscode": "npm --prefix tooling/vscode-jst test",
+    "precompile": "node tools/precompile.mjs"
+  }
+}

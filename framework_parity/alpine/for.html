@@ -3,9 +3,8 @@
 <!--
   Source: https://alpinejs.dev/directives/for
   Demonstrates: Alpine x-for — render a list, with add/remove, index access.
-  JST status: ✓ exact for rendering — `$ items.forEach((item, i) => { ... })`.
-  Caveat (per primer): JST morphing is index-based with no keyed reconciliation,
-  so reordering can lose node identity (focus/state). Fine for plain lists.
+  JST status: ✓ exact for rendering — `$ items.forEach((item, i) => { ... })`
+  plus `jst-key` when identity matters.
 -->
 <html lang="en">
 <head>
@@ -20,13 +19,13 @@
 </head>
 <body>
 
-<script type="jst" name="x-for-demo" items>
+<script type="jst" name="x-for-demo" props="items">
   $ const list = items || [];
   <div>
     <button data-testid="add" @click="$(() => el.items = [...list, 'Item ' + (list.length + 1)])">Add</button>
     <ol data-testid="list">
       $ list.forEach((item, i) => {
-        <li>
+        <li jst-key="$(item)">
           <span>$(i + 1). $(item)</span>
           <button class="del" @click="$(() => el.items = list.filter((_, j) => j !== i))">×</button>
         </li>

@@ -10,7 +10,7 @@ import { findJstBlocks, positionAt } from '../src/jst-blocks.mjs';
 const wrap = (attrs, body) => `<!DOCTYPE html>\n<body>\n<script type="jst" ${attrs}>${body}</script>\n</body>`;
 
 test('a well-formed template produces no diagnostics', () => {
-  const text = wrap('name="x-ok" count', '<div>$(count + 1)</div>');
+  const text = wrap('name="x-ok" props="count"', '<div>$(count + 1)</div>');
   assert.deepEqual(computeDiagnostics(text), []);
 });
 
@@ -43,7 +43,7 @@ test('duplicate template names warn on the second definition', () => {
 test('an unbalanced $( is reported with a position inside the block', () => {
   // body spans two lines; the error is on the second inner line
   const body = '\n  <div>$(count</div>\n';
-  const text = wrap('name="x-bad" count', body);
+  const text = wrap('name="x-bad" props="count"', body);
   const diagnostics = computeDiagnostics(text);
 
   const parseError = diagnostics.find(d => d.severity === 1 && !/hyphen|name/.test(d.message));
@@ -81,10 +81,22 @@ test('multi-line block: a positioned error maps to the right inner line', () => 
   assert.equal(error.range.start.line, 3, 'error mapped to the inner line, offset from the block');
 });
 
-test('declared params are extracted from the open tag', () => {
-  const text = wrap('name="todo-item" item :legacy on-toggle', '<div>$(item)</div>');
+test('declared props are extracted from the open tag', () => {
+  const text = wrap('name="todo-item" props="item onToggle"', '<div>$(item)</div>');
   const block = findJstBlocks(text)[0];
-  assert.deepEqual(block.params.sort(), ['item', 'on-toggle', ':legacy'].sort());
+  assert.deepEqual(block.params.sort(), ['item', 'onToggle'].sort());
+});
+
+test('reserved prop names are diagnostics', () => {
+  const text = wrap('name="x-bad" props="item emit"', '<div>$(item)</div>');
+  const diagnostics = computeDiagnostics(text);
+  assert.ok(diagnostics.some(d => /Invalid JST prop "emit"/.test(d.message)));
+});
+
+test('malformed property bindings are diagnostics', () => {
+  const text = wrap('name="x-bad" props="a b"', '<x-child .items="$(a)$(b)"></x-child>');
+  const diagnostics = computeDiagnostics(text);
+  assert.ok(diagnostics.some(d => /exactly one/.test(d.message)));
 });
 
 test('positionAt computes line and character', () => {

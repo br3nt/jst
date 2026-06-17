@@ -27,7 +27,7 @@
 </head>
 <body>
 
-<script type="jst" name="modal-demo" open>
+<script type="jst" name="modal-demo" props="open">
   <button id="show" @click="$(() => el.open = true)">Show Modal</button>
   <div class="mask $(open ? 'open' : '')"
        @click="$(e => { if (e.target === e.currentTarget) el.open = false; })">

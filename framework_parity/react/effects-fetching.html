@@ -5,15 +5,10 @@
   Demonstrates: useEffect for data fetching that re-runs when a dependency
   (the selected person id) changes, with the classic "ignore stale response"
   race guard.
-  JST status: (i) partial — JST exposes NO lifecycle hooks (connectedCallback /
-  disconnectedCallback are private to the framework), so there is no real
-  useEffect and, crucially, NO unmount cleanup. We approximate an effect by
-  running a guarded side-effect inside a ${} render block: it compares the
-  current dep to the last one (el._lastId) and fires the fetch only when it
-  changes — equivalent to useEffect([personId]). The stale-response guard
-  (myId === el._lastId) stands in for the effect cleanup function. What we
-  CANNOT do is run teardown when the element is removed from the DOM; that is
-  a genuine gap (e.g. you could not auto-close a subscription on unmount).
+  JST status: (i) partial — there is no useEffect dependency model. We approximate
+  an effect by running a guarded side-effect inside a ${} render block: it compares
+  the current dep to the last one (el._lastId) and fires the fetch only when it
+  changes. `onDisconnect` handles teardown for in-flight requests on unmount.
 -->
 <html lang="en">
 <head>
@@ -43,21 +38,35 @@
 </script>
 
 <!-- The effect lives in the ${} block, guarded so it runs once per id change. -->
-<script type="jst" name="bio-card" person-id bio loading>
+<script type="jst" name="bio-card" props="personId bio loading">
   ${
     if (el._lastId !== personId) {
+      if (!el._disconnectCleanup) {
+        el._disconnectCleanup = true;
+        el._aborters = new Set();
+        onDisconnect(() => {
+          el._aborters.forEach(controller => controller.abort());
+          el._aborters.clear();
+        });
+      }
       el._lastId = personId;
       el.loading = true;
       el.bio = null;
+      const controller = new AbortController();
+      el._aborters.add(controller);
       const myId = personId;                      // captured per "effect" run
-      fetch('/api/bio/' + personId)
+      fetch('/api/bio/' + personId, { signal: controller.signal })
         .then(r => r.json())
         .then(data => {
           if (el._lastId === myId) {              // ignore stale responses
             el.bio = data;
             el.loading = false;
           }
-        });
+        })
+        .catch(error => {
+          if (error.name !== 'AbortError') el.loading = false;
+        })
+        .finally(() => el._aborters.delete(controller));
     }
   }
   $ if (loading) {

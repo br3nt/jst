@@ -16,9 +16,9 @@
 </head>
 <body>
 
-<script type="jst" name="x-show-demo" open>
+<script type="jst" name="x-show-demo" props="open">
   <div>
-    <button data-testid="toggle" @click="$(() => el.open = !open)">
+    <button data-testid="toggle" @click="$(() => el.open = !el.open)">
       $(open ? 'Hide' : 'Show')
     </button>
     <!-- stays in DOM; only display toggles -->

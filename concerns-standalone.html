@@ -1,0 +1,2245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JST concerns lab - standalone</title>
+<script>
+(() => {
+/* ===== tokens.js ===== */
+class Token { }
+
+class Escaped$Token extends Token {
+  toString() { return `${Escaped$Token.name} {}` }
+}
+
+class WhitespaceToken extends Token {
+  whitespace
+
+  constructor(whitespace) {
+    super()
+    this.whitespace = whitespace
+  }
+
+  toString() { return `${WhitespaceToken.name} {}` }
+}
+
+class JsIdentifierToken extends Token {
+  identifier
+
+  constructor(identifier) {
+    super()
+    this.identifier = identifier
+  }
+
+  toString() { return `${JsIdentifierToken.name} { identifier=${this.identifier} }` }
+}
+
+class JsExpressionToken extends Token {
+  expression
+
+  constructor(expression) {
+    super()
+    this.expression = expression
+  }
+
+  toString() { return `${JsExpressionToken.name} { expression=${this.expression} }` }
+}
+
+class JsCodeToken extends Token {
+  code
+
+  constructor(code) {
+    super()
+    this.code = code
+  }
+
+  toString() { return `${JsCodeToken.name} { code=${this.code} }` }
+}
+
+class HtmlToken extends Token {
+  html
+
+  constructor(html) {
+    super()
+    this.html = html
+  }
+
+  toString() { return `${HtmlToken.name} { html=${this.html} }` }
+}
+
+class EndOfInputToken extends Token {
+
+
+  toString() { return `${EndOfInputToken.name} {}` }
+
+}
+
+
+const Tokens = { Token, Escaped$Token, WhitespaceToken, JsIdentifierToken, JsExpressionToken, JsCodeToken, HtmlToken, EndOfInputToken };
+
+/* ===== input_reader.js ===== */
+class InputReader {
+  #input;
+  #position = 0;
+  #line = 1;
+  #col = 0;
+
+  get position() { return this.#position; }
+  get line() { return this.#line; }
+  get col() { return this.#col; }
+
+  constructor(input) {
+    this.#input = input
+  }
+
+  next() {
+    const ch = this.#input.charAt(this.#position++);
+    if (ch == "\n") { this.#line++; this.#col = 0; } else this.#col++;
+    return ch
+  }
+
+  peek() { return this.#input.charAt(this.position); }
+
+  peekNext() { return this.#input.charAt(this.position + 1); }
+
+  peekAt(offset) { return this.#input.charAt(this.position + offset); }
+
+  endOfInput() { return this.peek() === ''; }
+
+  croak(msg) { throw new Error(`${msg} (${this.line}:${this.col})`); }
+
+  readWhile(predicate) {
+    const startPosition = this.position;
+    while (predicate(this.peek(), this.peekNext()) && !this.endOfInput()) this.next();
+    return this.#input.substring(startPosition, this.position);
+  }
+
+  readUntilChar(ch) {
+    const str = this.readWhile(chPeek => chPeek !== ch)
+    return str;
+  }
+
+  skipChar(ch) {
+    if (this.peek() !== ch) this.croak(`expected current char to be ${ch} but got ${this.peek()}`);
+    this.next();
+  }
+
+  readBalanced(chOpen, chClose) {
+    const startPosition = this.position;
+    let braceCount = 1;
+    let quote = null;
+    let escaped = false;
+    let lineComment = false;
+    let blockComment = false;
+    let regex = false;
+    let regexClass = false;
+    let previousSignificant = chOpen;
+
+    this.skipChar(chOpen);
+
+    const canStartRegex = previous => !previous || /[({[=,:;!&|?+\-*~%^<>]/.test(previous);
+    const remember = ch => {
+      if (!/\s/.test(ch)) previousSignificant = ch;
+    };
+
+    while (!this.endOfInput() && braceCount > 0) {
+      const peek = this.peek();
+      const peekNext = this.peekNext();
+
+      if (lineComment) {
+        this.next();
+        if (peek === '\n' || peek === '\r') lineComment = false;
+        continue;
+      }
+
+      if (blockComment) {
+        this.next();
+        if (peek === '*' && this.peek() === '/') {
+          this.next();
+          blockComment = false;
+        }
+        continue;
+      }
+
+      if (quote) {
+        if (escaped) {
+          escaped = false;
+        } else if (peek === '\\') {
+          escaped = true;
+        } else if (peek === quote) {
+          quote = null;
+        }
+        this.next();
+        continue;
+      }
+
+      if (regex) {
+        if (escaped) {
+          escaped = false;
+        } else if (peek === '\\') {
+          escaped = true;
+        } else if (peek === '[') {
+          regexClass = true;
+        } else if (peek === ']') {
+          regexClass = false;
+        } else if (peek === '/' && !regexClass) {
+          regex = false;
+        }
+        this.next();
+        continue;
+      }
+
+      if (peek === '/' && peekNext === '/') {
+        lineComment = true;
+        this.next();
+        this.next();
+        continue;
+      }
+
+      if (peek === '/' && peekNext === '*') {
+        blockComment = true;
+        this.next();
+        this.next();
+        continue;
+      }
+
+      if (peek === '/' && canStartRegex(previousSignificant)) {
+        regex = true;
+        this.next();
+        continue;
+      }
+
+      if (peek === "'" || peek === '"' || peek === '`') {
+        quote = peek;
+      } else if (peek === chOpen) {
+        braceCount += 1;
+      } else if (peek === chClose) {
+        braceCount -= 1;
+      }
+
+      remember(peek);
+      this.next();
+    }
+
+    if (braceCount !== 0) this.croak(`Unbalanced ${chOpen}${chClose}`);
+
+    const str = this.#input.substring(startPosition, this.position);
+    return str;
+  }
+
+  readBalancedInner(chOpen, chClose) {
+    const str = this.readBalanced(chOpen, chClose);
+    const strippedStr = str.substr(1, str.length - 2);
+    return strippedStr;
+  }
+}
+
+/* ===== lexer.js ===== */
+class Lexer {
+  #input
+
+  constructor(inputReader) {
+    this.#input = inputReader;
+  }
+
+  get position() { return this.#input.position; }
+  get line() { return this.#input.line; }
+  get col() { return this.#input.col; }
+
+  croak(msg) { return this.#input.croak(msg); }
+
+  nextToken() {
+    if (this.#input.endOfInput()) return new Tokens.EndOfInputToken();
+
+    const peek = this.#input.peek();
+
+    // 1. Check for JST Marker
+    if (peek === '$') return this.parseJsToken();
+
+    // 2. Check for Whitespace
+    if (Lexer.isWhitespace(peek)) return this.readWhitespaceToken();
+
+    // 3. Otherwise, it's HTML
+    return this.readHtmlToken();
+  }
+
+  static isWhitespace(ch) {
+    return /[ \t\n\r]/.test(ch)
+  }
+
+  readWhitespaceToken() {
+    const str = this.#input.readWhile(Lexer.isWhitespace);
+    return new Tokens.WhitespaceToken(str);
+  }
+
+  parseJsToken() {
+    this.#input.skipChar('$');
+    const peek = this.#input.peek();
+
+    switch (peek) {
+      case '$': return this.readEscaped$Token();
+      case '(': return this.readJsExpressionToken();
+      case '{': return this.readJsBlockToken();
+    }
+
+    // Line-based directive ($ const ...) or Identifier ($id)
+    if (peek === ' ' || Lexer.isWhitespace(peek)) {
+      return this.readJsLineToken();
+    }
+
+    if (Lexer.isJsIdentifierStart(peek)) {
+      return this.readJsIdentifierToken();
+    }
+
+    return this.croak(`Unexpected character after $: ${peek}`);
+  }
+
+  readJsIdentifierToken() {
+    const str = this.#input.next() + this.#input.readWhile(Lexer.isJsIdentifierContinue);
+    return new Tokens.JsIdentifierToken(str);
+  }
+
+  readJsLineToken() {
+    // Skip leading space after $ if it exists
+    if (this.#input.peek() === ' ') this.#input.next();
+
+    let quote = null;
+    let escaped = false;
+
+    const condition = (ch, chNext) => {
+      if (escaped) { escaped = false; return true; }
+
+      if (quote) {
+        if (ch === '\\') { escaped = true; return true; }
+        if (ch === quote) { quote = null; return true; }
+        // Strings other than template literals cannot span lines
+        if ((ch === '\n' || ch === '\r') && quote !== '`') { quote = null; return false; }
+        return true;
+      }
+
+      if (ch === "'" || ch === '"' || ch === '`') { quote = ch; return true; }
+      if (ch === '\n' || ch === '\r') return false;
+      if (ch === '$') return false;
+      // Stop if we see an actual HTML tag start
+      return !(Lexer.isHtmlTagStart(ch, chNext) || Lexer.isHtmlTagEnd(ch, chNext));
+    };
+
+    const str = this.#input.readWhile(condition);
+    return new Tokens.JsCodeToken(str);
+  }
+
+  readHtmlToken() {
+    let str = '';
+
+    while (!this.#input.endOfInput()) {
+      if (this.#input.peek() === '$') break;
+
+      if (this.startsHtmlComment()) {
+        str += this.readHtmlComment();
+        continue;
+      }
+
+      str += this.#input.next();
+    }
+
+    return new Tokens.HtmlToken(str);
+  }
+
+  readJsExpressionToken() {
+    const str = this.#input.readBalancedInner('(', ')');
+    return new Tokens.JsExpressionToken(str);
+  }
+
+  readJsBlockToken() {
+    const str = this.#input.readBalancedInner('{', '}');
+    return new Tokens.JsCodeToken(str);
+  }
+
+  readEscaped$Token() {
+    this.#input.skipChar('$');
+    return new Tokens.Escaped$Token();
+  }
+
+  static isJsIdentifierStart(ch) {
+    return /^[$_\p{ID_Start}]$/u.test(ch);
+  }
+
+  static isJsIdentifierContinue(ch) {
+    return /^[$\u200c\u200d\p{ID_Continue}]$/u.test(ch);
+  }
+
+  static isHtmlTagStart(ch, chNext) {
+    return ch === '<' && /[a-z]/i.test(chNext);
+  }
+
+  static isHtmlTagEnd(ch, chNext) {
+    return ch === '<' && chNext === '/';
+  }
+
+  startsHtmlComment() {
+    return this.#input.peek() === '<'
+      && this.#input.peekAt(1) === '!'
+      && this.#input.peekAt(2) === '-'
+      && this.#input.peekAt(3) === '-';
+  }
+
+  readHtmlComment() {
+    let str = '';
+
+    while (!this.#input.endOfInput()) {
+      const ch = this.#input.next();
+      str += ch;
+
+      if (ch === '-' && this.#input.peek() === '-' && this.#input.peekAt(1) === '>') {
+        str += this.#input.next();
+        str += this.#input.next();
+        break;
+      }
+    }
+
+    return str;
+  }
+}
+
+/* ===== parser.js ===== */
+function parseTemplateScript(script) {
+  const lexer = new Lexer(new InputReader(script))
+
+  const tokens = []
+  let token = lexer.nextToken()
+
+  while (!(token instanceof EndOfInputToken)) {
+    tokens.push(token)
+    token = lexer.nextToken()
+  }
+
+  return new TemplateTokens(tokens)
+}
+
+class TemplateTokens {
+  #tokens
+
+  constructor(tokens) {
+    this.#tokens = tokens
+  }
+
+  get tokens() { return this.#tokens }
+}
+
+/* ===== interpreter.js ===== */
+/**
+ * Consecutive `$ line` code directives (and the whitespace between them) merge
+ * into one code block so multi-line statements compile as a unit. Interpolation
+ * tokens ($(expr), $identifier) are output instructions and never merge.
+ */
+function mergeJsTokens(templateTokens) {
+  const processedTokens = []
+
+  for (let i = 0; i < templateTokens.length; i++) {
+    const token = templateTokens[i]
+    const last = processedTokens[processedTokens.length - 1]
+
+    if (token instanceof JsCodeToken && last instanceof JsCodeToken) {
+      last.code += ' ' + token.code
+      continue
+    }
+
+    const isWhitespaceOnly = token instanceof WhitespaceToken
+      || (token instanceof HtmlToken && !/[^\s]/.test(token.html))
+
+    if (isWhitespaceOnly) {
+      const next = templateTokens[i + 1]
+      const ws = token.whitespace ?? token.html
+
+      if (last instanceof JsCodeToken && next instanceof JsCodeToken) {
+        last.code += ws
+        continue
+      }
+
+      processedTokens.push(token instanceof WhitespaceToken ? token : new WhitespaceToken(token.html))
+      continue
+    }
+
+    processedTokens.push(token)
+  }
+
+  return processedTokens
+}
+
+// Matches a tag-position binding prefix at the end of an HTML chunk:
+//   `.prop="` assigns the expression value as a JS property after morphing
+//   `@event="` attaches the expression value with addEventListener after morphing
+const bindingTailPattern = /(^|\s)([.@])([a-zA-Z_$][\w$-]*(?:\.[\w$-]+)*)\s*=\s*(["'])$/
+
+function matchBinding(tokens, i) {
+  const token = tokens[i]
+  const expressionToken = tokens[i + 1]
+  const closingToken = tokens[i + 2]
+
+  if (!(token instanceof HtmlToken)) return null
+
+  const match = token.html.match(bindingTailPattern)
+  if (!match) return null
+
+  const [fullMatch, leading, sigil, name, quote] = match
+
+  if (!(expressionToken instanceof JsExpressionToken)
+    || !(closingToken instanceof HtmlToken)
+    || !closingToken.html.startsWith(quote)) {
+    throw new Error(`JST binding ${sigil}${name} must contain exactly one $(...) expression`)
+  }
+
+  return {
+    kind: sigil === '.' ? 'prop' : 'event',
+    name,
+    expression: expressionToken.expression,
+    htmlPrefix: token.html.slice(0, token.html.length - fullMatch.length + leading.length),
+    htmlSuffix: closingToken.html.slice(1),
+  }
+}
+
+function interpretTemplateTokens(templateTokens) {
+  const processedTokens = mergeJsTokens(templateTokens)
+  const instructions = []
+
+  for (let i = 0; i < processedTokens.length; i++) {
+    const binding = matchBinding(processedTokens, i)
+
+    if (binding) {
+      instructions.push(`lines.push(${JSON.stringify(binding.htmlPrefix)});`)
+      instructions.push(`lines.push(__bind(${JSON.stringify(binding.kind)}, ${JSON.stringify(binding.name)}, (${binding.expression})));`)
+      processedTokens[i + 2] = new HtmlToken(binding.htmlSuffix)
+      i += 1 // the expression token was consumed by the binding
+      continue
+    }
+
+    const token = processedTokens[i]
+    const instruction = interpretTemplateToken(token)
+    if (instruction === undefined) throw new Error(`Unknown token at index ${i}: ${token.constructor.name}`)
+    instructions.push(instruction)
+  }
+
+  return ['const lines = [];', ...instructions, 'return lines.join("");'].join('\n')
+}
+
+// Generated push statements end with ';' so a following user code line that
+// starts with '(' or '[' cannot be swallowed by automatic semicolon insertion.
+function interpretTemplateToken(token) {
+  if (token instanceof HtmlToken) return `lines.push(${JSON.stringify(token.html)});`
+  if (token instanceof JsCodeToken) return token.code
+  if (token instanceof Escaped$Token) return `lines.push('$');`
+  if (token instanceof JsExpressionToken) return `lines.push(__esc(${token.expression}));`
+  if (token instanceof JsIdentifierToken) return `lines.push(__esc(${token.identifier}));`
+  if (token instanceof WhitespaceToken) return `lines.push(${JSON.stringify(token.whitespace)});`
+}
+
+/* ===== compiler.js ===== */
+function kebabToCamel(name) {
+  return name.replace(/-([a-z0-9])/g, (_, ch) => ch.toUpperCase())
+}
+
+function camelToKebab(name) {
+  return name.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase()
+}
+
+const jsIdentifierPattern = /^[$_\p{ID_Start}][$\u200c\u200d\p{ID_Continue}]*$/u
+const reservedPropNames = new Set([
+  'arguments',
+  'await',
+  'break',
+  'case',
+  'catch',
+  'class',
+  'const',
+  'continue',
+  'debugger',
+  'default',
+  'delete',
+  'do',
+  'else',
+  'enum',
+  'eval',
+  'export',
+  'extends',
+  'finally',
+  'for',
+  'function',
+  'if',
+  'implements',
+  'import',
+  'in',
+  'instanceof',
+  'interface',
+  'let',
+  'new',
+  'package',
+  'private',
+  'protected',
+  'public',
+  'return',
+  'static',
+  'super',
+  'switch',
+  'this',
+  'throw',
+  'try',
+  'typeof',
+  'var',
+  'void',
+  'while',
+  'with',
+  'yield',
+  'el',
+  'raw',
+  'unsafeHTML',
+  'slot',
+  'onDisconnect',
+  'emit',
+  '__esc',
+  '__bind',
+])
+
+function parsePropsAttribute(value) {
+  if (!value || !value.trim()) return []
+
+  return value
+    .split(/[\s,]+/)
+    .filter(Boolean)
+    .map(prop => {
+      if (!jsIdentifierPattern.test(prop)) {
+        throw new Error(`Invalid JST prop "${prop}". Props must be valid JavaScript identifiers.`)
+      }
+      if (reservedPropNames.has(prop)) {
+        throw new Error(`Invalid JST prop "${prop}". Props cannot use JavaScript keywords or JST helper names.`)
+      }
+      return prop
+    })
+}
+
+class TemplateRenderingFunction {
+  #functionParams
+  #functionBody
+  #paramMap
+
+  constructor(functionParams, functionBody, paramMap) {
+    this.#functionParams = functionParams
+    this.#functionBody = functionBody
+    this.#paramMap = paramMap
+  }
+
+  get functionParams() { return this.#functionParams; }
+  get functionBody() { return this.#functionBody; }
+  get paramMap() { return this.#paramMap; }
+}
+
+function getTemplateRenderingFunctionParams(templateElement) {
+  // Props are declared in one case-preserving attribute value:
+  //   <script type="jst" name="todo-item" props="item onToggle">
+  // HTML lowercases attribute names, but not quoted attribute values, so this
+  // keeps internal JS identifiers greppable and supports expected names like
+  // `name` without conflicting with the template's own `name` attribute.
+  const paramMap = {}
+  const props = parsePropsAttribute(templateElement.getAttribute('props') || '')
+
+  props.forEach(prop => {
+    paramMap[camelToKebab(prop)] = prop
+  })
+
+  return {
+    functionParams: Array.from(new Set(props)),
+    paramMap,
+  }
+}
+
+function compileTemplateRenderingFunction(templateElement) {
+  const program = parseTemplateScript(templateElement.innerHTML)
+  const { functionParams, paramMap } = getTemplateRenderingFunctionParams(templateElement)
+  const functionBody = interpretTemplateTokens(program.tokens)
+
+  return new TemplateRenderingFunction(functionParams, functionBody, paramMap)
+}
+
+/* ===== jst.js ===== */
+/**
+ * JST Framework Core
+ *
+ * Templates are declared as <script type="jst" name="tag-name" props="prop otherProp">
+ * and registered as real custom elements. Data flows in through attributes
+ * (JSON-parsed primitives) or properties (rich values: el.items = [...]).
+ * Data flows out through bubbling CustomEvents (el.emit('name', detail)).
+ *
+ * Inside templates:
+ *   $(expr)                 escaped interpolation
+ *   $(raw(expr))            unescaped interpolation (opt-in trusted HTML)
+ *   $(unsafeHTML(expr))     alias for raw(expr)
+ *   $(slot())               project the component's original child nodes
+ *   $(slot('name', 'fb'))   project nodes marked slot="name", with a fallback
+ *   .prop="$(expr)"         assign expr as a JS property on the element
+ *   @event.mod="$(fn)"      addEventListener('event', fn) with optional modifiers
+ *   jst-model="prop"        shorthand for .value/checked + emitting prop changes
+ *   jst-key="$(id)"         preserve keyed node identity while morphing
+ */
+document.jst = {
+  ...document.jst,
+  templates: document.jst?.templates || new Map(),
+  config: {
+    dev: false,
+    autoRegister: true,
+    autoRegisterRoot: null,
+    resolveTemplate: null,
+    ...document.jst?.config,
+  },
+}
+
+let templatesInitialized = false
+let templateObserver = null
+const pendingTemplateResolutions = new Map()
+
+/** Values wrapped in RawHtml bypass interpolation escaping. */
+class RawHtml {
+  constructor(html) { this.html = html }
+}
+
+function raw(value) {
+  if (value instanceof RawHtml) return value
+  return new RawHtml(value == null ? '' : String(value))
+}
+
+const unsafeHTML = raw
+
+function configure(options = {}) {
+  document.jst.config = {
+    ...document.jst.config,
+    ...options,
+  }
+
+  if ((Object.prototype.hasOwnProperty.call(options, 'autoRegister')
+    || Object.prototype.hasOwnProperty.call(options, 'autoRegisterRoot')) && templateObserver) {
+    templateObserver.disconnect();
+    templateObserver = null;
+  }
+
+  observeNewTemplates();
+
+  return document.jst.config
+}
+
+function isCustomElementName(name) {
+  return typeof name === 'string' && name.includes('-');
+}
+
+function templateSource(templateElement) {
+  return templateElement.dataset?.jstSource || templateElement.ownerDocument?.baseURI || '';
+}
+
+function insertTemplateHtml(html, source) {
+  const container = document.createElement('div');
+  container.hidden = true;
+  container.setAttribute('data-jst-resolved-from', source);
+  container.innerHTML = html;
+  container.querySelectorAll('script[type="jst"]').forEach(script => {
+    script.dataset.jstSource = source;
+  });
+
+  (document.body || document.head || document.documentElement).appendChild(container);
+  container.querySelectorAll('script[type="jst"]').forEach(registerCustomElementFromTemplate);
+  return container;
+}
+
+async function resolveTemplateForName(name) {
+  const resolver = document.jst.config.resolveTemplate;
+  if (typeof resolver !== 'function') return null;
+  if (!isCustomElementName(name) || customElements.get(name) || document.jst.templates.has(name)) return null;
+  if (pendingTemplateResolutions.has(name)) return pendingTemplateResolutions.get(name);
+
+  const resolution = Promise.resolve()
+    .then(() => resolver(name))
+    .then(async url => {
+      if (!url) return null;
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`HTTP ${response.status} while fetching ${url}`);
+      const html = await response.text();
+      return insertTemplateHtml(html, String(url));
+    })
+    .catch(error => {
+      console.error(`JST: Failed to resolve template for <${name}>:`, error);
+      return null;
+    })
+    .finally(() => {
+      pendingTemplateResolutions.delete(name);
+    });
+
+  pendingTemplateResolutions.set(name, resolution);
+  return resolution;
+}
+
+function scanForMissingTemplates(root) {
+  if (!root || typeof root.querySelectorAll !== 'function') return;
+
+  const visit = element => {
+    if (element.nodeType !== Node.ELEMENT_NODE) return;
+    const name = element.tagName.toLowerCase();
+    if (isCustomElementName(name) && !customElements.get(name)) resolveTemplateForName(name);
+  };
+
+  visit(root);
+  root.querySelectorAll('*').forEach(visit);
+}
+
+function escapeHtml(value) {
+  if (value == null) return ''
+  if (value instanceof RawHtml) return value.html
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
+function createSlotPlaceholder(name, fallback) {
+  const nameAttribute = name ? ` name="${escapeHtml(name)}"` : ''
+  const fallbackHtml = fallback == null ? '' : escapeHtml(fallback)
+  return new RawHtml(`<jst-slot${nameAttribute} style="display: contents">${fallbackHtml}</jst-slot>`)
+}
+
+function canMorphDom(host) {
+  return typeof document?.createElement === 'function' && !!host?.childNodes;
+}
+
+function isManagedCustomElement(node) {
+  return node?.nodeType === Node.ELEMENT_NODE
+    && typeof customElements?.get === 'function'
+    && !!customElements.get(node.tagName.toLowerCase());
+}
+
+function isSlotElement(node) {
+  return node?.nodeType === Node.ELEMENT_NODE && node.tagName === 'JST-SLOT';
+}
+
+function nodesAreCompatible(currentNode, nextNode) {
+  if (!currentNode || !nextNode) return false;
+  if (currentNode.nodeType !== nextNode.nodeType) return false;
+
+  if (currentNode.nodeType === Node.ELEMENT_NODE) {
+    return currentNode.tagName === nextNode.tagName;
+  }
+
+  return true;
+}
+
+function getNodeKey(node) {
+  return node?.nodeType === Node.ELEMENT_NODE ? node.getAttribute('jst-key') : null;
+}
+
+function findKeyedChild(host, nextNode, startIndex) {
+  const key = getNodeKey(nextNode);
+  if (key == null) return null;
+
+  for (let i = startIndex; i < host.childNodes.length; i++) {
+    const candidate = host.childNodes[i];
+    if (getNodeKey(candidate) === key && nodesAreCompatible(candidate, nextNode)) {
+      return candidate;
+    }
+  }
+
+  return null;
+}
+
+function transitionName(node) {
+  return node?.nodeType === Node.ELEMENT_NODE ? node.getAttribute('jst-transition') : null;
+}
+
+function parseCssTimeList(value) {
+  return String(value || '')
+    .split(',')
+    .map(part => part.trim())
+    .filter(Boolean)
+    .map(part => part.endsWith('ms') ? Number.parseFloat(part) : Number.parseFloat(part) * 1000)
+    .filter(Number.isFinite);
+}
+
+function transitionTimeoutMs(element) {
+  if (typeof getComputedStyle !== 'function') return 0;
+  const style = getComputedStyle(element);
+  const transitionDurations = parseCssTimeList(style.transitionDuration);
+  const transitionDelays = parseCssTimeList(style.transitionDelay);
+  const animationDurations = parseCssTimeList(style.animationDuration);
+  const animationDelays = parseCssTimeList(style.animationDelay);
+  const maxFor = (durations, delays) => durations.reduce((max, duration, index) => {
+    const delay = delays[index] ?? delays[0] ?? 0;
+    return Math.max(max, duration + delay);
+  }, 0);
+
+  return Math.max(
+    maxFor(transitionDurations, transitionDelays),
+    maxFor(animationDurations, animationDelays),
+  );
+}
+
+function nextFrame(callback) {
+  if (typeof requestAnimationFrame === 'function') {
+    requestAnimationFrame(() => requestAnimationFrame(callback));
+    return;
+  }
+  setTimeout(callback, 0);
+}
+
+function afterTransition(element, callback) {
+  let done = false;
+  const finish = () => {
+    if (done) return;
+    done = true;
+    element.removeEventListener('transitionend', finish);
+    element.removeEventListener('animationend', finish);
+    callback();
+  };
+  const timeout = transitionTimeoutMs(element);
+
+  if (timeout <= 0) {
+    setTimeout(finish, 0);
+    return;
+  }
+
+  element.addEventListener('transitionend', finish);
+  element.addEventListener('animationend', finish);
+  setTimeout(finish, timeout + 50);
+}
+
+function removeTransitionClasses(element, name, phase) {
+  element.classList.remove(
+    `${name}-${phase}-from`,
+    `${name}-${phase}-active`,
+    `${name}-${phase}-to`,
+  );
+}
+
+function runEnterTransition(node) {
+  const name = transitionName(node);
+  if (!name || node.nodeType !== Node.ELEMENT_NODE) return;
+
+  node.classList.add(`${name}-enter-from`, `${name}-enter-active`);
+  nextFrame(() => {
+    node.classList.remove(`${name}-enter-from`);
+    node.classList.add(`${name}-enter-to`);
+    afterTransition(node, () => removeTransitionClasses(node, name, 'enter'));
+  });
+}
+
+function runLeaveTransition(node, remove) {
+  const name = transitionName(node);
+  if (!name || node.nodeType !== Node.ELEMENT_NODE) {
+    remove();
+    return;
+  }
+
+  node.classList.add(`${name}-leave-from`, `${name}-leave-active`);
+  nextFrame(() => {
+    node.classList.remove(`${name}-leave-from`);
+    node.classList.add(`${name}-leave-to`);
+    afterTransition(node, () => {
+      removeTransitionClasses(node, name, 'leave');
+      remove();
+    });
+  });
+}
+
+function runMoveTransition(node) {
+  const name = transitionName(node);
+  if (!name || node.nodeType !== Node.ELEMENT_NODE) return;
+
+  node.classList.add(`${name}-move`);
+  afterTransition(node, () => node.classList.remove(`${name}-move`));
+}
+
+function insertRenderedNode(host, nextNode, beforeNode = null) {
+  const inserted = cloneRenderedNode(nextNode);
+  host.insertBefore(inserted, beforeNode);
+  runEnterTransition(inserted);
+  return inserted;
+}
+
+function removeRenderedNode(host, node) {
+  runLeaveTransition(node, () => {
+    if (node.parentNode === host) host.removeChild(node);
+  });
+}
+
+function escapeCssIdentifier(value) {
+  if (typeof CSS !== 'undefined' && typeof CSS.escape === 'function') return CSS.escape(value);
+  return String(value).replace(/["\\]/g, '\\$&');
+}
+
+function syncAttributes(currentElement, nextElement) {
+  Array.from(currentElement.attributes).forEach(attr => {
+    if (!nextElement.hasAttribute(attr.name)) currentElement.removeAttribute(attr.name);
+  });
+
+  Array.from(nextElement.attributes).forEach(attr => {
+    if (currentElement.getAttribute(attr.name) !== attr.value) {
+      currentElement.setAttribute(attr.name, attr.value);
+    }
+  });
+}
+
+const booleanPropertyAttributes = {
+  readOnly: 'readonly',
+}
+
+function booleanPropertyValue(element, name) {
+  const attrName = booleanPropertyAttributes[name] || name.toLowerCase();
+  if (!element.hasAttribute(attrName)) return false;
+  const value = element.getAttribute(attrName);
+  return value !== 'false' && value !== '0';
+}
+
+function syncBooleanProperty(currentElement, nextElement, name) {
+  if (!(name in currentElement)) return;
+  const value = booleanPropertyValue(nextElement, name);
+  if (currentElement[name] !== value) currentElement[name] = value;
+}
+
+function syncBooleanPropertyIfDeclared(currentElement, nextElement, name) {
+  const attrName = booleanPropertyAttributes[name] || name.toLowerCase();
+  if (!nextElement.hasAttribute(attrName)) return;
+  syncBooleanProperty(currentElement, nextElement, name);
+}
+
+function setLiveValue(element, value) {
+  if (element.value !== value) element.value = value;
+}
+
+function syncFormProperties(currentElement, nextElement) {
+  if (currentElement.nodeType !== Node.ELEMENT_NODE) return;
+
+  const tagName = currentElement.tagName;
+
+  if (tagName === 'INPUT') {
+    if (nextElement.hasAttribute('value')) setLiveValue(currentElement, nextElement.getAttribute('value'));
+    syncBooleanPropertyIfDeclared(currentElement, nextElement, 'checked');
+  } else if (tagName === 'TEXTAREA') {
+    if (currentElement.defaultValue !== nextElement.defaultValue) setLiveValue(currentElement, nextElement.value);
+  } else if (tagName === 'SELECT') {
+    if (nextElement.hasAttribute('value')) setLiveValue(currentElement, nextElement.getAttribute('value'));
+  } else if (tagName === 'OPTION') {
+    syncBooleanPropertyIfDeclared(currentElement, nextElement, 'selected');
+  }
+
+  ['disabled', 'required', 'readOnly', 'multiple'].forEach(prop => {
+    syncBooleanProperty(currentElement, nextElement, prop);
+  });
+}
+
+function cloneRenderedNode(nextNode) {
+  const clone = nextNode.cloneNode(true);
+
+  const syncTree = (current, next) => {
+    if (current.nodeType !== Node.ELEMENT_NODE || next.nodeType !== Node.ELEMENT_NODE) return;
+    syncFormProperties(current, next);
+
+    const currentChildren = Array.from(current.childNodes);
+    const nextChildren = Array.from(next.childNodes);
+    nextChildren.forEach((nextChild, index) => {
+      if (currentChildren[index]) syncTree(currentChildren[index], nextChild);
+    });
+  };
+
+  syncTree(clone, nextNode);
+  return clone;
+}
+
+function morphNode(currentNode, nextNode) {
+  if (!nodesAreCompatible(currentNode, nextNode)) {
+    const replacement = cloneRenderedNode(nextNode);
+    currentNode.replaceWith(replacement);
+    runEnterTransition(replacement);
+    return;
+  }
+
+  if (currentNode.nodeType === Node.TEXT_NODE || currentNode.nodeType === Node.COMMENT_NODE) {
+    if (currentNode.nodeValue !== nextNode.nodeValue) currentNode.nodeValue = nextNode.nodeValue;
+    return;
+  }
+
+  syncAttributes(currentNode, nextNode);
+  syncFormProperties(currentNode, nextNode);
+  // Managed elements render their own children; slot elements hold projected
+  // author content. Neither should be morphed from the parent's output.
+  if (isManagedCustomElement(currentNode) || isSlotElement(currentNode)) return;
+  morphChildren(currentNode, nextNode);
+}
+
+function morphChildren(host, nextParent) {
+  const nextNodes = Array.from(nextParent.childNodes);
+  let index = 0;
+
+  while (index < nextNodes.length || index < host.childNodes.length) {
+    const currentNode = host.childNodes[index];
+    const nextNode = nextNodes[index];
+
+    if (!nextNode) {
+      removeRenderedNode(host, currentNode);
+      index++;
+      continue;
+    }
+
+    if (!currentNode) {
+      insertRenderedNode(host, nextNode);
+      index++;
+      continue;
+    }
+
+    const nextKey = getNodeKey(nextNode);
+    if (nextKey != null && getNodeKey(currentNode) !== nextKey) {
+      const keyedMatch = findKeyedChild(host, nextNode, index + 1);
+      if (keyedMatch) {
+        host.insertBefore(keyedMatch, currentNode);
+        morphNode(keyedMatch, nextNode);
+        runMoveTransition(keyedMatch);
+      } else {
+        insertRenderedNode(host, nextNode, currentNode);
+      }
+      index++;
+      continue;
+    }
+
+    if (getNodeKey(currentNode) != null && nextKey == null && !nodesAreCompatible(currentNode, nextNode)) {
+      insertRenderedNode(host, nextNode, currentNode);
+      index++;
+      continue;
+    }
+
+    if (!nodesAreCompatible(currentNode, nextNode)) {
+      const replacement = cloneRenderedNode(nextNode);
+      host.replaceChild(replacement, currentNode);
+      runEnterTransition(replacement);
+      index++;
+      continue;
+    }
+
+    morphNode(currentNode, nextNode);
+    index++;
+  }
+}
+
+function applyRenderedHtml(host, html) {
+  if (!canMorphDom(host)) {
+    host.innerHTML = html;
+    return;
+  }
+
+  const template = document.createElement('template');
+  template.innerHTML = html;
+  morphChildren(host, template.content);
+}
+
+const jsonLikePattern = /^(?:true|false|null|-?\d|\[|\{|")/
+
+/**
+ * Attributes arrive as strings. Values that look like JSON (numbers, booleans,
+ * arrays, objects, quoted strings) are parsed so count="0" renders as a number.
+ * Anything else stays a plain string. No eval involved.
+ */
+function parseAttributeValue(rawValue) {
+  if (rawValue === null) return undefined
+  const trimmed = rawValue.trim()
+  if (!jsonLikePattern.test(trimmed)) return rawValue
+  try { return JSON.parse(trimmed) } catch { return rawValue }
+}
+
+const bindingAttributePattern = /^jst-bind-(\d+)$/
+const boundListeners = new WeakMap()
+const modelListeners = new WeakMap()
+
+const keyModifiers = {
+  enter: 'Enter',
+  escape: 'Escape',
+  esc: 'Escape',
+  tab: 'Tab',
+  space: ' ',
+  up: 'ArrowUp',
+  down: 'ArrowDown',
+  left: 'ArrowLeft',
+  right: 'ArrowRight',
+}
+
+function parseEventDescriptor(descriptor) {
+  const [eventName, ...modifiers] = descriptor.split('.');
+  return { eventName, modifiers };
+}
+
+function valueFromModelControl(element, currentValue) {
+  if (element instanceof HTMLInputElement && element.type === 'checkbox') {
+    if (Array.isArray(currentValue)) {
+      const next = currentValue.filter(value => String(value) !== element.value);
+      if (element.checked) next.push(element.value);
+      return next;
+    }
+    return element.checked;
+  }
+
+  if (element instanceof HTMLInputElement && element.type === 'radio') {
+    return element.checked ? element.value : currentValue;
+  }
+
+  if (element instanceof HTMLSelectElement && element.multiple) {
+    return Array.from(element.selectedOptions).map(option => option.value);
+  }
+
+  return element.value;
+}
+
+function syncModelControl(element, value) {
+  if (element instanceof HTMLInputElement && element.type === 'checkbox') {
+    const checked = Array.isArray(value)
+      ? value.map(String).includes(element.value)
+      : Boolean(value);
+    if (element.checked !== checked) element.checked = checked;
+    return;
+  }
+
+  if (element instanceof HTMLInputElement && element.type === 'radio') {
+    const checked = value != null && String(value) === element.value;
+    if (element.checked !== checked) element.checked = checked;
+    return;
+  }
+
+  if (element instanceof HTMLSelectElement && element.multiple) {
+    const selected = Array.isArray(value) ? value.map(String) : [];
+    Array.from(element.options).forEach(option => {
+      option.selected = selected.includes(option.value);
+    });
+    return;
+  }
+
+  if ('value' in element && element.value !== (value == null ? '' : String(value))) {
+    element.value = value == null ? '' : String(value);
+  }
+}
+
+function buildEventListener(element, descriptor, handler) {
+  const { eventName, modifiers } = parseEventDescriptor(descriptor);
+  const modifierSet = new Set(modifiers);
+  const keyChecks = modifiers
+    .filter(modifier => keyModifiers[modifier])
+    .map(modifier => keyModifiers[modifier]);
+
+  let listener = event => {
+    if (keyChecks.length && !keyChecks.includes(event.key)) return;
+    if (modifierSet.has('self') && event.target !== element) return;
+    if (modifierSet.has('prevent')) event.preventDefault();
+    if (modifierSet.has('stop')) event.stopPropagation();
+    return handler(event);
+  };
+
+  const debounceIndex = modifiers.indexOf('debounce');
+  if (debounceIndex !== -1) {
+    const delay = Number(modifiers[debounceIndex + 1]) || 250;
+    const original = listener;
+    let timeout = null;
+    listener = event => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => original(event), delay);
+    };
+  }
+
+  return {
+    eventName,
+    target: modifierSet.has('outside') ? document : element,
+    listener: modifierSet.has('outside')
+      ? event => {
+          if (!element.contains(event.target)) listener(event);
+        }
+      : listener,
+  };
+}
+
+function applyBinding(element, { kind, name, value }) {
+  if (kind === 'prop') {
+    if (!Object.is(element[name], value)) element[name] = value
+    return
+  }
+
+  const listeners = boundListeners.get(element) || {}
+  if (listeners[name]) {
+    listeners[name].target.removeEventListener(listeners[name].eventName, listeners[name].listener)
+  }
+
+  if (typeof value === 'function') {
+    const binding = buildEventListener(element, name, value)
+    binding.target.addEventListener(binding.eventName, binding.listener)
+    listeners[name] = binding
+  } else {
+    delete listeners[name]
+  }
+
+  boundListeners.set(element, listeners)
+}
+
+function applyModelBinding(host, element, propName, paramNames) {
+  const previous = modelListeners.get(element);
+  if (previous) element.removeEventListener(previous.eventName, previous.listener);
+
+  if (!paramNames.includes(propName)) {
+    console.warn(`JST: jst-model="${propName}" does not match a declared prop on <${host.tagName.toLowerCase()}>.`);
+  }
+
+  syncModelControl(element, host._jstGetParam(propName));
+
+  const eventName = element instanceof HTMLSelectElement
+    || (element instanceof HTMLInputElement && (element.type === 'checkbox' || element.type === 'radio'))
+    ? 'change'
+    : 'input';
+  const listener = () => {
+    host[propName] = valueFromModelControl(element, host._jstGetParam(propName));
+  };
+  element.addEventListener(eventName, listener);
+  element.removeAttribute('jst-model');
+  modelListeners.set(element, { eventName, listener });
+}
+
+function registerCustomElementFromTemplate(templateElement) {
+  const customElementName = templateElement.getAttribute('name')?.toLowerCase();
+  const source = templateSource(templateElement);
+
+  // Custom elements MUST have a hyphen in their name
+  if (!customElementName || !customElementName.includes('-')) {
+    console.error(`JST Error: "${customElementName}" is not a valid custom element name. It MUST contain a hyphen (e.g. jst-${customElementName}).`, source);
+    return;
+  }
+
+  if (templateElement.__jstRegisteredName === customElementName) {
+    return customElements.get(customElementName);
+  }
+
+  const renderFunction = compileTemplateRenderingFunction(templateElement);
+
+  const elementClass = defineCustomElementFromRender({
+    customElementName,
+    paramNames: renderFunction.functionParams,
+    attributeToParam: renderFunction.paramMap,
+    renderFunctionBody: renderFunction.functionBody,
+    source,
+    createRenderFunction: () => new Function(
+      ...renderFunction.functionParams,
+      'el',
+      'raw',
+      'unsafeHTML',
+      'slot',
+      'onDisconnect',
+      '__esc',
+      '__bind',
+      renderFunction.functionBody,
+    ),
+  });
+
+  if (elementClass) templateElement.__jstRegisteredName = customElementName;
+  return elementClass;
+}
+
+function registerPrecompiledTemplate(customElementName, paramNames, attributeToParam, renderFunction, source = 'precompiled') {
+  if (!customElementName || !customElementName.includes('-')) {
+    console.error(`JST Error: "${customElementName}" is not a valid custom element name. It MUST contain a hyphen (e.g. jst-${customElementName}).`, source);
+    return;
+  }
+
+  return defineCustomElementFromRender({
+    customElementName: customElementName.toLowerCase(),
+    paramNames,
+    attributeToParam,
+    renderFunctionBody: renderFunction.toString(),
+    source,
+    createRenderFunction: () => renderFunction,
+  });
+}
+
+function defineCustomElementFromRender({
+  customElementName,
+  paramNames,
+  attributeToParam,
+  renderFunctionBody,
+  source,
+  createRenderFunction,
+}) {
+  if (document.jst.templates.has(customElementName)) {
+    console.warn(`JST: Duplicate template name "${customElementName}" ignored.`, source);
+    return customElements.get(customElementName);
+  }
+
+  document.jst.templates.set(customElementName, {
+    functionParams: paramNames,
+    paramMap: attributeToParam,
+    source,
+  });
+
+  if (customElements.get(customElementName)) {
+    console.warn(`JST: Custom element <${customElementName}> is already registered.`, source);
+    return customElements.get(customElementName);
+  }
+
+  let compiledRender = null;
+
+  const CustomElementClass = class extends HTMLElement {
+    #params = {};
+    #renderQueued = false;
+    #slotContent = null;
+    #slotContentDetached = false;
+    #rendering = false;
+    #slotObserver = null;
+    #disconnectCleanups = new Set();
+
+    static get observedAttributes() {
+      return Object.keys(attributeToParam);
+    }
+
+    connectedCallback() {
+      this.#captureSlotContent();
+      this.#observeSlotMutations();
+      this.#upgradeProperties();
+      this.requestRender();
+    }
+
+    disconnectedCallback() {
+      this.#slotObserver?.disconnect();
+      this.#slotObserver = null;
+
+      this.#disconnectCleanups.forEach(cleanup => {
+        try {
+          cleanup();
+        } catch (error) {
+          console.error(`JST disconnect cleanup error in <${customElementName}>:`, error);
+        }
+      });
+      this.#disconnectCleanups.clear();
+    }
+
+    attributeChangedCallback(name, oldValue, newValue) {
+      if (oldValue === newValue) return;
+      this.#params[attributeToParam[name]] = parseAttributeValue(newValue);
+      if (this.isConnected) this.requestRender();
+    }
+
+    /** Dispatch a bubbling CustomEvent. Data out: parents/pages listen for these. */
+    emit(eventName, detail) {
+      return this.dispatchEvent(new CustomEvent(eventName, { detail, bubbles: true, composed: true }));
+    }
+
+    requestRender() {
+      if (this.#renderQueued) return;
+      this.#renderQueued = true;
+
+      queueMicrotask(() => {
+        this.#renderQueued = false;
+        if (this.isConnected) this.render();
+      });
+    }
+
+    render() {
+      if (!this.isConnected) return;
+
+      const bindings = [];
+
+      try {
+        compiledRender = compiledRender || createRenderFunction();
+
+        const html = compiledRender.call(
+          this,
+          ...paramNames.map(param => this.#params[param]),
+          this,
+          raw,
+          unsafeHTML,
+          createSlotPlaceholder,
+          cleanup => this.#registerDisconnectCleanup(cleanup),
+          escapeHtml,
+          (kind, name, value) => ` jst-bound jst-bind-${bindings.push({ kind, name, value }) - 1}=""`,
+        );
+
+        this.#slotObserver?.disconnect();
+        this.#slotObserver = null;
+        this.#rendering = true;
+        try {
+          this.#detachSlotContent();
+          applyRenderedHtml(this, html);
+          this.#applyBindings(bindings);
+          this.#applyModelBindings();
+          this.#fillSlots();
+        } finally {
+          this.#rendering = false;
+          this.#observeSlotMutations();
+        }
+      } catch (e) {
+        console.error(`JST Render Error in <${customElementName}>:`, e);
+        console.groupCollapsed('--- Problematic Generated Code ---');
+        console.log(renderFunctionBody);
+        console.groupEnd();
+        if (document.jst.config.dev) this.#showDevError(e);
+      }
+    }
+
+    _jstGetParam(param) { return this.#params[param]; }
+
+    _jstSetParam(param, value) {
+      const previous = this.#params[param];
+      this.#params[param] = value;
+      const isMutableReference = value !== null && (typeof value === 'object' || typeof value === 'function');
+      if (Object.is(previous, value) && !isMutableReference) return;
+      this.requestRender();
+    }
+
+    #registerDisconnectCleanup(cleanup) {
+      if (typeof cleanup !== 'function') return cleanup;
+      this.#disconnectCleanups.add(cleanup);
+      return cleanup;
+    }
+
+    #showDevError(error) {
+      this.innerHTML = `<pre class="jst-error" role="alert">JST Render Error in &lt;${escapeHtml(customElementName)}&gt;\n${escapeHtml(error?.stack || error?.message || error)}</pre>`;
+    }
+
+    /**
+     * A property assigned before the element upgrades lands as an own property
+     * that shadows the prototype accessor. Re-route it through the setter.
+     */
+    #upgradeProperties() {
+      paramNames.forEach(param => {
+        if (Object.prototype.hasOwnProperty.call(this, param)) {
+          const value = this[param];
+          delete this[param];
+          this[param] = value;
+        }
+      });
+    }
+
+    /**
+     * On first connect the element's children are the author's content.
+     * Capture references so the template can project them via $(slot()).
+     * The nodes stay in the document until the first render so they remain
+     * reachable (getElementById, listeners) in the meantime.
+     */
+    #captureSlotContent() {
+      if (this.#slotContent || !this.childNodes) return;
+
+      const named = new Map();
+      const defaultNodes = [];
+
+      Array.from(this.childNodes).forEach(node => {
+        const slotName = node.nodeType === Node.ELEMENT_NODE ? node.getAttribute('slot') : null;
+        if (slotName) {
+          if (!named.has(slotName)) named.set(slotName, []);
+          named.get(slotName).push(node);
+        } else {
+          defaultNodes.push(node);
+        }
+      });
+
+      this.#slotContent = { defaultNodes, named };
+    }
+
+    #observeSlotMutations() {
+      if (this.#slotObserver || typeof MutationObserver === 'undefined') return;
+
+      this.#slotObserver = new MutationObserver(mutations => {
+        if (this.#rendering) return;
+
+        mutations.forEach(mutation => {
+          mutation.addedNodes.forEach(node => {
+            if (node.nodeType !== Node.ELEMENT_NODE && node.nodeType !== Node.TEXT_NODE) return;
+            if (!this.#slotContent) this.#captureSlotContent();
+
+            const slotName = node.nodeType === Node.ELEMENT_NODE ? node.getAttribute('slot') : null;
+            if (slotName) {
+              if (!this.#slotContent.named.has(slotName)) this.#slotContent.named.set(slotName, []);
+              const nodes = this.#slotContent.named.get(slotName);
+              if (!nodes.includes(node)) nodes.push(node);
+            } else if (!this.#slotContent.defaultNodes.includes(node)) {
+              this.#slotContent.defaultNodes.push(node);
+            }
+
+            this.#rendering = true;
+            try {
+              this.#placeSlotContent(slotName);
+            } finally {
+              this.#rendering = false;
+            }
+          });
+        });
+      });
+
+      this.#slotObserver.observe(this, { childList: true });
+    }
+
+    /**
+     * Detach the captured author content right before the first morph, so the
+     * morph never mutates author nodes and #fillSlots can re-project them.
+     * Runs synchronously inside render(): no observable detached window.
+     */
+    #detachSlotContent() {
+      if (this.#slotContentDetached || !this.#slotContent) return;
+      this.#slotContentDetached = true;
+
+      this.#slotContent.defaultNodes.forEach(node => node.remove?.());
+      this.#slotContent.named.forEach(nodes => nodes.forEach(node => node.remove?.()));
+    }
+
+    #applyBindings(bindings) {
+      if (!bindings.length || typeof this.querySelectorAll !== 'function') return;
+
+      // Binding markers are stripped synchronously after every render, so any
+      // marker present right now was emitted by this render's binding table —
+      // including markers inside a nested component's light DOM.
+      this.querySelectorAll('[jst-bound]').forEach(element => {
+        Array.from(element.attributes).forEach(attribute => {
+          const match = attribute.name.match(bindingAttributePattern);
+          if (!match) return;
+
+          element.removeAttribute(attribute.name);
+          const binding = bindings[Number(match[1])];
+          if (binding) applyBinding(element, binding);
+        });
+
+        element.removeAttribute('jst-bound');
+      });
+    }
+
+    #applyModelBindings() {
+      if (typeof this.querySelectorAll !== 'function') return;
+
+      this.querySelectorAll('[jst-model]').forEach(element => {
+        applyModelBinding(this, element, element.getAttribute('jst-model'), paramNames);
+      });
+    }
+
+    #fillSlots() {
+      if (typeof this.querySelectorAll !== 'function') return;
+
+      this.querySelectorAll('jst-slot').forEach(slotElement => {
+        if (slotElement.__jstFilled) return;
+        slotElement.__jstFilled = true;
+
+        this.#placeSlotContent(slotElement.getAttribute('name'));
+      });
+    }
+
+    #placeSlotContent(name) {
+      if (typeof this.querySelector !== 'function') return;
+      const selector = name ? `jst-slot[name="${escapeCssIdentifier(name)}"]` : 'jst-slot:not([name])';
+      const slotElement = this.querySelector(selector);
+      if (!slotElement) return;
+
+      const nodes = (name
+        ? this.#slotContent?.named.get(name)
+        : this.#slotContent?.defaultNodes) || [];
+
+      if (nodes.length) slotElement.replaceChildren(...nodes);
+    }
+  };
+
+  // Each declared prop becomes a real property: el.items = [...] re-renders.
+  paramNames.forEach(param => {
+    if (Object.prototype.hasOwnProperty.call(CustomElementClass.prototype, param)) {
+      console.warn(`JST: Prop "${param}" on <${customElementName}> clashes with a component member and will not get a property accessor.`);
+      return;
+    }
+
+    Object.defineProperty(CustomElementClass.prototype, param, {
+      configurable: true,
+      enumerable: true,
+      get() { return this._jstGetParam(param); },
+      set(value) { this._jstSetParam(param, value); },
+    });
+  });
+
+  customElements.define(customElementName, CustomElementClass);
+  if (document.jst.config.dev) console.log(`JST: Registered <${customElementName}>`, source);
+  return CustomElementClass;
+}
+
+function initializeTemplates() {
+  if (templatesInitialized) return document.jst.templates;
+  templatesInitialized = true;
+
+  document.querySelectorAll('script[type="jst"]').forEach(registerCustomElementFromTemplate);
+  observeNewTemplates();
+  scanForMissingTemplates(document.documentElement);
+
+  return document.jst.templates;
+}
+
+/**
+ * Templates that arrive after initial load (e.g. inside an htmx/fetch fragment)
+ * register automatically, so a server can ship component definitions on demand.
+ */
+function observeNewTemplates() {
+  if (templateObserver || typeof MutationObserver === 'undefined') return;
+  if (document.jst.config.autoRegister === false) return;
+
+  templateObserver = new MutationObserver(mutations => {
+    mutations.forEach(mutation => {
+      mutation.addedNodes.forEach(node => {
+        if (node.nodeType !== Node.ELEMENT_NODE) return;
+        if (node.matches?.('script[type="jst"]')) registerCustomElementFromTemplate(node);
+        node.querySelectorAll?.('script[type="jst"]').forEach(registerCustomElementFromTemplate);
+        scanForMissingTemplates(node);
+      });
+    });
+  });
+
+  const root = document.jst.config.autoRegisterRoot || document.documentElement;
+  templateObserver.observe(root, { childList: true, subtree: true });
+}
+
+function resetJstForTests() {
+  document.jst?.templates?.clear();
+}
+
+initializeTemplates();
+
+window.JST = {
+  configure,
+  raw,
+  unsafeHTML,
+  escapeHtml,
+  registerCustomElementFromTemplate,
+  registerPrecompiledTemplate,
+  initializeTemplates,
+};
+
+})();
+</script>
+<style>
+  * { box-sizing: border-box; }
+  :root {
+    --ink: #1b2030;
+    --muted: #667085;
+    --line: #d9deea;
+    --panel: #f7f8fc;
+    --accent: #3f51b5;
+    --hot: deeppink;
+    --ok: #16794c;
+    --warn: #9a5b00;
+  }
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, Segoe UI, sans-serif;
+    color: var(--ink);
+    line-height: 1.5;
+    background: #fff;
+  }
+  header {
+    border-bottom: 1px solid var(--line);
+    background: #f4f6ff;
+    padding: 24px 0 18px;
+  }
+  main, header .wrap { width: min(1120px, calc(100% - 32px)); margin: 0 auto; }
+  h1 { margin: 0 0 6px; color: var(--accent); font-size: 2rem; letter-spacing: 0; }
+  h2 { margin: 0 0 8px; font-size: 1.15rem; }
+  h3 { margin: 0 0 6px; font-size: .92rem; text-transform: uppercase; letter-spacing: 0; color: var(--muted); }
+  p { margin: 0 0 10px; }
+  .lede { max-width: 76ch; color: var(--muted); }
+  .marquee {
+    display: block;
+    overflow: hidden;
+    padding: 3px 0;
+    background: #ffe6f1;
+    border-top: 1px solid var(--hot);
+    border-bottom: 1px solid var(--hot);
+  }
+  .marquee-track { display: inline-flex; white-space: nowrap; animation: marquee 32s linear infinite; }
+  .marquee-track span { color: var(--hot); font-size: .84rem; font-weight: 300; }
+  .dot { margin: 0 .65em; }
+  @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+  section {
+    padding: 22px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .concern {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 16px;
+    align-items: start;
+  }
+  .demo, .source {
+    min-width: 0;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    border-radius: 4px;
+    padding: 14px;
+  }
+  .source { background: #1e2030; color: #d7d9e6; overflow: auto; }
+  pre {
+    margin: 0;
+    white-space: pre;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: .78rem;
+    line-height: 1.45;
+  }
+  code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    background: #eef1fb;
+    padding: 1px 4px;
+    border-radius: 3px;
+  }
+  button, input, textarea, select {
+    font: inherit;
+  }
+  button {
+    border: 1px solid var(--accent);
+    background: #fff;
+    color: var(--accent);
+    border-radius: 4px;
+    padding: 6px 10px;
+    cursor: pointer;
+    margin: 3px 3px 3px 0;
+  }
+  button.primary { background: var(--accent); color: #fff; }
+  input, textarea, select {
+    width: 100%;
+    border: 1px solid #cbd2e1;
+    border-radius: 4px;
+    padding: 7px 8px;
+    background: #fff;
+  }
+  textarea { min-height: 74px; resize: vertical; }
+  output, .note {
+    display: block;
+    margin-top: 8px;
+    color: var(--muted);
+    font-size: .9rem;
+  }
+  .flag {
+    display: inline-block;
+    font-size: .76rem;
+    font-weight: 700;
+    color: var(--warn);
+    background: #fff7e6;
+    border: 1px solid #ffd58a;
+    padding: 1px 6px;
+    border-radius: 3px;
+    margin-bottom: 8px;
+  }
+  .kind {
+    display: inline-block;
+    margin: 0 0 8px;
+    padding: 2px 7px;
+    border-radius: 3px;
+    font-size: .76rem;
+    font-weight: 800;
+    text-transform: uppercase;
+  }
+  .kind.problem { color: #8a2800; background: #fff0e8; border: 1px solid #ffb38f; }
+  .kind.check { color: #24419a; background: #eef2ff; border: 1px solid #b8c5ff; }
+  .kind.boundary { color: #8a0050; background: #fff0f8; border: 1px solid #ffacd7; }
+  .kind.limit { color: #6b4c00; background: #fff8dd; border: 1px solid #e9c95d; }
+  .kind.ok { color: #16794c; background: #e9f8ef; border: 1px solid #9fd8b5; }
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 14px;
+  }
+  .ok { color: var(--ok); }
+  .split { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .box {
+    border: 1px solid var(--line);
+    background: #fff;
+    border-radius: 4px;
+    padding: 10px;
+    min-height: 46px;
+  }
+  .list-demo ol, .move-list { margin: 8px 0 0; padding-left: 24px; }
+  .move-list li {
+    margin: 6px 0;
+    padding: 8px;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+  }
+  .move-list input { margin-top: 6px; }
+  .shift-enter-active, .shift-leave-active, .shift-move {
+    transition: opacity .22s ease, transform .22s ease, outline-color .22s ease;
+  }
+  .shift-enter-from, .shift-leave-to { opacity: 0; transform: translateY(-8px); }
+  .shift-enter-to, .shift-leave-from { opacity: 1; transform: none; }
+  .shift-move { outline: 2px solid var(--hot); }
+  .remote-note {
+    border: 1px solid #b8c1ff;
+    background: #f0f2ff;
+    border-radius: 4px;
+    padding: 10px;
+  }
+  .timer {
+    display: inline-block;
+    min-width: 110px;
+    padding: 10px;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+  }
+  @media (max-width: 820px) {
+    .concern, .split { grid-template-columns: 1fr; }
+    pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1>JST concerns lab</h1>
+    <p class="lede"><strong>Standalone file build:</strong> this version inlines JST so it can be opened directly with <code>file://</code>.</p>
+    <p class="lede">These are the API edges I would review hardest before calling JST production-ready. Some are real problems; some are design checks; some are just expectation-setting demos. Each section shows the live behavior and the actual JST component source used on this page.</p>
+    <div class="legend" aria-label="Legend">
+      <span class="kind problem">Problem</span>
+      <span class="kind check">Design check</span>
+      <span class="kind boundary">Trust boundary</span>
+      <span class="kind limit">Capability limit</span>
+      <span class="kind ok">Recommended pattern</span>
+    </div>
+  </div>
+</header>
+
+<marquee class="marquee" scrollamount="0" behavior="scroll" role="note" aria-label="Experimental concerns notice">
+  <div class="marquee-track">
+    <span><span class="dot">*</span>Sharp edges are product decisions<span class="dot">*</span>These demos are intentionally small<span class="dot">*</span>Trust boundaries matter&nbsp;&nbsp;</span>
+    <span aria-hidden="true"><span class="dot">*</span>Sharp edges are product decisions<span class="dot">*</span>These demos are intentionally small<span class="dot">*</span>Trust boundaries matter&nbsp;&nbsp;</span>
+  </div>
+</marquee>
+
+<main>
+  <section>
+    <h2>1. Mutable references can be republished explicitly</h2>
+    <span class="kind ok">Recommended pattern</span>
+    <p class="lede">Direct assignment to a mutable prop is treated as a publish signal, even when the array/object reference is unchanged. Parent `.prop` bindings still skip unchanged references so parent renders do not fan out through the whole tree.</p>
+    <div class="concern">
+      <div class="demo">
+        <span class="flag">Concern: mutation style</span>
+        <concern-list id="identity-list"></concern-list>
+        <button id="mutate-same">Mutate same array and assign</button>
+        <button id="publish-copy" class="primary">Publish new array</button>
+        <output id="identity-log">The component starts with two items.</output>
+      </div>
+      <div class="source">
+        <h3>Actual JST</h3>
+        <pre data-source="concern-list"></pre>
+      </div>
+    </div>
+  </section>
+
+  <script type="jst" name="concern-list" props="items">
+    <div class="list-demo">
+      <strong>Rendered item count: $((items || []).length)</strong>
+      <ol>
+        $ (items || []).forEach(item => {
+          <li jst-key="$(item.id)">#$(item.id): $(item.text)</li>
+        $ })
+      </ol>
+    </div>
+  </script>
+
+  <section>
+    <h2>2. Form ownership: local model vs parent-owned events</h2>
+    <span class="kind check">Design check</span>
+    <p class="lede">This is an API design check, not a bug demo. `jst-model` updates local component props. Parent-owned form state stays explicit with `.value` and an emitted event, so ownership is visible at the call site. Vue and Alpine lean into model sugar; React keeps controlled inputs explicit.</p>
+    <div class="concern">
+      <div class="demo">
+        <span class="flag">Concern: ownership clarity</span>
+        <div class="split">
+          <div>
+            <h3>Local shorthand</h3>
+            <concern-local-form id="local-form" title="Local draft" done="false"></concern-local-form>
+          </div>
+          <div>
+            <h3>Parent-owned</h3>
+            <concern-parent-field id="parent-field"></concern-parent-field>
+            <output id="parent-log"></output>
+          </div>
+        </div>
+      </div>
+      <div class="source">
+        <h3>Actual JST</h3>
+        <pre data-source="concern-local-form"></pre>
+        <hr>
+        <pre data-source="concern-parent-field"></pre>
+      </div>
+    </div>
+  </section>
+
+  <script type="jst" name="concern-local-form" props="title done">
+    <label>Title <input jst-model="title"></label>
+    <label><input type="checkbox" jst-model="done"> Done</label>
+    <p>Local state: <strong>$(title || '')</strong> / $(done ? 'done' : 'open')</p>
+  </script>
+
+  <script type="jst" name="concern-parent-field" props="value">
+    <label>Parent value
+      <input .value="$(value || '')" @input="$(event => el.emit('value-change', event.target.value))">
+    </label>
+    <p>Prop from parent: <strong>$(value || '')</strong></p>
+  </script>
+
+  <section>
+    <h2>3. Event handlers close over render-time values</h2>
+    <span class="kind problem">Problem / footgun</span>
+    <p class="lede">Bare props are plain JS values captured when the template rendered. When the next state depends on the previous state, read from the live element property, then assign back to that property.</p>
+    <div class="concern">
+      <div class="demo">
+        <span class="flag">Concern: stale render values</span>
+        <concern-stale-counter id="stale-counter" count="0"></concern-stale-counter>
+      </div>
+      <div class="source">
+        <h3>Actual JST</h3>
+        <pre data-source="concern-stale-counter"></pre>
+      </div>
+    </div>
+  </section>
+
+  <script type="jst" name="concern-stale-counter" props="count">
+    <p>Count: <strong>$(count || 0)</strong></p>
+    <button @click="$(() => { el.count = (count || 0) + 1; el.count = (count || 0) + 1; })">
+      Add twice using render value
+    </button>
+    <button class="primary" @click="$(() => { el.count = (el.count || 0) + 1; el.count = (el.count || 0) + 1; })">
+      Add twice using el.count
+    </button>
+  </script>
+
+  <section>
+    <h2>4. Escaped interpolation is safe; `unsafeHTML` is a trust boundary</h2>
+    <span class="kind boundary">Trust boundary</span>
+    <p class="lede">This distinction has to stay explicit in docs, examples, and tooling. `unsafeHTML` is for trusted HTML, not user content.</p>
+    <div class="concern">
+      <div class="demo">
+        <span class="flag">Concern: HTML trust</span>
+        <label>User-ish input
+          <textarea id="html-input">&lt;strong&gt;looks like markup&lt;/strong&gt; &lt;img src=x onerror=alert(1)&gt;</textarea>
+        </label>
+        <button id="apply-html">Apply escaped input</button>
+        <concern-html-boundary id="html-boundary"></concern-html-boundary>
+      </div>
+      <div class="source">
+        <h3>Actual JST</h3>
+        <pre data-source="concern-html-boundary"></pre>
+      </div>
+    </div>
+  </section>
+
+  <script type="jst" name="concern-html-boundary" props="userhtml trustedhtml">
+    <div class="split">
+      <div>
+        <h3>Escaped</h3>
+        <div class="box">$(userhtml)</div>
+      </div>
+      <div>
+        <h3>Trusted only</h3>
+        <div class="box">$(unsafeHTML(trustedhtml))</div>
+      </div>
+    </div>
+  </script>
+
+  <section>
+    <h2>5. Lazy template resolution is powerful and should be gated</h2>
+    <span class="kind boundary">Trust boundary</span>
+    <p class="lede">This demo resolves only the `app-remote-note` prefix from a trusted Blob URL. A real app should do the same kind of prefix/source check.</p>
+    <div class="concern">
+      <div class="demo">
+        <span class="flag">Concern: fetched code execution</span>
+        <button id="load-remote" class="primary">Insert unresolved component</button>
+        <div id="remote-mount" class="note">No remote component inserted yet.</div>
+      </div>
+      <div class="source">
+        <h3>Fetched JST fragment</h3>
+        <pre id="remote-source"></pre>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>6. Keyed transitions preserve identity, but are not full FLIP</h2>
+    <span class="kind limit">Capability limit</span>
+    <p class="lede">This checks two things: keyed nodes should keep their live DOM state while reordering, and `jst-transition` should stay a small CSS class-phase helper. Complex layout choreography still belongs in custom JS or a helper outside core.</p>
+    <div class="concern">
+      <div class="demo">
+        <span class="flag">Concern: animation expectations</span>
+        <concern-moving-list id="moving-list"></concern-moving-list>
+        <button id="reverse-move">Reverse keyed list</button>
+        <button id="add-move" class="primary">Add item</button>
+        <button id="remove-move">Remove first</button>
+        <span class="note">Type notes into the inputs, then reverse repeatedly. The typed values should follow their keyed rows.</span>
+      </div>
+      <div class="source">
+        <h3>Actual JST</h3>
+        <pre data-source="concern-moving-list"></pre>
+      </div>
+    </div>
+  </section>
+
+  <script type="jst" name="concern-moving-list" props="items">
+    <ol class="move-list">
+      $ (items || []).forEach(item => {
+        <li jst-key="$(item.id)" jst-transition="shift">
+          <strong>$(item.label)</strong>
+          <input placeholder="scratch note for $(item.label)">
+        </li>
+      $ })
+    </ol>
+  </script>
+
+  <section>
+    <h2>7. Side effects should usually live outside templates</h2>
+    <span class="kind ok">Recommended pattern</span>
+    <p class="lede">I agree this logic usually does not belong in a template. The preferred shape is page-owned side effects and dumb renderers. `onDisconnect(fn)` should stay an escape hatch for DOM-local resources a component truly creates itself, not an invitation to put business logic in templates.</p>
+    <div class="concern">
+      <div class="demo">
+        <span class="flag">Design check: keep the interval outside JST</span>
+        <concern-timer-view id="timer-view" tick="0" running="false"></concern-timer-view>
+        <button id="start-timer" class="primary">Start page-owned interval</button>
+        <button id="stop-timer">Stop interval</button>
+        <output id="timer-log">The timer id lives in page JavaScript, not in the template.</output>
+      </div>
+      <div class="source">
+        <h3>Actual JST</h3>
+        <pre data-source="concern-timer-view"></pre>
+      </div>
+    </div>
+  </section>
+
+  <script type="jst" name="concern-timer-view" props="tick running">
+    <span class="timer">$(running ? 'Running' : 'Stopped'): $(tick || 0)</span>
+  </script>
+</main>
+
+<script>
+  const { configure } = window.JST;
+
+  configure({ dev: true });
+
+  const list = document.getElementById('identity-list');
+  let listItems = [
+    { id: 1, text: 'Alpha' },
+    { id: 2, text: 'Beta' },
+  ];
+  let nextListId = 3;
+  list.items = listItems;
+  document.getElementById('mutate-same').addEventListener('click', () => {
+    listItems.push({ id: nextListId++, text: 'Mutated in place' });
+    list.items = listItems;
+    document.getElementById('identity-log').textContent =
+      'The same array reference was assigned, and JST treated it as an explicit publish.';
+  });
+  document.getElementById('publish-copy').addEventListener('click', () => {
+    listItems = [...listItems, { id: nextListId++, text: 'Published as copy' }];
+    list.items = listItems;
+    document.getElementById('identity-log').textContent =
+      'A new array reference was assigned, so JST rerendered.';
+  });
+
+  const parentField = document.getElementById('parent-field');
+  const parentLog = document.getElementById('parent-log');
+  let parentValue = 'Owned by page';
+  function syncParent() {
+    parentField.value = parentValue;
+    parentLog.textContent = 'Page state: ' + parentValue;
+  }
+  parentField.addEventListener('value-change', event => {
+    parentValue = event.detail;
+    syncParent();
+  });
+  syncParent();
+
+  const boundary = document.getElementById('html-boundary');
+  boundary.userhtml = document.getElementById('html-input').value;
+  boundary.trustedhtml = '<strong class="ok">Trusted server formatting</strong>';
+  document.getElementById('apply-html').addEventListener('click', () => {
+    boundary.userhtml = document.getElementById('html-input').value;
+  });
+
+  const remoteFragment = [
+    '<script type="jst" name="app-remote-note" props="message">',
+    '  <aside class="remote-note">',
+    '    <strong>Fetched template:</strong> $(message)',
+    '  </aside>',
+    '</' + 'script>',
+  ].join('\n');
+  document.getElementById('remote-source').textContent = remoteFragment;
+  const remoteUrl = URL.createObjectURL(new Blob([remoteFragment], { type: 'text/html' }));
+  configure({
+    resolveTemplate(name) {
+      if (name !== 'app-remote-note') return null;
+      return remoteUrl;
+    },
+  });
+  document.getElementById('load-remote').addEventListener('click', () => {
+    document.getElementById('remote-mount').innerHTML =
+      '<app-remote-note message="Loaded through resolveTemplate after the element appeared."></app-remote-note>';
+  });
+
+  const moving = document.getElementById('moving-list');
+  let moveItems = [
+    { id: 'a', label: 'Alpha' },
+    { id: 'b', label: 'Beta' },
+    { id: 'c', label: 'Gamma' },
+  ];
+  let nextMoveId = 4;
+  function syncMove() { moving.items = moveItems; }
+  document.getElementById('reverse-move').addEventListener('click', () => {
+    moveItems = moveItems.slice().reverse();
+    syncMove();
+  });
+  document.getElementById('add-move').addEventListener('click', () => {
+    moveItems = [...moveItems, { id: 'n' + nextMoveId, label: 'New ' + nextMoveId }];
+    nextMoveId += 1;
+    syncMove();
+  });
+  document.getElementById('remove-move').addEventListener('click', () => {
+    moveItems = moveItems.slice(1);
+    syncMove();
+  });
+  syncMove();
+
+  const timerView = document.getElementById('timer-view');
+  let timerId = null;
+  let timerTick = 0;
+  document.getElementById('start-timer').addEventListener('click', () => {
+    if (timerId) return;
+    timerView.running = true;
+    document.getElementById('timer-log').textContent = 'Interval started in page JavaScript.';
+    timerId = setInterval(() => {
+      timerTick += 1;
+      timerView.tick = timerTick;
+    }, 500);
+  });
+  document.getElementById('stop-timer').addEventListener('click', () => {
+    clearInterval(timerId);
+    timerId = null;
+    timerView.running = false;
+    document.getElementById('timer-log').textContent = 'Interval stopped by page JavaScript.';
+  });
+
+  function formatTemplateSource(script) {
+    const lines = script.textContent.replace(/\t/g, '  ').split('\n');
+    while (lines.length && !lines[0].trim()) lines.shift();
+    while (lines.length && !lines[lines.length - 1].trim()) lines.pop();
+
+    const indent = Math.min(
+      ...lines
+        .filter(line => line.trim())
+        .map(line => line.match(/^ */)[0].length),
+    );
+
+    return lines.map(line => line.slice(indent)).join('\n');
+  }
+
+  function showSources() {
+    const scripts = Array.from(document.querySelectorAll('script[type="jst"]'));
+    document.querySelectorAll('pre[data-source]').forEach(pre => {
+      const script = scripts.find(candidate => candidate.getAttribute('name') === pre.dataset.source);
+      if (!script) return;
+      const props = script.hasAttribute('props') ? ' props="' + script.getAttribute('props') + '"' : '';
+      pre.textContent = '<script type="jst" name="' + script.getAttribute('name') + '"' + props + '>\n'
+        + formatTemplateSource(script) + '\n</' + 'script>';
+    });
+  }
+  showSources();
+</script>
+</body>
+</html>

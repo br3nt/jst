@@ -15,7 +15,7 @@
 <body>
 
 <!-- Self-contained widget: owns its own `message` as local state. -->
-<script type="jst" name="hello-world" message>
+<script type="jst" name="hello-world" props="message">
   <h1 id="greeting">$(message)</h1>
   <input id="msg-input" .value="$(message)"
          @input="$(e => el.message = e.target.value)">
@@ -24,7 +24,7 @@
 <hello-world id="app" message="Hello World!"></hello-world>
 
 <script>
-  // Reactivity check: setting the param property re-renders the <h1>.
+  // Reactivity check: setting the prop property re-renders the <h1>.
   window.__exampleReady = true;
 </script>
 </body>

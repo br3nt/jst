@@ -8,7 +8,7 @@ hands us: `interpretTemplateTokens` already emits a valid JS function body.
 
 Approach (the Volar / Svelte "virtual document" technique):
 - For each `<script type="jst">`, generate a virtual `.ts` document:
-  `function render(${params}: ...) { ${compiledFunctionBody} }`
+  `function render(${props}: ...) { ${compiledFunctionBody} }`
 - Hand it to the TypeScript language service.
 - Map TS diagnostics / completions / hovers back to template positions via a
   source map between the generated body and the original `$(...)` spans.
@@ -17,7 +17,7 @@ Result: real type-checking, autocomplete on `card.` etc., all from the existing
 TS service. Effort: substantial (the position mapping is the work). Do this only
 once the syntax is stable.
 
-Cheaper interim: param types via JSDoc on the template, surfaced in hover.
+Cheaper interim: prop types via JSDoc on the template, surfaced in hover.
 
 ## tree-sitter grammar
 
@@ -41,12 +41,12 @@ plugin with an `embed` for the `<script type="jst">` regions.
   start-tag handling that knows about `.prop`/`@event` would remove the last
   highlighting glitches around bindings — at the cost of reimplementing basic
   tag/attribute/string highlighting (the Vue/Svelte approach).
-- Highlight the param attributes on the `<script type="jst" name=… foo bar>`
-  open tag itself (currently the open-tag attribute blob isn't sub-scoped).
+- Highlight the `props="..."` names on the `<script type="jst" name=…>`
+  open tag itself.
 - Diagnostics: warn on a `.prop`/attribute usage at a call site that isn't a
-  declared param of the target component (needs the cross-file index, which the
+  declared prop of the target component (needs the cross-file index, which the
   Tier 3 server already builds — wire it into `computeDiagnostics`).
 - Completion: suggest `slot()`, `raw()`, `el.emit()` inside `$(...)`.
-- Go-to-definition from a `.prop` binding to the param on the component.
+- Go-to-definition from a `.prop` binding to the prop declaration on the component.
 - Workspace indexing: index `.html` files on disk, not just open documents, so
   navigation works before a file is opened.

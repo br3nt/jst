@@ -14,13 +14,13 @@
 </head>
 <body>
 
-<script type="jst" name="cond-loops" show list>
+<script type="jst" name="cond-loops" props="show list">
   $ if (show) {
     <p id="bool-msg">Now you see me</p>
   $ } else {
     <p id="bool-msg">Now you don't</p>
   $ }
-  <button id="toggle" @click="$(() => el.show = !show)">Toggle</button>
+  <button id="toggle" @click="$(() => el.show = !el.show)">Toggle</button>
 
   <ul id="list">
     $ (list || []).forEach((item, i) => {

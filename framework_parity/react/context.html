@@ -31,7 +31,7 @@
 
 <!-- Deep leaf: just wants the theme. In React it would read context directly;
      here it must receive it as a prop forwarded by its parent. -->
-<script type="jst" name="themed-button" theme label>
+<script type="jst" name="themed-button" props="theme label">
   <button class="$(theme)" data-testid="deep-button"
           @click="$(() => el.emit('toggle-theme'))">
     $(label) — theme is $(theme) (click to flip)
@@ -39,7 +39,7 @@
 </script>
 
 <!-- Intermediate layer: does not use theme itself, yet must forward it. -->
-<script type="jst" name="themed-toolbar" theme>
+<script type="jst" name="themed-toolbar" props="theme">
   <div class="panel $(theme)">
     <p>A toolbar that owns no theme state but must pass it through:</p>
     <themed-button .theme="$(theme)" label="Toggle"></themed-button>
@@ -47,7 +47,7 @@
 </script>
 
 <!-- Top of the tree: holds the value (the "provider"). -->
-<script type="jst" name="themed-app" theme>
+<script type="jst" name="themed-app" props="theme">
   <themed-toolbar .theme="$(theme)"></themed-toolbar>
 </script>
 

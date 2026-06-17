@@ -15,7 +15,7 @@
 <body>
 
 <!-- Child emits 'enlarge-text' on click; holds no state. -->
-<script type="jst" name="blog-post" title>
+<script type="jst" name="blog-post" props="title">
   <div class="blog-post">
     <h4>$(title)</h4>
     <button @click="$(() => el.emit('enlarge-text'))">Enlarge text</button>
@@ -23,9 +23,9 @@
 </script>
 
 <!-- Parent owns fontSize, listens for the event, re-renders. -->
-<script type="jst" name="blog-app" posts fontsize>
+<script type="jst" name="blog-app" props="posts fontsize">
   $ const size = fontsize || 1;
-  <div id="blog" style="font-size: $(size)em" @enlarge-text="$(() => el.fontsize = size + 0.1)">
+  <div id="blog" style="font-size: $(size)em" @enlarge-text="$(() => el.fontsize = (el.fontsize || 1) + 0.1)">
     $ (posts || []).forEach(post => {
       <blog-post title="$(post.title)"></blog-post>
     $ })

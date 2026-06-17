@@ -21,16 +21,16 @@
 </head>
 <body>
 
-<script type="jst" name="class-style" active haserror color size>
+<script type="jst" name="class-style" props="active haserror color size">
   $ // Vue object syntax {active: isActive, 'text-danger': hasError}
   $ const cls = ['box', active ? 'active' : '', haserror ? 'text-danger' : ''].filter(Boolean).join(' ');
   <div id="target" class="$(cls)"
        style="color: $(color); font-size: $(size)px">
     Bound class = "$(cls)"
   </div>
-  <button id="toggle-active" @click="$(() => el.active = !active)">Toggle active</button>
-  <button id="toggle-error" @click="$(() => el.haserror = !haserror)">Toggle error</button>
-  <button id="grow" @click="$(() => el.size = size + 2)">Grow text</button>
+  <button id="toggle-active" @click="$(() => el.active = !el.active)">Toggle active</button>
+  <button id="toggle-error" @click="$(() => el.haserror = !el.haserror)">Toggle error</button>
+  <button id="grow" @click="$(() => el.size = (el.size || 0) + 2)">Grow text</button>
 </script>
 
 <class-style id="app" active="true" haserror="false" color="#333" size="16"></class-style>

@@ -88,7 +88,7 @@ test('both grammar files are valid JSON with the expected scope names', () => {
 
 test('$(expr) is scoped as an embedded JST expression', async () => {
   const grammar = await makeGrammar();
-  const tokens = tokenize(grammar, '<script type="jst" name="x-thing" count>\n  <div>$(count)</div>\n</script>');
+  const tokens = tokenize(grammar, '<script type="jst" name="x-thing" props="count">\n  <div>$(count)</div>\n</script>');
 
   const open = find(tokens, '(');
   assert.ok(open && hasScope(open, 'punctuation.section.parens.begin.jst'), 'opening paren scoped');
@@ -100,7 +100,7 @@ test('$(expr) is scoped as an embedded JST expression', async () => {
 
 test('$ line directives are scoped as embedded code', async () => {
   const grammar = await makeGrammar();
-  const tokens = tokenize(grammar, '<script type="jst" name="x-list" items>\n  $ items.forEach(item => {\n    <li>$(item)</li>\n  $ })\n</script>');
+  const tokens = tokenize(grammar, '<script type="jst" name="x-list" props="items">\n  $ items.forEach(item => {\n    <li>$(item)</li>\n  $ })\n</script>');
 
   const directive = findContaining(tokens, 'meta.embedded.jst.code');
   assert.ok(directive, 'line directive produced embedded code scope');
@@ -128,7 +128,7 @@ test('$$ is an escape, not an interpolation', async () => {
 
 test('$identifier interpolation is scoped as a variable', async () => {
   const grammar = await makeGrammar();
-  const tokens = tokenize(grammar, '<script type="jst" name="x-i" name>\n  Hi $name\n</script>');
+  const tokens = tokenize(grammar, '<script type="jst" name="x-i" props="name">\n  Hi $name\n</script>');
 
   const variable = findContaining(tokens, 'variable.other.jst');
   assert.ok(variable, 'identifier interpolation scoped as variable');
@@ -136,7 +136,7 @@ test('$identifier interpolation is scoped as a variable', async () => {
 
 test('.prop and @event binding attributes are scoped distinctly', async () => {
   const grammar = await makeGrammar();
-  const tokens = tokenize(grammar, '<script type="jst" name="x-bind" item>\n  <input .checked="$(item.done)" @change="$(() => el.emit(\'t\'))">\n</script>');
+  const tokens = tokenize(grammar, '<script type="jst" name="x-bind" props="item">\n  <input .checked="$(item.done)" @change="$(() => el.emit(\'t\'))">\n</script>');
 
   const attrNames = tokens.filter(token => hasScope(token, 'entity.other.attribute-name.jst')).map(token => token.text);
   assert.ok(attrNames.includes('checked'), 'prop binding name scoped');
@@ -151,7 +151,7 @@ test('islands fire inside an attribute binding, not just text content', async ()
   // the regression that motivated the two-grammar split: $(...) inside
   // @event="..." must still tokenize as embedded JST, not flat string.
   const grammar = await makeGrammar();
-  const tokens = tokenize(grammar, '<script type="jst" name="x-a" count>\n  <button @click="$(() => el.emit(\'go\', count))">x</button>\n</script>');
+  const tokens = tokenize(grammar, '<script type="jst" name="x-a" props="count">\n  <button @click="$(() => el.emit(\'go\', count))">x</button>\n</script>');
 
   const sigil = tokens.filter(token => hasScope(token, 'punctuation.definition.jst.binding')).map(token => token.text);
   assert.ok(sigil.includes('@'), 'event sigil scoped inside the tag');

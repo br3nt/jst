@@ -25,7 +25,7 @@
 
 <!-- The toolbar background click bubbles; inner buttons stopPropagation so
      only their own handler fires. message is a prop = "passing handler data". -->
-<script type="jst" name="event-toolbar" message>
+<script type="jst" name="event-toolbar" props="message">
   <div class="toolbar" @click="$(() => el.emit('log', 'toolbar background clicked'))">
     <button @click="$(e => { e.stopPropagation(); el.emit('log', message + ' #1'); })">Play</button>
     <button @click="$(e => { e.stopPropagation(); el.emit('log', message + ' #2'); })">Upload</button>

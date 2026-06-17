@@ -26,11 +26,11 @@ function posOf(text, substr, occurrence = 1) {
 
 const defDoc = {
   uri: 'file:///cards.html',
-  text: '<script type="jst" name="kanban-card" card>\n  <div>$(card.title)</div>\n</script>',
+  text: '<script type="jst" name="kanban-card" props="card">\n  <div>$(card.title)</div>\n</script>',
 };
 const useDoc = {
   uri: 'file:///board.html',
-  text: '<script type="jst" name="kanban-board" cards>\n  <kanban-card .card="$(cards[0])"></kanban-card>\n</script>',
+  text: '<script type="jst" name="kanban-board" props="cards">\n  <kanban-card .card="$(cards[0])"></kanban-card>\n</script>',
 };
 
 test('indexComponents indexes components across files', () => {
@@ -58,14 +58,14 @@ test('go-to-definition returns null for non-component words', () => {
   assert.equal(findDefinition(useDoc.text, position, index), null);
 });
 
-test('hover on a component shows its params', () => {
+test('hover on a component shows its props', () => {
   const index = indexComponents([defDoc, useDoc]);
   const position = posOf(useDoc.text, 'kanban-card', 1);
   const hover = getHover(useDoc.text, position, index);
 
   assert.ok(hover);
   assert.match(hover.contents, /<kanban-card>/);
-  assert.match(hover.contents, /Params: card/);
+  assert.match(hover.contents, /Props: card/);
 });
 
 test('completion after "<" lists known component tags', () => {
@@ -81,7 +81,7 @@ test('completion after "<" lists known component tags', () => {
   assert.ok(labels.includes('kanban-board'));
 });
 
-test('completion inside a component tag suggests its params and .prop forms', () => {
+test('completion inside a component tag suggests its props and .prop forms', () => {
   const index = indexComponents([defDoc, useDoc]);
   const text = '<kanban-card ></kanban-card>';
   const position = posOf(text, ' >', 1); // the space inside the open tag
@@ -107,7 +107,7 @@ test('works on the real kanban example file', () => {
   ['kanban-board', 'kanban-column', 'kanban-card', 'card-editor', 'board-toolbar', 'ui-panel']
     .forEach(name => assert.ok(index.has(name), `expected ${name} indexed`));
 
-  // kanban-card declares one param: card
+  // kanban-card declares one prop: card
   assert.deepEqual(index.get('kanban-card').params, ['card']);
 
   // go-to-definition from the <kanban-card> usage inside kanban-column's template

@@ -4,7 +4,7 @@
   Source: https://alpinejs.dev/directives/data
   Demonstrates: Alpine x-data — a component scope holding reactive local state,
   here the canonical counter (count + increment/decrement buttons).
-  JST status: ✓ exact — a JST component's params ARE its reactive scope; a
+  JST status: ✓ exact — a JST component's props ARE its reactive scope; a
   component updates its own state with `el.count = ...`, re-rendering itself.
 -->
 <html lang="en">
@@ -21,11 +21,11 @@
 <body>
 
 <!-- count is the component's local reactive state (Alpine's x-data="{ count: 0 }") -->
-<script type="jst" name="x-counter" count>
+<script type="jst" name="x-counter" props="count">
   <div class="counter">
-    <button data-testid="dec" @click="$(() => el.count = count - 1)">−</button>
+    <button data-testid="dec" @click="$(() => el.count = (el.count || 0) - 1)">−</button>
     <span data-testid="value">$(count)</span>
-    <button data-testid="inc" @click="$(() => el.count = count + 1)">+</button>
+    <button data-testid="inc" @click="$(() => el.count = (el.count || 0) + 1)">+</button>
   </div>
 </script>
 

@@ -31,8 +31,8 @@ A language server providing, across files:
 
 - **Go-to-definition** — from a `<my-card>` usage to its `<script type="jst"
   name="my-card">` definition (even in another file).
-- **Hover** — a component's declared params.
-- **Completion** — known component tags after `<`; a component's params and
+- **Hover** — a component's declared props.
+- **Completion** — known component tags after `<`; a component's props and
   `.prop` binding forms inside its open tag.
 - **Document symbols** — every component defined in a file.
 
@@ -80,7 +80,7 @@ the actual `examples/kanban.html`).
   TextMate scopes (keywords, strings, numbers, etc.) — the same syntactic layer
   a plain `<script>` gets. It does *not* get the richer *semantic* coloring the
   TypeScript language service adds in real `.js`/`.ts` (e.g. distinguishing
-  locals, params, member properties). That gap is exactly what Tier 4 (virtual
+  locals, props, member properties). That gap is exactly what Tier 4 (virtual
   TS documents, see `TODO.md`) closes. So an expression may look slightly less
   colorful than the same code in a standalone script — by design, for now.
 - **`@`/`.` attribute names** are non-standard HTML, so VS Code's HTML tag

@@ -29,7 +29,7 @@ export function findDefinition(text, position, components) {
   };
 }
 
-// Hover: cursor on a known component tag -> its name and declared params.
+// Hover: cursor on a known component tag -> its name and declared props.
 export function getHover(text, position, components) {
   const offset = offsetAt(text, position);
   const token = wordAt(text, offset);
@@ -40,7 +40,7 @@ export function getHover(text, position, components) {
 
   const params = component.params.length ? component.params.join(', ') : '(none)';
   return {
-    contents: `**<${component.name}>** — JST component\n\nParams: ${params}`,
+    contents: `**<${component.name}>** — JST component\n\nProps: ${params}`,
     range: {
       start: positionAt(text, token.start),
       end: positionAt(text, token.end),
@@ -48,7 +48,7 @@ export function getHover(text, position, components) {
   };
 }
 
-// Completion: suggest component tags after "<", and a component's params when
+// Completion: suggest component tags after "<", and a component's props when
 // inside its open tag.
 export function getCompletions(text, position, components) {
   const offset = offsetAt(text, position);
@@ -59,11 +59,11 @@ export function getCompletions(text, position, components) {
     return [...components.values()].map(component => ({
       label: component.name,
       kind: 'class',
-      detail: component.params.length ? `params: ${component.params.join(', ')}` : 'no params',
+      detail: component.params.length ? `props: ${component.params.join(', ')}` : 'no props',
     }));
   }
 
-  // inside a known component's attributes -> its params (attribute and .prop forms)
+  // inside a known component's attributes -> its props (attribute and .prop forms)
   if (context && context.inAttributes) {
     const component = components.get(context.tagName);
     if (!component) return [];
@@ -71,10 +71,7 @@ export function getCompletions(text, position, components) {
     return component.params.flatMap(param => {
       const camel = param.replace(/-([a-z0-9])/g, (_, ch) => ch.toUpperCase());
       const items = [{ label: param, kind: 'field', detail: `${context.tagName} attribute` }];
-      // property-binding form (skip legacy ":" params)
-      if (!param.startsWith(':')) {
-        items.push({ label: `.${camel}`, kind: 'property', detail: `${context.tagName} property binding` });
-      }
+      items.push({ label: `.${camel}`, kind: 'property', detail: `${context.tagName} property binding` });
       return items;
     });
   }

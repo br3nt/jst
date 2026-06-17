@@ -16,9 +16,9 @@
 </head>
 <body>
 
-<script type="jst" name="x-if-demo" open>
+<script type="jst" name="x-if-demo" props="open">
   <div>
-    <button data-testid="toggle" @click="$(() => el.open = !open)">
+    <button data-testid="toggle" @click="$(() => el.open = !el.open)">
       $(open ? 'Remove' : 'Add')
     </button>
     $ if (open) {

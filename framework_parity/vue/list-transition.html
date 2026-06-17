@@ -4,17 +4,9 @@
   Source: https://vuejs.org/examples/#list-transition
   Demonstrates: animating items entering/leaving/moving in a list
   (<transition-group> with FLIP move animations in Vue).
-  JST status: (i) partial — biggest stretch in this set. JST has no transition system
-  and no keyed reconciliation:
-    * ENTER: a CSS @keyframes fade/slide plays on freshly-created <li> nodes, so
-      APPENDING a row animates correctly.
-    * LEAVE: NOT reproducible — JST removes the DOM node immediately on re-render; there
-      is no hook to hold the node while an exit animation plays.
-    * MOVE / insert-at-front: NOT faithful — morphing is index-based (no keys), so
-      inserting/removing in the middle re-labels existing nodes in place and animates
-      whichever node happens to be created at the end, not the logically-new item. Vue's
-      FLIP move animation has no equivalent.
-  So: append + reset animate nicely; ordering changes do not. Documented, not hidden.
+  JST status: (i) partial — `jst-key` preserves identity and `jst-transition`
+  provides enter/leave/move classes. It does not implement Vue's full FLIP
+  transition-group calculations, so complex move animations still need custom JS.
 -->
 <html lang="en">
 <head>
@@ -24,15 +16,16 @@
 <style>
   body{font-family:sans-serif;max-width:420px;margin:2rem auto}
   ul{list-style:none;padding:0}
-  li{background:#42b883;color:#fff;margin:4px 0;padding:10px;border-radius:4px;
-     animation:slide-in .4s ease both}
-  @keyframes slide-in{from{opacity:0;transform:translateX(-30px)}to{opacity:1;transform:none}}
+  li{background:#42b883;color:#fff;margin:4px 0;padding:10px;border-radius:4px}
+  .list-enter-active,.list-leave-active,.list-move{transition:opacity .25s ease,transform .25s ease}
+  .list-enter-from,.list-leave-to{opacity:0;transform:translateX(-24px)}
+  .list-enter-to,.list-leave-from{opacity:1;transform:none}
   button{margin-right:6px;padding:6px 10px;cursor:pointer}
 </style>
 </head>
 <body>
 
-<script type="jst" name="list-transition" items>
+<script type="jst" name="list-transition" props="items">
   $ const list = items || [];
   $ const append = () => el.items = [...list, list.length ? Math.max(...list) + 1 : 1];
   $ const pop = () => el.items = list.slice(0, -1);
@@ -44,7 +37,7 @@
   </div>
   <ul id="list">
     $ list.forEach(n => {
-      <li>$(n)</li>
+      <li jst-key="$(n)" jst-transition="list">$(n)</li>
     $ })
   </ul>
 </script>

@@ -81,7 +81,7 @@
 <!-- ====================================================================
      ui-panel: generic chrome with a default slot and a named footer slot.
      ==================================================================== -->
-<script type="jst" name="ui-panel" heading>
+<script type="jst" name="ui-panel" props="heading">
     <section class="panel">
         <header class="panel-header"><h2>$(heading)</h2></header>
         <div class="panel-body">$(slot())</div>
@@ -93,7 +93,7 @@
      board-toolbar: search, priority filter, active tag chip, add button.
      Holds no state — every input emits an event the page acts on.
      ==================================================================== -->
-<script type="jst" name="board-toolbar" filter>
+<script type="jst" name="board-toolbar" props="filter">
     $ const f = filter || {};
     <div class="toolbar">
         <input type="search" class="search" placeholder="Search cards…"
@@ -120,7 +120,7 @@
      kanban-card: a dumb renderer. The card object flows in as a property;
      clicks, deletes, tag-filters and drags flow out as events.
      ==================================================================== -->
-<script type="jst" name="kanban-card" card>
+<script type="jst" name="kanban-card" props="card">
     <div class="card prio-$(card.priority)" draggable="true"
          @dragstart="$(event => event.dataTransfer.setData('text/plain', String(card.id)))"
          @click="$(() => el.emit('edit', card))">
@@ -146,7 +146,7 @@
      kanban-column: header with live count, native drop target,
      renders each card by passing the live object via .card="$(card)".
      ==================================================================== -->
-<script type="jst" name="kanban-column" column cards>
+<script type="jst" name="kanban-column" props="column cards">
     <div class="column"
          @dragover="$(event => event.preventDefault())"
          @drop="$(event => {
@@ -160,7 +160,7 @@
         </header>
         <div class="column-cards">
             $ cards.forEach(card => {
-                <kanban-card .card="$(card)"></kanban-card>
+                <kanban-card jst-key="$(card.id)" .card="$(card)"></kanban-card>
             $ })
             $ if (cards.length === 0) {
                 <p class="column-empty">Drop cards here</p>
@@ -172,7 +172,7 @@
 <!-- ====================================================================
      kanban-board: applies the composed filters, deals cards to columns.
      ==================================================================== -->
-<script type="jst" name="kanban-board" cards columns filter>
+<script type="jst" name="kanban-board" props="cards columns filter">
     $ const f = filter || {};
     $ const text = (f.text || '').toLowerCase();
     $ const visible = (cards || []).filter(card =>
@@ -184,7 +184,7 @@
     $ );
     <div class="board">
         $ (columns || []).forEach(column => {
-            <kanban-column .column="$(column)"
+            <kanban-column jst-key="$(column.id)" .column="$(column)"
                            .cards="$(visible.filter(card => card.column === column.id))"></kanban-column>
         $ })
     </div>
@@ -194,7 +194,7 @@
      card-editor: modal form. Renders nothing while closed. Reads its own
      fields on save and emits the result — the page decides what to do.
      ==================================================================== -->
-<script type="jst" name="card-editor" card columns open>
+<script type="jst" name="card-editor" props="card columns open">
     $ if (open) {
     $   const c = card || {};
         <div class="overlay" @click="$(event => { if (event.target === event.currentTarget) el.emit('cancel'); })">
@@ -292,20 +292,23 @@
 
     function sync() {
         localStorage.setItem('jst-kanban', JSON.stringify(cards));
-        board.cards = cards;
+        board.cards = cards.slice();
         board.columns = columns;
         board.filter = { ...filters };
         toolbar.filter = { ...filters };
         if (statsElement) {
-            statsElement.cards = cards;
+            statsElement.cards = cards.slice();
             statsElement.columns = columns;
         }
     }
 
     // --- events bubbling up from the board ---
     board.addEventListener('card-drop', event => {
-        const card = cards.find(c => c.id === event.detail.cardId);
-        if (card) { card.column = event.detail.columnId; sync(); }
+        const index = cards.findIndex(c => c.id === event.detail.cardId);
+        if (index !== -1) {
+            cards[index] = { ...cards[index], column: event.detail.columnId };
+            sync();
+        }
     });
 
     board.addEventListener('edit', event => {
@@ -341,7 +344,8 @@
         if (!data.title) return;
 
         if (data.id) {
-            Object.assign(cards.find(c => c.id === data.id), data);
+            const index = cards.findIndex(c => c.id === data.id);
+            if (index !== -1) cards[index] = { ...cards[index], ...data };
         } else {
             cards.push({ ...data, id: nextId++ });
         }

@@ -9,7 +9,9 @@
 const blockPattern = /(<script\b[^>]*?\btype\s*=\s*(['"])jst\2[^>]*?>)([\s\S]*?)(<\/script\s*>)/gi;
 const attrPattern = /([.@]?[A-Za-z_:][\w:.-]*)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|(\S+)))?/g;
 
-const reservedAttributes = new Set(['type', 'name', 'id']);
+function parseProps(value) {
+  return value ? value.split(/[\s,]+/).filter(Boolean) : [];
+}
 
 // 0-based line/character of an absolute offset in text.
 export function positionAt(text, offset) {
@@ -46,6 +48,7 @@ export function findJstBlocks(text) {
     const innerStart = match.index + openTag.length;
     const attributes = parseOpenTagAttributes(openTag);
     const nameAttr = attributes.find(attr => attr.name.toLowerCase() === 'name');
+    const propsAttr = attributes.find(attr => attr.name.toLowerCase() === 'props');
 
     blocks.push({
       openTag,
@@ -54,10 +57,7 @@ export function findJstBlocks(text) {
       innerPosition: positionAt(text, innerStart),
       openTagPosition: positionAt(text, match.index),
       nameValue: nameAttr ? nameAttr.value : null,
-      // the component's declared params: every non-reserved attribute name
-      params: attributes
-        .filter(attr => !reservedAttributes.has(attr.name.toLowerCase()))
-        .map(attr => attr.name.toLowerCase()),
+      params: parseProps(propsAttr?.value),
       attributes,
     });
   }

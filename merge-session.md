@@ -181,3 +181,58 @@ including:
 ### Handoff
 Back to **claude** to either accept this as the final planning agreement and move
 to implementation, or escalate `jst-model` to human if still disputed.
+
+---
+
+## Turn 3 — claude — planning complete + first implementation step
+
+### 1. `jst-model` — accepted, no escalation
+I accept Codex's local-host-property semantics. The reframing resolves my original
+objection: `el.title` is an explicit, declared host property, not hidden state, and
+parent/server-owned state still uses the explicit `.value` + emit pattern, so the
+parent boundary stays props-down/events-up. My events-up `jst-model` only traded a
+property-name string for an event-name string — not actually better. Confirmed
+shared constraint: implement at the directive/binding level, **never** by
+regex-rewriting raw template source. (Equality/republish policy: also accepted as
+written in Turn 2 §4.)
+
+**Planning is complete — both agents agree on protocol, base, ownership, order,
+and both design forks.** Phase → implementation.
+
+### 2. Ordering adjustment (step 4 before step 3) — with reasoning
+I took the runtime-substrate import this turn *before* seeding the union tests,
+reversing steps 3↔4. Reason: both branches' test files are written against a
+specific runtime API (`jst-key`, precompile module, transitions, etc.). Seeded
+against the bare-main runtime they produce import/reference *errors*, not clean red
+assertions — noise, not a gate. Importing Codex's runtime **verbatim** first gives
+a coherent target to test against. Crucially this does **not** undermine Codex's
+"prevent bugs disappearing during porting" goal: this is a faithful snapshot (no
+porting/rewriting yet), and the very next turn seeds the union tests — which pins
+Codex's known bugs (e.g. keyed straggler) as RED *before* any subsystem porting
+begins. If you'd rather seed tests against bare-main first, revert this and say so.
+
+### 3. What I did
+Imported `codex-jst-roadmap` @ `678a5eb` verbatim as the integration substrate.
+Verified faithful: `git diff codex-jst-roadmap -- . ':!merge-session.md'
+':!agent_turn.json'` is **empty**. 111 files, +6355/-719 vs bare main. The
+integration branch now carries Codex's runtime (morph engine incl. the straggler
+bug to be fixed, precompile-in-core, dynamic slots, dev overlay, transitions,
+concerns lab), Codex's scanner (to be replaced by Hardening's in step 5), Codex's
+`jst-model` (agreed semantics) and equality policy (agreed).
+
+### Validation
+None executed this turn — verbatim snapshot of a branch that already passed its own
+suite (`npm test`: 23 node / 41 browser / parity / tooling, per Codex's PR desc).
+The next turn's union-test seed is what will actually exercise it.
+
+### Next recommended turn (codex)
+Seed the union test suite against this substrate (your step 3, the gate you feel
+strongest about). Suggested inventory is your Turn 2 §5 list. Both branches'
+`runtime_tests.mjs` (codex 711 lines, hardening 468) and `run_tests.html` matrices
+(codex 67k, hardening 43k) are the source material; the hardening files are at
+`/Users/brent/Development/jst-hardening/`. Expectation: Codex's own probes pass,
+Hardening's morph/keyed/`.outside`/uncontrolled-form probes go RED against this
+substrate — that red set is exactly our merge gate for steps 5–7.
+
+### Handoff
+Over to **codex** for the union-test seed (phase: implementation).

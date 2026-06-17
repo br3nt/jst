@@ -31,6 +31,7 @@
         import { parseTemplateScript } from './parser.js';
         import { interpretTemplateTokens } from './interpreter.js';
         import {
+            configure,
             registerCustomElementFromTemplate,
             resetJstForTests,
         } from './jst.js';
@@ -58,7 +59,13 @@
             const template = document.createElement('script');
             template.type = 'jst';
             template.setAttribute('name', name);
-            attributes.forEach(attr => template.setAttribute(attr, ''));
+            attributes.forEach(attr => {
+                if (typeof attr === 'string') {
+                    template.setAttribute(attr, '');
+                } else {
+                    template.setAttribute(attr.name, attr.value);
+                }
+            });
             template.innerHTML = body;
             return template;
         };
@@ -168,7 +175,7 @@
             const componentName = nextName('x-late');
             const template = createTemplate({
                 name: componentName,
-                attributes: ['msg'],
+                attributes: [{ name: 'props', value: 'msg' }],
                 body: `<div>$(msg)</div>`,
             });
 
@@ -182,16 +189,44 @@
             }
         });
 
+        await suite.testAsync("JST Runtime: Missing Template Resolver", async () => {
+            const componentName = nextName('x-resolved');
+            const fragment = `<script type="jst" name="${componentName}" props="msg"><p class="resolved">$(msg)</p><\/script>`;
+            const url = `data:text/html;charset=utf-8,${encodeURIComponent(fragment)}`;
+
+            configure({
+                resolveTemplate(name) {
+                    return name === componentName ? url : null;
+                },
+            });
+
+            const element = document.createElement(componentName);
+            element.setAttribute('msg', 'from resolver');
+            document.body.appendChild(element);
+
+            for (let i = 0; i < 20 && !element.querySelector('.resolved'); i++) {
+                await flushRender();
+            }
+
+            try {
+                isEqual('from resolver', element.querySelector('.resolved')?.textContent, 'Expected missing template resolver to fetch, register, and upgrade the element');
+            } finally {
+                configure({ resolveTemplate: null });
+                element.remove();
+                document.querySelector(`[data-jst-resolved-from="${url}"]`)?.remove();
+            }
+        });
+
         await suite.testAsync("JST Runtime: Duplicate Template Names", async () => {
             const componentName = nextName('x-duplicate');
             const first = createTemplate({
                 name: componentName,
-                attributes: ['value'],
+                attributes: [{ name: 'props', value: 'value' }],
                 body: `<div>First $(value)</div>`,
             });
             const second = createTemplate({
                 name: componentName,
-                attributes: ['value'],
+                attributes: [{ name: 'props', value: 'value' }],
                 body: `<div>Second $(value)</div>`,
             });
 
@@ -210,7 +245,7 @@
 
             const template = createTemplate({
                 name: componentName,
-                attributes: ['value'],
+                attributes: [{ name: 'props', value: 'value' }],
                 body: `<div>$(value)</div>`,
             });
 
@@ -226,7 +261,7 @@
             const componentName = nextName('x-escape');
             registerCustomElementFromTemplate(createTemplate({
                 name: componentName,
-                attributes: ['text'],
+                attributes: [{ name: 'props', value: 'text' }],
                 body: `<div class="out">$(text)</div>`,
             }));
 
@@ -249,7 +284,7 @@
             const componentName = nextName('x-raw');
             registerCustomElementFromTemplate(createTemplate({
                 name: componentName,
-                attributes: ['html'],
+                attributes: [{ name: 'props', value: 'html' }],
                 body: `<div class="out">$(raw(html))</div>`,
             }));
 
@@ -265,11 +300,35 @@
             }
         });
 
+        await suite.testAsync("JST Runtime: url() Blocks Unsafe URL Schemes", async () => {
+            const componentName = nextName('x-url-helper');
+            registerCustomElementFromTemplate(createTemplate({
+                name: componentName,
+                attributes: [{ name: 'props', value: 'href' }],
+                body: `<a class="link" href="$(url(href))">link</a>`,
+            }));
+
+            const element = document.createElement(componentName);
+            element.href = 'javascript:alert(1)';
+            document.body.appendChild(element);
+            await flushRender();
+
+            try {
+                isEqual('#', element.querySelector('.link').getAttribute('href'), 'Expected unsafe URL schemes to be replaced');
+
+                element.href = '/safe/path';
+                await flushRender();
+                isEqual('/safe/path', element.querySelector('.link').getAttribute('href'), 'Expected relative URLs to pass through');
+            } finally {
+                element.remove();
+            }
+        });
+
         await suite.testAsync("JST Runtime: JSON-Like Attribute Parsing", async () => {
             const componentName = nextName('x-json');
             registerCustomElementFromTemplate(createTemplate({
                 name: componentName,
-                attributes: ['count', 'active', 'label'],
+                attributes: [{ name: 'props', value: 'count active label' }],
                 body: `<div class="out">$(label): $(count + 1) $(active ? 'on' : 'off')</div>`,
             }));
 
@@ -291,7 +350,7 @@
             const componentName = nextName('x-kebab');
             registerCustomElementFromTemplate(createTemplate({
                 name: componentName,
-                attributes: ['user-name'],
+                attributes: [{ name: 'props', value: 'userName' }],
                 body: `<div class="out">$(userName)</div>`,
             }));
 
@@ -301,11 +360,11 @@
             await flushRender();
 
             try {
-                isEqual('Brent', element.querySelector('.out').textContent, 'Expected user-name attr to populate userName param');
+                isEqual('Brent', element.querySelector('.out').textContent, 'Expected user-name attr to populate userName prop');
 
                 element.userName = 'Updated';
                 await flushRender();
-                isEqual('Updated', element.querySelector('.out').textContent, 'Expected camelCase property to drive the same param');
+                isEqual('Updated', element.querySelector('.out').textContent, 'Expected camelCase property to drive the same prop');
             } finally {
                 element.remove();
             }
@@ -320,7 +379,7 @@
 
             registerCustomElementFromTemplate(createTemplate({
                 name: componentName,
-                attributes: ['items'],
+                attributes: [{ name: 'props', value: 'items' }],
                 body: `<div class="out">$(items[0].label)</div>`,
             }));
 
@@ -340,13 +399,13 @@
 
             registerCustomElementFromTemplate(createTemplate({
                 name: childName,
-                attributes: ['data'],
+                attributes: [{ name: 'props', value: 'data' }],
                 body: `<div class="label">$(data ? data.label : 'none')</div>`,
             }));
 
             registerCustomElementFromTemplate(createTemplate({
                 name: parentName,
-                attributes: ['value'],
+                attributes: [{ name: 'props', value: 'value' }],
                 body: `<${childName} .data="$(value)"></${childName}>`,
             }));
 
@@ -371,7 +430,7 @@
             const componentName = nextName('x-emitter');
             registerCustomElementFromTemplate(createTemplate({
                 name: componentName,
-                attributes: ['count'],
+                attributes: [{ name: 'props', value: 'count' }],
                 body: `<button class="btn" @click="$(() => el.emit('poke', { count }))">go</button>`,
             }));
 
@@ -392,11 +451,134 @@
             }
         });
 
+        await suite.testAsync("JST Runtime: Event Modifiers", async () => {
+            const componentName = nextName('x-modifiers');
+            registerCustomElementFromTemplate(createTemplate({
+                name: componentName,
+                attributes: [],
+                body: `<form class="form" @submit.prevent="$(() => el.emit('saved'))">
+                         <input class="key" @keydown.enter="$(event => el.emit('commit', event.key))">
+                         <button class="inside" type="button" @click.outside="$(() => el.emit('outside'))">inside</button>
+                         <button class="once" type="button" @click.once="$(() => el.emit('once-fired'))">once</button>
+                       </form>`,
+            }));
+
+            const element = document.createElement(componentName);
+            let saved = 0;
+            let committed = 0;
+            let outside = 0;
+            let onceFired = 0;
+            element.addEventListener('saved', () => { saved++; });
+            element.addEventListener('commit', () => { committed++; });
+            element.addEventListener('outside', () => { outside++; });
+            element.addEventListener('once-fired', () => { onceFired++; });
+
+            document.body.appendChild(element);
+            await flushRender();
+
+            try {
+                const submit = new Event('submit', { bubbles: true, cancelable: true });
+                element.querySelector('.form').dispatchEvent(submit);
+                isEqual(true, submit.defaultPrevented, 'Expected .prevent to prevent submit default');
+                isEqual(1, saved, 'Expected submit handler to run');
+
+                element.querySelector('.key').dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+                element.querySelector('.key').dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+                isEqual(1, committed, 'Expected .enter to filter key events');
+
+                element.querySelector('.inside').click();
+                document.body.click();
+                isEqual(1, outside, 'Expected .outside to fire only for outside clicks');
+
+                element.querySelector('.once').click();
+                element.querySelector('.once').click();
+                isEqual(1, onceFired, 'Expected .once to remove the listener after the first event');
+            } finally {
+                element.remove();
+            }
+        });
+
+        await suite.testAsync("JST Runtime: jst-model Updates Local Prop State", async () => {
+            const componentName = nextName('x-model');
+            registerCustomElementFromTemplate(createTemplate({
+                name: componentName,
+                attributes: [{ name: 'props', value: 'title done picked colors shade choices' }],
+                body: `<input class="title" jst-model="title">
+                       <input class="done" type="checkbox" jst-model="done">
+                       <input class="pick-one" type="radio" name="pick" value="one" jst-model="picked">
+                       <input class="pick-two" type="radio" name="pick" value="two" jst-model="picked">
+                       <input class="red" type="checkbox" value="red" jst-model="colors">
+                       <input class="blue" type="checkbox" value="blue" jst-model="colors">
+                       <select class="shade" jst-model="shade">
+                         <option value="green">Green</option>
+                         <option value="purple">Purple</option>
+                       </select>
+                       <select class="choices" multiple jst-model="choices">
+                         <option value="a">A</option>
+                         <option value="b">B</option>
+                         <option value="c">C</option>
+                       </select>`,
+            }));
+
+            const element = document.createElement(componentName);
+            element.title = 'Initial';
+            element.done = false;
+            element.picked = 'one';
+            element.colors = ['red'];
+            element.shade = 'green';
+            element.choices = ['a'];
+
+            document.body.appendChild(element);
+            await flushRender();
+
+            try {
+                const title = element.querySelector('.title');
+                const done = element.querySelector('.done');
+                const pickOne = element.querySelector('.pick-one');
+                const pickTwo = element.querySelector('.pick-two');
+                const red = element.querySelector('.red');
+                const blue = element.querySelector('.blue');
+                const shade = element.querySelector('.shade');
+                const choices = element.querySelector('.choices');
+                isEqual('Initial', title.value, 'Expected jst-model to sync text value from prop');
+                isEqual(false, done.checked, 'Expected jst-model to sync checkbox from prop');
+                isEqual(true, pickOne.checked, 'Expected jst-model to sync radio value from prop');
+                isEqual(false, pickTwo.checked, 'Expected non-matching radio to remain unchecked');
+                isEqual(true, red.checked, 'Expected jst-model to sync checkbox arrays');
+                isEqual(false, blue.checked, 'Expected missing array checkbox to remain unchecked');
+                isEqual('green', shade.value, 'Expected jst-model to sync select value');
+                isEqual('a', Array.from(choices.selectedOptions).map(option => option.value).join(','), 'Expected jst-model to sync multi-select values');
+
+                title.value = 'Changed';
+                title.dispatchEvent(new Event('input', { bubbles: true }));
+                done.checked = true;
+                done.dispatchEvent(new Event('change', { bubbles: true }));
+                pickTwo.checked = true;
+                pickTwo.dispatchEvent(new Event('change', { bubbles: true }));
+                blue.checked = true;
+                blue.dispatchEvent(new Event('change', { bubbles: true }));
+                shade.value = 'purple';
+                shade.dispatchEvent(new Event('change', { bubbles: true }));
+                [...choices.options].forEach(option => { option.selected = option.value !== 'a'; });
+                choices.dispatchEvent(new Event('change', { bubbles: true }));
+                await flushRender();
+
+                isEqual('Changed', element.title, 'Expected jst-model to update the local text prop');
+                isEqual(true, element.done, 'Expected jst-model to update the local checkbox prop');
+                isEqual('two', element.picked, 'Expected jst-model to update the local radio prop');
+                isEqual('red,blue', element.colors.join(','), 'Expected jst-model to update checkbox array props');
+                isEqual('purple', element.shade, 'Expected jst-model to update select props');
+                isEqual('b,c', element.choices.join(','), 'Expected jst-model to update multi-select props');
+            } finally {
+                element.remove();
+            }
+        });
+
         await suite.testAsync("JST Runtime: Re-Renders Do Not Duplicate Event Listeners", async () => {
             const componentName = nextName('x-once');
             registerCustomElementFromTemplate(createTemplate({
                 name: componentName,
-                attributes: ['count'],
+                attributes: [{ name: 'props', value: 'count' }],
                 body: `<div>$(count)<button class="btn" @click="$(() => el.emit('fired'))">go</button></div>`,
             }));
 
@@ -426,7 +608,7 @@
             const componentName = nextName('x-card');
             registerCustomElementFromTemplate(createTemplate({
                 name: componentName,
-                attributes: ['title'],
+                attributes: [{ name: 'props', value: 'title' }],
                 body: `<div class="card"><h2 class="title">$(title)</h2><div class="body">$(slot())</div></div>`,
             }));
 
@@ -506,7 +688,7 @@
             const componentName = nextName('x-preserve');
             registerCustomElementFromTemplate(createTemplate({
                 name: componentName,
-                attributes: ['value'],
+                attributes: [{ name: 'props', value: 'value' }],
                 body: `<label>Value <input class="field" value="$(value)"></label>`,
             }));
 
@@ -530,19 +712,655 @@
             }
         });
 
+        await suite.testAsync("JST Runtime: Morphing Syncs Live Form Properties", async () => {
+            const componentName = nextName('x-form-props');
+            registerCustomElementFromTemplate(createTemplate({
+                name: componentName,
+                attributes: [{ name: 'props', value: 'value checked disabled' }],
+                body: `<input class="field" value="$(value)" disabled="$(disabled)">
+                       <input type="checkbox" class="box" checked="$(checked)">`,
+            }));
+
+            const element = document.createElement(componentName);
+            element.value = 'first';
+            element.checked = false;
+            element.disabled = false;
+            document.body.appendChild(element);
+            await flushRender();
+
+            try {
+                const field = element.querySelector('.field');
+                const box = element.querySelector('.box');
+
+                isEqual('first', field.value, 'Expected initial value property to sync');
+                isEqual(false, box.checked, 'Expected checked="false" to produce unchecked live property');
+                isEqual(false, field.disabled, 'Expected disabled="false" to produce enabled live property');
+
+                element.value = 'second';
+                element.checked = true;
+                element.disabled = true;
+                await flushRender();
+
+                isEqual('second', field.value, 'Expected rerender to update live value property');
+                isEqual(true, box.checked, 'Expected rerender to update live checked property');
+                isEqual(true, field.disabled, 'Expected rerender to update live disabled property');
+            } finally {
+                element.remove();
+            }
+        });
+
+        await suite.testAsync("JST Runtime: Caret Survives Unrelated Rerenders", async () => {
+            const componentName = nextName('x-caret');
+            registerCustomElementFromTemplate(createTemplate({
+                name: componentName,
+                attributes: [{ name: 'props', value: 'value tick' }],
+                body: `<label>Value <input class="field" value="$(value)"></label><span class="tick">$(tick)</span>`,
+            }));
+
+            const element = document.createElement(componentName);
+            element.value = 'abcdef';
+            element.tick = 1;
+            document.body.appendChild(element);
+            await flushRender();
+
+            try {
+                const input = element.querySelector('.field');
+                input.focus();
+                input.setSelectionRange(2, 4);
+
+                element.tick = 2;
+                await flushRender();
+
+                isEqual(input, element.querySelector('.field'), 'Expected input node to survive unrelated rerender');
+                isEqual(input, document.activeElement, 'Expected focus to survive unrelated rerender');
+                isEqual(2, input.selectionStart, 'Expected selection start to survive unrelated rerender');
+                isEqual(4, input.selectionEnd, 'Expected selection end to survive unrelated rerender');
+            } finally {
+                element.remove();
+            }
+        });
+
+        await suite.testAsync("JST Runtime: Uncontrolled Mixed Form State Survives Rerenders", async () => {
+            const componentName = nextName('x-uncontrolled-form');
+            registerCustomElementFromTemplate(createTemplate({
+                name: componentName,
+                attributes: [{ name: 'props', value: 'tick' }],
+                body: `<div>
+                    <input class="text">
+                    <textarea class="area"></textarea>
+                    <input type="checkbox" class="box">
+                    <input type="radio" name="choice" class="radio-a" value="a">
+                    <input type="radio" name="choice" class="radio-b" value="b">
+                    <select class="select">
+                        <option value="a">A</option>
+                        <option value="b">B</option>
+                    </select>
+                    <span class="tick">$(tick)</span>
+                </div>`,
+            }));
+
+            const element = document.createElement(componentName);
+            element.tick = 1;
+            document.body.appendChild(element);
+            await flushRender();
+
+            try {
+                element.querySelector('.text').value = 'typed';
+                element.querySelector('.area').value = 'notes';
+                element.querySelector('.box').checked = true;
+                element.querySelector('.radio-b').checked = true;
+                element.querySelector('.select').value = 'b';
+
+                element.tick = 2;
+                await flushRender();
+
+                isEqual('typed', element.querySelector('.text').value, 'Expected uncontrolled input value to survive rerender');
+                isEqual('notes', element.querySelector('.area').value, 'Expected uncontrolled textarea value to survive rerender');
+                isEqual(true, element.querySelector('.box').checked, 'Expected uncontrolled checkbox state to survive rerender');
+                isEqual(false, element.querySelector('.radio-a').checked, 'Expected unselected radio state to survive rerender');
+                isEqual(true, element.querySelector('.radio-b').checked, 'Expected selected radio state to survive rerender');
+                isEqual('b', element.querySelector('.select').value, 'Expected uncontrolled select value to survive rerender');
+            } finally {
+                element.remove();
+            }
+        });
+
+        await suite.testAsync("JST Runtime: Morphing Syncs Select Textarea Radio And Option Properties", async () => {
+            const componentName = nextName('x-rich-form-props');
+            registerCustomElementFromTemplate(createTemplate({
+                name: componentName,
+                attributes: [{ name: 'props', value: 'text choice picked' }],
+                body: `<div>
+                    <textarea class="area">$(text)</textarea>
+                    <input type="radio" name="picked" class="radio-a" value="a" checked="$(picked === 'a')">
+                    <input type="radio" name="picked" class="radio-b" value="b" checked="$(picked === 'b')">
+                    <select class="select" value="$(choice)">
+                        <option value="a" selected="$(choice === 'a')">A</option>
+                        <option value="b" selected="$(choice === 'b')">B</option>
+                    </select>
+                </div>`,
+            }));
+
+            const element = document.createElement(componentName);
+            element.text = 'first';
+            element.choice = 'a';
+            element.picked = 'a';
+            document.body.appendChild(element);
+            await flushRender();
+
+            try {
+                isEqual('first', element.querySelector('.area').value, 'Expected textarea value to sync initially');
+                isEqual(true, element.querySelector('.radio-a').checked, 'Expected first radio to sync initially');
+                isEqual('a', element.querySelector('.select').value, 'Expected select value to sync initially');
+
+                element.text = 'second';
+                element.choice = 'b';
+                element.picked = 'b';
+                await flushRender();
+
+                isEqual('second', element.querySelector('.area').value, 'Expected textarea value to sync on rerender');
+                isEqual(false, element.querySelector('.radio-a').checked, 'Expected first radio to clear on rerender');
+                isEqual(true, element.querySelector('.radio-b').checked, 'Expected second radio to sync on rerender');
+                isEqual('b', element.querySelector('.select').value, 'Expected select value to sync on rerender');
+                isEqual(false, element.querySelector('option[value="a"]').selected, 'Expected first option selected property to clear');
+                isEqual(true, element.querySelector('option[value="b"]').selected, 'Expected second option selected property to sync');
+            } finally {
+                element.remove();
+            }
+        });
+
+        await suite.testAsync("JST Runtime: .prop Bindings Skip Unchanged Values", async () => {
+            const childName = nextName('x-stable-child');
+            const parentName = nextName('x-stable-parent');
+
+            registerCustomElementFromTemplate(createTemplate({
+                name: childName,
+                attributes: [{ name: 'props', value: 'data' }],
+                body: `$ el.renderCount = (el.renderCount || 0) + 1;
+                       <span class="renders">$(el.renderCount)</span>`,
+            }));
+
+            registerCustomElementFromTemplate(createTemplate({
+                name: parentName,
+                attributes: [{ name: 'props', value: 'data tick' }],
+                body: `<${childName} .data="$(data)"></${childName}><span class="tick">$(tick)</span>`,
+            }));
+
+            const shared = { label: 'same' };
+            const element = document.createElement(parentName);
+            element.data = shared;
+            element.tick = 1;
+            document.body.appendChild(element);
+            await flushRender();
+
+            try {
+                isEqual('1', element.querySelector('.renders').textContent, 'Expected child to render once initially');
+
+                element.tick = 2;
+                await flushRender();
+
+                isEqual('1', element.querySelector('.renders').textContent, 'Expected unchanged .prop value not to rerender child');
+                isEqual('2', element.querySelector('.tick').textContent, 'Expected parent to rerender normally');
+            } finally {
+                element.remove();
+            }
+        });
+
+        await suite.testAsync("JST Runtime: jst-key Preserves Node Identity On Reorder", async () => {
+            const componentName = nextName('x-keyed-list');
+            registerCustomElementFromTemplate(createTemplate({
+                name: componentName,
+                attributes: [{ name: 'props', value: 'items' }],
+                body: `<div>
+                    $ items.forEach(item => {
+                        <input class="row" jst-key="$(item.id)" value="$(item.label)">
+                    $ })
+                </div>`,
+            }));
+
+            const element = document.createElement(componentName);
+            element.items = [{ id: 'a', label: 'A' }, { id: 'b', label: 'B' }];
+            document.body.appendChild(element);
+            await flushRender();
+
+            try {
+                const originalRows = element.querySelectorAll('.row');
+                const originalB = originalRows[1];
+
+                element.items = [{ id: 'b', label: 'B' }, { id: 'a', label: 'A' }];
+                await flushRender();
+
+                isEqual(originalB, element.querySelectorAll('.row')[0], 'Expected keyed B input node to move, not morph by index');
+            } finally {
+                element.remove();
+            }
+        });
+
+        await suite.testAsync("JST Runtime: Morphing Removes All Adjacent Trailing Nodes", async () => {
+            const componentName = nextName('x-shrink-adjacent');
+            registerCustomElementFromTemplate(createTemplate({
+                name: componentName,
+                attributes: [{ name: 'props', value: 'items' }],
+                body: `$ items.forEach(item => {<i class="row">$(item)</i>$ })`,
+            }));
+
+            const element = document.createElement(componentName);
+            element.items = ['a', 'b', 'c'];
+            document.body.appendChild(element);
+            await flushRender();
+
+            try {
+                isEqual('abc', Array.from(element.querySelectorAll('.row')).map(row => row.textContent).join(''), 'Expected initial adjacent nodes to render');
+
+                element.items = ['a'];
+                await flushRender();
+
+                isEqual('a', Array.from(element.querySelectorAll('.row')).map(row => row.textContent).join(''), 'Expected all trailing adjacent nodes to be removed');
+            } finally {
+                element.remove();
+            }
+        });
+
+        await suite.testAsync("JST Runtime: jst-key Preserves Uncontrolled Input Values Across Whitespace Reorder", async () => {
+            const componentName = nextName('x-keyed-uncontrolled');
+            registerCustomElementFromTemplate(createTemplate({
+                name: componentName,
+                attributes: [{ name: 'props', value: 'items' }],
+                body: `<ol>
+                    $ items.forEach(item => {
+                        <li jst-key="$(item.id)">
+                            <strong>$(item.label)</strong>
+                            <input class="note" placeholder="note for $(item.label)">
+                        </li>
+                    $ })
+                </ol>`,
+            }));
+
+            const element = document.createElement(componentName);
+            element.items = [{ id: 'a', label: 'A' }, { id: 'b', label: 'B' }, { id: 'c', label: 'C' }];
+            document.body.appendChild(element);
+            await flushRender();
+
+            try {
+                const initialRows = element.querySelectorAll('.note');
+                const originalA = initialRows[0];
+                const originalB = initialRows[1];
+                const originalC = initialRows[2];
+                originalA.value = 'typed A';
+                originalB.value = 'typed B';
+                originalC.value = 'typed C';
+
+                element.items = [{ id: 'c', label: 'C' }, { id: 'b', label: 'B' }, { id: 'a', label: 'A' }];
+                await flushRender();
+
+                const movedRows = element.querySelectorAll('.note');
+                isEqual(originalC, movedRows[0], 'Expected keyed C input node to move');
+                isEqual(originalB, movedRows[1], 'Expected keyed B input node to stay');
+                isEqual(originalA, movedRows[2], 'Expected keyed A input node to survive after interleaved whitespace');
+                isEqual('typed C', movedRows[0].value, 'Expected moved C input value to survive reorder');
+                isEqual('typed B', movedRows[1].value, 'Expected B input value to survive reorder');
+                isEqual('typed A', movedRows[2].value, 'Expected trailing A input value to survive reorder');
+            } finally {
+                element.remove();
+            }
+        });
+
+        await suite.testAsync("JST Runtime: Nested Keyed Lists Preserve Inner Form State", async () => {
+            const componentName = nextName('x-nested-keys');
+            registerCustomElementFromTemplate(createTemplate({
+                name: componentName,
+                attributes: [{ name: 'props', value: 'groups' }],
+                body: `<div>
+                    $ groups.forEach(group => {
+                        <section jst-key="$(group.id)">
+                            <h3>$(group.label)</h3>
+                            <ul>
+                                $ group.items.forEach(item => {
+                                    <li jst-key="$(item.id)">
+                                        <span>$(item.label)</span>
+                                        <input class="note" data-id="$(group.id)-$(item.id)">
+                                    </li>
+                                $ })
+                            </ul>
+                        </section>
+                    $ })
+                </div>`,
+            }));
+
+            const element = document.createElement(componentName);
+            element.groups = [
+                { id: 'g1', label: 'One', items: [{ id: 'a', label: 'A' }, { id: 'b', label: 'B' }] },
+                { id: 'g2', label: 'Two', items: [{ id: 'c', label: 'C' }, { id: 'd', label: 'D' }] },
+            ];
+            document.body.appendChild(element);
+            await flushRender();
+
+            try {
+                const before = new Map(Array.from(element.querySelectorAll('.note')).map(input => {
+                    input.value = 'typed ' + input.dataset.id;
+                    return [input.dataset.id, input];
+                }));
+
+                element.groups = [
+                    { id: 'g2', label: 'Two', items: [{ id: 'd', label: 'D' }, { id: 'c', label: 'C' }] },
+                    { id: 'g1', label: 'One', items: [{ id: 'b', label: 'B' }, { id: 'a', label: 'A' }] },
+                ];
+                await flushRender();
+
+                Array.from(element.querySelectorAll('.note')).forEach(input => {
+                    isEqual(before.get(input.dataset.id), input, `Expected ${input.dataset.id} input node to survive nested reorder`);
+                    isEqual('typed ' + input.dataset.id, input.value, `Expected ${input.dataset.id} value to survive nested reorder`);
+                });
+            } finally {
+                element.remove();
+            }
+        });
+
+        await suite.testAsync("JST Runtime: Table Rows Preserve Keyed Input State", async () => {
+            const componentName = nextName('x-table-keys');
+            registerCustomElementFromTemplate(createTemplate({
+                name: componentName,
+                attributes: [{ name: 'props', value: 'rows' }],
+                body: `<table>
+                    <tbody>
+                        $ rows.forEach(row => {
+                            <tr jst-key="$(row.id)">
+                                <td>$(row.name)</td>
+                                <td><input class="cell" data-id="$(row.id)"></td>
+                            </tr>
+                        $ })
+                    </tbody>
+                </table>`,
+            }));
+
+            const element = document.createElement(componentName);
+            element.rows = [{ id: 'a', name: 'Alpha' }, { id: 'b', name: 'Beta' }, { id: 'c', name: 'Gamma' }];
+            document.body.appendChild(element);
+            await flushRender();
+
+            try {
+                const before = new Map(Array.from(element.querySelectorAll('.cell')).map(input => {
+                    input.value = 'typed ' + input.dataset.id;
+                    return [input.dataset.id, input];
+                }));
+
+                element.rows = [{ id: 'c', name: 'Gamma' }, { id: 'b', name: 'Beta' }, { id: 'a', name: 'Alpha' }];
+                await flushRender();
+
+                Array.from(element.querySelectorAll('.cell')).forEach(input => {
+                    isEqual(before.get(input.dataset.id), input, `Expected table input ${input.dataset.id} node to survive reorder`);
+                    isEqual('typed ' + input.dataset.id, input.value, `Expected table input ${input.dataset.id} value to survive reorder`);
+                });
+            } finally {
+                element.remove();
+            }
+        });
+
+        await suite.testAsync("JST Runtime: SVG Nodes Morph Attributes Without Replacement", async () => {
+            const componentName = nextName('x-svg-morph');
+            registerCustomElementFromTemplate(createTemplate({
+                name: componentName,
+                attributes: [{ name: 'props', value: 'radius color' }],
+                body: `<svg viewBox="0 0 20 20">
+                    <circle class="dot" cx="10" cy="10" r="$(radius)" fill="$(color)"></circle>
+                </svg>`,
+            }));
+
+            const element = document.createElement(componentName);
+            element.radius = 4;
+            element.color = 'red';
+            document.body.appendChild(element);
+            await flushRender();
+
+            try {
+                const circle = element.querySelector('.dot');
+                isEqual('http://www.w3.org/2000/svg', circle.namespaceURI, 'Expected circle to be an SVG node');
+
+                element.radius = 7;
+                element.color = 'blue';
+                await flushRender();
+
+                isEqual(circle, element.querySelector('.dot'), 'Expected SVG node to morph in place');
+                isEqual('7', circle.getAttribute('r'), 'Expected SVG radius attribute to update');
+                isEqual('blue', circle.getAttribute('fill'), 'Expected SVG fill attribute to update');
+            } finally {
+                element.remove();
+            }
+        });
+
+        await suite.testAsync("JST Runtime: jst-transition Applies Enter Leave Classes", async () => {
+            const style = document.createElement('style');
+            style.textContent = `
+              .fade-enter-active, .fade-leave-active { transition: opacity 40ms linear; }
+              .fade-enter-from, .fade-leave-to { opacity: 0; }
+              .fade-enter-to, .fade-leave-from { opacity: 1; }
+            `;
+            document.head.appendChild(style);
+
+            const componentName = nextName('x-transition-list');
+            registerCustomElementFromTemplate(createTemplate({
+                name: componentName,
+                attributes: [{ name: 'props', value: 'shown' }],
+                body: `<div>
+                    $ if (shown) {
+                        <p class="box" jst-transition="fade">visible</p>
+                    $ }
+                </div>`,
+            }));
+
+            const frame = () => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+            const element = document.createElement(componentName);
+            element.shown = false;
+            document.body.appendChild(element);
+            await flushRender();
+
+            try {
+                element.shown = true;
+                await flushRender();
+                const box = element.querySelector('.box');
+                isEqual(true, box.classList.contains('fade-enter-active'), 'Expected enter-active class on inserted transition node');
+
+                await frame();
+                isEqual(true, box.classList.contains('fade-enter-to'), 'Expected enter-to class after transition frame');
+
+                element.shown = false;
+                await flushRender();
+                isEqual(true, !!element.querySelector('.box'), 'Expected leaving node to remain until transition finishes');
+
+                await frame();
+                isEqual(true, box.classList.contains('fade-leave-to'), 'Expected leave-to class after transition frame');
+
+                await new Promise(resolve => setTimeout(resolve, 80));
+                isEqual(false, !!element.querySelector('.box'), 'Expected node to be removed after leave transition');
+            } finally {
+                element.remove();
+                style.remove();
+            }
+        });
+
+        await suite.testAsync("JST Runtime: jst-transition Applies Move Classes On Keyed Reorder", async () => {
+            const style = document.createElement('style');
+            style.textContent = `
+              .shift-move { transition: opacity 40ms linear; opacity: .9; }
+            `;
+            document.head.appendChild(style);
+
+            const componentName = nextName('x-transition-move');
+            registerCustomElementFromTemplate(createTemplate({
+                name: componentName,
+                attributes: [{ name: 'props', value: 'items' }],
+                body: `<ol>
+                    $ items.forEach(item => {
+                        <li class="row" jst-key="$(item.id)" jst-transition="shift">$(item.label)</li>
+                    $ })
+                </ol>`,
+            }));
+
+            const element = document.createElement(componentName);
+            element.items = [{ id: 'a', label: 'A' }, { id: 'b', label: 'B' }];
+            document.body.appendChild(element);
+            await flushRender();
+
+            try {
+                const originalB = element.querySelectorAll('.row')[1];
+                element.items = [{ id: 'b', label: 'B' }, { id: 'a', label: 'A' }];
+                await flushRender();
+
+                isEqual(originalB, element.querySelectorAll('.row')[0], 'Expected moved transition node to be reused');
+                isEqual(true, originalB.classList.contains('shift-move'), 'Expected move class on keyed reorder');
+
+                await new Promise(resolve => setTimeout(resolve, 90));
+                isEqual(false, originalB.classList.contains('shift-move'), 'Expected move class to be removed after transition');
+            } finally {
+                element.remove();
+                style.remove();
+            }
+        });
+
+        await suite.testAsync("JST Runtime: Appended Light-DOM Children Project Into Slots", async () => {
+            const componentName = nextName('x-dynamic-slot');
+            registerCustomElementFromTemplate(createTemplate({
+                name: componentName,
+                attributes: [],
+                body: `<section class="body">$(slot())</section>`,
+            }));
+
+            const element = document.createElement(componentName);
+            document.body.appendChild(element);
+            await flushRender();
+
+            try {
+                const child = document.createElement('strong');
+                child.className = 'late';
+                child.textContent = 'late child';
+                element.appendChild(child);
+                await flushRender();
+
+                isEqual(child, element.querySelector('.body .late'), 'Expected appended child to project into the default slot');
+            } finally {
+                element.remove();
+            }
+        });
+
+        await suite.testAsync("JST Runtime: Appended Slot Content Survives Host Rerender", async () => {
+            const componentName = nextName('x-slot-rerender');
+            registerCustomElementFromTemplate(createTemplate({
+                name: componentName,
+                attributes: [{ name: 'props', value: 'title' }],
+                body: `<article><h2>$(title)</h2><div class="body">$(slot())</div></article>`,
+            }));
+
+            const element = document.createElement(componentName);
+            element.title = 'First';
+            document.body.appendChild(element);
+            await flushRender();
+
+            try {
+                const child = document.createElement('span');
+                child.className = 'late';
+                child.textContent = 'late child';
+                element.appendChild(child);
+                await flushRender();
+
+                element.title = 'Second';
+                await flushRender();
+
+                isEqual('Second', element.querySelector('h2').textContent, 'Expected host content to rerender');
+                isEqual(child, element.querySelector('.body .late'), 'Expected late slotted child to survive host rerender');
+            } finally {
+                element.remove();
+            }
+        });
+
+        await suite.testAsync("JST Runtime: onDisconnect Runs Registered Cleanup", async () => {
+            const componentName = nextName('x-cleanup');
+            registerCustomElementFromTemplate(createTemplate({
+                name: componentName,
+                attributes: [],
+                body: `$ onDisconnect(() => { window.__jstCleanupCount = (window.__jstCleanupCount || 0) + 1; });
+                       <div>cleanup</div>`,
+            }));
+
+            const element = document.createElement(componentName);
+            document.body.appendChild(element);
+            await flushRender();
+            element.remove();
+            await flushRender();
+
+            try {
+                isEqual(1, window.__jstCleanupCount, 'Expected cleanup callback to run once on disconnect');
+            } finally {
+                delete window.__jstCleanupCount;
+            }
+        });
+
+        await suite.testAsync("JST Runtime: once() Runs Setup Once Per Connection", async () => {
+            const componentName = nextName('x-once-helper');
+            registerCustomElementFromTemplate(createTemplate({
+                name: componentName,
+                attributes: [{ name: 'props', value: 'tick' }],
+                body: `\${ once('subscription', () => {
+                         window.__jstOnceSetup = (window.__jstOnceSetup || 0) + 1;
+                         return () => { window.__jstOnceCleanup = (window.__jstOnceCleanup || 0) + 1; };
+                       }); }
+                       <span class="tick">$(tick)</span>`,
+            }));
+
+            const element = document.createElement(componentName);
+            element.tick = 1;
+            document.body.appendChild(element);
+            await flushRender();
+            element.tick = 2;
+            await flushRender();
+            element.tick = 3;
+            await flushRender();
+            element.remove();
+            await flushRender();
+
+            try {
+                isEqual(1, window.__jstOnceSetup, 'Expected once() setup to run once across rerenders');
+                isEqual(1, window.__jstOnceCleanup, 'Expected once() cleanup to run on disconnect');
+            } finally {
+                delete window.__jstOnceSetup;
+                delete window.__jstOnceCleanup;
+            }
+        });
+
+        await suite.testAsync("JST Runtime: Dev Mode Shows Visible Render Errors", async () => {
+            const componentName = nextName('x-dev-error');
+            registerCustomElementFromTemplate(createTemplate({
+                name: componentName,
+                attributes: [{ name: 'props', value: 'items' }],
+                body: `<div>$(items.length)</div>`,
+            }));
+
+            configure({ dev: true });
+            const element = document.createElement(componentName);
+            document.body.appendChild(element);
+            await flushRender();
+
+            try {
+                isEqual(true, !!element.querySelector('.jst-error'), 'Expected visible dev error markup');
+                isEqual(true, element.textContent.includes(`JST Render Error in <${componentName}>`), 'Expected component context in visible error');
+            } finally {
+                configure({ dev: false });
+                element.remove();
+            }
+        });
+
         await suite.testAsync("JST Runtime: Parent Rerenders Do Not Clear Child Custom Elements", async () => {
             const childName = nextName('x-child');
             const parentName = nextName('x-parent');
 
             registerCustomElementFromTemplate(createTemplate({
                 name: childName,
-                attributes: ['text'],
+                attributes: [{ name: 'props', value: 'text' }],
                 body: `<div class="child-text">$(text)</div>`,
             }));
 
             registerCustomElementFromTemplate(createTemplate({
                 name: parentName,
-                attributes: ['mode'],
+                attributes: [{ name: 'props', value: 'mode' }],
                 body: `<section><${childName} text="hello"></${childName}><p class="mode">$(mode)</p></section>`,
             }));
 
@@ -560,6 +1378,44 @@
 
                 isEqual('hello', child.querySelector('.child-text').textContent, 'Expected child component content to survive parent rerender');
                 isEqual('b', element.querySelector('.mode').textContent, 'Expected parent content to update');
+            } finally {
+                element.remove();
+            }
+        });
+
+        await suite.testAsync("JST Runtime: Parent Rerenders Preserve Child Custom Element State", async () => {
+            const childName = nextName('x-stateful-child');
+            const parentName = nextName('x-stateful-parent');
+
+            registerCustomElementFromTemplate(createTemplate({
+                name: childName,
+                attributes: [{ name: 'props', value: 'count' }],
+                body: `<button class="inc" @click="$(() => el.count = (el.count || 0) + 1)">$(count || 0)</button>`,
+            }));
+
+            registerCustomElementFromTemplate(createTemplate({
+                name: parentName,
+                attributes: [{ name: 'props', value: 'tick' }],
+                body: `<section><${childName} count="0"></${childName}><p class="tick">$(tick)</p></section>`,
+            }));
+
+            const element = document.createElement(parentName);
+            element.tick = 1;
+            document.body.appendChild(element);
+            await flushRender();
+
+            try {
+                const child = element.querySelector(childName);
+                child.querySelector('.inc').click();
+                await flushRender();
+                isEqual('1', child.querySelector('.inc').textContent, 'Expected child local state to update');
+
+                element.tick = 2;
+                await flushRender();
+
+                isEqual(child, element.querySelector(childName), 'Expected child custom element node to survive parent rerender');
+                isEqual('1', child.querySelector('.inc').textContent, 'Expected child local state to survive parent rerender');
+                isEqual('2', element.querySelector('.tick').textContent, 'Expected parent tick to update');
             } finally {
                 element.remove();
             }

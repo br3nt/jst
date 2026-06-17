@@ -4,14 +4,9 @@
   Source: https://react.dev/learn/reacting-to-input-with-state
   Demonstrates: controlled inputs — UI is driven by state, every keystroke
   updates state and the view derives from it (live echo, uppercase, checkbox).
-  JST status: (i) partial — there is no two-way binding. You wire it by hand:
-  .value="$(text)" sets the property and @input="$(e => el.text = ...)" pushes
-  it back, so state is the single source of truth. Caveat: because the whole
-  component re-renders on each keystroke and morphing reuses the same <input>
-  node, focus is preserved, but editing in the MIDDLE of the field can bounce
-  the caret to the end (the input value is reassigned on every render). Append
-  typing is fine. That caret quirk is the cost of having no real controlled-
-  input primitive.
+  JST status: ✓ exact — `jst-model` keeps the component prop as the single
+  source of truth, and morphing syncs form properties without fighting focus or
+  caret position.
 -->
 <html lang="en">
 <head>
@@ -30,15 +25,13 @@
 <h1>Reacting to input with state</h1>
 
 <!-- text + bold are the single source of truth; the view is derived. -->
-<script type="jst" name="live-form" text bold>
+<script type="jst" name="live-form" props="text bold">
   <input type="text" data-testid="field"
          placeholder="Type something…"
-         .value="$(text || '')"
-         @input="$(e => el.text = e.target.value)">
+         jst-model="text">
   <label>
     <input type="checkbox" data-testid="bold"
-           .checked="$(!!bold)"
-           @change="$(e => el.bold = e.target.checked)">
+           jst-model="bold">
     Shout it
   </label>
   <p class="echo $(bold ? 'bold' : '')" data-testid="echo">

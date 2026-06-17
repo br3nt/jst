@@ -24,7 +24,7 @@
 </head>
 <body>
 
-<script type="jst" name="demo-grid" columns rows query sortkey sortasc>
+<script type="jst" name="demo-grid" props="columns rows query sortkey sortasc">
   $ const cols = columns || [];
   $ const q = (query || '').toLowerCase();
   $ const key = sortkey || (cols[0] || '');
@@ -36,7 +36,7 @@
   $   return (a[key] > b[key] ? 1 : -1) * (asc ? 1 : -1);
   $ });
   $ const setSort = (c) => {
-  $   if (key === c) { el.sortasc = !asc; }
+  $   if (key === c) { el.sortasc = !el.sortasc; }
   $   else { el.sortkey = c; el.sortasc = true; }
   $ };
 

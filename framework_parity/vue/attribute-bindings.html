@@ -16,17 +16,17 @@
 </head>
 <body>
 
-<script type="jst" name="attribute-bindings" message url disabled>
+<script type="jst" name="attribute-bindings" props="message linkHref disabled">
   <p id="hover" title="$(message)">Hover me for a tooltip (title attribute is bound).</p>
-  <a id="link" href="$(url)">A link with a bound href</a>
+  <a id="link" href="$(url(linkHref))">A link with a bound href</a>
   <p id="dyn" class="$(disabled ? 'danger' : '')">Class is bound to state.</p>
   <button id="btn" .disabled="$(disabled)">I may be disabled</button>
-  <button id="toggle" @click="$(() => el.disabled = !disabled)">Toggle disabled</button>
+  <button id="toggle" @click="$(() => el.disabled = !el.disabled)">Toggle disabled</button>
 </script>
 
 <attribute-bindings id="app"
   message="You loaded this page on a great day!"
-  url="https://vuejs.org"
+  link-href="https://vuejs.org"
   disabled="false"></attribute-bindings>
 
 <script>window.__exampleReady = true;</script>

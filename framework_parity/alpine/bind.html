@@ -21,12 +21,12 @@
 </head>
 <body>
 
-<script type="jst" name="x-bind-demo" on>
+<script type="jst" name="x-bind-demo" props="on">
   <div>
     <!-- :class — class string driven by state -->
     <span class="pill $(on ? 'active' : '')" data-testid="pill"
           aria-pressed="$(on ? 'true' : 'false')"
-          @click="$(() => el.on = !on)">Toggle me</span>
+          @click="$(() => el.on = !el.on)">Toggle me</span>
 
     <!-- :attribute — bind disabled -->
     <button data-testid="btn" $(on ? '' : 'disabled') @click="$(() => alert('clicked'))">

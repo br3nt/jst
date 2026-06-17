@@ -5,11 +5,10 @@
   Demonstrates: full TodoMVC — add, toggle, toggle-all, double-click to edit
   (enter/blur to commit, escape to cancel), delete, hash-route filters
   (all/active/completed), clear-completed, item count, localStorage persistence.
-  JST status: (i) partial — all behaviour is reproduced, but two JST realities show:
-   1) No v-model: every field is a manual .value/.checked + @input/@change pair.
-   2) Editing focus: because any state change re-renders the whole component (and morph
-      is index-based, not keyed), the edit <input> must be re-focused via a queued
-      microtask after render. Works reliably here but is a manual step Vue gives free.
+  JST status: (i) partial — all behaviour is reproduced. This parent-owned state
+  example keeps explicit input events, while property-aware morphing preserves
+  form state. Edit-focus still uses a queued microtask after render, which is a
+  manual step Vue gives free.
 -->
 <html lang="en">
 <head>
@@ -36,7 +35,7 @@
 </head>
 <body>
 
-<script type="jst" name="todo-mvc" todos filter editingid>
+<script type="jst" name="todo-mvc" props="todos filter editingid">
   $ const items = todos || [];
   $ const flt = filter || 'all';
   $ const remaining = items.filter(t => !t.done).length;

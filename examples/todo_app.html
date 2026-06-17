@@ -36,7 +36,7 @@
     A dumb renderer. It holds no state and knows no business logic:
     the item flows in as a property, actions flow out as bubbling events.
 -->
-<script type="jst" name="todo-item" item>
+<script type="jst" name="todo-item" props="item">
     <div class="todo-item $(item.done ? 'done' : '')">
         <input type="checkbox" .checked="$(item.done)" @change="$(() => el.emit('toggle', item))">
         <span class="text">$(item.text)</span>
@@ -49,7 +49,7 @@
     Iterates over the todo array and applies the current filter.
     Each item is passed to <todo-item> as a real object via .item="$(item)".
 -->
-<script type="jst" name="todo-list" items filter>
+<script type="jst" name="todo-list" props="items filter">
     $ const todos = items || [];
     $ const filtered = todos.filter(t => {
     $   if (filter === 'active') return !t.done;
@@ -59,7 +59,7 @@
 
     <div class="list-container">
         $ filtered.forEach(item => {
-            <todo-item .item="$(item)"></todo-item>
+            <todo-item jst-key="$(item.id)" .item="$(item)"></todo-item>
         $ })
 
         $ if (filtered.length === 0) {
@@ -96,30 +96,33 @@
 
 <script>
     const todos = [
-        { text: "Pass rich data as properties", done: true },
-        { text: "Bubble actions as CustomEvents", done: true },
-        { text: "Escape output by default", done: false },
+        { id: 1, text: "Pass rich data as properties", done: true },
+        { id: 2, text: "Bubble actions as CustomEvents", done: true },
+        { id: 3, text: "Escape output by default", done: false },
     ];
+    let nextId = 4;
 
     const list = document.getElementById('main-list');
-    list.items = todos;
+    list.items = todos.slice();
 
     list.addEventListener('toggle', event => {
-        event.detail.done = !event.detail.done;
-        list.items = todos;
+        const index = todos.findIndex(todo => todo.id === event.detail.id);
+        if (index !== -1) todos[index] = { ...todos[index], done: !todos[index].done };
+        list.items = todos.slice();
     });
 
     list.addEventListener('remove', event => {
-        todos.splice(todos.indexOf(event.detail), 1);
-        list.items = todos;
+        const index = todos.findIndex(todo => todo.id === event.detail.id);
+        if (index !== -1) todos.splice(index, 1);
+        list.items = todos.slice();
     });
 
     function addTodo() {
         const input = document.getElementById('new-todo');
         if (!input.value.trim()) return;
-        todos.push({ text: input.value, done: false });
+        todos.push({ id: nextId++, text: input.value, done: false });
         input.value = '';
-        list.items = todos;
+        list.items = todos.slice();
     }
 
     function setFilter(filter) {

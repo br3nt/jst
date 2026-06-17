@@ -4,8 +4,8 @@
   Source: https://react.dev/learn/state-a-components-memory
   Demonstrates: useState — a component's private memory. Two independent
   counters each keep their own count; clicking one does not affect the other.
-  JST status: ✓ exact — a JST param IS local state. `el.count = count + 1`
-  mutates the component's own param and re-renders, just like a setState call,
+  JST status: ✓ exact — a JST prop IS local state. `el.count = el.count + 1`
+  mutates the component's own prop and re-renders, just like a setState call,
   and each element instance has its own #params (isolated memory).
 -->
 <html lang="en">
@@ -22,9 +22,9 @@
 <body>
 <h1>useState counter</h1>
 
-<!-- count is declared as a param; it doubles as this component's local state. -->
-<script type="jst" name="my-counter" count>
-  <button @click="$(() => el.count = (count || 0) + 1)">
+<!-- count is declared as a prop; it doubles as this component's local state. -->
+<script type="jst" name="my-counter" props="count">
+  <button @click="$(() => el.count = (el.count || 0) + 1)">
     Clicked $(count || 0) times
   </button>
 </script>

@@ -33,7 +33,7 @@
 </script>
 
 <!-- the modal is its OWN component, mounted at body level (the manual "teleport target") -->
-<script type="jst" name="teleport-modal" open>
+<script type="jst" name="teleport-modal" props="open">
   $ if (open) {
     <div class="overlay" data-testid="overlay" @click="$(e => { if (e.target === e.currentTarget) el.emit('close'); })">
       <div class="modal">

@@ -69,7 +69,7 @@
     "source": "https://htmx.org/examples/active-search/",
     "status": "partial",
     "file": "htmx/active-search.html",
-    "note": "Results component clean, but debounce is a hand-written `setTimeout` (no `delay:` modifier)."
+    "note": "Results component clean; page-level debounce/fetch trigger is still hand-written."
   },
   {
     "framework": "HTMX",
@@ -99,9 +99,9 @@
     "framework": "HTMX",
     "name": "dialogs (custom modal)",
     "source": "https://htmx.org/examples/modal-custom/",
-    "status": "partial",
+    "status": "exact",
     "file": "htmx/modal-custom.html",
-    "note": "Server-fed modal + fade-in clean; fade-out needs a `closing` state + `setTimeout` (no transition directive)."
+    "note": "Server-fed modal content with `jst-transition` for fade/zoom enter and leave."
   },
   {
     "framework": "HTMX",
@@ -109,7 +109,7 @@
     "source": "https://htmx.org/examples/sortable/",
     "status": "exact",
     "file": "htmx/sortable.html",
-    "note": "Native HTML5 DnD via `@dragstart/@dragover/@drop`; reorders a page array + POSTs order. (Index-based morph — see keyed-list gap.)"
+    "note": "Native HTML5 DnD via `@dragstart/@dragover/@drop`; reorders a page array + POSTs order. `jst-key` preserves row identity when needed."
   },
   {
     "framework": "HTMX",
@@ -133,7 +133,7 @@
     "source": "https://alpinejs.dev/directives/data",
     "status": "exact",
     "file": "alpine/data.html",
-    "note": "Params are reactive scope; `el.count = count + 1` updates own state."
+    "note": "Params are reactive scope; `el.count = el.count + 1` updates own state."
   },
   {
     "framework": "Alpine.js",
@@ -163,17 +163,17 @@
     "framework": "Alpine.js",
     "name": "x-on (events + key modifiers)",
     "source": "https://alpinejs.dev/directives/on",
-    "status": "partial",
+    "status": "exact",
     "file": "alpine/on.html",
-    "note": "`@event` covers listeners exactly, but no `.enter`/`.prevent`/`.stop` sugar — done by hand."
+    "note": "`@event` covers listeners plus `.enter`, `.prevent`, `.stop`, `.outside`, and debounce modifiers."
   },
   {
     "framework": "Alpine.js",
     "name": "x-model (text/checkbox/select)",
     "source": "https://alpinejs.dev/directives/model",
-    "status": "partial",
+    "status": "exact",
     "file": "alpine/model.html",
-    "note": "No two-way binding; wired both directions per field. *(behaviourally verified)*"
+    "note": "`jst-model` binds local text, checkbox, and select state."
   },
   {
     "framework": "Alpine.js",
@@ -197,15 +197,15 @@
     "source": "https://alpinejs.dev/directives/for",
     "status": "exact",
     "file": "alpine/for.html",
-    "note": "`$ items.forEach(...)`. (No keyed reconciliation — see gap.)"
+    "note": "`$ items.forEach(...)` with `jst-key` when identity matters."
   },
   {
     "framework": "Alpine.js",
     "name": "x-transition",
     "source": "https://alpinejs.dev/directives/transition",
-    "status": "partial",
+    "status": "exact",
     "file": "alpine/transition.html",
-    "note": "CSS transition on a toggled class; can't animate true insert/remove."
+    "note": "`jst-transition` coordinates enter/leave classes; CSS owns the animation."
   },
   {
     "framework": "Alpine.js",
@@ -229,7 +229,7 @@
     "source": "https://alpinejs.dev/directives/effect",
     "status": "partial",
     "file": "alpine/effect.html",
-    "note": "Effect = template body, but coarse (any param change), not dep-tracked."
+    "note": "Effect = template body, but coarse (any prop change), not dep-tracked."
   },
   {
     "framework": "Alpine.js",
@@ -275,9 +275,9 @@
     "framework": "Alpine.js",
     "name": "dropdown (click-outside)",
     "source": "https://alpinejs.dev/component/dropdown",
-    "status": "partial",
+    "status": "exact",
     "file": "alpine/dropdown.html",
-    "note": "Open/close idiomatic, but no `@click.outside` — guarded `document` listener."
+    "note": "Open/close local state plus `@click.outside`."
   },
   {
     "framework": "Alpine.js",
@@ -325,7 +325,7 @@
     "source": "https://vuejs.org/examples/#form-bindings",
     "status": "partial",
     "file": "vue/form-bindings.html",
-    "note": "All field types manual two-way. *(behaviourally verified in TodoMVC)*"
+    "note": "`jst-model` covers native text, checkbox, radio, select, checkbox-array, and multi-select cases; component v-model conventions are still manual."
   },
   {
     "framework": "Vue",
@@ -365,7 +365,7 @@
     "source": "https://vuejs.org/guide/essentials/lifecycle",
     "status": "partial",
     "file": "vue/lifecycle.html",
-    "note": "`mounted` approximable; **no unmounted** hook."
+    "note": "`mounted` approximable with a microtask; teardown uses `onDisconnect(fn)`."
   },
   {
     "framework": "Vue",
@@ -413,7 +413,7 @@
     "source": "https://vuejs.org/examples/#markdown",
     "status": "partial",
     "file": "vue/markdown.html",
-    "note": "`$(raw())` renders md; preview updated imperatively (controlled textarea resets caret)."
+    "note": "`$(raw())` renders md; property-aware morphing keeps the textarea stable."
   },
   {
     "framework": "Vue",
@@ -429,7 +429,7 @@
     "source": "https://vuejs.org/examples/#todomvc",
     "status": "partial",
     "file": "vue/todomvc.html",
-    "note": "Full feature set; edit-focus needs a queued re-focus; manual two-way throughout. *(behaviourally verified)*"
+    "note": "Full feature set; explicit parent-owned input events and a queued re-focus for edit mode. *(behaviourally verified)*"
   },
   {
     "framework": "Vue",
@@ -437,7 +437,7 @@
     "source": "https://vuejs.org/examples/#list-transition",
     "status": "partial",
     "file": "vue/list-transition.html",
-    "note": "CSS handles ENTER; **LEAVE and FLIP move not reproducible**."
+    "note": "`jst-key` + `jst-transition` cover enter/leave/move classes; full FLIP transition-group behavior still needs custom JS."
   },
   {
     "framework": "Vue",
@@ -453,7 +453,7 @@
     "source": "https://react.dev/learn/state-a-components-memory",
     "status": "exact",
     "file": "react/state-counter.html",
-    "note": "A param is local state; instances independent. *(verified)*"
+    "note": "A prop is local state; instances independent. *(verified)*"
   },
   {
     "framework": "React",
@@ -467,9 +467,9 @@
     "framework": "React",
     "name": "Rendering lists (keys)",
     "source": "https://react.dev/learn/rendering-lists",
-    "status": "partial",
+    "status": "exact",
     "file": "react/rendering-lists.html",
-    "note": "Rendering idiomatic, but **no `key`** — input text sticks to position, not data, on reorder. *(gap proven in headless run)*"
+    "note": "`jst-key` preserves node identity across reorders."
   },
   {
     "framework": "React",
@@ -491,9 +491,9 @@
     "framework": "React",
     "name": "Controlled inputs",
     "source": "https://react.dev/learn/reacting-to-input-with-state",
-    "status": "partial",
+    "status": "exact",
     "file": "react/controlled-inputs.html",
-    "note": "Manual `.value` + `@input`; mid-string edits can bounce the caret."
+    "note": "`jst-model` keeps local state as the source of truth; form-property morphing preserves focus/caret."
   },
   {
     "framework": "React",
@@ -509,7 +509,7 @@
     "source": "https://react.dev/learn/synchronizing-with-effects",
     "status": "partial",
     "file": "react/effects-fetching.html",
-    "note": "Guarded render block + stale-response guard; **no unmount cleanup**."
+    "note": "Guarded render block + stale-response guard; teardown can use `onDisconnect`, but there is no effect dependency model."
   },
   {
     "framework": "React",
@@ -547,9 +547,9 @@
     "framework": "React",
     "name": "Thinking in React (filter table)",
     "source": "https://react.dev/learn/thinking-in-react",
-    "status": "partial",
+    "status": "exact",
     "file": "react/thinking-in-react.html",
-    "note": "Maps perfectly; inherits the controlled-input caveat."
+    "note": "Lifted state, explicit events, derived table rendering, and stable controlled inputs map cleanly."
   },
   {
     "framework": "React",

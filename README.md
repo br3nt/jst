@@ -1,19 +1,18 @@
 # &lt;JST/&gt;
 
-**JavaScript Templates (JST)** — reactive web components in plain HTML, with
+**JavaScript Templates (JST)** - reactive web components in plain HTML, with
 **JavaScript itself as the templating language**. **No build step.**
 
 **It's just Web Components under the hood.** A `<script type="jst">` tag is
 compiled into a class and registered with `customElements.define()`, so every
-`<jst-*>` is a *genuine custom element* — inspectable in DevTools, scriptable
+JST component is a genuine custom element: inspectable in DevTools, scriptable
 with plain properties and `addEventListener`, and usable inside any framework or
-none. You write them in ordinary HTML with JavaScript as the templating
-language — no compiler, no bundler, no JSX, no virtual DOM, no signals.
+none.
 
 ```html
 <script type="module" src="jst.js"></script>
 
-<script type="jst" name="hello-name" name>
+<script type="jst" name="hello-name" props="name">
   <p>Hello, <strong>$(name)</strong>!</p>
   <button @click="$(() => el.name = 'world')">reset</button>
 </script>
@@ -24,24 +23,101 @@ language — no compiler, no bundler, no JSX, no virtual DOM, no signals.
 ## What hole it fills
 
 - **HTMX** lets the server send HTML, but has no client interactivity without a round-trip.
-- **Alpine** adds client interactivity, but the server can't stream components.
-- **React/Vue** are powerful, but need a build step, a virtual DOM, and a runtime.
+- **Alpine** adds client interactivity, but the server cannot stream reusable components.
+- **React/Vue** are powerful, but usually bring a build step, a runtime model, and a client-owned render pipeline.
 
-JST: components in plain HTML that the **server can stream down** (a fetched
-fragment can define *and* use a component — it auto-registers via a
-`MutationObserver`), with **full client interactivity**, **no build**, and **no
-virtual DOM or signals**. It rides the platform — custom elements, properties,
-bubbling events, and DOM morphing.
+JST targets HATEOAS-style apps where the backend and frontend should be able to
+send the same thing: HTML that defines components, uses components, and can still
+be interactive once it lands in the browser. A fetched fragment can include both
+`<script type="jst">` definitions and the markup that uses them.
 
 ## Philosophy
 
-1. **No build step** — components live in `<script type="jst">` in plain HTML; the browser is the toolchain.
-2. **JavaScript is the templating language** — `$(expr)`, `$ if`, `$ forEach`. No new DSL.
-3. **Hypertext as the API** — responses are HTML carrying their own UI and next actions, not JSON a client must re-render. Like HTMX, but the response brings its own front-end interactivity.
-4. **No backend required** — a JST app is just static files; the same components run on the client or stream down from a server.
-5. **It's just Web Components** — every `<jst-*>` is a real custom element via `customElements.define`; data in as properties, actions out as `CustomEvent`s, DOM morphed in place — no virtual DOM, no signals.
-6. **Props down, events up** — components are dumb renderers; state lives in the page/parent.
-7. **Safe by default** — interpolation is HTML-escaped unless you opt out with `raw()`.
+1. **No build step by default** - components live in `<script type="jst">` in plain HTML.
+2. **JavaScript is the templating language** - `$(expr)`, `$ if`, `$ forEach`; no second expression DSL.
+3. **Hypertext as the API** - responses can be HTML carrying their own UI and next actions, not JSON that must be reshaped into client models.
+4. **Props down, events up** - components are controlled renderers; state lives in the page, parent, or server.
+5. **No store, no proxies, no hidden graph** - use plain JavaScript objects, properties, and events.
+6. **Safe interpolation by default** - `$(expr)` escapes HTML; `url()` guards URL attributes; `raw()` / `unsafeHTML()` are explicit trusted-HTML escapes.
+7. **Fail loud** - invalid prop declarations, malformed bindings, and render errors should be visible during development.
+
+## Component API
+
+Props are declared in the case-preserving `props` attribute:
+
+```html
+<script type="jst" name="todo-item" props="item onToggle">
+  <li jst-key="$(item.id)">
+    <button @click.stop="$(onToggle)">Done</button>
+    $(item.text)
+  </li>
+</script>
+
+<todo-item .item="$(todo)" .on-toggle="$(toggleTodo)"></todo-item>
+```
+
+- `props="item onToggle"` declares the bare locals available in the template.
+- Each prop is also a property on the element: `el.item`, `el.onToggle`.
+- External HTML attributes use platform casing rules, so multi-word call sites
+  use kebab-case: `on-toggle` maps to `onToggle`.
+- Plain attributes pass JSON-ish primitives (`count="1"`, `open="true"`).
+- Directly assigning a mutable prop reference republishes it: mutate an array,
+  then assign `el.items = el.items` to render. Identical primitive assignments
+  stay quiet.
+- When the next value depends on the current value inside an event handler, read
+  the live element property: `el.count = (el.count || 0) + 1`.
+- `.prop="$(expr)"` passes rich JavaScript values without stringifying.
+- `@event="$(fn)"` attaches listeners; modifiers are supported:
+  `.prevent`, `.stop`, `.self`, `.outside`, `.once`, `.capture`, `.passive`,
+  key filters like `.enter`, and `.debounce.300`.
+- `jst-model="title"` is local form shorthand: read from `title` and update
+  `el.title` when the user changes it.
+- `jst-key="$(id)"` preserves DOM identity during list inserts and reorders.
+- `jst-transition="fade"` applies CSS-owned transition classes:
+  `fade-enter-*`, `fade-leave-*`, and `fade-move`.
+- `$(slot())` and `$(slot('name', 'fallback'))` project light-DOM children.
+- `once(key, setup)` runs a rare DOM-local setup once per connection and uses
+  a returned function as disconnect cleanup.
+- `onDisconnect(fn)` is the lower-level teardown escape hatch; prefer wrapping
+  resource setup in `once()` so it is not re-registered on every render.
+
+## Production Path
+
+JST has two modes:
+
+- **Runtime mode**: load `jst.js`; the browser compiles inline templates with
+  `new Function`. This is ideal for prototypes, static pages, examples, and
+  server-streamed trusted components.
+- **Precompiled mode**: run `tools/precompile.mjs` and load the generated module.
+  This avoids runtime template compilation and is the path for strict CSP apps
+  that cannot allow `unsafe-eval`.
+
+```sh
+node tools/precompile.mjs index.html --out dist/templates.js --runtime ../jst.js
+```
+
+See [docs/production.md](docs/production.md) and [SECURITY.md](SECURITY.md).
+
+## Runtime Configuration
+
+```js
+import { configure } from './jst.js';
+
+configure({
+  dev: true,
+  autoRegister: true,
+  autoRegisterRoot: document.body,
+  resolveTemplate(name) {
+    if (!name.startsWith('app-')) return null;
+    return `/components/${name}.html`;
+  },
+});
+```
+
+- `dev: true` renders visible error boxes instead of leaving stale/empty DOM.
+- `autoRegister: false` disables MutationObserver registration of arriving templates.
+- `autoRegisterRoot` scopes automatic registration to a known container.
+- `resolveTemplate(name)` lazily fetches missing component definitions.
 
 ## Try it
 
@@ -49,27 +125,37 @@ Serve the repo root and open `index.html`:
 
 ```sh
 python3 -m http.server 8000
-# http://localhost:8000/            — landing page (live demo)
+# http://localhost:8000/
 # http://localhost:8000/examples/kanban.html
-# http://localhost:8000/framework_parity/index.html   — the parity study
+# http://localhost:8000/framework_parity/index.html
 ```
 
 ## What's here
 
 | Path | What |
 |---|---|
-| `jst.js` + `compiler.js` / `interpreter.js` / `lexer.js` / … | the framework (~600 lines, zero dependencies) |
+| `jst.js` + `compiler.js` / `interpreter.js` / `lexer.js` / ... | the framework, zero runtime dependencies |
 | `index.html` | landing page |
 | `examples/` | kanban, todo, slots, counters |
-| `framework_parity/` | 70 HTMX/Alpine/Vue/React examples rebuilt in JST + a browsable hub and gap report |
-| `tooling/vscode-jst/` | VS Code syntax highlighting, diagnostics, and a language server |
-| `agentic_feed/` | a HATEOAS-feed prototype (needs Node to run its SSE server) |
-| `run_tests.html` / `runtime_tests.mjs` | the test suites |
+| `framework_parity/` | HTMX/Alpine/Vue/React examples rebuilt in JST |
+| `tooling/vscode-jst/` | VS Code syntax highlighting, diagnostics, and language server |
+| `agentic_feed/` | a HATEOAS-feed prototype |
+| `docs/` | decision guide and production notes |
+| `run_tests.html` / `runtime_tests.mjs` | test suites |
 
 ## Tests
 
 ```sh
-node --test runtime_tests.mjs          # framework unit tests (Node)
-node run_browser_tests.mjs             # framework tests in headless Chrome
-node run_example_smoke.mjs             # example pages, driven in headless Chrome
+node --test runtime_tests.mjs
+node run_browser_tests.mjs
+node run_example_smoke.mjs
+find framework_parity -name '*.html' -print | xargs node framework_parity/verify.mjs
+node agentic_feed/run_feed_smoke.mjs
+npm --prefix tooling/vscode-jst test
+```
+
+Or run the root script:
+
+```sh
+npm test
 ```

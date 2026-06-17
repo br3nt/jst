@@ -4,10 +4,9 @@
   Source: https://htmx.org/examples/active-search/
   Demonstrates: a search box that queries the server as you type (debounced) and swaps the
   results table; a spinner shows during the request.
-  JST status: (i) partial. Page state + results component is idiomatic, BUT HTMX gives the
-  debounce + "fire on keyup" declaratively (hx-trigger="keyup changed delay:500ms"). JST
-  has no event-modifier/debounce primitive, so the 300ms debounce is a hand-written
-  setTimeout. The input is kept a plain field so typing doesn't lose focus to re-renders.
+  JST status: (i) partial. Page state + results component is idiomatic, but HTMX gives
+  the request trigger declaratively (hx-trigger="keyup changed delay:500ms"). This
+  page-level plain input keeps debounce/fetch orchestration in hand-written JS.
 -->
 <html lang="en">
 <head>
@@ -25,7 +24,7 @@
 </head>
 <body>
 
-<script type="jst" name="search-results" rows searching query>
+<script type="jst" name="search-results" props="rows searching query">
   $ if (searching) {
     <span class="spinner" data-testid="spinner">Searching…</span>
   $ }
@@ -72,7 +71,7 @@
     results.searching = false;
   }
 
-  // Workaround: no declarative debounce in JST, so we time it by hand.
+  // Page-level trigger orchestration stays hand-written here.
   q.addEventListener('input', () => {
     clearTimeout(timer);
     timer = setTimeout(() => run(q.value), 300);

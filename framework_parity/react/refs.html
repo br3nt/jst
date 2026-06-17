@@ -7,7 +7,7 @@
   JST status: ✓ — both ref use-cases are covered cleanly. DOM ref:
   el.querySelector('input').focus() after render. Mutable instance value:
   stash it on the element (el._taps) — it persists and, because it is not a
-  declared param, mutating it does NOT trigger a re-render, exactly like
+  declared prop, mutating it does NOT trigger a re-render, exactly like
   useRef's .current. No dedicated ref object, but nothing is lost.
 -->
 <html lang="en">
@@ -25,7 +25,7 @@
 <body>
 <h1>Manipulating the DOM with refs</h1>
 
-<script type="jst" name="focus-field" count>
+<script type="jst" name="focus-field" props="count">
   <div>
     <input data-testid="field" placeholder="I will be focused">
     <button data-testid="focus" @click="$(() => el.querySelector('input').focus())">
@@ -47,7 +47,7 @@
 
 <p style="color:#666; font-size:.9rem">
   "Tap" bumps a plain property (el._taps) — like useRef's .current, it changes
-  silently. "Reveal" copies it into a param, which is the moment it re-renders.
+  silently. "Reveal" copies it into a prop, which is the moment it re-renders.
 </p>
 
 <script>

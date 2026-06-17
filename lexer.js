@@ -64,7 +64,7 @@ export class Lexer {
   }
 
   readJsIdentifierToken() {
-    const str = this.#input.readWhile(Lexer.isJsIdentifier);
+    const str = this.#input.next() + this.#input.readWhile(Lexer.isJsIdentifierContinue);
     return new Tokens.JsIdentifierToken(str);
   }
 
@@ -72,33 +72,26 @@ export class Lexer {
     // Skip leading space after $ if it exists
     if (this.#input.peek() === ' ') this.#input.next();
 
-    let quote = null;
-    let escaped = false;
-
-    const condition = (ch, chNext) => {
-      if (escaped) { escaped = false; return true; }
-
-      if (quote) {
-        if (ch === '\\') { escaped = true; return true; }
-        if (ch === quote) { quote = null; return true; }
-        // Strings other than template literals cannot span lines
-        if ((ch === '\n' || ch === '\r') && quote !== '`') { quote = null; return false; }
-        return true;
-      }
-
-      if (ch === "'" || ch === '"' || ch === '`') { quote = ch; return true; }
-      if (ch === '\n' || ch === '\r') return false;
-      if (ch === '$') return false;
-      // Stop if we see an actual HTML tag start
-      return !(Lexer.isHtmlTagStart(ch, chNext) || Lexer.isHtmlTagEnd(ch, chNext));
-    };
-
-    const str = this.#input.readWhile(condition);
+    const str = this.#input.readJsLine(
+      (ch, chNext) => Lexer.isHtmlTagStart(ch, chNext) || Lexer.isHtmlTagEnd(ch, chNext),
+    );
     return new Tokens.JsCodeToken(str);
   }
 
   readHtmlToken() {
-    const str = this.#input.readUntilChar('$');
+    let str = '';
+
+    while (!this.#input.endOfInput()) {
+      if (this.#input.peek() === '$') break;
+
+      if (this.startsHtmlComment()) {
+        str += this.readHtmlComment();
+        continue;
+      }
+
+      str += this.#input.next();
+    }
+
     return new Tokens.HtmlToken(str);
   }
 
@@ -118,11 +111,11 @@ export class Lexer {
   }
 
   static isJsIdentifierStart(ch) {
-    return /[$_\p{ID_Start}]/u.test(ch);
+    return /^[$_\p{ID_Start}]$/u.test(ch);
   }
 
-  static isJsIdentifier(ch) {
-    return /[$_\p{ID_Start}][$\u200c\u200d\p{ID_Continue}]*/u.test(ch);
+  static isJsIdentifierContinue(ch) {
+    return /^[$\u200c\u200d\p{ID_Continue}]$/u.test(ch);
   }
 
   static isHtmlTagStart(ch, chNext) {
@@ -131,5 +124,29 @@ export class Lexer {
 
   static isHtmlTagEnd(ch, chNext) {
     return ch === '<' && chNext === '/';
+  }
+
+  startsHtmlComment() {
+    return this.#input.peek() === '<'
+      && this.#input.peekAt(1) === '!'
+      && this.#input.peekAt(2) === '-'
+      && this.#input.peekAt(3) === '-';
+  }
+
+  readHtmlComment() {
+    let str = '';
+
+    while (!this.#input.endOfInput()) {
+      const ch = this.#input.next();
+      str += ch;
+
+      if (ch === '-' && this.#input.peek() === '-' && this.#input.peekAt(1) === '>') {
+        str += this.#input.next();
+        str += this.#input.next();
+        break;
+      }
+    }
+
+    return str;
   }
 }

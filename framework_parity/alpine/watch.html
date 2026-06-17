@@ -18,7 +18,7 @@
 </head>
 <body>
 
-<script type="jst" name="watch-demo" count log>
+<script type="jst" name="watch-demo" props="count log">
   $ const entries = log || [];
   <div>
     <button data-testid="inc" @click="$(() => el.setCount(count + 1))">+1</button>

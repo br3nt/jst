@@ -9,7 +9,7 @@
     already has, like <ui-panel>.
 -->
 
-<script type="jst" name="kanban-stats" cards columns>
+<script type="jst" name="kanban-stats" props="cards columns">
     $ const all = cards || [];
     $ const cols = columns || [];
     $ const countFor = id => all.filter(card => card.column === id).length;

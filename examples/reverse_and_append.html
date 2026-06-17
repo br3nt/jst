@@ -14,7 +14,7 @@
 </head>
 <body>
 
-<script type="jst" name="jst-reverse" text>
+<script type="jst" name="jst-reverse" props="text">
     <div class="example-box">
         <h2>Example 1: String Manipulation</h2>
         <p>Original: <code>$(text)</code></p>
@@ -22,7 +22,7 @@
     </div>
 </script>
 
-<script type="jst" name="jst-append" items>
+<script type="jst" name="jst-append" props="items">
     <div class="example-box">
         <h2>Example 2: List Management</h2>
         <ul>
@@ -50,16 +50,16 @@
     let myData = ["Initial Item"];
 
     const appendList = document.getElementById('append-list');
-    appendList.items = myData;
+    appendList.items = myData.slice();
 
     function addItem() {
         myData.push(Math.floor(Math.random() * 100));
-        appendList.items = myData;
+        appendList.items = myData.slice();
     }
 
     function clearItems() {
         myData = [];
-        appendList.items = myData;
+        appendList.items = myData.slice();
     }
 </script>
 

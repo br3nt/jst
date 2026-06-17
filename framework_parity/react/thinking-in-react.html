@@ -6,11 +6,9 @@
   and a ProductTable, with the filter state lifted to their common parent and
   the table derived from it. Combines lifting state + controlled inputs +
   conditional/list rendering.
-  JST status: (i) partial — the architecture maps perfectly (page owns
-  filterText/inStockOnly; search-bar emits, product-table renders), but it
-  inherits the controlled-input caveat: the search field is driven by state
-  via .value + @input, so mid-string edits can bounce the caret to the end.
-  Append-typing (the common case) is smooth. Everything else is idiomatic JST.
+  JST status: ✓ exact — the page owns filterText/inStockOnly, search-bar emits,
+  product-table renders, and property-aware morphing keeps controlled inputs
+  stable.
 -->
 <html lang="en">
 <head>
@@ -30,7 +28,7 @@
 <h1>Thinking in React</h1>
 
 <!-- Controlled search bar; state is lifted to the page. -->
-<script type="jst" name="search-bar" filter-text in-stock>
+<script type="jst" name="search-bar" props="filterText inStock">
   <div>
     <input type="text" data-testid="search" placeholder="Search…"
            .value="$(filterText || '')"
@@ -45,7 +43,7 @@
 </script>
 
 <!-- Pure renderer: products + filter come down, nothing comes up. -->
-<script type="jst" name="product-table" products filter-text in-stock>
+<script type="jst" name="product-table" props="products filterText inStock">
   $ const ft = (filterText || '').toLowerCase();
   $ let lastCat = null;
   <table>

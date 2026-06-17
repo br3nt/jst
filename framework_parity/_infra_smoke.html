@@ -13,7 +13,7 @@
   // A mocked endpoint returns an HTML fragment that DEFINES a new JST component
   // and uses it — proving the "server returns JST, browser registers + renders" path.
   JSTMock.route('GET /api/widget', () => `
-    <script type="jst" name="smoke-widget" label>
+    <script type="jst" name="smoke-widget" props="label">
       <span class="w">[$(label)]<\/span>
     <\/script>
     <smoke-widget label="hello"></smoke-widget>

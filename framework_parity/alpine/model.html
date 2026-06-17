@@ -4,10 +4,8 @@
   Source: https://alpinejs.dev/directives/model
   Demonstrates: Alpine x-model — two-way binding for text input, checkbox and
   select, with a live preview of the bound values.
-  JST status: (i) partial — JST has NO two-way binding. You wire BOTH directions
-  by hand: push state into the control with `.value`/`.checked="$(...)"` and pull
-  changes back with `@input`/`@change="$(e => el.x = e.target.value)"`. Behaviour
-  matches x-model but it is manual boilerplate per field.
+  JST status: ✓ exact — `jst-model` is the local form shorthand: it reads from
+  a declared prop and updates `el.prop` when the user edits the control.
 -->
 <html lang="en">
 <head>
@@ -22,22 +20,16 @@
 </head>
 <body>
 
-<script type="jst" name="x-model-demo" text agree color>
+<script type="jst" name="x-model-demo" props="text agree color">
   <div>
     <label>Text:
-      <input data-testid="text" type="text"
-             .value="$(text || '')"
-             @input="$(e => el.text = e.target.value)">
+      <input data-testid="text" type="text" jst-model="text">
     </label>
     <label>Agree:
-      <input data-testid="checkbox" type="checkbox"
-             .checked="$(!!agree)"
-             @change="$(e => el.agree = e.target.checked)">
+      <input data-testid="checkbox" type="checkbox" jst-model="agree">
     </label>
     <label>Color:
-      <select data-testid="select"
-              .value="$(color || 'red')"
-              @change="$(e => el.color = e.target.value)">
+      <select data-testid="select" jst-model="color">
         <option value="red">Red</option>
         <option value="green">Green</option>
         <option value="blue">Blue</option>

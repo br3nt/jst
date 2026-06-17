@@ -30,7 +30,7 @@
 
 <script>
   JSTMock.route('GET /api/graph', () => `
-    <script type="jst" name="lazy-graph" label>
+    <script type="jst" name="lazy-graph" props="label">
       <div class="chart" data-testid="chart">$(label)<\/div>
     <\/script>
     <lazy-graph label="Revenue is up 42%"></lazy-graph>

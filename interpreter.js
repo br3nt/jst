@@ -53,7 +53,7 @@ function mergeJsTokens(templateTokens) {
 // Matches a tag-position binding prefix at the end of an HTML chunk:
 //   `.prop="` assigns the expression value as a JS property after morphing
 //   `@event="` attaches the expression value with addEventListener after morphing
-const bindingTailPattern = /(^|\s)([.@])([a-zA-Z_$][\w$-]*)\s*=\s*(["'])$/
+const bindingTailPattern = /(^|\s)([.@])([a-zA-Z_$][\w$-]*(?:\.[\w$-]+)*)\s*=\s*(["'])$/
 
 function matchBinding(tokens, i) {
   const token = tokens[i]
@@ -61,14 +61,17 @@ function matchBinding(tokens, i) {
   const closingToken = tokens[i + 2]
 
   if (!(token instanceof HtmlToken)) return null
-  if (!(expressionToken instanceof JsExpressionToken)) return null
-  if (!(closingToken instanceof HtmlToken)) return null
 
   const match = token.html.match(bindingTailPattern)
   if (!match) return null
 
   const [fullMatch, leading, sigil, name, quote] = match
-  if (!closingToken.html.startsWith(quote)) return null
+
+  if (!(expressionToken instanceof JsExpressionToken)
+    || !(closingToken instanceof HtmlToken)
+    || !closingToken.html.startsWith(quote)) {
+    throw new Error(`JST binding ${sigil}${name} must contain exactly one $(...) expression`)
+  }
 
   return {
     kind: sigil === '.' ? 'prop' : 'event',

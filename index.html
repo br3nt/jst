@@ -21,7 +21,7 @@
   code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
 
   header.hero { background: linear-gradient(160deg,#eef0fb,#f7f8fc); border-bottom:1px solid var(--line); padding: 2.4rem 0 1.9rem; }
-  .hero h1 { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 2.5rem; margin:0; letter-spacing:-.02em; font-weight:700; color:var(--accent); }
+  .hero h1 { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 2.5rem; margin:0; letter-spacing:0; font-weight:700; color:var(--accent); }
   .hero h1::before { content:"<"; color:#aab2e6; }
   .hero h1::after { content:"/>"; color:#aab2e6; }
   .hero .tag { font-size:1.12rem; color:var(--ink); margin:.35rem 0 .5rem; font-weight:400; }
@@ -30,7 +30,7 @@
   .platform-note { background:var(--bg); border:1px solid var(--line); border-left:3px solid var(--accent); border-radius:3px; padding:.6rem .8rem; margin-top:1rem; font-size:.92rem; }
   .platform-note code { background:#e7e9f7; padding:.05rem .3rem; border-radius:3px; }
   .hero .cta { display:flex; gap:.5rem; flex-wrap:wrap; }
-  .btn { display:inline-block; padding:.35rem .8rem; border-radius:3px; text-decoration:none; font-weight:600; font-size:.9rem; border:1px solid var(--accent); }
+  .btn { display:inline-block; padding:.35rem .8rem; border-radius:3px; text-decoration:none; font-weight:600; font-size:.9rem; border:1px solid var(--accent); white-space:normal; }
   .btn.primary { background:var(--accent); color:#fff; }
   .btn.ghost { color:var(--accent); background:#fff; }
 
@@ -39,7 +39,8 @@
   .lede { color:var(--muted); font-size:1rem; max-width:62ch; }
 
   .demo { display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-top:1.1rem; align-items:start; }
-  .demo .panel { background:var(--bg); border:1px solid var(--line); border-radius:3px; padding:.7rem .9rem; }
+  .demo > *, .grid3 > *, .tiers > * { min-width: 0; }
+  .demo .panel { background:var(--bg); border:1px solid var(--line); border-radius:3px; padding:.7rem .9rem; min-width:0; }
   .demo .panel h3 { margin:.1rem 0 .5rem; font-size:.78rem; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); }
   pre.code { margin:0; background:#1e2030; color:#d7d9e6; padding:.8rem; border-radius:3px; overflow:auto; font-size:.82rem; line-height:1.5; }
   pre.code .k { color:#c792ea; } pre.code .s { color:#c3e88d; } pre.code .t { color:#89ddff; } pre.code .c { color:#7a82a8; }
@@ -51,7 +52,7 @@
   .card { border:1px solid var(--line); border-radius:3px; padding:.75rem .9rem; background:#fff; }
   .card h3 { margin:.1rem 0 .35rem; font-size:1rem; }
   .card p { margin:0; color:var(--muted); font-size:.9rem; }
-  .card .who { font-size:.74rem; text-transform:uppercase; letter-spacing:.05em; color:var(--accent2); font-weight:700; }
+  .card .who { font-size:.74rem; text-transform:uppercase; letter-spacing:0; color:var(--accent2); font-weight:700; }
 
   ul.principles { list-style:none; padding:0; margin:1rem 0 0; display:grid; gap:.55rem; }
   ul.principles li { padding-left:1.5rem; position:relative; }
@@ -78,7 +79,7 @@
   /* Marquee (CSS-animated; <marquee> is dead). Two copies + -50% = seamless. */
   .marquee { display: block; overflow: hidden; padding: 3px 0; background: #ffe6f1; border-top: 1px solid deeppink; border-bottom: 1px solid deeppink; }
   .marquee-track { display: inline-flex; white-space: nowrap; will-change: transform; animation: marquee 34s linear infinite; }
-  .marquee-track span { color: deeppink; font-size: .85rem; font-weight: 300; letter-spacing: .02em; }
+  .marquee-track span { color: deeppink; font-size: .85rem; font-weight: 300; letter-spacing: 0; }
   .marquee .dot { margin: 0 .65em; font-size: .8em; vertical-align: .08em; }
   @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
   @media (prefers-reduced-motion: reduce) { .marquee-track { animation: none; } }
@@ -86,7 +87,13 @@
   .tier { border: 1px solid var(--line); border-radius: 3px; padding: .75rem .9rem; }
   .tier h4 { margin: 0 0 .3rem; font-size: .95rem; }
   .tier p { margin: 0; color: var(--muted); font-size: .88rem; }
-  @media (max-width:680px){ .demo,.grid3,.tiers{grid-template-columns:1fr;} .hero h1{font-size:1.9rem;} }
+  @media (max-width:680px){
+    .wrap { padding: 0 1rem; }
+    .demo,.grid3,.tiers{grid-template-columns:1fr;}
+    .hero h1{font-size:1.9rem;}
+    .breakout { width: 100%; margin-left: 0; }
+    pre.code { max-width: 100%; white-space: pre; }
+  }
 </style>
 </head>
 <body>
@@ -117,8 +124,8 @@
       <code>jst.js</code> this page loads. View source: it's all here, nothing built.</p>
 
     <!-- A live JST component, defined inline. -->
-    <script type="jst" name="jst-demo-counter" count>
-      <button class="demo-btn" @click="$(() => el.count = (count || 0) + 1)">
+    <script type="jst" name="jst-demo-counter" props="count">
+      <button class="demo-btn" @click="$(() => el.count = (el.count || 0) + 1)">
         Clicked $(count || 0) time$(count === 1 ? '' : 's')
       </button>
     </script>
@@ -127,12 +134,12 @@
       <div class="panel">
         <h3>Live</h3>
         <jst-demo-counter count="0"></jst-demo-counter>
-        <p class="demo-note">It's a real custom element: open DevTools and it's <code>&lt;jst-demo-counter&gt;</code>; type <code>document.querySelector('jst-demo-counter').count = 9</code> in the console and watch it re-render. Local state via <code>el.count = …</code>, no framework state object, no hooks.</p>
+        <p class="demo-note">It's a real custom element: open DevTools and it's <code>&lt;jst-demo-counter&gt;</code>; type <code>document.querySelector('jst-demo-counter').count = 9</code> in the console and watch it re-render. Local state via element properties, no framework state object, no hooks.</p>
       </div>
       <div class="panel">
         <h3>Source</h3>
-<pre class="code"><span class="t">&lt;script</span> <span class="k">type</span>=<span class="s">"jst"</span> <span class="k">name</span>=<span class="s">"jst-demo-counter"</span> count<span class="t">&gt;</span>
-  <span class="t">&lt;button</span> <span class="k">@click</span>=<span class="s">"$(() =&gt; el.count = count + 1)"</span><span class="t">&gt;</span>
+<pre class="code"><span class="t">&lt;script</span> <span class="k">type</span>=<span class="s">"jst"</span> <span class="k">name</span>=<span class="s">"jst-demo-counter"</span> <span class="k">props</span>=<span class="s">"count"</span><span class="t">&gt;</span>
+  <span class="t">&lt;button</span> <span class="k">@click</span>=<span class="s">"$(() =&gt; el.count = (el.count || 0) + 1)"</span><span class="t">&gt;</span>
     Clicked $(count) times
   <span class="t">&lt;/button&gt;</span>
 <span class="t">&lt;/script&gt;</span>
@@ -266,10 +273,10 @@
     <div class="tiers">
       <div class="tier"><h4>Syntax highlighting</h4><p>TextMate injection grammars highlight <code>$(…)</code>, <code>$ …</code> and <code>.prop</code>/<code>@event</code> inside <code>&lt;script type="jst"&gt;</code>, delegating the embedded JS to the editor's own <code>source.js</code>.</p></div>
       <div class="tier"><h4>Diagnostics</h4><p>Runs the <em>real</em> JST compiler over each template, so an editor squiggle is exactly what the runtime would reject. Embedded-JS syntax errors are caught by V8 itself.</p></div>
-      <div class="tier"><h4>Language server</h4><p>Cross-file go-to-definition (a <code>&lt;my-card&gt;</code> tag → its <code>&lt;script type="jst" name="my-card"&gt;</code>), hover with a component's params, completion, and document symbols.</p></div>
+      <div class="tier"><h4>Language server</h4><p>Cross-file go-to-definition (a <code>&lt;my-card&gt;</code> tag → its <code>&lt;script type="jst" name="my-card"&gt;</code>), hover with a component's props, completion, and document symbols.</p></div>
     </div>
 <pre class="code"><span class="c">&lt;!-- the grammar highlights these as embedded JS --&gt;</span>
-<span class="t">&lt;script</span> <span class="k">type</span>=<span class="s">"jst"</span> <span class="k">name</span>=<span class="s">"todo-item"</span> item<span class="t">&gt;</span>
+<span class="t">&lt;script</span> <span class="k">type</span>=<span class="s">"jst"</span> <span class="k">name</span>=<span class="s">"todo-item"</span> <span class="k">props</span>=<span class="s">"item"</span><span class="t">&gt;</span>
   <span class="t">&lt;li</span> <span class="k">@click</span>=<span class="s">"$(() =&gt; el.emit('toggle', item))"</span><span class="t">&gt;</span>$(item.title)<span class="t">&lt;/li&gt;</span>
 <span class="t">&lt;/script&gt;</span></pre>
     <div class="links">

@@ -25,7 +25,7 @@
 <h1>Passing props</h1>
 
 <!-- Leaf component: receives a person object + numeric size prop. -->
-<script type="jst" name="user-avatar" person size>
+<script type="jst" name="user-avatar" props="person size">
   $ const p = person || {};
   $ const px = (size || 48) + 'px';
   <div class="avatar" style="width:$(px); height:$(px); background:$(p.color || '#888')">
@@ -34,7 +34,7 @@
 </script>
 
 <!-- Container: forwards the object down and sets a primitive size prop. -->
-<script type="jst" name="user-card" person>
+<script type="jst" name="user-card" props="person">
   $ const p = person || {};
   <div class="card">
     <user-avatar .person="$(p)" size="56"></user-avatar>

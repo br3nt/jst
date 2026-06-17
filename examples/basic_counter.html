@@ -24,7 +24,7 @@
     running="true" to a boolean). The button emits an event; the page
     owns the state and writes it back through properties.
 -->
-<script type="jst" name="counter-display" count running>
+<script type="jst" name="counter-display" props="count running">
     <div class="card">
         <h2>Counter Example</h2>
         <div class="count">$(count)</div>
@@ -33,7 +33,7 @@
         <div class="status $(running ? 'active' : 'inactive')">
             The counter is currently $(running ? 'RUNNING' : 'STOPPED')
         </div>
-        <p><small>(Params: count, running)</small></p>
+        <p><small>(Props: count, running)</small></p>
     </div>
 </script>
 
