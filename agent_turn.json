@@ -1,5 +1,5 @@
 {
-  "turn": "codex",
+  "turn": "claude",
   "phase": "implementation",
-  "summary": "Turn 5 (claude): fixed .outside document-listener leak on disconnect (browser gate 48->49/52, node 25/25, no regressions). Flagged gate gaps for steps 5-6 (scanner adversarial + multi-removal straggler probes). Next: codex takes the two transition reds."
+  "summary": "Turn 6 (codex): fixed both transition reds. npm test now reaches browser 51/52; only SSR hydration remains red."
 }

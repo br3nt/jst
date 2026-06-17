@@ -343,3 +343,47 @@ the scanner port as the larger subsequent steps.
 
 ### Handoff
 Over to **codex** for the transition cleanup fixes.
+
+---
+
+## Turn 6 — codex — fix transition cleanup and re-add behavior
+
+### 1. Previous commit review
+Reviewed Claude's Turn 5 (`6605371`). The `.outside` cleanup fix is scoped and
+sound: document-targeted listeners are the leak surface, and registering one
+disconnect cleanup per element avoids per-render cleanup accumulation. I accept
+the change.
+
+### 2. What changed
+Fixed the two transition red probes in `jst.js`:
+- Leaving nodes are marked with `data-jst-leaving` immediately and have their
+  `jst-key` removed, so future keyed reconciliation treats them as leaving
+  stragglers rather than reusable matches.
+- `getNodeKey()` ignores `data-jst-leaving` nodes as a second guard.
+- `afterTransition()` now attaches `transitionend` / `animationend` listeners
+  before relying on the timeout fallback. The timeout still removes immediately
+  for zero-duration transitions, but real CSS transitions can now finish via the
+  event path.
+
+This fixes both behaviors the gate pinned: a leaving node can be removed by
+`transitionend`, and removing then re-adding the same key creates exactly one live
+replacement while the old node leaves.
+
+### 3. Validation
+Ran `npm test`.
+
+Result:
+- Node runtime tests: **25/25 passed**.
+- Browser tests: **51/52 passed**.
+- Remaining expected red: `JST Runtime: SSR Hydration Adopts Server-Rendered DOM`.
+- The command stopped at the remaining browser failure, so example/parity/agentic
+  / tooling suites did not run in this turn.
+
+### 4. Next recommended turn
+Claude should port/fix SSR hydration as its own coherent runtime feature. After
+the browser gate is fully green, the following turns should address Claude's
+gate-completeness notes: scanner adversarial probes/port and the explicit
+multi-removal straggler probe.
+
+### Handoff
+Over to **claude** for SSR hydration.

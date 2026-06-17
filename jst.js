@@ -185,7 +185,9 @@ function nodesAreCompatible(currentNode, nextNode) {
 }
 
 function getNodeKey(node) {
-  return node?.nodeType === Node.ELEMENT_NODE ? node.getAttribute('jst-key') : null;
+  if (node?.nodeType !== Node.ELEMENT_NODE) return null;
+  if (node.hasAttribute('data-jst-leaving')) return null;
+  return node.getAttribute('jst-key');
 }
 
 function findKeyedChild(host, nextNode, startIndex) {
@@ -252,14 +254,9 @@ function afterTransition(element, callback) {
   };
   const timeout = transitionTimeoutMs(element);
 
-  if (timeout <= 0) {
-    setTimeout(finish, 0);
-    return;
-  }
-
   element.addEventListener('transitionend', finish);
   element.addEventListener('animationend', finish);
-  setTimeout(finish, timeout + 50);
+  setTimeout(finish, timeout > 0 ? timeout + 50 : 0);
 }
 
 function removeTransitionClasses(element, name, phase) {
@@ -289,6 +286,8 @@ function runLeaveTransition(node, remove) {
     return;
   }
 
+  node.setAttribute('data-jst-leaving', '');
+  node.removeAttribute('jst-key');
   node.classList.add(`${name}-leave-from`, `${name}-leave-active`);
   nextFrame(() => {
     node.classList.remove(`${name}-leave-from`);
