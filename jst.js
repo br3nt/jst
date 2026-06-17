@@ -755,14 +755,22 @@ function defineCustomElementFromRender({
     #disconnectCleanups = new Set();
     #onceKeys = new Set();
     #outsideTracked = new WeakSet();
+    #hydrating = false;
 
     static get observedAttributes() {
       return Object.keys(attributeToParam);
     }
 
     connectedCallback() {
-      this.#captureSlotContent();
-      this.#observeSlotMutations();
+      // SSR/hydration: a server can emit the component already rendered, marked
+      // jst-ssr. The existing children are rendered output, not slot content, so
+      // we skip slot capture/observation and let the first render morph onto the
+      // existing DOM (adopting it, no flash) rather than detaching+replacing.
+      this.#hydrating = typeof this.hasAttribute === 'function' && this.hasAttribute('jst-ssr');
+      if (!this.#hydrating) {
+        this.#captureSlotContent();
+        this.#observeSlotMutations();
+      }
       this.#upgradeProperties();
       this.requestRender();
     }
@@ -829,7 +837,14 @@ function defineCustomElementFromRender({
         this.#slotObserver = null;
         this.#rendering = true;
         try {
-          this.#detachSlotContent();
+          if (this.#hydrating) {
+            // First render after SSR: adopt the existing server DOM by morphing
+            // onto it. No slot content was captured, so nothing to detach.
+            this.removeAttribute('jst-ssr');
+            this.#hydrating = false;
+          } else {
+            this.#detachSlotContent();
+          }
           applyRenderedHtml(this, html);
           this.#applyBindings(bindings);
           this.#applyModelBindings();

@@ -1,5 +1,5 @@
 {
-  "turn": "claude",
+  "turn": "codex",
   "phase": "implementation",
-  "summary": "Turn 6 (codex): fixed both transition reds. npm test now reaches browser 51/52; only SSR hydration remains red."
+  "summary": "Turn 7 (claude): ported jst-ssr hydration. Union runtime gate FULLY GREEN (node 25, browser 52). Surfaced a tooling-deps issue (missing node_modules -> grammar.test.mjs; for the CI turn). Next: codex extends gate with adversarial scanner + multi-removal straggler probes."
 }

@@ -387,3 +387,61 @@ multi-removal straggler probe.
 
 ### Handoff
 Over to **claude** for SSR hydration.
+
+---
+
+## Turn 7 — claude — port SSR hydration (gate fully green)
+
+### 1. Previous commit review
+Reviewed Codex's Turn 6 (transition fixes). The leaving-node `data-jst-leaving`
+marker + `jst-key` removal + `getNodeKey` guard, plus attaching
+`transitionend`/`animationend` before the timeout fallback, is sound and matches
+how the gate probes exercise it. Browser 51/52, node 25/25. Accepted.
+
+### 2. What changed (jst.js)
+Ported `jst-ssr` hydration from Hardening into the substrate:
+- New `#hydrating` field, set in `connectedCallback` from `hasAttribute('jst-ssr')`.
+- When hydrating, skip `#captureSlotContent()` and `#observeSlotMutations()` on
+  connect — the existing children are rendered *output*, not slot content.
+- On the first `render()`, when hydrating: remove the `jst-ssr` marker, clear the
+  flag, and **skip `#detachSlotContent()`** so `applyRenderedHtml` (which already
+  morphs via `morphChildren`) diffs the rendered output onto the existing server
+  DOM, adopting node identity instead of replacing. Subsequent renders are normal.
+- Scoped limitation (matches Hardening): SSR + projected slot content together is
+  not handled (hydration skips slot capture). No probe covers that combo; noted
+  for docs.
+
+### 3. Validation
+- `node run_browser_tests.mjs`: **52/52** — the union browser gate is now FULLY
+  GREEN. SSR probe adopts the server `.out` node (identity preserved), drops the
+  marker, stays reactive.
+- `node --test runtime_tests.mjs`: **25/25**.
+- Full `npm test` now runs past the (previously red) browser gate to the
+  downstream suites. Examples / parity / agentic all pass. See §4 for the one
+  tooling issue it surfaced.
+
+### 4. Tooling-deps issue surfaced (NOT this turn's unit; for the CI/tooling turn)
+This was the first full `npm test` to reach the tooling suite (the browser gate
+was red turns 4–6). It surfaced `tooling/vscode-jst/test/grammar.test.mjs`
+failing — but the cause is environmental, not a code defect and unrelated to SSR:
+this fresh worktree has **no `tooling/vscode-jst/node_modules`**, and
+`grammar.test.mjs` `require`s `vscode-oniguruma` (declared at
+`tooling/vscode-jst/package.json:41-42` alongside `vscode-textmate`), so it errors
+on load. Fix = install tooling deps (`npm ci --prefix tooling/vscode-jst`). This
+belongs to **step 15 (CI)**, which must `npm ci` the tooling package so its tests
+are a real gate. Left uncommitted (node_modules is gitignored).
+
+### 5. Milestone + next recommended turn (codex)
+**The runtime merge gate is fully green (node 25 + browser 52).** But per my
+Turn 5 §4 flag, the gate may be green partly because it doesn't yet pin (a)
+Hardening's adversarial scanner cases and (b) the multi-node trailing keyed
+straggler. Recommend Codex take the **gate extension** next (keep "probes before
+fix" discipline): add the adversarial scanner probes (regex-vs-division,
+`<`-tag-vs-less-than, template-literal `${}` nesting, comments, `$item1` digits,
+`$ line` edges) and the multi-removal straggler probe. Those will likely go RED
+against the substrate's weaker scanner / morph — which then gives the scanner port
+(step 5, Hardening-owned, mine to follow) and the straggler fix (step 6) a real
+red gate.
+
+### Handoff
+Over to **codex** to extend the gate with adversarial scanner + straggler probes.
