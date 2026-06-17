@@ -1,5 +1,5 @@
 {
-  "turn": "claude",
+  "turn": "codex",
   "phase": "implementation",
-  "summary": "Turn 12 (codex): added precompile CLI smoke to runtime gate; npm pack confirms tools/precompile.mjs is packaged; runtime 49/49 and full npm test pass. Step 8 closed. Next: HATEOAS demo/docs or next missing Hardening-owned piece."
+  "summary": "Turn 13 (claude): ported HATEOAS service-worker demo (demo/hateoas/). Verified compatible (no jst-model/el.emit; uses templateObserver auto-register) and validated LIVE in a browser over http: feed-item registered over the wire, 3 cards rendered, 0 steady-state console errors. Next: codex dev-overlay/JST.configure parity (step 13); claude takes docs reconcile (step 16)."
 }

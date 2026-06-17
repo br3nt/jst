@@ -723,3 +723,59 @@ Step 8 (precompile/package verification) is closed.
 ### Handoff
 Over to **claude** for HATEOAS demo/docs, or the next missing Hardening-owned
 piece.
+
+---
+
+## Turn 13 — claude — port HATEOAS service-worker demo (step 14)
+
+### 1. Previous commit review
+Reviewed Codex's Turn 12 (precompile CLI smoke test). Accepted: it actually runs
+`tools/precompile.mjs`, imports the generated module, and asserts it registers +
+renders — putting the strict-CSP production path under the runtime gate (49/49).
+Good closure of step 8.
+
+### 2. What changed
+Ported Hardening's HATEOAS demo into `demo/hateoas/` (`index.html`,
+`service-worker.js`, `README.md`) verbatim. It demonstrates JST's core thesis —
+HTML as the contract: a service worker returns HTML fragments that each carry
+their own `<script type="jst">` component definition, which auto-registers the
+instant it's inserted. The page defines no application components and contains no
+view-model/JSON code.
+
+### 3. Compatibility review (before trusting it)
+- Runtime path `../../jst.js` resolves to integration root in this layout.
+- The page script uses only standard APIs (`fetch`, `innerHTML`, SW registration,
+  event delegation) — no JST-specific calls.
+- The over-the-wire fragments use only integration-supported syntax: `props=`,
+  `$(...)`, `@click` / `@click.prevent`, `$(url(...))`. **No `jst-model`, no
+  `el.emit`, nothing Hardening-specific** — so no semantics fork is dragged in.
+- The integration runtime already has the mechanism the demo depends on: the
+  `templateObserver` registers dynamically-inserted `<script type="jst">`
+  (jst.js:1090-1100) and `scanForMissingTemplates` resolves unknown elements.
+
+### 4. Validation (live, in a real browser over http)
+Served the integration root over http and loaded the demo in a browser (SW needs
+http, not file://):
+- Service worker took control (`swController: true`).
+- `feed-item` **registered over the wire** (`feedItemDefined: true`) and rendered
+  **3 cards** with working interpolation (first author "Ada Lovelace").
+- HATEOAS "load more" link present.
+- Steady-state console after the SW-control reload: **0 errors** (the single
+  first-load error is the documented pre-SW-control path, which the page handles
+  by reloading once).
+Server + browser + all scratch artifacts cleaned up; only `demo/` is added.
+
+### 5. Remaining work
+- **Docs reconcile (step 16)** + landing-page link to the demo + CHANGELOG — Hardening-owned (mine, next).
+- **Dev overlay + `JST.configure` reconcile (step 13)** — Codex flagged this is likely a parity review (substrate already has visible dev errors + configure knobs), not a port.
+- Concerns lab (`concerns.html`) is already in the substrate (Codex-owned); fine.
+
+### 6. Next recommended turn (codex)
+Take the **dev-overlay + `JST.configure` parity review (step 13)**: confirm the
+substrate's dev-error overlay and configure knobs (`dev`, `autoRegister`,
+`autoRegisterRoot`, `resolveTemplate`) cover Hardening's intent; add a probe if
+any behavior is unpinned. After that, I'll do the docs reconcile (step 16), which
+is the last major item.
+
+### Handoff
+Over to **codex** for the dev-overlay / `JST.configure` parity review.
