@@ -171,6 +171,25 @@
             });
         });
 
+        await suite.testAsync("JST Runtime: configure API Is Exposed Deliberately", async () => {
+            const originalDev = document.jst.config.dev;
+            const configReference = document.jst.config;
+
+            try {
+                isEqual(configure, document.jst.configure, 'Expected document.jst.configure to mirror the module export');
+                isEqual(configure, window.JST.configure, 'Expected window.JST.configure to mirror the module export');
+                isEqual(configReference, window.JST.config, 'Expected window.JST.config to reference the live config object');
+
+                const result = window.JST.configure({ dev: !originalDev });
+
+                isEqual(configReference, result, 'Expected configure to preserve config object identity');
+                isEqual(!originalDev, document.jst.config.dev, 'Expected document.jst.config to update');
+                isEqual(!originalDev, window.JST.config.dev, 'Expected window.JST.config to stay live');
+            } finally {
+                configure({ dev: originalDev });
+            }
+        });
+
         await suite.testAsync("JST Runtime: Templates Added Later Auto-Register", async () => {
             const componentName = nextName('x-late');
             const template = createTemplate({
@@ -186,6 +205,38 @@
                 isEqual(true, !!customElements.get(componentName), 'Expected MutationObserver to register the late template');
             } finally {
                 template.remove();
+            }
+        });
+
+        await suite.testAsync("JST Runtime: autoRegisterRoot Scopes Late Template Registration", async () => {
+            const insideName = nextName('x-scoped-inside');
+            const outsideName = nextName('x-scoped-outside');
+            const root = document.createElement('section');
+            const insideTemplate = createTemplate({
+                name: insideName,
+                attributes: [{ name: 'props', value: 'msg' }],
+                body: `<span>$(msg)</span>`,
+            });
+            const outsideTemplate = createTemplate({
+                name: outsideName,
+                attributes: [{ name: 'props', value: 'msg' }],
+                body: `<span>$(msg)</span>`,
+            });
+
+            document.body.appendChild(root);
+            configure({ autoRegister: true, autoRegisterRoot: root, resolveTemplate: null });
+
+            document.body.appendChild(outsideTemplate);
+            root.appendChild(insideTemplate);
+            await flushRender();
+
+            try {
+                isEqual(false, !!customElements.get(outsideName), 'Expected templates outside autoRegisterRoot to be ignored');
+                isEqual(true, !!customElements.get(insideName), 'Expected templates inside autoRegisterRoot to register');
+            } finally {
+                outsideTemplate.remove();
+                root.remove();
+                configure({ autoRegister: true, autoRegisterRoot: null, resolveTemplate: null });
             }
         });
 
@@ -214,6 +265,47 @@
                 configure({ resolveTemplate: null });
                 element.remove();
                 document.querySelector(`[data-jst-resolved-from="${url}"]`)?.remove();
+            }
+        });
+
+        await suite.testAsync("JST Runtime: autoRegister False Blocks Scripts But Allows Trusted Resolver", async () => {
+            const blockedName = nextName('x-blocked-late');
+            const resolvedName = nextName('x-resolved-locked');
+            const blockedTemplate = createTemplate({
+                name: blockedName,
+                attributes: [{ name: 'props', value: 'msg' }],
+                body: `<p class="blocked">$(msg)</p>`,
+            });
+            const fragment = `<script type="jst" name="${resolvedName}" props="msg"><p class="resolved">$(msg)</p><\/script>`;
+            const url = `data:text/html;charset=utf-8,${encodeURIComponent(fragment)}`;
+
+            configure({
+                autoRegister: false,
+                autoRegisterRoot: null,
+                resolveTemplate(name) {
+                    return name === resolvedName ? url : null;
+                },
+            });
+
+            document.body.appendChild(blockedTemplate);
+            await flushRender();
+
+            const element = document.createElement(resolvedName);
+            element.setAttribute('msg', 'from resolver');
+            document.body.appendChild(element);
+
+            for (let i = 0; i < 20 && !element.querySelector('.resolved'); i++) {
+                await flushRender();
+            }
+
+            try {
+                isEqual(false, !!customElements.get(blockedName), 'Expected autoRegister:false to ignore inserted script templates');
+                isEqual('from resolver', element.querySelector('.resolved')?.textContent, 'Expected whitelisted resolver to still fetch and register the missing component');
+            } finally {
+                blockedTemplate.remove();
+                element.remove();
+                document.querySelector(`[data-jst-resolved-from="${url}"]`)?.remove();
+                configure({ autoRegister: true, autoRegisterRoot: null, resolveTemplate: null });
             }
         });
 

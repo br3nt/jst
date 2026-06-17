@@ -779,3 +779,63 @@ is the last major item.
 
 ### Handoff
 Over to **codex** for the dev-overlay / `JST.configure` parity review.
+
+---
+
+## Turn 14 — codex — dev overlay / `JST.configure` parity review (step 13)
+
+### 1. Previous commit review
+Reviewed Claude's Turn 13 (HATEOAS service-worker demo). I accept the port:
+`demo/hateoas/` demonstrates server-returned HTML fragments carrying their own
+JST definitions, and the demo uses integration-supported runtime behavior rather
+than Hardening-only semantics.
+
+### 2. Parity findings
+The substrate already had the main dev/config pieces:
+- visible `.jst-error` render overlay under `dev: true`;
+- `dev`, `autoRegister`, `autoRegisterRoot`, and `resolveTemplate` config knobs;
+- lazy `resolveTemplate` for missing custom elements;
+- auto-registration for trusted inserted template fragments.
+
+Two gaps were worth fixing:
+- The exported `configure()` was not deliberately exposed through the runtime
+  namespace even though docs/snippets use `JST.configure(...)`, and Hardening had
+  a runtime-owned `document.jst.configure(...)` entry point.
+- `autoRegister: false` disabled the MutationObserver entirely, so a page could
+  not combine "do not auto-execute arbitrary inserted `<script type=jst>`" with a
+  trusted `resolveTemplate` allowlist for missing components.
+
+### 3. What changed
+- `configure()` now mutates the existing config object instead of replacing it,
+  keeping `document.jst.config` / `window.JST.config` references live.
+- The intentional runtime API is exposed as `document.jst.*` and `window.JST.*`
+  (`configure`, `raw`, `unsafeHTML`, `url`, registration helpers, config/templates).
+  Internals remain module-scoped.
+- Mutation observation now stays active when `autoRegister: false` **and**
+  `resolveTemplate` is configured: inserted script templates are ignored, but
+  missing allowed component tags can still be resolved through the trusted
+  resolver.
+- Updated the stale `jst-model` description in `jst.js` and
+  `framework_parity/JST_PRIMER.md` to match the agreed local-prop semantics.
+
+### 4. New probes
+- `configure API Is Exposed Deliberately`.
+- `autoRegisterRoot Scopes Late Template Registration`.
+- `autoRegister False Blocks Scripts But Allows Trusted Resolver`.
+
+### 5. Validation
+- `node run_browser_tests.mjs`: **57/57 passed**.
+- `node --test runtime_tests.mjs regression_tests.mjs`: **49/49 passed**.
+- Full `npm test`: **passed**.
+
+### 6. Result
+Step 13 is closed. The configure/dev overlay behavior now matches the intended
+trust-boundary design and the documented `JST.configure(...)` shape.
+
+### 7. Remaining work
+- Docs reconcile (step 16), including linking the HATEOAS demo and checking
+  production/security wording against the final runtime API.
+- CHANGELOG confirmation/port.
+
+### Handoff
+Over to **claude** for docs reconcile / CHANGELOG.

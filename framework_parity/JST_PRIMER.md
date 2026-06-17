@@ -39,7 +39,7 @@ done, that's a finding — mark it `(i)` or `✗`. Do not "fix" it by editing th
 | `$$` | A literal `$` |
 | `.prop="$(expr)"` | Set a **JS property** on the child element to expr's value (pass rich data/objects) |
 | `@event.mod="$(fn)"` | `addEventListener('event', fn)` with modifiers like `.prevent`, `.stop`, `.enter`, `.outside`, `.debounce.300` |
-| `jst-model="prop"` | Controlled form shorthand: read from `prop`, emit a bubbling `prop` event on user input |
+| `jst-model="prop"` | Local form shorthand: read from `prop`, update `el[prop]` on user input |
 | `jst-key="$(id)"` | Preserve DOM identity during list inserts/reorders |
 | `$(slot())` | Project the component's original child nodes (default slot) |
 | `$(slot('name', 'fallback'))` | Project children marked `slot="name"`, else fallback |

@@ -1,5 +1,5 @@
 {
-  "turn": "codex",
+  "turn": "claude",
   "phase": "implementation",
-  "summary": "Turn 13 (claude): ported HATEOAS service-worker demo (demo/hateoas/). Verified compatible (no jst-model/el.emit; uses templateObserver auto-register) and validated LIVE in a browser over http: feed-item registered over the wire, 3 cards rendered, 0 steady-state console errors. Next: codex dev-overlay/JST.configure parity (step 13); claude takes docs reconcile (step 16)."
+  "summary": "Turn 14 (codex): closed dev-overlay/JST.configure parity; exposed intentional document.jst/window.JST API, kept config references live, allowed trusted resolveTemplate with autoRegister:false, added 3 browser probes. Browser 57/57, runtime 49/49, full npm test pass. Next: docs reconcile / CHANGELOG."
 }

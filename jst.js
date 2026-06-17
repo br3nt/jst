@@ -21,7 +21,7 @@ import { compileTemplateRenderingFunction } from './compiler.js'
  *   $(slot('name', 'fb'))   project nodes marked slot="name", with a fallback
  *   .prop="$(expr)"         assign expr as a JS property on the element
  *   @event.mod="$(fn)"      addEventListener('event', fn) with optional modifiers
- *   jst-model="prop"        shorthand for .value/checked + emitting prop changes
+ *   jst-model="prop"        local form shorthand: read prop, update el[prop]
  *   once('key', setup)      run setup once per connection, cleanup on disconnect
  *   jst-key="$(id)"         preserve keyed node identity while morphing
  */
@@ -64,13 +64,13 @@ export function url(value) {
 }
 
 export function configure(options = {}) {
-  document.jst.config = {
-    ...document.jst.config,
-    ...options,
-  }
+  const shouldRewire = Object.prototype.hasOwnProperty.call(options, 'autoRegister')
+    || Object.prototype.hasOwnProperty.call(options, 'autoRegisterRoot')
+    || Object.prototype.hasOwnProperty.call(options, 'resolveTemplate');
 
-  if ((Object.prototype.hasOwnProperty.call(options, 'autoRegister')
-    || Object.prototype.hasOwnProperty.call(options, 'autoRegisterRoot')) && templateObserver) {
+  Object.assign(document.jst.config, options);
+
+  if (shouldRewire && templateObserver) {
     templateObserver.disconnect();
     templateObserver = null;
   }
@@ -1089,14 +1089,17 @@ export function initializeTemplates() {
  */
 function observeNewTemplates() {
   if (templateObserver || typeof MutationObserver === 'undefined') return;
-  if (document.jst.config.autoRegister === false) return;
+  if (document.jst.config.autoRegister === false
+    && typeof document.jst.config.resolveTemplate !== 'function') return;
 
   templateObserver = new MutationObserver(mutations => {
     mutations.forEach(mutation => {
       mutation.addedNodes.forEach(node => {
         if (node.nodeType !== Node.ELEMENT_NODE) return;
-        if (node.matches?.('script[type="jst"]')) registerCustomElementFromTemplate(node);
-        node.querySelectorAll?.('script[type="jst"]').forEach(registerCustomElementFromTemplate);
+        if (document.jst.config.autoRegister !== false) {
+          if (node.matches?.('script[type="jst"]')) registerCustomElementFromTemplate(node);
+          node.querySelectorAll?.('script[type="jst"]').forEach(registerCustomElementFromTemplate);
+        }
         scanForMissingTemplates(node);
       });
     });
@@ -1110,4 +1113,28 @@ export function resetJstForTests() {
   document.jst?.templates?.clear();
 }
 
+function publishJstApi() {
+  const api = {
+    configure,
+    raw,
+    unsafeHTML,
+    url,
+    registerCustomElementFromTemplate,
+    registerPrecompiledTemplate,
+    initializeTemplates,
+  };
+
+  Object.assign(document.jst, api);
+
+  if (typeof window !== 'undefined') {
+    window.JST = {
+      ...window.JST,
+      ...api,
+      config: document.jst.config,
+      templates: document.jst.templates,
+    };
+  }
+}
+
+publishJstApi();
 initializeTemplates();
