@@ -87,6 +87,13 @@ rendered output or client-side slot projection, not both at once.
 - Tree-sitter grammar: planned.
 - Formatter: planned. No official formatter for JST templates yet.
 
+## Direct file-open mode (planned)
+
+The current runtime is an ES module build, and browsers block external module
+imports from many direct `file://` pages. A classic/global build such as
+`jst.global.js` is planned so copied examples, local prototypes, and
+LLM-generated single HTML files can run directly from disk.
+
 ## Summary
 
 JST's core (custom elements, morphing, keyed reconciliation, CSS transitions,

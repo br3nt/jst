@@ -121,6 +121,7 @@ allTemplates.forEach((template, index) => {
     '__bind',
     'url',
     'once',
+    'trustedHTML',
   ];
 
   lines.push(`function ${fn}(${args.join(', ')}) {`);

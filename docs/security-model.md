@@ -8,8 +8,7 @@ in the root [SECURITY.md](../SECURITY.md); read that too.
 JST treats three things as different trust levels:
 
 1. Data interpolated with `$(expr)` is escaped. Safe to render untrusted values.
-2. `raw()` / `unsafeHTML()` is trusted HTML you vouch for. Never pass untrusted
-   input.
+2. `trustedHTML()` is trusted HTML you vouch for. Never pass untrusted input.
 3. Fetched JST template fragments are executable application code. Only load
    same-origin, trusted fragments.
 
@@ -53,12 +52,16 @@ escape for those contexts. Use JST's `@event` bindings (which attach real
 listeners, no string-to-code) and bind discrete style properties rather than
 splicing untrusted strings into CSS.
 
-## `raw()` / `unsafeHTML()` is trusted HTML
+## `trustedHTML()` is trusted HTML
 
-`raw(value)` (aliased as `unsafeHTML(value)`) inserts its argument as HTML with
-no escaping. It exists for HTML you produce or sanitise yourself. Passing
-untrusted input to `raw()` is an XSS bug. If you must render user HTML, sanitise
-it first with a real sanitiser, then `raw()` the result.
+`trustedHTML(value)` inserts its argument as HTML with no escaping. It exists for
+HTML you produce or sanitise yourself. Passing untrusted input to
+`trustedHTML()` is an XSS bug. If you must render user HTML, sanitise it first
+with a real sanitiser, then pass the sanitized result to `trustedHTML()`.
+
+`raw(value)` and `unsafeHTML(value)` remain compatibility aliases. Other
+frameworks often use those names; JST documents `trustedHTML()` first because it
+states the contract more clearly.
 
 ## Fetched templates are application code
 

@@ -38,7 +38,7 @@ be interactive once it lands in the browser. A fetched fragment can include both
 3. **Hypertext as the API** - responses can be HTML carrying their own UI and next actions, not JSON that must be reshaped into client models.
 4. **Props down, events up** - components are controlled renderers; state lives in the page, parent, or server.
 5. **No store, no proxies, no hidden graph** - use plain JavaScript objects, properties, and events.
-6. **Safe interpolation by default** - `$(expr)` escapes HTML; `url()` guards URL attributes; `raw()` / `unsafeHTML()` are explicit trusted-HTML escapes.
+6. **Safe interpolation by default** - `$(expr)` escapes HTML; `url()` guards URL attributes; `trustedHTML()` is the explicit trusted-HTML escape.
 7. **Fail loud** - invalid prop declarations, malformed bindings, and render errors should be visible during development.
 
 ## Component API
@@ -151,7 +151,7 @@ python3 -m http.server 8000
 | `framework_parity/` | HTMX/Alpine/Vue/React examples rebuilt in JST |
 | `tooling/vscode-jst/` | VS Code syntax highlighting, diagnostics, and language server |
 | `agentic_feed/` | a HATEOAS-feed prototype |
-| `docs/` | decision guide and production notes |
+| `docs/` | practical authoring guide, decision guide, production notes |
 | `run_tests.html` / `runtime_tests.mjs` | test suites |
 
 ## Tests

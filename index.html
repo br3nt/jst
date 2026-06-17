@@ -44,6 +44,11 @@
   .demo .panel h3 { margin:.1rem 0 .5rem; font-size:.78rem; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); }
   pre.code { margin:0; background:#1e2030; color:#d7d9e6; padding:.8rem; border-radius:3px; overflow:auto; font-size:.82rem; line-height:1.5; }
   pre.code .k { color:#c792ea; } pre.code .s { color:#c3e88d; } pre.code .t { color:#89ddff; } pre.code .c { color:#7a82a8; }
+  pre.code .j { color:#ffcb6b; } pre.code .e { color:#f78c6c; } pre.code .p { color:#82aaff; } pre.code .x { color:#f07178; }
+  .ann { border-bottom:1px dotted currentColor; border-radius:2px; cursor:help; }
+  .ann:hover, .ann:focus { outline:0; background:rgba(255,255,255,.12); }
+  .snippet-detail { margin-top:.45rem; border:1px solid var(--line); background:#fff; border-radius:3px; padding:.55rem .65rem; min-height:3.8rem; font-size:.86rem; color:var(--muted); }
+  .snippet-detail strong { display:block; color:var(--accent); margin-bottom:.12rem; }
   .demo-btn { font:inherit; font-size:1rem; padding:.45rem 1rem; border:none; border-radius:3px; background:var(--accent); color:#fff; cursor:pointer; }
   .demo-btn:hover { background:#35459c; }
   .demo-note { font-size:.84rem; color:var(--muted); margin-top:.6rem; }
@@ -137,15 +142,16 @@
         <jst-demo-counter count="0"></jst-demo-counter>
         <p class="demo-note">It's a real custom element: open DevTools and it's <code>&lt;jst-demo-counter&gt;</code>; type <code>document.querySelector('jst-demo-counter').count = 9</code> in the console and watch it re-render. Local state via element properties, no framework state object, no hooks.</p>
       </div>
-      <div class="panel">
+      <div class="panel code-example">
         <h3>Source</h3>
-<pre class="code"><span class="t">&lt;script</span> <span class="k">type</span>=<span class="s">"jst"</span> <span class="k">name</span>=<span class="s">"jst-demo-counter"</span> <span class="k">props</span>=<span class="s">"count"</span><span class="t">&gt;</span>
-  <span class="t">&lt;button</span> <span class="k">@click</span>=<span class="s">"$(() =&gt; el.count = (el.count || 0) + 1)"</span><span class="t">&gt;</span>
-    Clicked $(count) times
+<pre class="code"><span class="t">&lt;script</span> <span class="k ann" tabindex="0" data-label="type=&quot;jst&quot;" data-detail="This marks the block as a JST template. The runtime compiles it into a real custom element.">type</span>=<span class="s">"jst"</span> <span class="k ann" tabindex="0" data-label="Component name" data-detail="The name becomes the custom element tag. Custom element names must contain a hyphen.">name</span>=<span class="s">"jst-demo-counter"</span> <span class="k ann" tabindex="0" data-label="Props" data-detail="props declares the template locals and host properties. Here count is available as count and el.count.">props</span>=<span class="s">"count"</span><span class="t">&gt;</span>
+  <span class="t">&lt;button</span> <span class="e ann" tabindex="0" data-label="@click" data-detail="@event attaches a real addEventListener after render. This handler updates the host property.">@click</span>=<span class="s">"$(() =&gt; el.count = (el.count || 0) + 1)"</span><span class="t">&gt;</span>
+    Clicked <span class="j ann" tabindex="0" data-label="$(count)" data-detail="$(expr) evaluates JavaScript and HTML-escapes the result before insertion.">$(count)</span> times
   <span class="t">&lt;/button&gt;</span>
 <span class="t">&lt;/script&gt;</span>
 
 <span class="t">&lt;jst-demo-counter</span> count=<span class="s">"0"</span><span class="t">&gt;&lt;/jst-demo-counter&gt;</span></pre>
+        <div class="snippet-detail" aria-live="polite"><strong>Hover over the code</strong><span>Hover over parts of the code snippet to get a detailed explanation.</span></div>
       </div>
     </div>
   </div>
@@ -227,7 +233,7 @@
       <li><b>No backend required.</b> A JST app is just static files; the same components run on the client, stream down from a server, or ship as a folder of files. No JSON contract, no parallel client app.</li>
       <li><b>It's just Web Components.</b> Every <code>&lt;jst-*&gt;</code> is a real custom element via <code>customElements.define</code>. Data in as <em>properties</em>, actions out as bubbling <em>CustomEvents</em>, DOM patched by morphing — no virtual DOM, no signals, no shadow-DOM lock-in.</li>
       <li><b>Props down, events up.</b> Components are dumb renderers; state lives in the page or a parent, recursively.</li>
-      <li><b>Safe by default.</b> Interpolation is HTML-escaped unless you opt out with <code>raw()</code>.</li>
+      <li><b>Safe by default.</b> Interpolation is HTML-escaped unless you opt out with <code>trustedHTML()</code>.</li>
     </ul>
   </div>
 </section>
@@ -282,10 +288,13 @@
       <div class="tier"><h4>Diagnostics</h4><p>Runs the <em>real</em> JST compiler over each template, so an editor squiggle is exactly what the runtime would reject. Embedded-JS syntax errors are caught by V8 itself.</p></div>
       <div class="tier"><h4>Language server</h4><p>Cross-file go-to-definition (a <code>&lt;my-card&gt;</code> tag → its <code>&lt;script type="jst" name="my-card"&gt;</code>), hover with a component's props, completion, and document symbols.</p></div>
     </div>
+    <div class="code-example">
 <pre class="code"><span class="c">&lt;!-- the grammar highlights these as embedded JS --&gt;</span>
 <span class="t">&lt;script</span> <span class="k">type</span>=<span class="s">"jst"</span> <span class="k">name</span>=<span class="s">"todo-item"</span> <span class="k">props</span>=<span class="s">"item"</span><span class="t">&gt;</span>
-  <span class="t">&lt;li</span> <span class="k">@click</span>=<span class="s">"$(() =&gt; el.emit('toggle', item))"</span><span class="t">&gt;</span>$(item.title)<span class="t">&lt;/li&gt;</span>
+  <span class="t">&lt;li</span> <span class="e ann" tabindex="0" data-label="@click" data-detail="The VS Code extension highlights JST event bindings and validates them using the real compiler.">@click</span>=<span class="s">"$(() =&gt; el.emit('toggle', item))"</span><span class="t">&gt;</span><span class="j ann" tabindex="0" data-label="$(item.title)" data-detail="Embedded JavaScript is delegated to the editor's JavaScript grammar.">$(item.title)</span><span class="t">&lt;/li&gt;</span>
 <span class="t">&lt;/script&gt;</span></pre>
+      <div class="snippet-detail" aria-live="polite"><strong>Hover over the code</strong><span>Hover over parts of the code snippet to get a detailed explanation.</span></div>
+    </div>
     <div class="links">
       <a href="tooling/vscode-jst/README.md">Tooling README</a> ·
       <a href="https://github.com/br3nt/jst">GitHub repo ↗</a> ·
@@ -323,6 +332,28 @@
   document.querySelectorAll('.embed').forEach(embed => {
     embed.querySelector('.embed-shield')?.addEventListener('click', () => embed.classList.add('active'));
     embed.addEventListener('mouseleave', () => embed.classList.remove('active'));
+  });
+  document.querySelectorAll('.code-example').forEach(example => {
+    const detail = example.querySelector('.snippet-detail');
+    if (!detail) return;
+    const title = detail.querySelector('strong');
+    const body = detail.querySelector('span');
+    const defaultTitle = title.textContent;
+    const defaultBody = body.textContent;
+    const show = node => {
+      title.textContent = node.dataset.label || defaultTitle;
+      body.textContent = node.dataset.detail || defaultBody;
+    };
+    const reset = () => {
+      title.textContent = defaultTitle;
+      body.textContent = defaultBody;
+    };
+    example.querySelectorAll('.ann').forEach(node => {
+      node.addEventListener('mouseenter', () => show(node));
+      node.addEventListener('focus', () => show(node));
+      node.addEventListener('blur', reset);
+    });
+    example.addEventListener('mouseleave', reset);
   });
   window.__exampleReady = true;
 </script>

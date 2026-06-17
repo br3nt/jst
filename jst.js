@@ -14,8 +14,9 @@ import { compileTemplateRenderingFunction } from './compiler.js'
  *
  * Inside templates:
  *   $(expr)                 escaped interpolation
- *   $(raw(expr))            unescaped interpolation (opt-in trusted HTML)
- *   $(unsafeHTML(expr))     alias for raw(expr)
+ *   $(trustedHTML(expr))    unescaped interpolation (opt-in trusted HTML)
+ *   $(raw(expr))            compatibility alias for trustedHTML(expr)
+ *   $(unsafeHTML(expr))     compatibility alias for trustedHTML(expr)
  *   $(url(expr))            URL helper for href/src values
  *   $(slot())               project the component's original child nodes
  *   $(slot('name', 'fb'))   project nodes marked slot="name", with a fallback
@@ -46,11 +47,12 @@ class RawHtml {
   constructor(html) { this.html = html }
 }
 
-export function raw(value) {
+export function trustedHTML(value) {
   if (value instanceof RawHtml) return value
   return new RawHtml(value == null ? '' : String(value))
 }
 
+export const raw = trustedHTML
 export const unsafeHTML = raw
 
 export function url(value) {
@@ -695,6 +697,7 @@ export function registerCustomElementFromTemplate(templateElement) {
       '__bind',
       'url',
       'once',
+      'trustedHTML',
       renderFunction.functionBody,
     ),
   });
@@ -831,6 +834,7 @@ function defineCustomElementFromRender({
           (kind, name, value) => ` jst-bound jst-bind-${bindings.push({ kind, name, value }) - 1}=""`,
           url,
           (key, setupFn) => this.#runOnce(key, setupFn),
+          trustedHTML,
         );
 
         this.#slotObserver?.disconnect();
@@ -1116,6 +1120,7 @@ export function resetJstForTests() {
 function publishJstApi() {
   const api = {
     configure,
+    trustedHTML,
     raw,
     unsafeHTML,
     url,

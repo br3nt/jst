@@ -519,6 +519,28 @@ test('raw() opts out of escaping', async () => {
   }
 });
 
+test('trustedHTML() opts out of escaping', async () => {
+  const runtime = await loadRuntime([
+    {
+      name: 'x-trusted-html',
+      attributes: [{ name: 'props', value: 'html' }],
+      innerHTML: '<div>$(trustedHTML(html))</div>',
+    },
+  ]);
+
+  try {
+    const TrustedClass = runtime.customElements.get('x-trusted-html');
+    const element = new TrustedClass();
+    element.html = '<b>bold</b>';
+    runtime.connect(element);
+    await flushRenders();
+
+    assert.match(element.innerHTML, /<b>bold<\/b>/);
+  } finally {
+    runtime.cleanup();
+  }
+});
+
 test('render errors are logged with component context', async () => {
   const runtime = await loadRuntime([
     {

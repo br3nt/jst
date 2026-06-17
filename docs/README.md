@@ -16,7 +16,7 @@ JavaScript Templates - no-build reactive web components in plain HTML.
 
 ## Production
 - [Production](./production.md) - runtime vs precompiled mode, configuration, the strict-CSP path.
-- [Security model](./security-model.md) - escaping, `raw()`/`unsafeHTML()`, `url()`, trust boundaries, `resolveTemplate`.
+- [Security model](./security-model.md) - escaping, `trustedHTML()`, `url()`, trust boundaries, `resolveTemplate`.
 - [Known gaps & roadmap](./known-gaps.md) - an honest list of what is shipped and what is planned.
 
 ## See it run

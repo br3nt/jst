@@ -32,7 +32,8 @@ done, that's a finding - mark it `(i)` or `x`. Do not "fix" it by editing the fr
 | Syntax | Meaning |
 |---|---|
 | `$(expr)` | Interpolate, **HTML-escaped** by default |
-| `$(raw(expr))` | Interpolate without escaping (opt-in; only for trusted HTML) |
+| `$(trustedHTML(expr))` | Interpolate without escaping (opt-in; only for trusted HTML) |
+| `$(raw(expr))` / `$(unsafeHTML(expr))` | Compatibility aliases for trusted HTML |
 | `$identifier` | Shorthand interpolation of a single identifier |
 | `$ statement` | A line of JS (to end of line). Use for `if`, `for`, `const`, loops |
 | `${ ... }` | A block of JS |
@@ -47,7 +48,7 @@ done, that's a finding - mark it `(i)` or `x`. Do not "fix" it by editing the fr
 
 Inside a template you can use the props by name plus these globals:
 - `el` - the component element instance. `el.emit(name, detail)`, `el.querySelector(...)`, `el.count = ...`.
-- `raw(value)` / `unsafeHTML(value)` - wrap a trusted string so it is NOT escaped.
+- `trustedHTML(value)` - wrap a trusted string so it is NOT escaped.
 - `slot(name?, fallback?)` - slot projection (see above).
 - `onDisconnect(fn)` - cleanup timers, observers, or external listeners.
 

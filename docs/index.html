@@ -10,11 +10,20 @@
     --ink: #1b2030;
     --muted: #667085;
     --accent: #3f51b5;
+    --accent-2: #5c6bc0;
     --accent-soft: #eef0fb;
     --line: #e3e6ef;
     --paper: #fff;
     --bg: #f7f8fc;
     --code: #1e2030;
+    --tag: #89ddff;
+    --attr: #c792ea;
+    --string: #c3e88d;
+    --jst: #ffcb6b;
+    --event: #f78c6c;
+    --prop: #82aaff;
+    --js: #f07178;
+    --comment: #7a82a8;
   }
   * { box-sizing: border-box; }
   html { scroll-behavior: smooth; }
@@ -32,12 +41,12 @@
     border-bottom: 1px solid var(--line);
   }
   .wrap {
-    max-width: 1120px;
+    max-width: 1180px;
     margin: 0 auto;
     padding: 0 1.25rem;
   }
   .hero {
-    padding: 2rem 0 1.4rem;
+    padding: 2rem 0 1.35rem;
   }
   .hero h1 {
     margin: 0;
@@ -46,7 +55,7 @@
     letter-spacing: 0;
   }
   .hero p {
-    max-width: 74ch;
+    max-width: 78ch;
     margin: .7rem 0 0;
     color: var(--muted);
     font-size: 1.05rem;
@@ -73,49 +82,118 @@
   }
   .layout {
     display: grid;
-    grid-template-columns: 230px minmax(0, 1fr);
-    gap: 1.4rem;
+    grid-template-columns: 260px minmax(0, 1fr);
+    gap: 1.35rem;
     padding: 1.25rem 0 2.5rem;
+    timeline-scope:
+      --short-version,
+      --install,
+      --first-component,
+      --template-syntax,
+      --data-flow,
+      --state-and-forms,
+      --slots,
+      --hateoas-fragments,
+      --server-side-rendering,
+      --security-and-production,
+      --browser-support,
+      --known-gaps,
+      --tooling;
   }
-  nav {
+  .toc {
     position: sticky;
     top: 1rem;
     align-self: start;
+    max-height: calc(100vh - 2rem);
+    overflow: auto;
     border: 1px solid var(--line);
     background: var(--paper);
     border-radius: 6px;
     padding: .75rem;
   }
-  nav h2 {
+  .toc h2 {
     margin: 0 0 .55rem;
     font-size: .78rem;
     text-transform: uppercase;
     color: var(--muted);
     letter-spacing: .06em;
   }
-  nav a {
+  .toc a {
     display: block;
     padding: .28rem .35rem;
+    border-left: 3px solid transparent;
     border-radius: 3px;
     color: var(--ink);
     text-decoration: none;
-    font-size: .92rem;
+    font-size: .91rem;
   }
-  nav a:hover,
-  nav a:focus {
+  .toc a.sub {
+    margin-left: .65rem;
+    font-size: .82rem;
+    color: var(--muted);
+  }
+  .toc a:hover,
+  .toc a:focus,
+  body:has(#short-version:target) .toc a[href="#short-version"],
+  body:has(#install:target) .toc a[href="#install"],
+  body:has(#first-component:target) .toc a[href="#first-component"],
+  body:has(#template-syntax:target) .toc a[href="#template-syntax"],
+  body:has(#data-flow:target) .toc a[href="#data-flow"],
+  body:has(#state-and-forms:target) .toc a[href="#state-and-forms"],
+  body:has(#slots:target) .toc a[href="#slots"],
+  body:has(#hateoas-fragments:target) .toc a[href="#hateoas-fragments"],
+  body:has(#server-side-rendering:target) .toc a[href="#server-side-rendering"],
+  body:has(#security-and-production:target) .toc a[href="#security-and-production"],
+  body:has(#browser-support:target) .toc a[href="#browser-support"],
+  body:has(#known-gaps:target) .toc a[href="#known-gaps"],
+  body:has(#tooling:target) .toc a[href="#tooling"] {
     background: var(--accent-soft);
     color: var(--accent);
+    border-left-color: var(--accent);
   }
   main {
     display: grid;
-    gap: .9rem;
+    gap: .95rem;
   }
   section {
     background: var(--paper);
     border: 1px solid var(--line);
     border-radius: 6px;
-    padding: 1rem;
+    padding: 1.05rem;
     scroll-margin-top: 1rem;
+  }
+  #short-version { view-timeline-name: --short-version; }
+  #install { view-timeline-name: --install; }
+  #first-component { view-timeline-name: --first-component; }
+  #template-syntax { view-timeline-name: --template-syntax; }
+  #data-flow { view-timeline-name: --data-flow; }
+  #state-and-forms { view-timeline-name: --state-and-forms; }
+  #slots { view-timeline-name: --slots; }
+  #hateoas-fragments { view-timeline-name: --hateoas-fragments; }
+  #server-side-rendering { view-timeline-name: --server-side-rendering; }
+  #security-and-production { view-timeline-name: --security-and-production; }
+  #browser-support { view-timeline-name: --browser-support; }
+  #known-gaps { view-timeline-name: --known-gaps; }
+  #tooling { view-timeline-name: --tooling; }
+  @supports (animation-timeline: view()) {
+    section { view-timeline-axis: block; }
+    .toc a[href="#short-version"] { animation: toc-active both linear; animation-timeline: --short-version; animation-range: entry 10% exit 70%; }
+    .toc a[href="#install"] { animation: toc-active both linear; animation-timeline: --install; animation-range: entry 10% exit 70%; }
+    .toc a[href="#first-component"] { animation: toc-active both linear; animation-timeline: --first-component; animation-range: entry 10% exit 70%; }
+    .toc a[href="#template-syntax"] { animation: toc-active both linear; animation-timeline: --template-syntax; animation-range: entry 10% exit 70%; }
+    .toc a[href="#data-flow"] { animation: toc-active both linear; animation-timeline: --data-flow; animation-range: entry 10% exit 70%; }
+    .toc a[href="#state-and-forms"] { animation: toc-active both linear; animation-timeline: --state-and-forms; animation-range: entry 10% exit 70%; }
+    .toc a[href="#slots"] { animation: toc-active both linear; animation-timeline: --slots; animation-range: entry 10% exit 70%; }
+    .toc a[href="#hateoas-fragments"] { animation: toc-active both linear; animation-timeline: --hateoas-fragments; animation-range: entry 10% exit 70%; }
+    .toc a[href="#server-side-rendering"] { animation: toc-active both linear; animation-timeline: --server-side-rendering; animation-range: entry 10% exit 70%; }
+    .toc a[href="#security-and-production"] { animation: toc-active both linear; animation-timeline: --security-and-production; animation-range: entry 10% exit 70%; }
+    .toc a[href="#browser-support"] { animation: toc-active both linear; animation-timeline: --browser-support; animation-range: entry 10% exit 70%; }
+    .toc a[href="#known-gaps"] { animation: toc-active both linear; animation-timeline: --known-gaps; animation-range: entry 10% exit 70%; }
+    .toc a[href="#tooling"] { animation: toc-active both linear; animation-timeline: --tooling; animation-range: entry 10% exit 70%; }
+    @keyframes toc-active {
+      0%, 100% { background: transparent; color: var(--ink); border-left-color: transparent; font-weight: 400; }
+      22%, 78% { background: var(--accent-soft); color: var(--accent); border-left-color: var(--accent); font-weight: 700; }
+    }
   }
   section:target {
     border-color: var(--accent);
@@ -123,7 +201,7 @@
   }
   h2 {
     margin: 0 0 .45rem;
-    font-size: 1.25rem;
+    font-size: 1.28rem;
   }
   h3 {
     margin: 1rem 0 .35rem;
@@ -144,21 +222,60 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: .75rem;
   }
+  .grid.three {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
   .mini {
     border: 1px solid var(--line);
     border-radius: 5px;
     padding: .75rem;
+    background: #fff;
   }
   .mini h3 { margin-top: 0; }
+  .mini p:last-child { margin-bottom: 0; }
+  .code-example {
+    margin: .8rem 0;
+  }
   pre {
-    margin: .75rem 0;
-    padding: .8rem;
+    margin: 0;
+    padding: .85rem;
     overflow: auto;
     background: var(--code);
     color: #d7d9e6;
     border-radius: 5px;
     font-size: .86rem;
-    line-height: 1.45;
+    line-height: 1.5;
+  }
+  .tok-tag, .chip.tag { color: var(--tag); }
+  .tok-attr, .chip.attr { color: var(--attr); }
+  .tok-string, .chip.string { color: var(--string); }
+  .tok-jst, .chip.jst { color: var(--jst); }
+  .tok-event, .chip.event { color: var(--event); }
+  .tok-prop, .chip.prop { color: var(--prop); }
+  .tok-js, .chip.js { color: var(--js); }
+  .tok-comment, .chip.comment { color: var(--comment); }
+  .ann {
+    border-bottom: 1px dotted currentColor;
+    border-radius: 2px;
+    cursor: help;
+  }
+  .ann:hover,
+  .ann:focus {
+    outline: 0;
+    background: rgba(255, 255, 255, .12);
+  }
+  .snippet-detail {
+    margin-top: .45rem;
+    border: 1px solid var(--line);
+    background: #fbfcff;
+    border-radius: 5px;
+    padding: .65rem .75rem;
+    min-height: 4.25rem;
+  }
+  .snippet-detail strong {
+    display: block;
+    color: var(--accent);
+    margin-bottom: .15rem;
   }
   table {
     width: 100%;
@@ -173,15 +290,23 @@
     vertical-align: top;
   }
   th { color: var(--muted); }
+  .chip {
+    display: inline-block;
+    min-width: 8.5rem;
+    border-radius: 4px;
+    background: var(--code);
+    padding: .08rem .35rem;
+  }
   footer {
     color: var(--muted);
     font-size: .9rem;
     padding: 0 0 2rem;
   }
-  @media (max-width: 760px) {
+  @media (max-width: 860px) {
     .layout { grid-template-columns: 1fr; }
-    nav { position: static; }
-    .grid { grid-template-columns: 1fr; }
+    .toc { position: static; max-height: none; }
+    .grid,
+    .grid.three { grid-template-columns: 1fr; }
   }
 </style>
 </head>
@@ -189,7 +314,7 @@
 <header>
   <div class="wrap hero">
     <h1>JST docs</h1>
-    <p>JST is for HTML-first apps where the server and browser can share one UI contract: HTML. The server can return pages or fragments; the browser can run those same components with client-side interactivity, no JSON view-model layer, no virtual DOM, and no build step.</p>
+    <p>JST is for HTML-first apps where the server and browser can share one UI contract: HTML. A server can return pages or fragments; the browser can run those same components with client-side interactivity, no JSON view-model layer, no virtual DOM, and no build step.</p>
     <div class="actions">
       <a class="btn primary" href="../index.html">Landing page</a>
       <a class="btn" href="../demo/hateoas/">HATEOAS demo</a>
@@ -200,255 +325,360 @@
 </header>
 
 <div class="wrap layout">
-  <nav aria-label="Documentation sections">
+  <nav class="toc" aria-label="Documentation sections">
     <h2>Contents</h2>
-    <a href="#pitch">Pitch</a>
+    <a href="#short-version">Short Version</a>
+    <a class="sub" href="#use-jst-when">Use JST When</a>
+    <a class="sub" href="#avoid-jst-when">Avoid JST When</a>
     <a href="#install">Install</a>
-    <a href="#quick-start">Quick start</a>
-    <a href="#syntax">Syntax</a>
-    <a href="#data-flow">Data flow</a>
-    <a href="#file-mode">File mode</a>
-    <a href="#components">Components</a>
-    <a href="#hateoas">HATEOAS</a>
-    <a href="#server-examples">Server examples</a>
-    <a href="#forms">Forms</a>
-    <a href="#production">Production</a>
-    <a href="#security">Security</a>
-    <a href="#gaps">Gaps</a>
-    <a href="#source-pages">Source pages</a>
+    <a class="sub" href="#file-mode">file:// Mode</a>
+    <a class="sub" href="#dev-mode">Dev Mode</a>
+    <a class="sub" href="#prod-mode">Prod Mode</a>
+    <a href="#first-component">Write Your First Component</a>
+    <a href="#template-syntax">Template Syntax</a>
+    <a href="#data-flow">Data Flow</a>
+    <a href="#state-and-forms">State, Forms, Lists</a>
+    <a href="#slots">Slots</a>
+    <a href="#hateoas-fragments">HATEOAS Fragments</a>
+    <a href="#server-side-rendering">Server-Side Rendering</a>
+    <a href="#security-and-production">Security And Production</a>
+    <a href="#browser-support">Browser Support</a>
+    <a href="#known-gaps">Known Gaps</a>
+    <a href="#tooling">Tooling</a>
   </nav>
 
   <main>
-    <section id="pitch">
-      <h2>The short version</h2>
+    <section id="short-version">
+      <h2>Short Version</h2>
       <p>Most web apps turn database state into backend models, then DTOs, then frontend models, then components, then HTML. JST asks whether the backend and browser can both speak the final format directly.</p>
-      <p>A JST component is just HTML plus JavaScript. The browser registers it as a real custom element. A server can also emit that same component syntax in an ordinary HTML response.</p>
-      <div class="callout">
-        Use full-page RESTful navigation by default. Use fragment swaps only where they make a workflow better: inline validation, load-more feeds, modal bodies, expanding rows, or shipping a component definition the page did not know yet.
-      </div>
+      <p>A JST component is HTML plus JavaScript. The browser registers it as a real custom element. A server can emit that same component syntax in an ordinary HTML response.</p>
+      <div class="callout">Start with resourceful URLs and full-page navigation. Add fragment swaps only where they make a workflow better: inline validation, load-more feeds, modal bodies, expanding rows, or shipping a component definition the page did not know yet.</div>
+
       <div class="grid">
-        <div class="mini">
-          <h3>Good fit</h3>
-          <p>Static sites, SSR apps, HATEOAS apps, internal tools, progressively enhanced pages, and apps where state naturally belongs in the page or on the server.</p>
+        <div class="mini" id="use-jst-when">
+          <h3>Use JST When</h3>
+          <p>You want the backend and frontend to share the same UI representation: HTML. JST fits static sites, SSR apps, HATEOAS apps, internal tools, progressively enhanced pages, and apps where state naturally belongs in the page or on the server.</p>
         </div>
-        <div class="mini">
-          <h3>Poor fit</h3>
-          <p>Large client-owned SPAs with deep client routing, normalized caches, optimistic updates everywhere, and a need for a mature component ecosystem.</p>
+        <div class="mini" id="avoid-jst-when">
+          <h3>Avoid JST When</h3>
+          <p>You need a large client-owned SPA, a mature component ecosystem, fine-grained reactive state graphs, strict CSP with no build step, or TypeScript-first component authoring today.</p>
         </div>
       </div>
     </section>
 
     <section id="install">
       <h2>Install</h2>
-      <p>Runtime mode is one module script. It registers every inline JST template and watches trusted inserted fragments.</p>
-      <pre><code>&lt;script type="module" src="/jst.js"&gt;&lt;/script&gt;
+      <p>JST has three install stories. Development and production module modes ship now. Direct file-open mode is planned and important: it should become the path for a single HTML file an LLM can generate and a user can open from disk.</p>
 
-&lt;script type="jst" name="hello-name" props="name"&gt;
-  &lt;p&gt;Hello, $(name)!&lt;/p&gt;
-&lt;/script&gt;
+      <div class="grid three">
+        <div class="mini" id="file-mode">
+          <h3>file:// Mode</h3>
+          <p><strong>Coming.</strong> The goal is a classic/global build such as <code>jst.global.js</code> that works from disk with no server. That matters for copied examples, local prototypes, and LLM-generated HTML files.</p>
+        </div>
+        <div class="mini" id="dev-mode">
+          <h3>Dev Mode</h3>
+          <p><strong>Shipped.</strong> Serve over HTTP, load <code>jst.js</code> as an ES module, enable <code>dev: true</code>, and write templates inline.</p>
+        </div>
+        <div class="mini" id="prod-mode">
+          <h3>Prod Mode</h3>
+          <p><strong>Shipped.</strong> Precompile templates into a module for strict CSP and lower startup cost. Runtime behavior still goes through the normal JST renderer.</p>
+        </div>
+      </div>
 
-&lt;hello-name name="JST"&gt;&lt;/hello-name&gt;</code></pre>
-      <p>For local preview, serve the repo root:</p>
-      <pre><code>python3 -m http.server 8000
-# open http://localhost:8000/</code></pre>
+      <div class="code-example">
+        <pre><code><span class="tok-comment">&lt;!-- Dev mode: serve over http://, then load the module runtime. --&gt;</span>
+<span class="tok-tag">&lt;script</span> <span class="tok-attr ann" tabindex="0" data-label="ES module runtime" data-detail="The current runtime is an ES module. Browsers load its imports only from http:// or https://, not from a direct file:// page.">type</span>=<span class="tok-string">"module"</span> <span class="tok-attr">src</span>=<span class="tok-string">"/jst.js"</span><span class="tok-tag">&gt;&lt;/script&gt;</span>
+
+<span class="tok-tag">&lt;script</span> <span class="tok-attr">type</span>=<span class="tok-string">"module"</span><span class="tok-tag">&gt;</span>
+  <span class="tok-js">import</span> { configure } <span class="tok-js">from</span> <span class="tok-string">'/jst.js'</span>;
+  configure({ <span class="tok-attr ann" tabindex="0" data-label="dev: true" data-detail="Dev mode shows visible render/compile errors and gives better diagnostics while templates are changing.">dev</span>: true });
+<span class="tok-tag">&lt;/script&gt;</span></code></pre>
+        <div class="snippet-detail" aria-live="polite"><strong>Hover over the code</strong><span>Hover over parts of the code snippet to get a detailed explanation.</span></div>
+      </div>
+
+      <div class="code-example">
+        <pre><code><span class="tok-comment"># Production mode: precompile templates for strict CSP.</span>
+node tools/precompile.mjs components.html <span class="tok-attr ann" tabindex="0" data-label="Output module" data-detail="The generated file registers templates through registerPrecompiledTemplate, so keyed morphing, form handling, slots, transitions, and modifiers still work.">--out</span> dist/templates.js <span class="tok-attr">--runtime</span> ../jst.js
+
+<span class="tok-tag">&lt;script</span> <span class="tok-attr">type</span>=<span class="tok-string">"module"</span> <span class="tok-attr">src</span>=<span class="tok-string">"/jst.js"</span><span class="tok-tag">&gt;&lt;/script&gt;</span>
+<span class="tok-tag">&lt;script</span> <span class="tok-attr">type</span>=<span class="tok-string">"module"</span> <span class="tok-attr ann" tabindex="0" data-label="Precompiled templates" data-detail="This avoids browser-side new Function, so it is the production path for strict Content-Security-Policy apps.">src</span>=<span class="tok-string">"/dist/templates.js"</span><span class="tok-tag">&gt;&lt;/script&gt;</span></code></pre>
+        <div class="snippet-detail" aria-live="polite"><strong>Hover over the code</strong><span>Hover over parts of the code snippet to get a detailed explanation.</span></div>
+      </div>
     </section>
 
-    <section id="quick-start">
-      <h2>Write your first component</h2>
-      <p>A component is a <code>&lt;script type="jst"&gt;</code> block. The <code>name</code> becomes the custom element tag. The <code>props</code> list declares the values you can use in the template.</p>
-      <pre><code>&lt;script type="jst" name="hello-name" props="name count"&gt;
-  &lt;p&gt;Hello, &lt;strong&gt;$(name)&lt;/strong&gt;.&lt;/p&gt;
-  &lt;button @click="$(() =&gt; el.count = (el.count || 0) + 1)"&gt;
-    Clicked $(count || 0) times
-  &lt;/button&gt;
-&lt;/script&gt;
+    <section id="first-component">
+      <h2>Write Your First Component</h2>
+      <p>A component is a <code>&lt;script type="jst"&gt;</code> block. The <code>name</code> becomes the custom element tag. The <code>props</code> list declares the values available inside the template.</p>
 
-&lt;hello-name name="JST" count="0"&gt;&lt;/hello-name&gt;</code></pre>
-      <p>Inside the template, <code>name</code> and <code>count</code> are JavaScript locals. <code>el</code> is the custom element instance. Assigning <code>el.count</code> updates the prop and schedules a render.</p>
-      <p><a href="writing-jst.md">Read the full authoring guide</a>.</p>
+      <div class="code-example">
+        <pre><code><span class="tok-tag">&lt;script</span> <span class="tok-attr">type</span>=<span class="tok-string">"jst"</span> <span class="tok-attr ann" tabindex="0" data-label="Component name" data-detail="The name becomes the custom element tag. Custom element names must contain a hyphen, so hello-name is valid and hello is not.">name</span>=<span class="tok-string">"hello-name"</span> <span class="tok-attr ann" tabindex="0" data-label="Props" data-detail="Props are case-preserved JavaScript identifiers. Declaring name and count gives the template bare locals named name and count, and element properties el.name and el.count.">props</span>=<span class="tok-string">"name count"</span><span class="tok-tag">&gt;</span>
+  <span class="tok-tag">&lt;p&gt;</span>Hello, <span class="tok-tag">&lt;strong&gt;</span><span class="tok-jst ann" tabindex="0" data-label="$(name)" data-detail="$(expr) evaluates JavaScript and HTML-escapes the result before inserting it into the output.">$(name)</span><span class="tok-tag">&lt;/strong&gt;</span>.<span class="tok-tag">&lt;/p&gt;</span>
+  <span class="tok-tag">&lt;button</span> <span class="tok-event ann" tabindex="0" data-label="@click" data-detail="@event attaches a real addEventListener after render. Modifiers such as .prevent, .stop, .enter, .outside, and .debounce.300 are supported.">@click</span>=<span class="tok-string">"$(() =&gt; el.count = (el.count || 0) + 1)"</span><span class="tok-tag">&gt;</span>
+    Clicked <span class="tok-jst ann" tabindex="0" data-label="$(count || 0)" data-detail="This is plain JavaScript. There is no second expression language; use the operators and functions you already know.">$(count || 0)</span> times
+  <span class="tok-tag">&lt;/button&gt;</span>
+<span class="tok-tag">&lt;/script&gt;</span>
+
+<span class="tok-tag">&lt;hello-name</span> <span class="tok-attr">name</span>=<span class="tok-string">"JST"</span> <span class="tok-attr">count</span>=<span class="tok-string">"0"</span><span class="tok-tag">&gt;&lt;/hello-name&gt;</span></code></pre>
+        <div class="snippet-detail" aria-live="polite"><strong>Hover over the code</strong><span>Hover over parts of the code snippet to get a detailed explanation.</span></div>
+      </div>
     </section>
 
-    <section id="syntax">
-      <h2>Template syntax</h2>
+    <section id="template-syntax">
+      <h2>Template Syntax</h2>
+      <p>The colors in code examples match this table. The template language is intentionally small: HTML stays HTML, and the dynamic parts are JavaScript.</p>
       <table>
         <tr><th>Syntax</th><th>Meaning</th></tr>
-        <tr><td><code>$(expr)</code></td><td>Evaluate JavaScript and HTML-escape the result.</td></tr>
-        <tr><td><code>$identifier</code></td><td>Shorthand for a single identifier interpolation.</td></tr>
-        <tr><td><code>$ statement</code></td><td>Run a JavaScript statement line.</td></tr>
-        <tr><td><code>${ ... }</code></td><td>Run a JavaScript block.</td></tr>
-        <tr><td><code>.prop="$(expr)"</code></td><td>Set a JavaScript property on a rendered element.</td></tr>
-        <tr><td><code>@event="$(fn)"</code></td><td>Add an event listener.</td></tr>
-        <tr><td><code>jst-key="$(id)"</code></td><td>Preserve DOM identity in lists.</td></tr>
-        <tr><td><code>jst-model="prop"</code></td><td>Local form shorthand: read/write <code>el[prop]</code>.</td></tr>
-        <tr><td><code>$(slot())</code></td><td>Project the component's original children.</td></tr>
+        <tr><td><code class="chip jst">$(expr)</code></td><td>Evaluate JavaScript and HTML-escape the result.</td></tr>
+        <tr><td><code class="chip jst">$identifier</code></td><td>Shorthand for a single identifier interpolation.</td></tr>
+        <tr><td><code class="chip js">$ statement</code></td><td>Run a JavaScript statement line.</td></tr>
+        <tr><td><code class="chip js">${ ... }</code></td><td>Run a JavaScript block.</td></tr>
+        <tr><td><code class="chip prop">.prop="$(expr)"</code></td><td>Set a JavaScript property on a rendered element.</td></tr>
+        <tr><td><code class="chip event">@event="$(fn)"</code></td><td>Add an event listener.</td></tr>
+        <tr><td><code class="chip attr">jst-key="$(id)"</code></td><td>Preserve DOM identity in lists.</td></tr>
+        <tr><td><code class="chip attr">jst-model="prop"</code></td><td>Local form shorthand: read/write <code>el[prop]</code>.</td></tr>
+        <tr><td><code class="chip jst">$(slot())</code></td><td>Project the component's original children.</td></tr>
       </table>
-      <pre><code>&lt;script type="jst" name="todo-list" props="items filter"&gt;
-  $ const visible = (items || []).filter(item =&gt; {
-  $   if (filter === 'done') return item.done;
-  $   if (filter === 'active') return !item.done;
-  $   return true;
-  $ });
 
-  &lt;ul&gt;
-    $ visible.forEach(item =&gt; {
-      &lt;li jst-key="$(item.id)"&gt;$(item.text)&lt;/li&gt;
-    $ })
-  &lt;/ul&gt;
-&lt;/script&gt;</code></pre>
+      <div class="code-example">
+        <pre><code><span class="tok-tag">&lt;script</span> <span class="tok-attr">type</span>=<span class="tok-string">"jst"</span> <span class="tok-attr">name</span>=<span class="tok-string">"todo-list"</span> <span class="tok-attr">props</span>=<span class="tok-string">"items filter"</span><span class="tok-tag">&gt;</span>
+  <span class="tok-js ann" tabindex="0" data-label="$ statement" data-detail="A line starting with $ runs JavaScript to the end of the line. Consecutive $ lines can form a multi-line statement.">$ const visible = (items || []).filter(item =&gt; {</span>
+  <span class="tok-js">$   if (filter === 'done') return item.done;</span>
+  <span class="tok-js">$   if (filter === 'active') return !item.done;</span>
+  <span class="tok-js">$   return true;</span>
+  <span class="tok-js">$ });</span>
+
+  <span class="tok-tag">&lt;ul&gt;</span>
+    <span class="tok-js">$ visible.forEach(item =&gt; {</span>
+      <span class="tok-tag">&lt;li</span> <span class="tok-attr ann" tabindex="0" data-label="jst-key" data-detail="Use jst-key for lists that insert, remove, or reorder. It preserves DOM identity, focus, input state, media state, and transitions.">jst-key</span>=<span class="tok-string">"$(item.id)"</span><span class="tok-tag">&gt;</span><span class="tok-jst">$(item.text)</span><span class="tok-tag">&lt;/li&gt;</span>
+    <span class="tok-js">$ })</span>
+  <span class="tok-tag">&lt;/ul&gt;</span>
+<span class="tok-tag">&lt;/script&gt;</span></code></pre>
+        <div class="snippet-detail" aria-live="polite"><strong>Hover over the code</strong><span>Hover over parts of the code snippet to get a detailed explanation.</span></div>
+      </div>
     </section>
 
     <section id="data-flow">
-      <h2>Pass data and handle actions</h2>
-      <p>Top-level HTML can pass simple values as attributes. Rich values are assigned as element properties from page JavaScript, or passed with <code>.prop</code> inside another JST template.</p>
-      <pre><code>&lt;todo-list id="todos"&gt;&lt;/todo-list&gt;
+      <h2>Data Flow</h2>
+      <p>In raw top-level HTML, pass simple values as attributes and rich values with normal JavaScript properties. Inside a JST template, use <code>.prop</code> and <code>@event</code> bindings.</p>
+      <div class="grid">
+        <div>
+          <h3>Raw HTML + page JavaScript</h3>
+          <div class="code-example">
+            <pre><code><span class="tok-tag">&lt;todo-list</span> <span class="tok-attr">id</span>=<span class="tok-string">"todos"</span><span class="tok-tag">&gt;&lt;/todo-list&gt;</span>
 
-&lt;script&gt;
-  const list = document.getElementById('todos');
-  list.items = [{ id: 1, text: 'Write docs', done: false }];
-
-  list.addEventListener('toggle', event =&gt; {
+<span class="tok-tag">&lt;script&gt;</span>
+  <span class="tok-js">const</span> list = document.getElementById(<span class="tok-string">'todos'</span>);
+  list.<span class="tok-prop ann" tabindex="0" data-label="Property assignment" data-detail="Objects, arrays, functions, classes, and DOM nodes should be assigned as properties. They are not squeezed through attributes.">items</span> = [{ id: 1, text: <span class="tok-string">'Write docs'</span>, done: false }];
+  list.addEventListener(<span class="tok-string">'toggle'</span>, event =&gt; {
     list.items = list.items.map(item =&gt;
       item.id === event.detail.id ? { ...item, done: !item.done } : item
     );
   });
-&lt;/script&gt;</code></pre>
-      <p>Inside JST templates, <code>.item="$(item)"</code> passes the real object and <code>@toggle="$(fn)"</code> attaches a real listener:</p>
-      <pre><code>&lt;script type="jst" name="todo-list" props="items"&gt;
-  $ (items || []).forEach(item =&gt; {
-    &lt;todo-item
-      jst-key="$(item.id)"
-      .item="$(item)"
-      @toggle="$(event =&gt; el.emit('toggle', event.detail))"&gt;
-    &lt;/todo-item&gt;
-  $ })
-&lt;/script&gt;</code></pre>
-      <div class="callout">
-        <code>.prop</code> and <code>@event</code> are JST template syntax. They are compiled only inside <code>&lt;script type="jst"&gt;</code>, not in raw top-level HTML.
+<span class="tok-tag">&lt;/script&gt;</span></code></pre>
+            <div class="snippet-detail" aria-live="polite"><strong>Hover over the code</strong><span>Hover over parts of the code snippet to get a detailed explanation.</span></div>
+          </div>
+        </div>
+        <div>
+          <h3>Inside a JST template</h3>
+          <div class="code-example">
+            <pre><code><span class="tok-tag">&lt;script</span> <span class="tok-attr">type</span>=<span class="tok-string">"jst"</span> <span class="tok-attr">name</span>=<span class="tok-string">"todo-list"</span> <span class="tok-attr">props</span>=<span class="tok-string">"items"</span><span class="tok-tag">&gt;</span>
+  <span class="tok-js">$ (items || []).forEach(item =&gt; {</span>
+    <span class="tok-tag">&lt;todo-item</span>
+      <span class="tok-attr">jst-key</span>=<span class="tok-string">"$(item.id)"</span>
+      <span class="tok-prop ann" tabindex="0" data-label=".item binding" data-detail=".prop is JST-only syntax. It assigns the actual JavaScript value to the child element after render.">.item</span>=<span class="tok-string">"$(item)"</span>
+      <span class="tok-event ann" tabindex="0" data-label="@toggle listener" data-detail="@event is JST-only syntax. It attaches a real listener and can re-emit events upward.">@toggle</span>=<span class="tok-string">"$(event =&gt; el.emit('toggle', event.detail))"</span><span class="tok-tag">&gt;</span>
+    <span class="tok-tag">&lt;/todo-item&gt;</span>
+  <span class="tok-js">$ })</span>
+<span class="tok-tag">&lt;/script&gt;</span></code></pre>
+            <div class="snippet-detail" aria-live="polite"><strong>Hover over the code</strong><span>Hover over parts of the code snippet to get a detailed explanation.</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="callout"><code>.prop</code> and <code>@event</code> are JST template syntax. They are compiled only inside <code>&lt;script type="jst"&gt;</code>, not in raw top-level HTML.</div>
+    </section>
+
+    <section id="state-and-forms">
+      <h2>State, Forms, Lists</h2>
+      <h3>State Updates</h3>
+      <p>Assigning a declared prop property publishes component state. Objects and arrays render even when the reference is the same, because assigning the same reference is treated as an explicit publish signal.</p>
+      <div class="code-example">
+        <pre><code><span class="tok-js">counter.count = counter.count + 1;</span>
+
+<span class="tok-js">list.items.push(nextItem);</span>
+<span class="tok-js ann" tabindex="0" data-label="Same-reference publish" data-detail="This intentionally re-renders. JST cannot know whether an object or array was mutated, so assigning it back means publish this value.">list.items = list.items;</span>
+
+<span class="tok-js">list.items = [...list.items, nextItem];</span> <span class="tok-comment">// immutable-style update also works</span></code></pre>
+        <div class="snippet-detail" aria-live="polite"><strong>Hover over the code</strong><span>Hover over parts of the code snippet to get a detailed explanation.</span></div>
+      </div>
+
+      <h3>Forms</h3>
+      <p>For parent/server-owned state, keep the boundary explicit. For local draft state, use <code>jst-model</code>.</p>
+      <div class="code-example">
+        <pre><code><span class="tok-comment">&lt;!-- Parent-owned value: explicit props-down, events-up. --&gt;</span>
+<span class="tok-tag">&lt;input</span>
+  <span class="tok-prop ann" tabindex="0" data-label=".value" data-detail="JST morphs form controls through properties, so value, checked, selected state, focus, and caret position stay stable across renders.">.value</span>=<span class="tok-string">"$(title)"</span>
+  <span class="tok-event">@input</span>=<span class="tok-string">"$(event =&gt; el.emit('title-change', event.target.value))"</span><span class="tok-tag">&gt;</span>
+
+<span class="tok-comment">&lt;!-- Local draft value: reads and writes el.title. --&gt;</span>
+<span class="tok-tag">&lt;input</span> <span class="tok-attr ann" tabindex="0" data-label="jst-model" data-detail="jst-model is local host-property sugar. It reads from el.title and writes back to el.title; it is not hidden parent state.">jst-model</span>=<span class="tok-string">"title"</span><span class="tok-tag">&gt;</span></code></pre>
+        <div class="snippet-detail" aria-live="polite"><strong>Hover over the code</strong><span>Hover over parts of the code snippet to get a detailed explanation.</span></div>
       </div>
     </section>
 
-    <section id="file-mode">
-      <h2>Direct file mode</h2>
-      <p>The current runtime is an ES module build. Chrome blocks external module imports from <code>file://</code>, so direct disk-opened pages need either a local static server or a future classic/global build.</p>
-      <table>
-        <tr><th>Mode</th><th>Status</th></tr>
-        <tr><td>HTTP runtime module</td><td>Shipped. Best for examples, dev, GitHub Pages, and trusted fragments.</td></tr>
-        <tr><td>Precompiled module</td><td>Shipped. Best for strict CSP production.</td></tr>
-        <tr><td><code>file://</code> classic build</td><td>Planned. Likely <code>jst.global.js</code>, wrapping internals and exposing only <code>window.JST</code>.</td></tr>
-      </table>
+    <section id="slots">
+      <h2>Slots</h2>
+      <p>Slots project the custom element's original light-DOM children. Light DOM means the nodes are ordinary page DOM, not hidden inside a shadow root.</p>
+      <div class="code-example">
+        <pre><code><span class="tok-tag">&lt;script</span> <span class="tok-attr">type</span>=<span class="tok-string">"jst"</span> <span class="tok-attr">name</span>=<span class="tok-string">"app-panel"</span> <span class="tok-attr">props</span>=<span class="tok-string">"title"</span><span class="tok-tag">&gt;</span>
+  <span class="tok-tag">&lt;section&gt;</span>
+    <span class="tok-tag">&lt;h2&gt;</span><span class="tok-jst">$(title)</span><span class="tok-tag">&lt;/h2&gt;</span>
+    <span class="tok-tag">&lt;div</span> <span class="tok-attr">class</span>=<span class="tok-string">"body"</span><span class="tok-tag">&gt;</span><span class="tok-jst ann" tabindex="0" data-label="$(slot())" data-detail="slot() projects the component's original children into the rendered output.">$(slot())</span><span class="tok-tag">&lt;/div&gt;</span>
+    <span class="tok-tag">&lt;footer&gt;</span><span class="tok-jst ann" tabindex="0" data-label="Named slot" data-detail="slot('footer', '') projects children with slot=&quot;footer&quot;. The second argument is fallback content.">$(slot('footer', ''))</span><span class="tok-tag">&lt;/footer&gt;</span>
+  <span class="tok-tag">&lt;/section&gt;</span>
+<span class="tok-tag">&lt;/script&gt;</span>
+
+<span class="tok-tag">&lt;app-panel</span> <span class="tok-attr">title</span>=<span class="tok-string">"Hello"</span><span class="tok-tag">&gt;</span>
+  <span class="tok-tag">&lt;p&gt;</span>Main content<span class="tok-tag">&lt;/p&gt;</span>
+  <span class="tok-tag">&lt;button</span> <span class="tok-attr">slot</span>=<span class="tok-string">"footer"</span><span class="tok-tag">&gt;</span>Save<span class="tok-tag">&lt;/button&gt;</span>
+<span class="tok-tag">&lt;/app-panel&gt;</span></code></pre>
+        <div class="snippet-detail" aria-live="polite"><strong>Hover over the code</strong><span>Hover over parts of the code snippet to get a detailed explanation.</span></div>
+      </div>
     </section>
 
-    <section id="components">
-      <h2>Components</h2>
-      <p>Declare props explicitly. Inside the template, props are bare JavaScript locals and element properties. From ordinary HTML, assign rich values with normal JavaScript:</p>
-      <pre><code>&lt;script type="jst" name="todo-item" props="item"&gt;
-  &lt;li class="$(item.done ? 'done' : '')"&gt;
-    $(item.text)
-    &lt;button @click.stop="$(() =&gt; el.emit('toggle', item))"&gt;Toggle&lt;/button&gt;
-  &lt;/li&gt;
-&lt;/script&gt;
+    <section id="hateoas-fragments">
+      <h2>HATEOAS Fragments</h2>
+      <p>JST's unusual feature is that a server response can define and use a component in the same HTML fragment. When inserted into a trusted auto-register root, the template registers and the element upgrades.</p>
+      <div class="code-example">
+        <pre><code><span class="tok-comment">&lt;!-- Server response body --&gt;</span>
+<span class="tok-tag">&lt;script</span> <span class="tok-attr">type</span>=<span class="tok-string">"jst"</span> <span class="tok-attr ann" tabindex="0" data-label="Fragment-defined component" data-detail="A trusted server response can include a JST template definition and the markup that uses it. The runtime registers the template after insertion.">name</span>=<span class="tok-string">"app-notice"</span> <span class="tok-attr">props</span>=<span class="tok-string">"message level"</span><span class="tok-tag">&gt;</span>
+  <span class="tok-tag">&lt;aside</span> <span class="tok-attr">class</span>=<span class="tok-string">"notice $(level)"</span><span class="tok-tag">&gt;</span><span class="tok-jst">$(message)</span><span class="tok-tag">&lt;/aside&gt;</span>
+<span class="tok-tag">&lt;/script&gt;</span>
 
-&lt;todo-item id="row"&gt;&lt;/todo-item&gt;
-
-&lt;script&gt;
-  const row = document.getElementById('row');
-  row.item = { id: 1, text: 'Write docs', done: false };
-  row.addEventListener('toggle', event =&gt; console.log(event.detail));
-&lt;/script&gt;</code></pre>
-      <p>Inside another JST template, <code>.item="$(item)"</code> passes rich data and <code>@toggle="$(fn)"</code> attaches a listener. No separate <code>events="..."</code> declaration is required.</p>
-      <pre><code>&lt;script type="jst" name="todo-list" props="items"&gt;
-  $ (items || []).forEach(item =&gt; {
-    &lt;todo-item
-      jst-key="$(item.id)"
-      .item="$(item)"
-      @toggle="$(event =&gt; el.emit('toggle', event.detail))"&gt;
-    &lt;/todo-item&gt;
-  $ })
-&lt;/script&gt;</code></pre>
+<span class="tok-tag">&lt;app-notice</span> <span class="tok-attr">level</span>=<span class="tok-string">"info"</span> <span class="tok-attr">message</span>=<span class="tok-string">"Saved"</span><span class="tok-tag">&gt;&lt;/app-notice&gt;</span></code></pre>
+        <div class="snippet-detail" aria-live="polite"><strong>Hover over the code</strong><span>Hover over parts of the code snippet to get a detailed explanation.</span></div>
+      </div>
+      <p>Use ordinary links and forms for whole-resource navigation: <code>GET /orders/4471</code>, <code>GET /orders/4471/edit</code>, <code>POST /orders/4471/items</code>, <code>PATCH /orders/4471/items/8</code>. Fragment swaps are an enhancement for places where partial updates are worth the extra moving parts.</p>
+      <div class="callout">HTMX-style declarative swap helpers are worth exploring for JST, especially when they stay resourceful: fetch this URL, replace this region, preserve history when appropriate, and let returned JST components register from trusted sources.</div>
     </section>
 
-    <section id="hateoas">
-      <h2>HATEOAS fragments</h2>
-      <p>A response can define and use a component in the same HTML fragment. When inserted into a trusted auto-register root, the template registers and the element upgrades.</p>
-      <pre><code>&lt;script type="jst" name="app-notice" props="message level"&gt;
-  &lt;aside class="notice $(level)"&gt;$(message)&lt;/aside&gt;
-&lt;/script&gt;
+    <section id="server-side-rendering">
+      <h2>Server-Side Rendering Examples</h2>
+      <p>These examples are for backend web frameworks that render HTML on the server. The point is not that JST needs those frameworks; it is that they can emit JST directly because the wire format is HTML.</p>
+      <div class="grid">
+        <div class="mini">
+          <h3>Rails ERB</h3>
+          <div class="code-example"><pre><code><span class="tok-tag">&lt;task-row</span>
+  <span class="tok-attr">task-id</span>=<span class="tok-string">"&lt;%= task.id %&gt;"</span>
+  <span class="tok-attr ann" tabindex="0" data-label="Escaped ERB output" data-detail="Use the server framework's normal escaping for text attributes. JST receives ordinary HTML.">title</span>=<span class="tok-string">"&lt;%= h task.title %&gt;"</span>
+  <span class="tok-attr">done</span>=<span class="tok-string">"&lt;%= task.done.to_json %&gt;"</span><span class="tok-tag">&gt;</span>
+<span class="tok-tag">&lt;/task-row&gt;</span></code></pre><div class="snippet-detail" aria-live="polite"><strong>Hover over the code</strong><span>Escaped server values become ordinary JST attributes.</span></div></div>
+        </div>
+        <div class="mini">
+          <h3>ASP.NET Razor</h3>
+          <div class="code-example"><pre><code><span class="tok-tag">&lt;script</span> <span class="tok-attr">type</span>=<span class="tok-string">"jst"</span> <span class="tok-attr">name</span>=<span class="tok-string">"task-row"</span> <span class="tok-attr">props</span>=<span class="tok-string">"taskId title done"</span><span class="tok-tag">&gt;</span>
+  <span class="tok-tag">&lt;button</span> <span class="tok-event ann" tabindex="0" data-label="Razor @@click" data-detail="Razor treats @ as syntax, so use @@click to render a literal JST @click attribute.">@@click</span>=<span class="tok-string">"$(() =&gt; el.emit('complete', taskId))"</span><span class="tok-tag">&gt;</span>Complete<span class="tok-tag">&lt;/button&gt;</span>
+<span class="tok-tag">&lt;/script&gt;</span>
 
-&lt;app-notice level="info" message="Saved"&gt;&lt;/app-notice&gt;</code></pre>
-      <p>Ordinary RESTful routes remain the default: links and forms can navigate to new pages like any SSR app. Fragment swaps are an enhancement for the places where partial updates are worth the extra moving parts.</p>
+<span class="tok-tag">&lt;task-row</span> <span class="tok-attr">task-id</span>=<span class="tok-string">"@Model.Task.Id"</span> <span class="tok-attr">title</span>=<span class="tok-string">"@Model.Task.Title"</span><span class="tok-tag">&gt;&lt;/task-row&gt;</span></code></pre><div class="snippet-detail" aria-live="polite"><strong>Hover over the code</strong><span>Hover over parts of the code snippet to get a detailed explanation.</span></div></div>
+        </div>
+        <div class="mini">
+          <h3>Plain PHP</h3>
+          <div class="code-example"><pre><code><span class="tok-tag">&lt;task-row</span>
+  <span class="tok-attr">task-id</span>=<span class="tok-string">"&lt;?= htmlspecialchars($task['id']) ?&gt;"</span>
+  <span class="tok-attr ann" tabindex="0" data-label="htmlspecialchars" data-detail="Plain PHP needs explicit escaping for attribute strings. The framework is not doing magic here.">title</span>=<span class="tok-string">"&lt;?= htmlspecialchars($task['title']) ?&gt;"</span>
+  <span class="tok-attr">done</span>=<span class="tok-string">"&lt;?= json_encode($task['done']) ?&gt;"</span><span class="tok-tag">&gt;</span>
+<span class="tok-tag">&lt;/task-row&gt;</span></code></pre><div class="snippet-detail" aria-live="polite"><strong>Hover over the code</strong><span>Plain PHP can output JST tags directly. Escape strings and JSON-encode booleans/numbers.</span></div></div>
+        </div>
+        <div class="mini">
+          <h3>Laravel Blade</h3>
+          <div class="code-example"><pre><code><span class="tok-tag">&lt;task-row</span>
+  <span class="tok-attr">task-id</span>=<span class="tok-string">"{{ $task-&gt;id }}"</span>
+  <span class="tok-attr">title</span>=<span class="tok-string">"{{ $task-&gt;title }}"</span>
+  <span class="tok-attr ann" tabindex="0" data-label="@json" data-detail="Use @json for booleans, numbers, arrays, and objects so the browser receives valid JSON-ish attribute text.">done</span>=<span class="tok-string">"@json($task-&gt;done)"</span><span class="tok-tag">&gt;</span>
+<span class="tok-tag">&lt;/task-row&gt;</span></code></pre><div class="snippet-detail" aria-live="polite"><strong>Hover over the code</strong><span>Blade escapes {{ }} output by default; @json is useful for non-string values.</span></div></div>
+        </div>
+        <div class="mini">
+          <h3>Go html/template</h3>
+          <div class="code-example"><pre><code><span class="tok-tag">&lt;task-row</span>
+  <span class="tok-attr">task-id</span>=<span class="tok-string">"{{ .Task.ID }}"</span>
+  <span class="tok-attr ann" tabindex="0" data-label="html/template" data-detail="Go's html/template context-escapes attribute values, so server-rendered JST remains ordinary safe HTML output.">title</span>=<span class="tok-string">"{{ .Task.Title }}"</span>
+  <span class="tok-attr">done</span>=<span class="tok-string">"{{ .Task.Done }}"</span><span class="tok-tag">&gt;</span>
+<span class="tok-tag">&lt;/task-row&gt;</span></code></pre><div class="snippet-detail" aria-live="polite"><strong>Hover over the code</strong><span>Go's html/template context-escapes attribute values. For arrays/objects, render JSON into a script block or assign properties from page JS.</span></div></div>
+        </div>
+        <div class="mini">
+          <h3>Django / Jinja-style templates</h3>
+          <div class="code-example"><pre><code><span class="tok-tag">&lt;task-row</span>
+  <span class="tok-attr">task-id</span>=<span class="tok-string">"{{ task.id }}"</span>
+  <span class="tok-attr ann" tabindex="0" data-label="Python template output" data-detail="Django and Jinja-style templates can output custom elements directly. The browser upgrades them after JST loads.">title</span>=<span class="tok-string">"{{ task.title }}"</span>
+  <span class="tok-attr">done</span>=<span class="tok-string">"{{ task.done|yesno:'true,false' }}"</span><span class="tok-tag">&gt;</span>
+<span class="tok-tag">&lt;/task-row&gt;</span></code></pre><div class="snippet-detail" aria-live="polite"><strong>Hover over the code</strong><span>Server-rendered Python templates can emit JST custom elements like any other HTML tag.</span></div></div>
+        </div>
+        <div class="mini">
+          <h3>Rust Askama</h3>
+          <div class="code-example"><pre><code><span class="tok-tag">&lt;task-row</span>
+  <span class="tok-attr">task-id</span>=<span class="tok-string">"{{ task.id }}"</span>
+  <span class="tok-attr ann" tabindex="0" data-label="Rust SSR output" data-detail="Askama and similar Rust template engines can render JST custom element tags as plain HTML.">title</span>=<span class="tok-string">"{{ task.title }}"</span>
+  <span class="tok-attr">done</span>=<span class="tok-string">"{{ task.done }}"</span><span class="tok-tag">&gt;</span>
+<span class="tok-tag">&lt;/task-row&gt;</span></code></pre><div class="snippet-detail" aria-live="polite"><strong>Hover over the code</strong><span>Rust SSR template engines can do the same thing: output HTML tags and let the browser upgrade them.</span></div></div>
+        </div>
+      </div>
     </section>
 
-    <section id="server-examples">
-      <h2>Server examples</h2>
-      <p>Backend templates can emit JST directly because the wire format is HTML.</p>
-      <h3>Rails ERB</h3>
-      <pre><code>&lt;task-row
-  task-id="&lt;%= task.id %&gt;"
-  title="&lt;%= h task.title %&gt;"
-  done="&lt;%= task.done.to_json %&gt;"&gt;
-&lt;/task-row&gt;</code></pre>
-      <h3>ASP.NET Razor</h3>
-      <pre><code>&lt;script type="jst" name="task-row" props="taskId title done"&gt;
-  &lt;button @@click="$(() =&gt; el.emit('complete', taskId))"&gt;Complete&lt;/button&gt;
-&lt;/script&gt;
-
-&lt;task-row
-  task-id="@Model.Task.Id"
-  title="@Model.Task.Title"
-  done="@Json.Serialize(Model.Task.Done)"&gt;
-&lt;/task-row&gt;</code></pre>
-      <p>Razor uses <code>@@click</code> to render a literal JST <code>@click</code> attribute.</p>
-    </section>
-
-    <section id="forms">
-      <h2>Forms and state</h2>
-      <p>Parent/server-owned state stays explicit:</p>
-      <pre><code>&lt;input .value="$(title)" @input="$(e =&gt; el.emit('title-change', e.target.value))"&gt;</code></pre>
-      <p>Local draft state can use <code>jst-model</code>:</p>
-      <pre><code>&lt;input jst-model="title"&gt;</code></pre>
-      <p><code>jst-model</code> reads and writes <code>el.title</code>. It is local host-property sugar, not hidden parent state.</p>
-    </section>
-
-    <section id="production">
-      <h2>Production</h2>
-      <p>Runtime mode compiles templates in the browser with <code>new Function</code>. Strict CSP should use precompiled mode:</p>
-      <pre><code>node tools/precompile.mjs components.html --out dist/templates.js --runtime ../jst.js</code></pre>
-      <p>The generated module registers through the normal runtime, so keyed morphing, form-state preservation, slots, transitions, and modifiers still work.</p>
-    </section>
-
-    <section id="security">
-      <h2>Security</h2>
+    <section id="security-and-production">
+      <h2>Security And Production</h2>
+      <h3>Trust Boundary</h3>
       <ul>
         <li><code>$(expr)</code> escapes HTML by default.</li>
         <li><code>url(value)</code> blocks dangerous URL schemes in URL-bearing attributes.</li>
-        <li><code>raw(value)</code> / <code>unsafeHTML(value)</code> bypass escaping. Only use them for HTML you trust.</li>
+        <li><code>trustedHTML(value)</code> bypasses escaping. Only use it for HTML your app produced or sanitized.</li>
+        <li><code>raw(value)</code> and <code>unsafeHTML(value)</code> remain compatibility aliases. Other frameworks often use names like raw or unsafe HTML; JST should teach the safer intent first.</li>
         <li>Fetched JST templates are code. Scope them with <code>autoRegisterRoot</code> and allowlist names in <code>resolveTemplate</code>.</li>
       </ul>
+      <div class="code-example">
+        <pre><code><span class="tok-tag">&lt;p&gt;</span><span class="tok-jst ann" tabindex="0" data-label="Escaped interpolation" data-detail="$(comment) is safe for untrusted text in normal HTML text and quoted attributes.">$(comment)</span><span class="tok-tag">&lt;/p&gt;</span>
+<span class="tok-tag">&lt;a</span> <span class="tok-attr">href</span>=<span class="tok-string">"$(url(userLink))"</span><span class="tok-tag">&gt;</span>go<span class="tok-tag">&lt;/a&gt;</span>
+<span class="tok-tag">&lt;article&gt;</span><span class="tok-jst ann" tabindex="0" data-label="trustedHTML()" data-detail="trustedHTML() is an explicit escape hatch. It says this value is already trusted HTML; do not pass user input here unless you sanitized it first.">$(trustedHTML(renderedMarkdown))</span><span class="tok-tag">&lt;/article&gt;</span></code></pre>
+        <div class="snippet-detail" aria-live="polite"><strong>Hover over the code</strong><span>Hover over parts of the code snippet to get a detailed explanation.</span></div>
+      </div>
+      <h3>Configuration</h3>
+      <div class="code-example">
+        <pre><code><span class="tok-js">import</span> { configure } <span class="tok-js">from</span> <span class="tok-string">'./jst.js'</span>;
+
+configure({
+  <span class="tok-attr">dev</span>: location.hostname === <span class="tok-string">'localhost'</span>,
+  <span class="tok-attr ann" tabindex="0" data-label="autoRegisterRoot" data-detail="Scope automatic registration to the container where trusted server fragments are inserted.">autoRegisterRoot</span>: document.getElementById(<span class="tok-string">'trusted-fragments'</span>),
+  <span class="tok-attr ann" tabindex="0" data-label="resolveTemplate" data-detail="resolveTemplate can lazily fetch missing components. Treat those fetched templates as executable application code.">resolveTemplate</span>(name) {
+    if (!name.startsWith(<span class="tok-string">'app-'</span>)) return null;
+    return <span class="tok-string">`/components/${name}.html`</span>;
+  },
+});</code></pre>
+        <div class="snippet-detail" aria-live="polite"><strong>Hover over the code</strong><span>Hover over parts of the code snippet to get a detailed explanation.</span></div>
+      </div>
     </section>
 
-    <section id="gaps">
-      <h2>Known gaps</h2>
+    <section id="browser-support">
+      <h2>Browser Support</h2>
+      <p>JST targets modern evergreen browsers and uses platform features directly: Custom Elements v1, ES modules, <code>MutationObserver</code>, <code>queueMicrotask</code>, <code>CustomEvent</code>, and modern DOM APIs. Internet Explorer and very old pre-evergreen browsers are out of scope.</p>
+      <p>The default browser compiler uses <code>new Function</code>, which Content Security Policy treats as eval. That is a CSP concern, not a browser compatibility concern. Use precompiled mode for strict CSP.</p>
+    </section>
+
+    <section id="known-gaps">
+      <h2>Known Gaps</h2>
       <ul>
-        <li>No official formatter, tree-sitter grammar, or typed expression checking yet.</li>
-        <li>No marketplace release for the VS Code extension yet.</li>
-        <li>Direct <code>file://</code> mode needs a classic/global build.</li>
-        <li>SSR hydration plus already-projected light-DOM slots is documented as planned.</li>
-        <li>HTMX-style declarative swap helpers are worth exploring, but not shipped.</li>
+        <li><strong>Direct file-open mode:</strong> planned, important, and not shipped yet.</li>
+        <li><strong>Formatter / tree-sitter / typed expressions:</strong> planned. VS Code diagnostics and highlighting exist now.</li>
+        <li><strong>Keyed reconciliation:</strong> shipped and tested, but still a high-risk area that should keep gaining adversarial tests.</li>
+        <li><strong>Transitions:</strong> CSS-driven v1 shipped for keyed enter/leave; richer move/FLIP behavior may grow later.</li>
+        <li><strong>Light DOM:</strong> deliberate. There is no style or id encapsulation, so prefer classes and derive ids from props.</li>
+        <li><strong>SSR hydration plus projected slots:</strong> planned edge. Use SSR adoption or client-side slot projection, not both together yet.</li>
+        <li><strong>HTMX-style triggers/swaps:</strong> worth exploring, especially when kept resourceful and explicit.</li>
       </ul>
     </section>
 
-    <section id="source-pages">
-      <h2>Source pages</h2>
-      <p>The Markdown references remain useful as source documents:</p>
-      <ul>
-        <li><a href="decision-guide.md">Decision guide</a></li>
-        <li><a href="writing-jst.md">Writing JST</a></li>
-        <li><a href="use-jst-when.md">Use JST when...</a> / <a href="avoid-jst-when.md">Avoid JST when...</a></li>
-        <li><a href="controlled-components.md">Controlled components</a></li>
-        <li><a href="hateoas-fragments.md">HATEOAS fragments</a></li>
-        <li><a href="production.md">Production</a> / <a href="security-model.md">Security model</a></li>
-        <li><a href="known-gaps.md">Known gaps</a></li>
-      </ul>
+    <section id="tooling">
+      <h2>Tooling</h2>
+      <p>The VS Code extension under <code>tooling/</code> already provides syntax highlighting, diagnostics, and a language server. The next tooling path is marketplace packaging, formatter support, typed expression checking, and a tree-sitter grammar.</p>
+      <div class="callout">Tooling should support the same simple model as runtime JST: props are declared explicitly, template expressions are JavaScript, invalid bindings fail loudly, and rich values move through properties rather than string attributes.</div>
     </section>
   </main>
 </div>
@@ -456,5 +686,33 @@
 <footer class="wrap">
   JST docs. Serve over HTTP for module and service-worker demos.
 </footer>
+
+<script>
+  document.querySelectorAll('.code-example').forEach(example => {
+    const detail = example.querySelector('.snippet-detail');
+    if (!detail) return;
+    const title = detail.querySelector('strong');
+    const body = detail.querySelector('span');
+    const defaultTitle = title.textContent;
+    const defaultBody = body.textContent;
+
+    function show(node) {
+      title.textContent = node.dataset.label || defaultTitle;
+      body.textContent = node.dataset.detail || defaultBody;
+    }
+
+    function reset() {
+      title.textContent = defaultTitle;
+      body.textContent = defaultBody;
+    }
+
+    example.querySelectorAll('.ann').forEach(node => {
+      node.addEventListener('mouseenter', () => show(node));
+      node.addEventListener('focus', () => show(node));
+      node.addEventListener('blur', reset);
+    });
+    example.addEventListener('mouseleave', reset);
+  });
+</script>
 </body>
 </html>

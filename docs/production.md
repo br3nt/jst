@@ -25,6 +25,10 @@ node tools/precompile.mjs components.html --out dist/templates.js --runtime ../j
 Use runtime mode for development and trusted streamed fragments. Use
 precompiled mode for strict CSP and release builds.
 
+Direct `file://` mode is planned, not shipped. The intended shape is a
+classic/global build such as `jst.global.js` that a single HTML file can load
+directly from disk.
+
 ## Configuration
 
 ```js

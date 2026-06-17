@@ -264,12 +264,15 @@ Use `url(value)` for URL-bearing attributes:
 <a href="$(url(link.href))">$(link.label)</a>
 ```
 
-Use `raw(value)` / `unsafeHTML(value)` only for HTML that your app already
-trusts or sanitizes:
+Use `trustedHTML(value)` only for HTML that your app already trusts or
+sanitizes:
 
 ```html
-<article>$(raw(renderedMarkdown))</article>
+<article>$(trustedHTML(renderedMarkdown))</article>
 ```
+
+`raw(value)` and `unsafeHTML(value)` remain compatibility aliases, but
+`trustedHTML()` is the name to teach first.
 
 ## 12. Lazy templates and HATEOAS fragments
 
@@ -304,5 +307,5 @@ JST.configure({
 - Use camelCase in `props`, kebab-case in normal HTML attributes.
 - Remember that `.prop` and `@event` bindings only compile inside JST templates.
 - Add `jst-key` to real lists.
-- Use `raw()` / `unsafeHTML()` only for trusted HTML.
+- Use `trustedHTML()` only for trusted HTML.
 - Serve module builds over HTTP; direct `file://` needs a future global build.
