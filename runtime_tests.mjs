@@ -310,6 +310,71 @@ test('JSON-like attribute values are parsed without eval', async () => {
   }
 });
 
+test('once() setup runs after the DOM commits, fires once, and auto-registers cleanup', async () => {
+  const runtime = await loadRuntime([
+    {
+      name: 'x-once',
+      attributes: [{ name: 'props', value: 'n' }],
+      innerHTML:
+        '<span>n=$(n)</span>' +
+        '${ once("mount", () => {' +
+        '  window.domAtMount = el.innerHTML;' +
+        '  window.mountCount = (window.mountCount || 0) + 1;' +
+        '  return () => { window.didCleanup = true; };' +
+        '}) }',
+    },
+  ]);
+
+  try {
+    const OnceClass = runtime.customElements.get('x-once');
+    const element = new OnceClass();
+    element.setAttribute('n', '1');
+    runtime.connect(element);
+    await flushRenders();
+
+    // Setup ran after the rendered DOM existed (not mid-render, when it is empty).
+    assert.match(runtime.windowObject.domAtMount ?? '', /n=1/);
+    assert.equal(runtime.windowObject.mountCount, 1);
+
+    // A re-render in the same connection does not run setup again.
+    element.setAttribute('n', '2');
+    await flushRenders();
+    assert.equal(runtime.windowObject.mountCount, 1);
+
+    // The function returned by setup is the disconnect cleanup, with no manual wiring.
+    assert.notEqual(runtime.windowObject.didCleanup, true);
+    element.isConnected = false;
+    element.disconnectedCallback();
+    assert.equal(runtime.windowObject.didCleanup, true);
+  } finally {
+    runtime.cleanup();
+  }
+});
+
+test('once() setup is skipped when the element disconnects before it runs', async () => {
+  const runtime = await loadRuntime([
+    {
+      name: 'x-once-early-disconnect',
+      attributes: [{ name: 'props', value: '' }],
+      innerHTML: '<span>hi</span>${ once("mount", () => { window.ranSetup = true; }) }',
+    },
+  ]);
+
+  try {
+    const Klass = runtime.customElements.get('x-once-early-disconnect');
+    const element = new Klass();
+    runtime.connect(element);
+    // Disconnect before microtasks flush: the deferred setup must not run.
+    element.isConnected = false;
+    element.disconnectedCallback();
+    await flushRenders();
+
+    assert.notEqual(runtime.windowObject.ranSetup, true);
+  } finally {
+    runtime.cleanup();
+  }
+});
+
 test('attribute changes re-render the component', async () => {
   const runtime = await loadRuntime([
     {

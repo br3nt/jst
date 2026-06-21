@@ -23,7 +23,8 @@ import { compileTemplateRenderingFunction } from './compiler.js'
  *   .prop="$(expr)"         assign expr as a JS property on the element
  *   @event.mod="$(fn)"      addEventListener('event', fn) with optional modifiers
  *   jst-model="prop"        local form shorthand: read prop, update el[prop]
- *   once('key', setup)      run setup once per connection, cleanup on disconnect
+ *   once('key', setup)      run setup once per connection, after the DOM commits;
+ *                           a returned function is registered as disconnect cleanup
  *   jst-key="$(id)"         preserve keyed node identity while morphing
  */
 document.jst = {
@@ -757,6 +758,7 @@ function defineCustomElementFromRender({
     #slotObserver = null;
     #disconnectCleanups = new Set();
     #onceKeys = new Set();
+    #connectionEpoch = 0;
     #outsideTracked = new WeakSet();
     #hydrating = false;
 
@@ -765,6 +767,9 @@ function defineCustomElementFromRender({
     }
 
     connectedCallback() {
+      // Each connection is its own epoch; deferred once() setups captured under
+      // a stale epoch (e.g. a synchronous disconnect+reconnect) are discarded.
+      this.#connectionEpoch++;
       // SSR/hydration: a server can emit the component already rendered, marked
       // jst-ssr. The existing children are rendered output, not slot content, so
       // we skip slot capture/observation and let the first render morph onto the
@@ -887,14 +892,25 @@ function defineCustomElementFromRender({
       if (typeof setupFn !== 'function') return undefined;
 
       this.#onceKeys.add(key);
-      try {
-        const cleanup = setupFn();
-        if (typeof cleanup === 'function') this.#registerDisconnectCleanup(cleanup);
-        return cleanup;
-      } catch (error) {
-        this.#onceKeys.delete(key);
-        throw error;
-      }
+
+      // The template body runs before this render commits, so the component's
+      // own rendered DOM and projected slots don't exist yet. Defer setup to a
+      // microtask so it sees the committed DOM, and register whatever it returns
+      // as disconnect cleanup, so callers never have to wire teardown by hand.
+      const epoch = this.#connectionEpoch;
+      queueMicrotask(() => {
+        if (!this.isConnected || this.#connectionEpoch !== epoch || !this.#onceKeys.has(key)) return;
+        try {
+          const cleanup = setupFn();
+          if (typeof cleanup === 'function') this.#registerDisconnectCleanup(cleanup);
+        } catch (error) {
+          this.#onceKeys.delete(key);
+          console.error(`JST once("${key}") setup error in <${customElementName}>:`, error);
+          if (document.jst.config.dev) this.#showDevError(error);
+        }
+      });
+
+      return undefined;
     }
 
     #showDevError(error) {
