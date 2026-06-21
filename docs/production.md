@@ -29,6 +29,84 @@ Direct `file://` mode is planned, not shipped. The intended shape is a
 classic/global build such as `jst.global.js` that a single HTML file can load
 directly from disk.
 
+## Choosing between the two no-inline paths
+
+Two features let you avoid inlining every definition on every page, and under a
+strict CSP they are mutually exclusive.
+
+- Precompiled bundle - `tools/precompile.mjs` compiles ahead of time into a
+  plain ES module with no `new Function`, so it runs under strict
+  `script-src 'self'`. The cost is a build step.
+- `resolveTemplate` - the runtime fetches each definition and compiles it in the
+  browser with `new Function`, so it needs `script-src 'self' 'unsafe-eval'`.
+  The benefit is no build step and true on-demand loading.
+
+Under a strict `script-src 'self'` policy with no `'unsafe-eval'`, the
+`new Function` call that `resolveTemplate` relies on is blocked, so only the
+precompiled path works. You cannot run a precompiled bundle and
+`resolveTemplate` together when the policy forbids `'unsafe-eval'`: pick one.
+The same trade-off appears in [hateoas-fragments.md](./hateoas-fragments.md#csp-and-resolvetemplate).
+
+## Splitting components across files
+
+You will not want every definition in one file. There are two ways to split,
+and they differ in how the pieces reach the browser.
+
+### Precompiled: many sources, one bundle
+
+`tools/precompile.mjs` accepts multiple input files but always emits a single
+bundle module. Splitting is for source maintainability, not on-demand network
+loading; the browser still downloads one cacheable file.
+
+```sh
+node tools/precompile.mjs \
+  app/jst/orders.html app/jst/cart.html app/jst/notices.html \
+  --out public/jst/dist/components.js \
+  --runtime ../jst.js
+```
+
+```html
+<script type="module" src="/jst/jst.js"></script>
+<script type="module" src="/jst/dist/components.js"></script>
+```
+
+The `--runtime` value is the import specifier the generated bundle uses to reach
+`jst.js`, resolved relative to the bundle's own location, not your shell's
+working directory. The default is `./jst.js`, which is correct only when the
+bundle sits next to `jst.js`. The examples here use `../jst.js` because the
+bundle lands in a `dist/` subdirectory one level below `jst.js`. Set it to
+whatever path walks from the emitted bundle to `jst.js`, or the bundle's import
+404s.
+
+### resolveTemplate: one file per component, fetched on demand
+
+`resolveTemplate` keeps each `app-*` component in its own file and fetches it
+the first time an unknown element appears. This is a true lazy load, build-free,
+and needs `'unsafe-eval'`.
+
+```js
+import { configure } from '/jst/jst.js';
+
+configure({
+  resolveTemplate(name) {
+    if (!name.startsWith('app-')) return null;
+    return `/jst/components/${name}.html`;
+  },
+});
+```
+
+```html
+<!-- /jst/components/app-notice.html -->
+<script type="jst" name="app-notice" props="message">
+  <aside>$(message)</aside>
+</script>
+```
+
+When `<app-notice>` first lands in the DOM, the runtime fetches that file,
+registers the definition, and upgrades the element. See
+[hateoas-fragments.md](./hateoas-fragments.md) for the lifetime and failure
+behaviour.
+
 ## Configuration
 
 ```js
@@ -45,7 +123,13 @@ configure({
 });
 ```
 
-## Forms
+`autoRegister: false` does not fully stop the `MutationObserver` when a
+`resolveTemplate` resolver is also configured. With a resolver present the
+observer keeps running so it can drive lazy resolution; what `autoRegister:
+false` turns off is the auto-registration of `<script type="jst">` definitions
+that arrive in inserted nodes. It does not turn off the scan that triggers
+`resolveTemplate` for unknown custom elements. Only when both `autoRegister` is
+false and no resolver is set does the observer never start.
 
 JST morphs form controls as properties, not just attributes, so values,
 checked state, selected options, focus, and caret position remain stable across
