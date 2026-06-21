@@ -60,6 +60,14 @@
   // Tab clicks bubble out of the injected component as a 'select' event.
   mount.addEventListener('select', e => showTab(e.detail));
 
+  window.__parityTest = async () => {
+    document.querySelector('[data-testid="tab-2"]').click();
+    const timeout = Date.now() + 3000;
+    while (Date.now() < timeout && !document.querySelector('[data-testid="body"]')?.textContent.includes('Apple')) {
+      await new Promise(resolve => setTimeout(resolve, 50));
+    }
+    return { ok: document.querySelector('[data-testid="body"]')?.textContent.includes('Apple'), detail: 'server-returned tab component selection' };
+  };
   showTab('1').then(() => { window.__exampleReady = true; });
 </script>
 </body>

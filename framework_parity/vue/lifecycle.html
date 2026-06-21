@@ -3,12 +3,10 @@
 <!--
   Source: https://vuejs.org/guide/essentials/lifecycle
   Demonstrates: lifecycle hooks (onMounted / onUpdated / onUnmounted).
-  JST status: (i) partial — JST exposes a narrow `onDisconnect(fn)` teardown
-  primitive, not a full lifecycle system. Approximations used here:
-    * "mounted"   -> a one-time guard in the template (el.__mounted) that schedules a
-                     microtask after the first render (DOM is present by then).
+  JST status: ✓ exact — JST's narrow lifecycle API covers this example:
+    * "mounted"   -> `once()` runs after the first DOM commit.
     * "updated"   -> every render is an "update"; we count renders in the template.
-    * "unmounted" -> `onDisconnect(fn)`.
+    * "unmounted" -> the cleanup returned by `once()`.
 -->
 <html lang="en">
 <head>
@@ -20,13 +18,10 @@
 
 <script type="jst" name="lifecycle-demo" props="message">
   $ el.__renders = (el.__renders || 0) + 1;     // "onUpdated": runs every render
-  $ if (!el.__mounted) {                          // "onMounted": one-time guard
-  $   el.__mounted = true;
-  $   queueMicrotask(() => {
-  $     el.querySelector('#mounted-text').textContent = 'mounted! (the component is now in the DOM)';
-  $   });
-  $   onDisconnect(() => { window.__lifecycleDisconnected = true; });
-  $ }
+  $ once('lifecycle', () => {
+  $   el.querySelector('#mounted-text').textContent = 'mounted! (the component is now in the DOM)';
+  $   return () => { window.__lifecycleDisconnected = true; };
+  $ });
   <p id="message">$(message)</p>
   <p id="mounted-text">not mounted yet</p>
   <p id="render-count">renders: $(el.__renders)</p>
@@ -35,6 +30,19 @@
 
 <lifecycle-demo id="app" message="Hello"></lifecycle-demo>
 
-<script>window.__exampleReady = true;</script>
+<script>
+  window.__parityTest = async () => {
+    await new Promise(resolve => setTimeout(resolve, 0));
+    const app = document.getElementById('app');
+    const mounted = app.querySelector('#mounted-text').textContent.startsWith('mounted!');
+    const before = app.querySelector('#render-count').textContent;
+    app.querySelector('#bump').click();
+    await new Promise(resolve => setTimeout(resolve, 0));
+    const updated = app.querySelector('#render-count').textContent !== before;
+    app.remove();
+    return { ok: mounted && updated && window.__lifecycleDisconnected === true, detail: 'mount, update, cleanup' };
+  };
+  window.__exampleReady = true;
+</script>
 </body>
 </html>

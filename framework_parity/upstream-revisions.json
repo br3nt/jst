@@ -1,0 +1,21 @@
+{
+  "reviewedAt": "2026-06-21",
+  "sources": {
+    "HTMX": {
+      "repository": "https://github.com/bigskysoftware/htmx",
+      "revision": "e38aa4342e1c0682f8d206578854e3d4fd48e9ce"
+    },
+    "Alpine.js": {
+      "repository": "https://github.com/alpinejs/alpine",
+      "revision": "3b125f96058aa53904befbb3fa35dbfb1cd0e69a"
+    },
+    "Vue": {
+      "repository": "https://github.com/vuejs/docs",
+      "revision": "066d5c9072c3dd34d9a9efe92470ed6596f612ef"
+    },
+    "React": {
+      "repository": "https://github.com/reactjs/react.dev",
+      "revision": "8bb31acb86bf68fa33d97dd0f1b834dfa71e2b1a"
+    }
+  }
+}

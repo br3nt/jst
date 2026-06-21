@@ -29,6 +29,13 @@
   link-href="https://vuejs.org"
   disabled="false"></attribute-bindings>
 
-<script>window.__exampleReady = true;</script>
+<script>
+  window.__parityTest = async () => {
+    document.getElementById('toggle').click();
+    await new Promise(resolve => setTimeout(resolve, 0));
+    return { ok: document.getElementById('btn').disabled && document.getElementById('dyn').classList.contains('danger'), detail: 'property and class bindings update' };
+  };
+  window.__exampleReady = true;
+</script>
 </body>
 </html>

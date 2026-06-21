@@ -5,6 +5,14 @@
   "type": "module",
   "private": false,
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/br3nt/jst.git"
+  },
+  "homepage": "https://br3nt.github.io/jst/",
+  "bugs": {
+    "url": "https://github.com/br3nt/jst/issues"
+  },
   "files": [
     "jst.js",
     "compiler.js",

@@ -116,8 +116,8 @@ Handler return value:
 ## Known gaps to expect (classify honestly)
 
 These are likely `(i)` (workaround) or `x`. Don't paper over them.
-- **No full transition directive yet** (`x-transition`, Vue `<transition>`):
-  use CSS classes and keyed DOM identity manually.
+- **Transitions are CSS-owned:** use `jst-transition` on keyed nodes for
+  coordinated enter/leave/move classes.
 - **No computed/watch primitives**: compute with `$ const ... =` in the template; "watch" by acting in the event that changes state.
 - **Coarse re-render**: setting any prop re-renders the whole component (fine for these examples).
 - **No router, no scoped styles** (light DOM; use normal CSS).

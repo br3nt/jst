@@ -105,7 +105,7 @@ async function runChrome(url) {
   const port = 9222;
 
   try {
-    const chrome = spawn(chromePath, [
+    const chromeArgs = [
       '--headless=new',
       '--disable-gpu',
       '--disable-background-networking',
@@ -125,7 +125,12 @@ async function runChrome(url) {
       '--use-mock-keychain',
       `--user-data-dir=${userDataDir}`,
       'about:blank',
-    ], {
+    ];
+    if (process.platform === 'linux') {
+      chromeArgs.push('--no-sandbox', '--disable-dev-shm-usage');
+    }
+
+    const chrome = spawn(chromePath, chromeArgs, {
       stdio: ['ignore', 'pipe', 'pipe'],
     });
 
@@ -140,7 +145,12 @@ async function runChrome(url) {
     });
 
     const baseUrl = `http://127.0.0.1:${port}`;
-    const targets = await waitForJson(baseUrl, '/json/list');
+    let targets;
+    try {
+      targets = await waitForJson(baseUrl, '/json/list');
+    } catch (error) {
+      throw new Error(`${error.message}\n${stderr}`.trim());
+    }
     const pageTarget = targets.find(target => target.type === 'page');
 
     if (!pageTarget?.webSocketDebuggerUrl) {

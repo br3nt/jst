@@ -3,11 +3,11 @@
 **JavaScript Templates (JST)** - reactive web components in plain HTML, with
 **JavaScript itself as the templating language**. **No build step.**
 
-**It's just Web Components under the hood.** A `<script type="jst">` tag is
-compiled into a class and registered with `customElements.define()`, so every
-JST component is a genuine custom element: inspectable in DevTools, scriptable
-with plain properties and `addEventListener`, and usable inside any framework or
-none.
+**JST builds on Web Components.** Its roughly 15 KB runtime/compiler turns a
+`<script type="jst">` tag into a class and registers it with
+`customElements.define()`, so every JST component is a genuine custom element:
+inspectable in DevTools, scriptable with plain properties and
+`addEventListener`, and usable inside any framework or none.
 
 ```html
 <script type="module" src="jst.js"></script>
@@ -22,8 +22,8 @@ none.
 
 ## What hole it fills
 
-- **HTMX** lets the server send HTML, but has no client interactivity without a round-trip.
-- **Alpine** adds client interactivity, but the server cannot stream reusable components.
+- **HTMX** is strongest when server round-trips drive UI changes; JST targets fragments that also define reusable client-side component behavior.
+- **Alpine** is strongest for behavior attached to existing markup; JST additionally gives streamed component definitions custom-element identity and a props/events boundary.
 - **React/Vue** are powerful, but usually bring a build step, a runtime model, and a client-owned render pipeline.
 
 JST targets HATEOAS-style apps where the backend and frontend should be able to
@@ -100,6 +100,8 @@ JST has two modes:
 - **Runtime mode**: load `jst.js`; the browser compiles inline templates with
   `new Function`. This is ideal for prototypes, static pages, examples, and
   server-streamed trusted components.
+- Runtime templates are executable JavaScript. Only auto-register or resolve
+  templates from sources you trust; interpolated data remains escaped by default.
 - **Precompiled mode**: run `tools/precompile.mjs` and load the generated module.
   This avoids runtime template compilation and is the path for strict CSP apps
   that cannot allow `unsafe-eval`.

@@ -14,13 +14,13 @@ idiomatically, it is recorded as a gap rather than hidden in an example.
 
 | | ✓ exact | (i) partial | ✗ none | total |
 |---|---:|---:|---:|---:|
-| HTMX | 10 | 6 | 0 | 16 |
-| Alpine.js | 14 | 6 | 0 | 20 |
-| Vue | 8 | 12 | 0 | 20 |
+| HTMX | 11 | 5 | 0 | 16 |
+| Alpine.js | 15 | 5 | 0 | 20 |
+| Vue | 10 | 10 | 0 | 20 |
 | React | 11 | 3 | 0 | 14 |
-| **Total** | **43** | **27** | **0** | **70** |
+| **Total** | **47** | **23** | **0** | **70** |
 
-**Every example was reproduced** — 43 as exact, idiomatic matches and 27 needing
+**Every example was reproduced** — 47 as exact, idiomatic matches and 23 needing
 a documented workaround. **Zero were impossible.** But "no ✗" is not "no gaps":
 several `(i)` rows still contain real tradeoffs, called out in **Gaps** below.
 
@@ -53,7 +53,7 @@ above, not `file://`, since they load `/jst.js` by absolute path.)
 
 ---
 
-## HTMX — 10 ✓ / 6 (i)
+## HTMX — 11 ✓ / 5 (i)
 
 The fetch-returns-fragment model is JST's natural fit; the `(i)`s are almost all
 about **triggers HTMX gives declaratively** (debounce, poll, reveal) and exit
@@ -64,7 +64,7 @@ animations.
 | click-to-edit | [link](https://htmx.org/examples/click-to-edit/) | ✓ | [htmx/click-to-edit.html](htmx/click-to-edit.html) | View↔edit on an `editing` flag; PUT persists; props re-render. |
 | bulk-update | [link](https://htmx.org/examples/bulk-update/) | ✓ | [htmx/bulk-update.html](htmx/bulk-update.html) | Checkbox changes stage a draft; one POST applies all + toast. |
 | click-to-load | [link](https://htmx.org/examples/click-to-load/) | ✓ | [htmx/click-to-load.html](htmx/click-to-load.html) | Fetch next page, concat to page-owned array, re-render. |
-| delete-row | [link](https://htmx.org/examples/delete-row/) | (i) | [htmx/delete-row.html](htmx/delete-row.html) | Round-trip clean, but fade-out needs a `deleting` class + `setTimeout`; coarse re-render yanks the node instantly otherwise. |
+| delete-row | [link](https://htmx.org/examples/delete-row/) | ✓ | [htmx/delete-row.html](htmx/delete-row.html) | Round-trip plus keyed `jst-transition`; CSS owns the fade and JST delays removal. |
 | edit-row | [link](https://htmx.org/examples/edit-row/) | ✓ | [htmx/edit-row.html](htmx/edit-row.html) | Page owns rows + one `editingId`; other Edit buttons disabled while editing. |
 | lazy-load | [link](https://htmx.org/examples/lazy-load/) | ✓ | [htmx/lazy-load.html](htmx/lazy-load.html) | Fetched fragment ships a `<script type="jst">` def + markup; auto-upgraded on insert. |
 | inline-validation | [link](https://htmx.org/examples/inline-validation/) | ✓ | [htmx/inline-validation.html](htmx/inline-validation.html) | Plain input (keeps focus) POSTs per keystroke; `<field-status>` renders verdict. |
@@ -78,7 +78,7 @@ animations.
 | keyboard-shortcuts | [link](https://htmx.org/examples/keyboard-shortcuts/) | (i) | [htmx/keyboard-shortcuts.html](htmx/keyboard-shortcuts.html) | Result panel clean, but global shortcut is a hand-written `document.addEventListener` (`@event` only binds template elements). |
 | polling / update-other-content | [link](https://htmx.org/examples/update-other-content/) | (i) | [htmx/polling.html](htmx/polling.html) | One response updating two regions is idiomatic; polling itself is a hand-written `setInterval`. |
 
-## Alpine.js — 14 ✓ / 6 (i)
+## Alpine.js — 15 ✓ / 5 (i)
 
 Directives split cleanly: rendering, binding, events, local model binding, and
 CSS transitions map directly. Reactivity primitives, refs, and DOM relocation
@@ -97,7 +97,7 @@ still need workarounds. `x-cloak` is actually *better* in JST.
 | x-for | [link](https://alpinejs.dev/directives/for) | ✓ | [alpine/for.html](alpine/for.html) | `$ items.forEach(...)` with `jst-key` when identity matters. |
 | x-transition | [link](https://alpinejs.dev/directives/transition) | ✓ | [alpine/transition.html](alpine/transition.html) | `jst-transition` coordinates enter/leave classes; CSS owns the animation. |
 | x-ref + $refs | [link](https://alpinejs.dev/directives/ref) | (i) | [alpine/ref.html](alpine/ref.html) | No `$refs` registry; `el.querySelector(...)` instead. |
-| x-init | [link](https://alpinejs.dev/directives/init) | (i) | [alpine/init.html](alpine/init.html) | No template init hook; one-time guard + `queueMicrotask`. |
+| x-init | [link](https://alpinejs.dev/directives/init) | ✓ | [alpine/init.html](alpine/init.html) | `once()` runs setup once after the first DOM commit. |
 | x-effect | [link](https://alpinejs.dev/directives/effect) | (i) | [alpine/effect.html](alpine/effect.html) | Effect = template body, but coarse (any prop change), not dep-tracked. |
 | $dispatch | [link](https://alpinejs.dev/magics/dispatch) | ✓ | [alpine/dispatch.html](alpine/dispatch.html) | `el.emit(name, detail)` bubbling CustomEvent. |
 | $store (global) | [link](https://alpinejs.dev/globals/alpine-store) | (i) | [alpine/store.html](alpine/store.html) | Shared object passed via props; manually re-published to subscribers. |
@@ -107,7 +107,7 @@ still need workarounds. `x-cloak` is actually *better* in JST.
 | dropdown (click-outside) | [link](https://alpinejs.dev/component/dropdown) | ✓ | [alpine/dropdown.html](alpine/dropdown.html) | Open/close local state plus `@click.outside`. |
 | tabs | [link](https://alpinejs.dev/start-here) | ✓ | [alpine/tabs.html](alpine/tabs.html) | Active tab is local state; no gap. |
 
-## Vue — 8 ✓ / 12 (i)
+## Vue — 10 ✓ / 10 (i)
 
 Templating, components, events, local form binding, and slots map closely. The
 `(i)`s cluster around computed/watch, broader component `v-model` conventions,
@@ -124,7 +124,7 @@ provide/inject, and full transition-group behavior.
 | Component events ($emit) | [link](https://vuejs.org/guide/components/events) | ✓ | [vue/component-events.html](vue/component-events.html) | `el.emit` + `addEventListener`. |
 | Computed | [link](https://vuejs.org/guide/essentials/computed) | (i) | [vue/computed.html](vue/computed.html) | Derive inline with `$ const`; no memoization. |
 | Watchers | [link](https://vuejs.org/guide/essentials/watchers) | (i) | [vue/watchers.html](vue/watchers.html) | Side effect runs in the mutating handler. |
-| Lifecycle | [link](https://vuejs.org/guide/essentials/lifecycle) | (i) | [vue/lifecycle.html](vue/lifecycle.html) | `mounted` approximable with a microtask; teardown uses `onDisconnect(fn)`. |
+| Lifecycle | [link](https://vuejs.org/guide/essentials/lifecycle) | ✓ | [vue/lifecycle.html](vue/lifecycle.html) | `once()` covers post-commit setup and returned cleanup; each render covers the example's update counter. |
 | Slots (default + named) | [link](https://vuejs.org/guide/components/slots) | ✓ | [vue/slots.html](vue/slots.html) | `$(slot())`, `$(slot('name','fallback'))` native. |
 | provide / inject | [link](https://vuejs.org/guide/components/provide-inject) | (i) | [vue/provide-inject.html](vue/provide-inject.html) | `el.closest()` to read ancestor; not auto-reactive. |
 | Template refs | [link](https://vuejs.org/guide/essentials/template-refs) | (i) | [vue/template-refs.html](vue/template-refs.html) | `el.querySelector(...)` after render. |
@@ -134,7 +134,7 @@ provide/inject, and full transition-group behavior.
 | Grid (sort/search) | [link](https://vuejs.org/examples/#grid) | ✓ | [vue/grid.html](vue/grid.html) | Local state; filtered/sorted rows derived inline. |
 | TodoMVC | [link](https://vuejs.org/examples/#todomvc) | (i) | [vue/todomvc.html](vue/todomvc.html) | Full feature set; edit-focus needs a queued re-focus; manual two-way throughout. *(behaviourally verified)* |
 | List transitions | [link](https://vuejs.org/examples/#list-transition) | (i) | [vue/list-transition.html](vue/list-transition.html) | `jst-key` + `jst-transition` cover enter/leave/move classes; full FLIP transition-group behavior still needs custom JS. |
-| Modal with transition | [link](https://vuejs.org/examples/#modal) | (i) | [vue/modal.html](vue/modal.html) | No `<transition>`; kept in DOM, class toggled, CSS does enter+leave. |
+| Modal with transition | [link](https://vuejs.org/examples/#modal) | ✓ | [vue/modal.html](vue/modal.html) | Conditional keyed node plus `jst-transition`; CSS owns enter and leave. |
 
 ## React — 11 ✓ / 3 (i)
 
@@ -217,13 +217,15 @@ Still worth remembering:
 
 ## Method & validation
 
-- Built by four parallel subagents (one per framework), each given a JST primer
-  (`JST_PRIMER.md`), then re-run after the core hardening work.
-- **All 70 pages** independently re-validated to load with no console/JST errors
-  (`verify.mjs`).
-- Representative examples spanning all four frameworks are driven in headless
-  Chrome by the smoke suites, including forms, HATEOAS fragments, list identity,
-  and larger examples such as kanban and TodoMVC.
+- The source examples were reviewed against the upstream revisions recorded in
+  [`upstream-revisions.json`](upstream-revisions.json), rather than an unpinned
+  moving documentation target.
+- **All 70 pages** are checked for readiness, console/JST errors, and one
+  per-page assertion (`verify.mjs`). Pages can declare a focused
+  `window.__parityTest`; otherwise the verifier exercises the first control and
+  requires an observable change, or checks rendered output for static examples.
+- Exact/partial remains an author assessment of how idiomatically the source
+  behavior maps to JST. It is not inferred from the test result.
 - Nothing was impossible (0 ✗); nothing got stuck.
 
 _Infra: `lib/mock-fetch.js` (front-end backend), `JST_PRIMER.md` (build guide),

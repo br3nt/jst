@@ -136,7 +136,7 @@ async function waitForHttp(url, timeoutMs = 8000) {
 async function main() {
   const serverProcess = spawn('node', [path.join(__dirname, 'server.mjs'), `--port=${SERVER_PORT}`], { stdio: 'ignore' });
   const userDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'jst-feed-'));
-  const chrome = spawn(process.env.CHROME_PATH || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', [
+  const chromeArgs = [
     '--headless=new',
     '--disable-gpu',
     '--no-first-run',
@@ -144,7 +144,11 @@ async function main() {
     `--remote-debugging-port=${DEBUG_PORT}`,
     `--user-data-dir=${userDataDir}`,
     'about:blank',
-  ], { stdio: 'ignore' });
+  ];
+  if (process.platform === 'linux') {
+    chromeArgs.push('--no-sandbox', '--disable-dev-shm-usage');
+  }
+  const chrome = spawn(process.env.CHROME_PATH || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', chromeArgs, { stdio: 'ignore' });
 
   try {
     await waitForHttp(`http://127.0.0.1:${SERVER_PORT}/agentic_feed/index.html`);

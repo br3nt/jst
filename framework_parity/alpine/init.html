@@ -4,10 +4,7 @@
   Source: https://alpinejs.dev/directives/init
   Demonstrates: Alpine x-init — run setup code once when the component initialises
   (here: populate a message after mount, as you would to kick off a fetch).
-  JST status: (i) partial — JST has no x-init hook reachable from the template.
-  Workaround: guard a one-time block with a flag (`el.__inited`) and defer the
-  state write with queueMicrotask so it lands as a normal re-render. The page's
-  trailing <script> after the element is the other idiomatic "init" point.
+  JST status: ✓ exact — `once()` runs setup once after the rendered DOM commits.
 -->
 <html lang="en">
 <head>
@@ -19,13 +16,7 @@
 <body>
 
 <script type="jst" name="x-init-demo" props="message">
-  ${
-    if (!el.__inited) {
-      el.__inited = true;
-      // runs exactly once, like x-init
-      queueMicrotask(() => { el.message = 'Initialised once at render #1'; });
-    }
-  }
+  $ once('init', () => { el.message = 'Initialised once after mount'; });
   <p data-testid="out">$(message || 'waiting for init…')</p>
 </script>
 
@@ -33,6 +24,10 @@
 <x-init-demo id="demo"></x-init-demo>
 
 <script>
+  window.__parityTest = async () => {
+    await new Promise(resolve => setTimeout(resolve, 0));
+    return { ok: document.querySelector('[data-testid="out"]').textContent.includes('Initialised once'), detail: 'once() ran after mount' };
+  };
   window.__exampleReady = true;
 </script>
 </body>

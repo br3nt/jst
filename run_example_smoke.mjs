@@ -282,7 +282,7 @@ async function main() {
   const userDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'jst-smoke-'));
   const debugPort = 9223;
 
-  const chrome = spawn(chromePath, [
+  const chromeArgs = [
     '--headless=new',
     '--disable-gpu',
     '--no-first-run',
@@ -290,7 +290,11 @@ async function main() {
     `--remote-debugging-port=${debugPort}`,
     `--user-data-dir=${userDataDir}`,
     'about:blank',
-  ], { stdio: 'ignore' });
+  ];
+  if (process.platform === 'linux') {
+    chromeArgs.push('--no-sandbox', '--disable-dev-shm-usage');
+  }
+  const chrome = spawn(chromePath, chromeArgs, { stdio: 'ignore' });
 
   let failures = 0;
 

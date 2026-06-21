@@ -27,9 +27,9 @@
     "framework": "HTMX",
     "name": "delete-row",
     "source": "https://htmx.org/examples/delete-row/",
-    "status": "partial",
+    "status": "exact",
     "file": "htmx/delete-row.html",
-    "note": "Round-trip clean, but fade-out needs a `deleting` class + `setTimeout`; coarse re-render yanks the node instantly otherwise."
+    "note": "Round-trip plus keyed `jst-transition`; CSS owns the fade and JST delays removal."
   },
   {
     "framework": "HTMX",
@@ -69,7 +69,7 @@
     "source": "https://htmx.org/examples/active-search/",
     "status": "partial",
     "file": "htmx/active-search.html",
-    "note": "Results component clean; page-level debounce/fetch trigger is still hand-written."
+    "note": "Results component clean, but debounce is a hand-written `setTimeout` (no `delay:` modifier)."
   },
   {
     "framework": "HTMX",
@@ -219,9 +219,9 @@
     "framework": "Alpine.js",
     "name": "x-init",
     "source": "https://alpinejs.dev/directives/init",
-    "status": "partial",
+    "status": "exact",
     "file": "alpine/init.html",
-    "note": "No template init hook; one-time guard + `queueMicrotask`."
+    "note": "`once()` runs setup once after the first DOM commit."
   },
   {
     "framework": "Alpine.js",
@@ -363,9 +363,9 @@
     "framework": "Vue",
     "name": "Lifecycle",
     "source": "https://vuejs.org/guide/essentials/lifecycle",
-    "status": "partial",
+    "status": "exact",
     "file": "vue/lifecycle.html",
-    "note": "`mounted` approximable with a microtask; teardown uses `onDisconnect(fn)`."
+    "note": "`once()` covers post-commit setup and returned cleanup; each render covers the example's update counter."
   },
   {
     "framework": "Vue",
@@ -429,7 +429,7 @@
     "source": "https://vuejs.org/examples/#todomvc",
     "status": "partial",
     "file": "vue/todomvc.html",
-    "note": "Full feature set; explicit parent-owned input events and a queued re-focus for edit mode. *(behaviourally verified)*"
+    "note": "Full feature set; edit-focus needs a queued re-focus; manual two-way throughout. *(behaviourally verified)*"
   },
   {
     "framework": "Vue",
@@ -443,9 +443,9 @@
     "framework": "Vue",
     "name": "Modal with transition",
     "source": "https://vuejs.org/examples/#modal",
-    "status": "partial",
+    "status": "exact",
     "file": "vue/modal.html",
-    "note": "No `<transition>`; kept in DOM, class toggled, CSS does enter+leave."
+    "note": "Conditional keyed node plus `jst-transition`; CSS owns enter and leave."
   },
   {
     "framework": "React",
@@ -509,7 +509,7 @@
     "source": "https://react.dev/learn/synchronizing-with-effects",
     "status": "partial",
     "file": "react/effects-fetching.html",
-    "note": "Guarded render block + stale-response guard; teardown can use `onDisconnect`, but there is no effect dependency model."
+    "note": "Guarded render block + stale-response guard; teardown exists via `onDisconnect`, but JST has no effect dependency model."
   },
   {
     "framework": "React",

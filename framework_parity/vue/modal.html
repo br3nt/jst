@@ -3,11 +3,8 @@
 <!--
   Source: https://vuejs.org/examples/#modal
   Demonstrates: a modal dialog with a fade/scale transition on open and close.
-  JST status: (i) partial — JST has no <transition> wrapper. Reproduced by keeping the
-  modal always in the DOM and toggling an `open` class; CSS transitions handle BOTH the
-  enter and the leave animation (opacity + transform). The visual result is equivalent
-  to Vue's <transition>; what's missing is Vue's automatic mount/unmount-driven hooks
-  (we trade real DOM removal for a visibility toggle). Acceptable for most modals.
+  JST status: ✓ exact — conditional rendering plus `jst-transition` coordinates
+  mount/unmount with CSS-owned enter and leave animations.
 -->
 <html lang="en">
 <head>
@@ -16,12 +13,14 @@
 <script type="module" src="../../jst.js"></script>
 <style>
   body{font-family:sans-serif}
-  .mask{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;
-        opacity:0;visibility:hidden;transition:opacity .3s ease}
-  .mask.open{opacity:1;visibility:visible}
+  .mask{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center}
+  .modal-fade-enter-active,.modal-fade-leave-active{transition:opacity .3s ease}
+  .modal-fade-enter-from,.modal-fade-leave-to{opacity:0}
+  .modal-fade-enter-to,.modal-fade-leave-from{opacity:1}
   .modal{background:#fff;padding:24px;border-radius:8px;width:300px;box-shadow:0 4px 20px rgba(0,0,0,.3);
-         transform:scale(.9) translateY(-20px);transition:transform .3s ease}
-  .mask.open .modal{transform:scale(1) translateY(0)}
+         transition:transform .3s ease}
+  .modal-fade-enter-from .modal,.modal-fade-leave-to .modal{transform:scale(.9) translateY(-20px)}
+  .modal-fade-enter-to .modal,.modal-fade-leave-from .modal{transform:scale(1) translateY(0)}
   button{padding:8px 14px;cursor:pointer}
 </style>
 </head>
@@ -29,18 +28,39 @@
 
 <script type="jst" name="modal-demo" props="open">
   <button id="show" @click="$(() => el.open = true)">Show Modal</button>
-  <div class="mask $(open ? 'open' : '')"
-       @click="$(e => { if (e.target === e.currentTarget) el.open = false; })">
-    <div class="modal">
-      <h3 id="modal-title">Hello from a JST modal!</h3>
-      <p>This modal animates in and out with CSS transitions.</p>
-      <button id="close" @click="$(() => el.open = false)">Close</button>
+  $ if (open) {
+    <div class="mask" jst-key="$('modal')" jst-transition="modal-fade"
+         @click="$(e => { if (e.target === e.currentTarget) el.open = false; })">
+      <div class="modal">
+        <h3 id="modal-title">Hello from a JST modal!</h3>
+        <p>This modal animates in and out with CSS transitions.</p>
+        <button id="close" @click="$(() => el.open = false)">Close</button>
+      </div>
     </div>
-  </div>
+  $ }
 </script>
 
 <modal-demo id="app" open="false"></modal-demo>
 
-<script>window.__exampleReady = true;</script>
+<script>
+  window.__parityTest = async () => {
+    document.getElementById('show').click();
+    let timeout = Date.now() + 1000;
+    while (Date.now() < timeout && !document.querySelector('.mask')) {
+      await new Promise(resolve => setTimeout(resolve, 25));
+    }
+    const entered = Boolean(document.querySelector('.mask'));
+    document.getElementById('close').click();
+    timeout = Date.now() + 1000;
+    while (Date.now() < timeout && !document.querySelector('.modal-fade-leave-active')) {
+      await new Promise(resolve => setTimeout(resolve, 25));
+    }
+    const leaving = document.querySelector('.modal-fade-leave-active');
+    leaving?.dispatchEvent(new Event('transitionend', { bubbles: true }));
+    await new Promise(resolve => setTimeout(resolve, 0));
+    return { ok: entered && Boolean(leaving) && !document.querySelector('.mask'), detail: 'conditional enter and leave' };
+  };
+  window.__exampleReady = true;
+</script>
 </body>
 </html>
