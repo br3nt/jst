@@ -94,6 +94,31 @@ imports from many direct `file://` pages. A classic/global build such as
 `jst.global.js` is planned so copied examples, local prototypes, and
 LLM-generated single HTML files can run directly from disk.
 
+## Calling module code from a template needs a global (planned)
+
+A template cannot `import`, and a server-streamed component root has no seam to
+inject a function through before it renders. So when a template has to call into
+a behaviour module, for example to mount a third-party widget in `once()`, the
+reference is reached through a global such as `window.MyEditor.mount(el)`. For a
+page that owns its components, the page-level script can inject via properties
+instead (`el.controller = ...`); a streamed root cannot. Keep the bridge to a
+single named object rather than scattering `window.*` across components. A
+first-class injection or behaviour-registry mechanism is planned; until then,
+treat the global as a known, contained gap.
+
+## No uncontrolled-region directive for template-generated hosts (planned)
+
+Hosting a third-party widget works by handing its mount node in as a slot;
+projected slot nodes are detached during morphing and re-projected by reference,
+so the morpher never recreates them (see
+[controlled-components.md](./controlled-components.md#hosting-a-third-party-widget)).
+That covers a static, single host. A host the template itself generates inside a
+re-rendering region, a conditionally shown widget or one per array item, is not
+slot-shaped, and there is no `jst-ignore`-style directive to mark a subtree the
+morpher must leave alone. Composition covers most cases: make each item its own
+component with its own slot. A genuine case that composition cannot shape is the
+argument for an explicit uncontrolled-region directive; report it if you hit one.
+
 ## Summary
 
 JST's core (custom elements, morphing, keyed reconciliation, CSS transitions,

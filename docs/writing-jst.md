@@ -341,7 +341,11 @@ Reach for `once()` whenever you touch the rendered DOM or set up a resource: a
 timer, subscription, observer, or third-party widget. Host a widget through a
 slot so the morpher does not recreate its nodes on re-render. See
 [controlled-components.md](./controlled-components.md#hosting-a-third-party-widget)
-for the full pattern.
+for the full pattern. Calling `window.MyChart` here is a global bridge, because a
+template cannot `import`; keep it to one named object (see
+[known-gaps.md](./known-gaps.md)). Before wrapping a library this way, check that
+the surface needs a component at all
+([decision-guide.md](./decision-guide.md#component-granularity)).
 
 ## Common mistakes
 
@@ -353,4 +357,7 @@ for the full pattern.
 - Use `trustedHTML()` only for trusted HTML.
 - Avoid prop names that clash with native HTML attributes such as `title`.
 - Use `once()`, not an inline `${ ... }` block, to touch the rendered DOM.
+- Do not wrap a third-party library in a slot-only component; inline it instead.
+- A static form or markup with a handler needs no component; server-render it and
+  wire it from a module by selector.
 - Serve module builds over HTTP; direct `file://` needs a future global build.

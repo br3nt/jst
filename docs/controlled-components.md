@@ -215,3 +215,11 @@ every re-render intact, and `mount` returns the teardown that `once()` registers
 for disconnect. If you instead wrote the mount element directly in the template
 body, the morpher would own those nodes and rewrite them on the next render,
 corrupting the widget. The slot is the boundary that keeps the two apart.
+
+Two caveats. First, `window.MyEditor` is a global bridge: a template cannot
+`import`, so calling into a widget module means reaching for a global. Keep it to
+one named object and see [known-gaps.md](./known-gaps.md) for why and what is
+planned. Second, confirm the surface needs a component at all before reaching for
+this pattern. A slot-only component around a library is overhead; a static widget
+with no lifecycle can be mounted by a plain module instead. See
+[decision-guide.md](./decision-guide.md#component-granularity).
