@@ -196,6 +196,36 @@ Supported modifiers include:
 - `.debounce` / `.debounce.300`
 - `.outside`
 
+### `el` versus the event target
+
+Inside a handler, `el` is always the component host, even for a listener on a
+nested or `forEach`-ed child. To act on the element the event fired on, read it
+from the event rather than from `el`:
+
+- `el` - the component host. Use it for host state, such as `el.count`.
+- `event.currentTarget` - the element the listener is attached to. Use it inside
+  a loop to act on this row, column, or cell.
+- `event.target` - the deepest element actually hit, which may be a child of
+  `currentTarget`.
+
+```html
+<script type="jst" name="kanban-board" props="columns">
+  $ columns.forEach(col => {
+    <div class="col"
+         @dragover.prevent="$(event => event.currentTarget.classList.add('over'))"
+         @dragleave="$(event => event.currentTarget.classList.remove('over'))"
+         @click="$(() => el.selected = col.id)">
+      $(col.name)
+    </div>
+  $ })
+</script>
+```
+
+In the dragover handler `el` is the `kanban-board`, not the hovered `.col`, so
+`el.classList.add('over')` would highlight the whole board. Use
+`event.currentTarget` for the column. Reach for `el` only when you want host
+state, as in the `@click` handler that sets `el.selected`.
+
 ## 7. State updates
 
 Assigning a declared prop property renders:
