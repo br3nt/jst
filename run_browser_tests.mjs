@@ -73,6 +73,21 @@ async function listen(server) {
   return server.address().port;
 }
 
+async function stopChild(child, timeoutMs = 2000) {
+  if (!child || child.exitCode !== null) return;
+  await new Promise(resolve => {
+    const timeout = setTimeout(() => {
+      child.kill('SIGKILL');
+      resolve();
+    }, timeoutMs);
+    child.once('exit', () => {
+      clearTimeout(timeout);
+      resolve();
+    });
+    child.kill('SIGTERM');
+  });
+}
+
 function parseSummaryFromDom(dom) {
   const match = dom.match(/<div id="browser-test-summary"[^>]*data-status="([^"]+)"[^>]*data-total="([^"]+)"[^>]*data-passed="([^"]+)"[^>]*data-failed="([^"]+)"/);
   if (!match) throw new Error('Could not find browser test summary in rendered DOM');
@@ -149,6 +164,7 @@ async function runChrome(url) {
     try {
       targets = await waitForJson(baseUrl, '/json/list');
     } catch (error) {
+      await stopChild(chrome);
       throw new Error(`${error.message}\n${stderr}`.trim());
     }
     const pageTarget = targets.find(target => target.type === 'page');
@@ -218,8 +234,7 @@ async function runChrome(url) {
       throw new Error(`Chrome headless timed out.\n${stderr}`.trim());
     } finally {
       ws.close();
-      chrome.kill('SIGINT');
-      await new Promise(resolve => chrome.once('exit', resolve));
+      await stopChild(chrome);
     }
   } finally {
     fs.rmSync(userDataDir, { recursive: true, force: true });

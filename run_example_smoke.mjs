@@ -270,6 +270,15 @@ async function waitForJson(baseUrl, pathName, timeoutMs = 10000) {
   throw new Error(`Timed out waiting for ${baseUrl}${pathName}`);
 }
 
+async function stopChild(child, timeoutMs = 2000) {
+  if (!child || child.exitCode !== null) return;
+  await new Promise(resolve => {
+    const timeout = setTimeout(() => { child.kill('SIGKILL'); resolve(); }, timeoutMs);
+    child.once('exit', () => { clearTimeout(timeout); resolve(); });
+    child.kill('SIGTERM');
+  });
+}
+
 async function main() {
   const server = createStaticServer(__dirname);
   await new Promise((resolve, reject) => {
@@ -357,8 +366,7 @@ async function main() {
 
     ws.close();
   } finally {
-    chrome.kill('SIGINT');
-    await new Promise(resolve => chrome.once('exit', resolve));
+    await stopChild(chrome);
     fs.rmSync(userDataDir, { recursive: true, force: true });
     server.close();
   }

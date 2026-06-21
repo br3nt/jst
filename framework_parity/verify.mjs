@@ -62,6 +62,15 @@ async function waitForJson(url, timeoutMs = 10000) {
   throw new Error(`timeout waiting for ${url}`);
 }
 
+async function stopChild(child, timeoutMs = 2000) {
+  if (!child || child.exitCode !== null) return;
+  await new Promise(resolve => {
+    const timeout = setTimeout(() => { child.kill('SIGKILL'); resolve(); }, timeoutMs);
+    child.once('exit', () => { clearTimeout(timeout); resolve(); });
+    child.kill('SIGTERM');
+  });
+}
+
 async function main() {
   const server = createStaticServer();
   await new Promise((res, rej) => { server.once('error', rej); server.listen(0, '127.0.0.1', res); });
@@ -158,7 +167,7 @@ async function main() {
     }
     ws.close();
   } finally {
-    chrome.kill('SIGINT');
+    await stopChild(chrome);
     server.close();
     try { fs.rmSync(userDataDir, { recursive: true, force: true }); } catch {}
   }
