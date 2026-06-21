@@ -169,7 +169,7 @@ async function main() {
   } finally {
     await stopChild(chrome);
     server.close();
-    try { fs.rmSync(userDataDir, { recursive: true, force: true }); } catch {}
+    try { fs.rmSync(userDataDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 }); } catch {}
   }
 
   let failures = 0;

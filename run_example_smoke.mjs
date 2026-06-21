@@ -367,7 +367,7 @@ async function main() {
     ws.close();
   } finally {
     await stopChild(chrome);
-    fs.rmSync(userDataDir, { recursive: true, force: true });
+    fs.rmSync(userDataDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
     server.close();
   }
 

@@ -206,7 +206,7 @@ async function main() {
     if (!ok) process.exitCode = 1;
   } finally {
     await Promise.all([stopChild(chrome), stopChild(serverProcess)]);
-    fs.rmSync(userDataDir, { recursive: true, force: true });
+    fs.rmSync(userDataDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
   }
 }
 
