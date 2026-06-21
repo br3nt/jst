@@ -118,6 +118,7 @@ async function runChrome(url) {
   const chromePath = process.env.CHROME_PATH || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
   const userDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'jst-chrome-'));
   const port = 9222;
+  let chrome;
 
   try {
     const chromeArgs = [
@@ -145,7 +146,7 @@ async function runChrome(url) {
       chromeArgs.push('--no-sandbox', '--disable-dev-shm-usage');
     }
 
-    const chrome = spawn(chromePath, chromeArgs, {
+    chrome = spawn(chromePath, chromeArgs, {
       stdio: ['ignore', 'pipe', 'pipe'],
     });
 
@@ -234,9 +235,9 @@ async function runChrome(url) {
       throw new Error(`Chrome headless timed out.\n${stderr}`.trim());
     } finally {
       ws.close();
-      await stopChild(chrome);
     }
   } finally {
+    await stopChild(chrome);
     fs.rmSync(userDataDir, { recursive: true, force: true });
   }
 }
