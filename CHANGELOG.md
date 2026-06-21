@@ -5,6 +5,30 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.1.1 - 2026-06-21
+
+### Changed
+
+- **`once()` runs after the DOM commits.** The template body runs as a
+  string-build pass before the rendered DOM and projected slots exist, so
+  `once()` setup that touched the component's own DOM ran too early. Setup is now
+  deferred to a microtask that runs after the render commits. The function setup
+  returns is registered as disconnect cleanup, so hosting a third-party widget is
+  `once('key', () => mount(el))` with no manual teardown wiring. A per-connection
+  epoch discards a stale setup across a synchronous disconnect then reconnect.
+
+### Documentation
+
+- **Lifecycle and `once()` timing.** The string-build vs commit model, inline
+  `${ ... }` vs `once()`, and hosting a third-party widget through a slot so the
+  morpher never recreates its nodes.
+- **Component granularity.** Guidance on when not to make a component: inline a
+  library rather than wrap it in a slot-only component, and server-render a
+  static surface with a module instead of a component.
+- **Known gaps.** Calling module code from a template currently needs a global,
+  and there is no uncontrolled-region directive for template-generated widget
+  hosts.
+
 ## 0.1.0 - 2026-06-17
 
 First release: a fail-loud, no-build component model with a real reconciler, a
