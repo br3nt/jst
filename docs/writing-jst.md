@@ -52,6 +52,20 @@ Attribute values that look like JSON are parsed:
 - `open="true"` becomes boolean `true`.
 - `label="hello"` stays a string.
 
+The parser tries `JSON.parse` first and falls back to the raw string, so the
+coercion is eager and applies to any JSON-looking value. `title="123"` arrives
+as the number `123`, not the string `"123"`. When a numeric-looking value must
+stay a string, pass it as a property, which skips JSON coercion:
+
+```js
+el.title = "123"; // stays the string "123"
+```
+
+Avoid prop names that clash with native HTML attributes. A prop named `title`
+also drives the browser's native `title` tooltip, and names like `id`, `class`,
+`style`, and `hidden` carry their platform behavior whatever your component does
+with them. Choose prop names that do not shadow native attributes.
+
 Multi-word props use kebab-case in HTML attributes:
 
 ```html
@@ -300,6 +314,35 @@ JST.configure({
 });
 ```
 
+## 13. Lifecycle: inline blocks vs once()
+
+A template body runs as a string-build pass before its DOM is committed. Inline
+`${ ... }` blocks and `$(expr)` evaluate during that pass, on every render, and
+cannot see the component's own rendered DOM or projected slots yet. Use them for
+pure computation that feeds the template.
+
+`once(key, setup)` defers `setup` to a microtask that runs after the render
+commits, so the rendered DOM and slots are present. It runs once per connection
+and registers the function `setup` returns as disconnect cleanup:
+
+```html
+<script type="jst" name="chart-card" props="data">
+  $(slot('canvas'))
+  ${ once('chart', () => {
+    const chart = window.MyChart.mount(el)
+    return () => chart.destroy()      // runs on disconnect
+  }) }
+</script>
+
+<chart-card><canvas slot="canvas"></canvas></chart-card>
+```
+
+Reach for `once()` whenever you touch the rendered DOM or set up a resource: a
+timer, subscription, observer, or third-party widget. Host a widget through a
+slot so the morpher does not recreate its nodes on re-render. See
+[controlled-components.md](./controlled-components.md#hosting-a-third-party-widget)
+for the full pattern.
+
 ## Common mistakes
 
 - Custom element names must include a hyphen: `todo-item`, not `todo`.
@@ -308,4 +351,6 @@ JST.configure({
 - Remember that `.prop` and `@event` bindings only compile inside JST templates.
 - Add `jst-key` to real lists.
 - Use `trustedHTML()` only for trusted HTML.
+- Avoid prop names that clash with native HTML attributes such as `title`.
+- Use `once()`, not an inline `${ ... }` block, to touch the rendered DOM.
 - Serve module builds over HTTP; direct `file://` needs a future global build.

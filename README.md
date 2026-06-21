@@ -87,8 +87,9 @@ Props are declared in the case-preserving `props` attribute:
 - `jst-transition="fade"` applies CSS-owned transition classes:
   `fade-enter-*`, `fade-leave-*`, and `fade-move`.
 - `$(slot())` and `$(slot('name', 'fallback'))` project light-DOM children.
-- `once(key, setup)` runs a rare DOM-local setup once per connection and uses
-  a returned function as disconnect cleanup.
+- `once(key, setup)` defers a rare DOM-local setup to a microtask after the
+  render commits, runs it once per connection, and uses a returned function as
+  disconnect cleanup.
 - `onDisconnect(fn)` is the lower-level teardown escape hatch; prefer wrapping
   resource setup in `once()` so it is not re-registered on every render.
 

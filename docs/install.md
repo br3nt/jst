@@ -44,6 +44,26 @@ the same origin as your pages, or pin a versioned copy on a CDN. See
 [production.md](./production.md) for production specifics including CDN
 pinning and CSP.
 
+## Asset pipelines and digested filenames
+
+`jst.js` imports the rest of the framework with relative specifiers
+(`./compiler.js`, `./interpreter.js`, and so on). An asset pipeline that
+fingerprints filenames breaks that import graph. Rails Propshaft, or any bundler
+that rewrites assets to digested names like `jst-9f2c1a.js`, leaves `jst.js`
+still asking for `./compiler.js` while the served file is `compiler-3a7b04.js`,
+so the import 404s.
+
+Serve the JST module files as plain static files from a non-digested path, the
+way the JST site itself ships them, and load the entry point as a module:
+
+```html
+<script type="module" src="/jst/jst.js"></script>
+```
+
+In a Rails app, put the files under `public/jst/` so Propshaft does not digest
+them. Keeping every JST module together under one undigested path preserves the
+relative imports intact.
+
 ## Serving locally
 
 JST needs the files served over HTTP (ES modules do not load from `file://`).
