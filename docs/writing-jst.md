@@ -54,12 +54,18 @@ Attribute values that look like JSON are parsed:
 
 The parser tries `JSON.parse` first and falls back to the raw string, so the
 coercion is eager and applies to any JSON-looking value. `title="123"` arrives
-as the number `123`, not the string `"123"`. When a numeric-looking value must
-stay a string, pass it as a property, which skips JSON coercion:
+as the number `123`, not the string `"123"`; `version="1.0"` arrives as the
+number `1` (JSON parses `1.0` to `1`); and an identifier like `id="0123"` loses
+its leading zero. Pass rich data and any string that must stay a string,
+identifiers and version numbers especially, as a property, which skips JSON
+coercion:
 
 ```js
-el.title = "123"; // stays the string "123"
+el.version = "1.0"; // stays the string "1.0"
+el.code = "0123";   // stays the string "0123"
 ```
+
+This trap is also listed in [known-gaps.md](./known-gaps.md#attribute-coercion-is-eager-shipped-know-the-trap).
 
 Avoid prop names that clash with native HTML attributes. A prop named `title`
 also drives the browser's native `title` tooltip, and names like `id`, `class`,
