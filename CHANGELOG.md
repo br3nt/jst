@@ -64,6 +64,9 @@ release integrates two parallel hardening efforts into one runtime.
 
 ### Fixed
 
+- **Post-commit `once()` setup.** Lifecycle setup now runs in a microtask after
+  rendered DOM is committed, skips setup if the element disconnects first, and
+  still registers a returned disconnect cleanup.
 - **Fail-loud lexer/compiler.** Malformed bindings throw at compile time instead
   of silently degrading - including `.prop`/`@event` values with more than one
   `$(...)` expression or literal text around the expression. Compile errors are

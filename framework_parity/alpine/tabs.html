@@ -51,6 +51,11 @@
     { id: 'two',   label: 'Specs',    body: 'The specifications panel.' },
     { id: 'three', label: 'Reviews',  body: 'The reviews panel.' },
   ];
+  window.__parityTest = async () => {
+    document.querySelector('[data-testid="tab-two"]').click();
+    await new Promise(resolve => setTimeout(resolve, 0));
+    return { ok: document.querySelector('[data-testid="panel"]').textContent.includes('specifications'), detail: 'second tab selection' };
+  };
   window.__exampleReady = true;
 </script>
 </body>

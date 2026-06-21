@@ -165,7 +165,7 @@
       <code>&lt;script type="jst"&gt;</code> tag is compiled into a class and registered with
       <code>customElements.define()</code> — so your <code>&lt;jst-*&gt;</code> tags are
       <em>genuine custom elements</em>, not a framework's virtual stand-ins. You write them in
-      ordinary HTML with JavaScript as the templating language — no compiler, no bundler, no JSX,
+      ordinary HTML with JavaScript as the templating language — no build-time compiler, no bundler, no JSX,
       no virtual DOM.
     </p>
     <div class="platform-note">
@@ -187,15 +187,17 @@
 
     <table class="pos">
       <tr><th>Tool</th><th>Strength</th><th>The gap JST targets</th></tr>
-      <tr><td><b>HTMX</b></td><td>Server returns HTML; hypermedia-driven.</td><td>No client-side interactivity without a round-trip; introduces its own attribute language.</td></tr>
-      <tr><td><b>Alpine</b></td><td>Sprinkle client interactivity into HTML.</td><td>No server-streamed components; ad-hoc scopes and stores.</td></tr>
+      <tr><td><b>HTMX</b></td><td>Server returns HTML; hypermedia-driven.</td><td>Optimised for server-driven interactions; reusable client component definitions are outside its core model.</td></tr>
+      <tr><td><b>Alpine</b></td><td>Sprinkle client interactivity into existing HTML.</td><td>Local behaviour is the primary abstraction; JST instead targets streamed custom-element definitions with explicit props and events.</td></tr>
       <tr><td><b>React / Vue</b></td><td>Powerful component models.</td><td>Build step, virtual DOM, framework runtime, JSX/SFC tooling.</td></tr>
       <tr><td><b>JST</b></td><td colspan="2">Components in plain HTML that the <b>server can stream down</b> (a fetched fragment can define <em>and</em> use a component — it auto-registers), with <b>full client interactivity</b>, <b>no build</b>, and <b>no virtual DOM or signals</b> — it rides the platform: custom elements, properties, events, DOM morphing.</td></tr>
     </table>
 
     <p class="lede" style="margin-top:1.2rem">We tested that claim: <a href="framework_parity/index.html">70 canonical examples</a>
-      from HTMX, Alpine, Vue and React, rebuilt in JST. 35 were exact matches, 35 needed a
-      documented workaround, none were impossible. The gaps are catalogued honestly.</p>
+      from HTMX, Alpine, Vue and React, rebuilt in JST. 47 are currently classified as
+      idiomatic matches and 23 use a documented workaround. Those classifications are an
+      author assessment; the verifier separately checks every page's readiness, errors,
+      rendered output, and an interaction where the example provides one.</p>
   </div>
 </section>
 
@@ -210,6 +212,10 @@
       interactivity</strong> — the browser registers and runs the JS on arrival. You get HTMX's
       "the server just returns HTML" simplicity <strong>and</strong> real client-side behaviour in
       the very same response. No JSON contract, no parallel client app, no duplicated views.</p>
+    <div class="platform-note"><strong>Trust boundary:</strong> a streamed
+      <code>&lt;script type="jst"&gt;</code> template is executable JavaScript. Only load and
+      auto-register component definitions from trusted sources. Ordinary interpolated data
+      is escaped; that does not make an untrusted template safe.</div>
     <p class="lede">You do not need a client router to get there. Use ordinary resourceful URLs
       and full-page navigation by default — <code>/orders/4471</code>,
       <code>/orders/4471/edit</code>, <code>POST /orders/4471/items</code>. Reach for fragment
@@ -227,11 +233,11 @@
   <div class="wrap">
     <h2>Philosophy</h2>
     <ul class="principles">
-      <li><b>No build step.</b> Components live in <code>&lt;script type="jst"&gt;</code> in plain HTML. The browser is the toolchain — nothing to compile, bundle, or transpile.</li>
+      <li><b>No build-time compiler required.</b> Components live in <code>&lt;script type="jst"&gt;</code> in plain HTML. The runtime compiler handles them in the browser; precompilation remains available for production and strict CSP.</li>
       <li><b>JavaScript is the templating language.</b> <code>$(expr)</code> to interpolate, <code>$ if</code> / <code>$ forEach</code> for control flow. No new DSL — if you know JavaScript, you know JST.</li>
       <li><b>Hypertext as the API.</b> Responses are HTML carrying their own UI and next actions — not JSON a client must re-render. Like HTMX, but the response brings its own front-end interactivity.</li>
       <li><b>No backend required.</b> A JST app is just static files; the same components run on the client, stream down from a server, or ship as a folder of files. No JSON contract, no parallel client app.</li>
-      <li><b>It's just Web Components.</b> Every <code>&lt;jst-*&gt;</code> is a real custom element via <code>customElements.define</code>. Data in as <em>properties</em>, actions out as bubbling <em>CustomEvents</em>, DOM patched by morphing — no virtual DOM, no signals, no shadow-DOM lock-in.</li>
+      <li><b>Built on Web Components.</b> JST's runtime/compiler registers every <code>&lt;jst-*&gt;</code> as a real custom element via <code>customElements.define</code>. Data in as <em>properties</em>, actions out as bubbling <em>CustomEvents</em>, DOM patched by morphing — no virtual DOM, no signals, no shadow-DOM lock-in.</li>
       <li><b>Props down, events up.</b> Components are dumb renderers; state lives in the page or a parent, recursively.</li>
       <li><b>Safe by default.</b> Interpolation is HTML-escaped unless you opt out with <code>trustedHTML()</code>.</li>
     </ul>

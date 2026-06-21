@@ -2,6 +2,7 @@ name: CI
 
 on:
   push:
+    branches: [main]
   pull_request:
 
 jobs:
@@ -9,12 +10,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 22
 
       # Required gate: the pure-Node suites (runtime + adversarial scanner
       # regression). No browser, no network, no build step.
@@ -27,8 +28,10 @@ jobs:
       # macOS path for local dev. On CI we install Chrome and point CHROME_PATH at
       # it, so these are a real gate (no continue-on-error).
       - name: Install Chrome
-        uses: browser-actions/setup-chrome@v1
+        uses: browser-actions/setup-chrome@v2
         id: setup-chrome
+        with:
+          chrome-version: stable
 
       - name: Browser tests
         env:

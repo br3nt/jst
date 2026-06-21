@@ -270,6 +270,15 @@ async function waitForJson(baseUrl, pathName, timeoutMs = 10000) {
   throw new Error(`Timed out waiting for ${baseUrl}${pathName}`);
 }
 
+async function stopChild(child, timeoutMs = 2000) {
+  if (!child || child.exitCode !== null) return;
+  await new Promise(resolve => {
+    const timeout = setTimeout(() => { child.kill('SIGKILL'); resolve(); }, timeoutMs);
+    child.once('exit', () => { clearTimeout(timeout); resolve(); });
+    child.kill('SIGTERM');
+  });
+}
+
 async function main() {
   const server = createStaticServer(__dirname);
   await new Promise((resolve, reject) => {
@@ -282,7 +291,7 @@ async function main() {
   const userDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'jst-smoke-'));
   const debugPort = 9223;
 
-  const chrome = spawn(chromePath, [
+  const chromeArgs = [
     '--headless=new',
     '--disable-gpu',
     '--no-first-run',
@@ -290,7 +299,11 @@ async function main() {
     `--remote-debugging-port=${debugPort}`,
     `--user-data-dir=${userDataDir}`,
     'about:blank',
-  ], { stdio: 'ignore' });
+  ];
+  if (process.platform === 'linux') {
+    chromeArgs.push('--no-sandbox', '--disable-dev-shm-usage');
+  }
+  const chrome = spawn(chromePath, chromeArgs, { stdio: 'ignore' });
 
   let failures = 0;
 
@@ -353,9 +366,8 @@ async function main() {
 
     ws.close();
   } finally {
-    chrome.kill('SIGINT');
-    await new Promise(resolve => chrome.once('exit', resolve));
-    fs.rmSync(userDataDir, { recursive: true, force: true });
+    await stopChild(chrome);
+    try { fs.rmSync(userDataDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 }); } catch {}
     server.close();
   }
 

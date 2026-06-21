@@ -25,7 +25,8 @@ too.
 </html>
 ```
 
-That is the whole install. There is nothing to compile and nothing to bundle.
+That is the whole install. No build-time compilation or bundling is required;
+runtime mode compiles the templates in the browser.
 
 ## File layout
 
@@ -40,9 +41,40 @@ modules:
 | `utils.js` / `input_reader.js` | helpers |
 
 Because they are ES modules, the browser fetches them on demand. Serve them from
-the same origin as your pages, or pin a versioned copy on a CDN. See
+the same origin as your pages. After a Git tag exists, you can also pin that tag
+through a CDN; do not depend on a moving branch URL. See
 [production.md](./production.md) for production specifics including CDN
 pinning and CSP.
+
+For the `v0.1.0` release, the version-pinned jsDelivr entry point is:
+
+```html
+<script type="module" src="https://cdn.jsdelivr.net/gh/br3nt/jst@v0.1.0/jst.js"></script>
+```
+
+The imported modules resolve relative to that same tagged snapshot. Self-host
+the release files if CDN availability is not an acceptable production
+dependency.
+
+## Asset pipelines and digested filenames
+
+`jst.js` imports the rest of the framework with relative specifiers
+(`./compiler.js`, `./interpreter.js`, and so on). An asset pipeline that
+fingerprints filenames breaks that import graph. Rails Propshaft, or any bundler
+that rewrites assets to digested names like `jst-9f2c1a.js`, leaves `jst.js`
+still asking for `./compiler.js` while the served file is `compiler-3a7b04.js`,
+so the import 404s.
+
+Serve the JST module files as plain static files from a non-digested path, the
+way the JST site itself ships them, and load the entry point as a module:
+
+```html
+<script type="module" src="/jst/jst.js"></script>
+```
+
+In a Rails app, put the files under `public/jst/` so Propshaft does not digest
+them. Keeping every JST module together under one undigested path preserves the
+relative imports intact.
 
 ## Serving locally
 
@@ -88,5 +120,6 @@ node run_example_smoke.mjs
   and regression tests in Node.
 - `node run_browser_tests.mjs` runs the framework tests in headless Chrome.
 - `node run_example_smoke.mjs` drives the example pages in headless Chrome.
-- The `framework_parity` command verifies the HTMX/Alpine/Vue/React parity
-  examples rebuilt in JST.
+- The `framework_parity` command verifies readiness, console/JST errors, and a
+  per-page interaction or rendered-output assertion. It does not turn the
+  exact/partial editorial classifications into benchmark results.

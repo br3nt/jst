@@ -73,6 +73,21 @@ async function listen(server) {
   return server.address().port;
 }
 
+async function stopChild(child, timeoutMs = 2000) {
+  if (!child || child.exitCode !== null) return;
+  await new Promise(resolve => {
+    const timeout = setTimeout(() => {
+      child.kill('SIGKILL');
+      resolve();
+    }, timeoutMs);
+    child.once('exit', () => {
+      clearTimeout(timeout);
+      resolve();
+    });
+    child.kill('SIGTERM');
+  });
+}
+
 function parseSummaryFromDom(dom) {
   const match = dom.match(/<div id="browser-test-summary"[^>]*data-status="([^"]+)"[^>]*data-total="([^"]+)"[^>]*data-passed="([^"]+)"[^>]*data-failed="([^"]+)"/);
   if (!match) throw new Error('Could not find browser test summary in rendered DOM');
@@ -103,9 +118,10 @@ async function runChrome(url) {
   const chromePath = process.env.CHROME_PATH || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
   const userDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'jst-chrome-'));
   const port = 9222;
+  let chrome;
 
   try {
-    const chrome = spawn(chromePath, [
+    const chromeArgs = [
       '--headless=new',
       '--disable-gpu',
       '--disable-background-networking',
@@ -125,7 +141,12 @@ async function runChrome(url) {
       '--use-mock-keychain',
       `--user-data-dir=${userDataDir}`,
       'about:blank',
-    ], {
+    ];
+    if (process.platform === 'linux') {
+      chromeArgs.push('--no-sandbox', '--disable-dev-shm-usage');
+    }
+
+    chrome = spawn(chromePath, chromeArgs, {
       stdio: ['ignore', 'pipe', 'pipe'],
     });
 
@@ -140,7 +161,13 @@ async function runChrome(url) {
     });
 
     const baseUrl = `http://127.0.0.1:${port}`;
-    const targets = await waitForJson(baseUrl, '/json/list');
+    let targets;
+    try {
+      targets = await waitForJson(baseUrl, '/json/list');
+    } catch (error) {
+      await stopChild(chrome);
+      throw new Error(`${error.message}\n${stderr}`.trim());
+    }
     const pageTarget = targets.find(target => target.type === 'page');
 
     if (!pageTarget?.webSocketDebuggerUrl) {
@@ -208,11 +235,10 @@ async function runChrome(url) {
       throw new Error(`Chrome headless timed out.\n${stderr}`.trim());
     } finally {
       ws.close();
-      chrome.kill('SIGINT');
-      await new Promise(resolve => chrome.once('exit', resolve));
     }
   } finally {
-    fs.rmSync(userDataDir, { recursive: true, force: true });
+    await stopChild(chrome);
+    try { fs.rmSync(userDataDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 }); } catch {}
   }
 }
 

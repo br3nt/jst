@@ -121,7 +121,10 @@ delays removal until leave transitions finish.
 ## Teardown
 
 Most templates should not need lifecycle code. When a template opens an external
-resource, use `once(key, setup)` so setup is not re-registered on every render:
+resource, use `once(key, setup)` so setup is not re-registered on every render.
+`once` defers `setup` to a microtask that runs after the render commits, so the
+rendered DOM and projected slots are available, and registers the function
+`setup` returns as disconnect cleanup:
 
 ```html
 <script type="jst" name="clock-face" props="time">
@@ -135,7 +138,9 @@ resource, use `once(key, setup)` so setup is not re-registered on every render:
 
 `onDisconnect(fn)` is still available as the low-level teardown primitive, but
 calling it directly from a template body will run on every render unless you
-guard it yourself.
+guard it yourself. See
+[controlled-components.md](./controlled-components.md#hosting-a-third-party-widget)
+for hosting a third-party widget with `once()` and a slot.
 
 ## Browser Support
 

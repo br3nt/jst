@@ -129,22 +129,97 @@ that owns a resource: a timer, a subscription, an observer, an external widget.
 For those, JST gives you two lifecycle primitives in template scope (also on the
 element as `el.once` / `el.onDisconnect`):
 
-- `once(key, setupFn)` runs `setupFn` exactly once per key for the lifetime of
-  the connection. If `setupFn` returns a function, that runs as teardown on
-  disconnect.
+- `once(key, setupFn)` runs `setupFn` once per key for the lifetime of the
+  connection, after the render commits. If `setupFn` returns a function, that
+  function runs as teardown on disconnect.
 - `onDisconnect(fn)` registers a teardown to run on disconnect.
+
+### Render passes and the committed DOM
+
+A template body runs in two distinct moments. The body itself is a string-build
+pass: JST evaluates every `$(expr)` and `${ ... }` block to assemble the HTML.
+This happens before the rendered DOM and any projected slot nodes exist. Only
+after that string is built does JST commit it, morph the DOM, and fill slots.
+
+So an inline block cannot read the component's own rendered output:
+
+```html
+${ const node = el.querySelector('.thing') }  // null: nothing is rendered yet
+```
+
+`once(key, setupFn)` bridges the gap. The current runtime defers `setupFn` to a
+microtask that runs after the render commits, so the rendered DOM and projected
+slots are present:
+
+```html
+${ once('init', () => {
+  const node = el.querySelector('.thing')   // present now
+  // ... wire it up ...
+  return () => { /* teardown */ }            // registered as disconnect cleanup
+}) }
+```
+
+`setupFn` runs once per connection, and the function it returns is registered as
+disconnect cleanup, so you never wire teardown by hand. A synchronous
+disconnect then reconnect discards the stale setup. `once` keys reset on
+disconnect, so setup re-runs if the element reconnects.
+
+### Inline `${ ... }` vs once()
+
+Pick by whether you need the committed DOM.
+
+- Inline `${ ... }` runs synchronously during every render pass, before commit.
+  Use it for pure computation that feeds the template: deriving a value,
+  branching, building a list.
+- `once()` runs once, after commit, with cleanup. Use it for anything that
+  reaches into the rendered DOM or sets up a resource: a timer, subscription,
+  observer, or third-party widget.
 
 ```html
 <script type="jst" name="live-clock" props="label">
-  $ once('tick', () => {
-  $   const id = setInterval(() => el.emit('tick'), 1000)
-  $   return () => clearInterval(id)
-  $ })
+  ${ once('tick', () => {
+    const id = setInterval(() => el.emit('tick'), 1000)
+    return () => clearInterval(id)
+  }) }
   <time>$(label)</time>
 </script>
 ```
 
-Use `once()` so setup is not re-run on every render, and return the teardown so
-the resource is released on disconnect. There is no `effect()` and no dependency
-array, see [no-store-no-proxy.md](./no-store-no-proxy.md). `once` keys reset on
-disconnect, so setup re-runs if the element reconnects.
+There is no `effect()` and no dependency array, see
+[no-store-no-proxy.md](./no-store-no-proxy.md).
+
+### Hosting a third-party widget
+
+A rich-text editor, chart, or map manages its own DOM subtree. JST's morpher
+reconciles child nodes on every re-render, so it will fight any widget whose
+nodes live inside a re-rendered region; the morpher removes or rewrites the
+widget's DOM out from under it.
+
+Keep the widget's subtree out of the morphed region by passing its mount element
+in as a slot. Projected slot nodes are the element's original children. JST
+detaches them before morphing and re-projects the same node references after, so
+they are never recreated. Instantiate the widget in `once()`, once the slot is
+in place:
+
+```html
+<script type="jst" name="rich-editor">
+  $(slot('content'))
+  ${ once('editor', () => window.MyEditor.mount(el)) }   // mount returns its teardown
+</script>
+
+<rich-editor><div slot="content"></div></rich-editor>
+```
+
+The editor mounts into the projected `<div slot="content">`, which survives
+every re-render intact, and `mount` returns the teardown that `once()` registers
+for disconnect. If you instead wrote the mount element directly in the template
+body, the morpher would own those nodes and rewrite them on the next render,
+corrupting the widget. The slot is the boundary that keeps the two apart.
+
+Two caveats. First, `window.MyEditor` is a global bridge: a template cannot
+`import`, so calling into a widget module means reaching for a global. Keep it to
+one named object and see [known-gaps.md](./known-gaps.md) for why and what is
+planned. Second, confirm the surface needs a component at all before reaching for
+this pattern. A slot-only component around a library is overhead; a static widget
+with no lifecycle can be mounted by a plain module instead. See
+[decision-guide.md](./decision-guide.md#component-granularity).

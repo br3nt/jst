@@ -63,6 +63,14 @@
     app.commits = await (await fetch('/api/commits/' + branch)).json();
   }
   app.addEventListener('branch-change', e => loadBranch(e.detail));
+  window.__parityTest = async () => {
+    document.querySelectorAll('input[type="radio"]')[1].click();
+    const timeout = Date.now() + 3000;
+    while (Date.now() < timeout && !(app.branch === 'dev' && app.querySelectorAll('#commits li').length === 1)) {
+      await new Promise(resolve => setTimeout(resolve, 50));
+    }
+    return { ok: app.branch === 'dev' && app.querySelectorAll('#commits li').length === 1, detail: 'branch change fetches new commits' };
+  };
   loadBranch('main').then(() => { window.__exampleReady = true; });
 </script>
 </body>

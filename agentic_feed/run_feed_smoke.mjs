@@ -133,10 +133,19 @@ async function waitForHttp(url, timeoutMs = 8000) {
   throw new Error(`Timed out waiting for ${url}`);
 }
 
+async function stopChild(child, timeoutMs = 2000) {
+  if (!child || child.exitCode !== null) return;
+  await new Promise(resolve => {
+    const timeout = setTimeout(() => { child.kill('SIGKILL'); resolve(); }, timeoutMs);
+    child.once('exit', () => { clearTimeout(timeout); resolve(); });
+    child.kill('SIGTERM');
+  });
+}
+
 async function main() {
   const serverProcess = spawn('node', [path.join(__dirname, 'server.mjs'), `--port=${SERVER_PORT}`], { stdio: 'ignore' });
   const userDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'jst-feed-'));
-  const chrome = spawn(process.env.CHROME_PATH || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', [
+  const chromeArgs = [
     '--headless=new',
     '--disable-gpu',
     '--no-first-run',
@@ -144,7 +153,11 @@ async function main() {
     `--remote-debugging-port=${DEBUG_PORT}`,
     `--user-data-dir=${userDataDir}`,
     'about:blank',
-  ], { stdio: 'ignore' });
+  ];
+  if (process.platform === 'linux') {
+    chromeArgs.push('--no-sandbox', '--disable-dev-shm-usage');
+  }
+  const chrome = spawn(process.env.CHROME_PATH || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', chromeArgs, { stdio: 'ignore' });
 
   try {
     await waitForHttp(`http://127.0.0.1:${SERVER_PORT}/agentic_feed/index.html`);
@@ -192,10 +205,8 @@ async function main() {
     console.log(ok ? 'PASS: agentic feed end-to-end' : `FAIL: ${failed.join(', ')}`);
     if (!ok) process.exitCode = 1;
   } finally {
-    chrome.kill('SIGINT');
-    serverProcess.kill('SIGINT');
-    await new Promise(resolve => chrome.once('exit', resolve));
-    fs.rmSync(userDataDir, { recursive: true, force: true });
+    await Promise.all([stopChild(chrome), stopChild(serverProcess)]);
+    try { fs.rmSync(userDataDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 }); } catch {}
   }
 }
 

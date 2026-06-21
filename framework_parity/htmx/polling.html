@@ -58,6 +58,12 @@
   const timer = setInterval(() => { refresh(); if (++polls >= 5) clearInterval(timer); }, 500);
   document.getElementById('stop').addEventListener('click', () => clearInterval(timer));
 
+  window.__parityTest = async () => {
+    document.getElementById('stop').click();
+    const before = document.querySelector('[data-testid="value"]').textContent;
+    await new Promise(resolve => setTimeout(resolve, 650));
+    return { ok: document.querySelector('[data-testid="value"]').textContent === before, detail: 'stop polling cancels updates' };
+  };
   refresh().then(() => { window.__exampleReady = true; });
 </script>
 </body>

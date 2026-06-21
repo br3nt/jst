@@ -4,8 +4,10 @@
  */
 // verify.mjs — headless validation for parity examples.
 //
-// Loads each given .html file in headless Chrome and reports console errors,
-// uncaught exceptions, and JST render errors. Self-contained: spawns its own
+// Loads each given .html file in headless Chrome, reports console/JST errors,
+// and runs one assertion per page. Pages may provide window.__parityTest(); the
+// fallback exercises the first control and requires an observable state/DOM
+// change. Static examples get a rendered-output assertion. Self-contained: spawns its own
 // static server (ephemeral port) and Chrome (pid-derived debug port) so several
 // copies can run in parallel without colliding.
 //
@@ -60,16 +62,29 @@ async function waitForJson(url, timeoutMs = 10000) {
   throw new Error(`timeout waiting for ${url}`);
 }
 
+async function stopChild(child, timeoutMs = 2000) {
+  if (!child || child.exitCode !== null) return;
+  await new Promise(resolve => {
+    const timeout = setTimeout(() => { child.kill('SIGKILL'); resolve(); }, timeoutMs);
+    child.once('exit', () => { clearTimeout(timeout); resolve(); });
+    child.kill('SIGTERM');
+  });
+}
+
 async function main() {
   const server = createStaticServer();
   await new Promise((res, rej) => { server.once('error', rej); server.listen(0, '127.0.0.1', res); });
   const port = server.address().port;
 
   const userDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'jst-verify-'));
-  const chrome = spawn(process.env.CHROME_PATH || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', [
+  const chromeArgs = [
     '--headless=new', '--disable-gpu', '--no-first-run', '--no-default-browser-check',
     `--remote-debugging-port=${debugPort}`, `--user-data-dir=${userDataDir}`, 'about:blank',
-  ], { stdio: 'ignore' });
+  ];
+  if (process.platform === 'linux') {
+    chromeArgs.push('--no-sandbox', '--disable-dev-shm-usage');
+  }
+  const chrome = spawn(process.env.CHROME_PATH || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', chromeArgs, { stdio: 'ignore' });
 
   const results = [];
   try {
@@ -117,26 +132,57 @@ async function main() {
         returnByValue: true,
       }).then(r => { try { return JSON.parse(r.result.value); } catch { return {}; } });
 
+      const assertion = await cdp('Runtime.evaluate', {
+        expression: `(async () => {
+          if (typeof window.__parityTest === 'function') {
+            const result = await window.__parityTest();
+            return { kind: 'declared', ok: result === true || result?.ok === true, detail: result?.detail || '' };
+          }
+          const root = [...document.querySelectorAll('*')].find(el => el.tagName.includes('-'));
+          const control = document.querySelector('button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled])');
+          if (!control) return { kind: 'render', ok: Boolean(root && root.innerHTML.trim()), detail: 'custom element rendered output' };
+          const before = document.body.innerHTML;
+          const beforeState = JSON.stringify({ value: control.value, checked: control.checked, selectedIndex: control.selectedIndex });
+          if (control.matches('input[type="text"], input[type="search"], input[type="email"], input[type="url"], input[type="tel"], input[type="password"], input[type="number"], input:not([type]), textarea')) {
+            control.value = (control.value || '') + 'x';
+            control.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: 'x' }));
+            control.dispatchEvent(new Event('change', { bubbles: true }));
+          } else if (control.matches('select')) {
+            if (control.options.length > 1) control.selectedIndex = (control.selectedIndex + 1) % control.options.length;
+            control.dispatchEvent(new Event('change', { bubbles: true }));
+          } else {
+            control.click();
+          }
+          await new Promise(resolve => setTimeout(resolve, 700));
+          const afterState = JSON.stringify({ value: control.value, checked: control.checked, selectedIndex: control.selectedIndex });
+          return { kind: 'interaction', ok: document.body.innerHTML !== before || afterState !== beforeState, detail: control.tagName.toLowerCase() + (control.id ? '#' + control.id : '') };
+        })()`,
+        awaitPromise: true,
+        returnByValue: true,
+      }).then(r => r.result?.value || { kind: 'unknown', ok: false, detail: 'assertion returned no value' });
+
       const errors = collected.filter(Boolean);
       const jstErrors = errors.filter(e => /JST Render Error/.test(e));
-      results.push({ file, errors, jstErrors, ...ready });
+      results.push({ file, errors, jstErrors, assertion, ...ready });
     }
     ws.close();
   } finally {
-    chrome.kill('SIGINT');
+    await stopChild(chrome);
     server.close();
-    try { fs.rmSync(userDataDir, { recursive: true, force: true }); } catch {}
+    try { fs.rmSync(userDataDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 }); } catch {}
   }
 
   let failures = 0;
   for (const r of results) {
-    const ok = r.errors.length === 0;
+    const ok = r.errors.length === 0 && r.ready === true && r.assertion?.ok === true;
     if (!ok) failures++;
     const tag = ok ? 'PASS' : 'FAIL';
-    console.log(`${tag}  ${path.relative(staticRoot, path.resolve(r.file))}  (custom-elements: ${r.customEls ?? '?'}, ready: ${r.ready ?? '?'})`);
+    console.log(`${tag}  ${path.relative(staticRoot, path.resolve(r.file))}  (custom-elements: ${r.customEls ?? '?'}, ready: ${r.ready ?? '?'}, assertion: ${r.assertion?.kind ?? 'none'}${r.assertion?.detail ? ` ${r.assertion.detail}` : ''})`);
     r.errors.forEach(e => console.log(`        • ${e.slice(0, 240)}`));
   }
-  console.log(`\n${results.length - failures}/${results.length} pages loaded cleanly.`);
+  const interactions = results.filter(r => r.assertion?.kind === 'interaction' || r.assertion?.kind === 'declared').length;
+  const renders = results.filter(r => r.assertion?.kind === 'render').length;
+  console.log(`\n${results.length - failures}/${results.length} pages passed readiness, error, and per-page assertions (${interactions} interaction, ${renders} rendered-output).`);
   process.exit(failures ? 1 : 0);
 }
 

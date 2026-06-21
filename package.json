@@ -5,6 +5,14 @@
   "type": "module",
   "private": false,
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/br3nt/jst.git"
+  },
+  "homepage": "https://br3nt.github.io/jst/",
+  "bugs": {
+    "url": "https://github.com/br3nt/jst/issues"
+  },
   "files": [
     "jst.js",
     "compiler.js",
@@ -32,7 +40,7 @@
     "test:runtime": "node --test runtime_tests.mjs regression_tests.mjs",
     "test:browser": "node run_browser_tests.mjs",
     "test:examples": "node run_example_smoke.mjs",
-    "test:parity": "find framework_parity -name '*.html' -print | xargs node framework_parity/verify.mjs",
+    "test:parity": "node framework_parity/verify.mjs framework_parity/htmx/*.html framework_parity/alpine/*.html framework_parity/vue/*.html framework_parity/react/*.html",
     "test:agentic": "node agentic_feed/run_feed_smoke.mjs",
     "test:vscode": "npm --prefix tooling/vscode-jst test",
     "precompile": "node tools/precompile.mjs"

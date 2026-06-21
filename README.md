@@ -3,11 +3,11 @@
 **JavaScript Templates (JST)** - reactive web components in plain HTML, with
 **JavaScript itself as the templating language**. **No build step.**
 
-**It's just Web Components under the hood.** A `<script type="jst">` tag is
-compiled into a class and registered with `customElements.define()`, so every
-JST component is a genuine custom element: inspectable in DevTools, scriptable
-with plain properties and `addEventListener`, and usable inside any framework or
-none.
+**JST builds on Web Components.** Its roughly 15 KB runtime/compiler turns a
+`<script type="jst">` tag into a class and registers it with
+`customElements.define()`, so every JST component is a genuine custom element:
+inspectable in DevTools, scriptable with plain properties and
+`addEventListener`, and usable inside any framework or none.
 
 ```html
 <script type="module" src="jst.js"></script>
@@ -22,8 +22,8 @@ none.
 
 ## What hole it fills
 
-- **HTMX** lets the server send HTML, but has no client interactivity without a round-trip.
-- **Alpine** adds client interactivity, but the server cannot stream reusable components.
+- **HTMX** is strongest when server round-trips drive UI changes; JST targets fragments that also define reusable client-side component behavior.
+- **Alpine** is strongest for behavior attached to existing markup; JST additionally gives streamed component definitions custom-element identity and a props/events boundary.
 - **React/Vue** are powerful, but usually bring a build step, a runtime model, and a client-owned render pipeline.
 
 JST targets HATEOAS-style apps where the backend and frontend should be able to
@@ -87,8 +87,9 @@ Props are declared in the case-preserving `props` attribute:
 - `jst-transition="fade"` applies CSS-owned transition classes:
   `fade-enter-*`, `fade-leave-*`, and `fade-move`.
 - `$(slot())` and `$(slot('name', 'fallback'))` project light-DOM children.
-- `once(key, setup)` runs a rare DOM-local setup once per connection and uses
-  a returned function as disconnect cleanup.
+- `once(key, setup)` defers a rare DOM-local setup to a microtask after the
+  render commits, runs it once per connection, and uses a returned function as
+  disconnect cleanup.
 - `onDisconnect(fn)` is the lower-level teardown escape hatch; prefer wrapping
   resource setup in `once()` so it is not re-registered on every render.
 
@@ -99,6 +100,8 @@ JST has two modes:
 - **Runtime mode**: load `jst.js`; the browser compiles inline templates with
   `new Function`. This is ideal for prototypes, static pages, examples, and
   server-streamed trusted components.
+- Runtime templates are executable JavaScript. Only auto-register or resolve
+  templates from sources you trust; interpolated data remains escaped by default.
 - **Precompiled mode**: run `tools/precompile.mjs` and load the generated module.
   This avoids runtime template compilation and is the path for strict CSP apps
   that cannot allow `unsafe-eval`.
@@ -160,7 +163,7 @@ python3 -m http.server 8000
 node --test runtime_tests.mjs
 node run_browser_tests.mjs
 node run_example_smoke.mjs
-find framework_parity -name '*.html' -print | xargs node framework_parity/verify.mjs
+node framework_parity/verify.mjs framework_parity/{htmx,alpine,vue,react}/*.html
 node agentic_feed/run_feed_smoke.mjs
 npm --prefix tooling/vscode-jst test
 ```

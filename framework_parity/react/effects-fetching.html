@@ -89,6 +89,11 @@
 <script>
   const card = document.getElementById('card');
   function pick(id) { card.personId = id; }   // changing the dep re-runs the effect
+  window.__parityTest = async () => {
+    pick(2);
+    await new Promise(resolve => setTimeout(resolve, 650));
+    return { ok: card.querySelector('[data-testid="bio"]')?.textContent.includes('Bob'), detail: 'dependency change refetches bio' };
+  };
   window.__exampleReady = true;
 </script>
 </body>
