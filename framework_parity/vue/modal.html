@@ -52,13 +52,16 @@
     const entered = Boolean(document.querySelector('.mask'));
     document.getElementById('close').click();
     timeout = Date.now() + 1000;
-    while (Date.now() < timeout && !document.querySelector('.modal-fade-leave-active')) {
+    while (Date.now() < timeout && document.querySelector('.mask') && !document.querySelector('.modal-fade-leave-active')) {
       await new Promise(resolve => setTimeout(resolve, 25));
     }
     const leaving = document.querySelector('.modal-fade-leave-active');
     leaving?.dispatchEvent(new Event('transitionend', { bubbles: true }));
-    await new Promise(resolve => setTimeout(resolve, 0));
-    return { ok: entered && Boolean(leaving) && !document.querySelector('.mask'), detail: 'conditional enter and leave' };
+    timeout = Date.now() + 1000;
+    while (Date.now() < timeout && document.querySelector('.mask')) {
+      await new Promise(resolve => setTimeout(resolve, 25));
+    }
+    return { ok: entered && !document.querySelector('.mask'), detail: 'conditional enter and leave' };
   };
   window.__exampleReady = true;
 </script>

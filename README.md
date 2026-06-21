@@ -163,7 +163,7 @@ python3 -m http.server 8000
 node --test runtime_tests.mjs
 node run_browser_tests.mjs
 node run_example_smoke.mjs
-find framework_parity -name '*.html' -print | xargs node framework_parity/verify.mjs
+node framework_parity/verify.mjs framework_parity/{htmx,alpine,vue,react}/*.html
 node agentic_feed/run_feed_smoke.mjs
 npm --prefix tooling/vscode-jst test
 ```
