@@ -147,3 +147,54 @@ test('on<event> modifiers are preserved on the event descriptor', () => {
 test('a well-formed .prop binding still compiles cleanly', () => {
   assert.doesNotThrow(() => interpretTemplateTokens(tokensOf('<x .items="$(rows)"></x>')))
 })
+
+test('an on* handler whose event name does not start with a letter is rejected', () => {
+  assert.throws(
+    () => interpretTemplateTokens(tokensOf('<x on3d-ready="$(fn)"></x>')),
+    /on3d-ready=.*not a valid JST event handler.*must start with a letter/s,
+  )
+  assert.throws(
+    () => interpretTemplateTokens(tokensOf('<x on-foo="$(fn)"></x>')),
+    /on-foo=.*must start with a letter/s,
+  )
+})
+
+test('a hyphenated custom event whose name starts with a letter still binds', () => {
+  const body = interpretTemplateTokens(tokensOf('<x-c onitem-selected="$(fn)"></x-c>'))
+  assert.match(body, /__bind\("event", "item-selected", \(fn\)\)/)
+})
+
+test('on* / .prop sequences in template text are not misread as bindings', () => {
+  // `online="$(x)"` in body text must not bind an `line` event, and must not throw.
+  const a = interpretTemplateTokens(tokensOf('<p>plan: online="$(x)" today</p>'))
+  assert.doesNotMatch(a, /__bind\("event"/)
+  // bare `online="x"` prose must not be rejected as a raw on* handler.
+  assert.doesNotThrow(() => interpretTemplateTokens(tokensOf('<p>status online="active" now</p>')))
+  // `.foo="$(x)"` in text must not bind a prop.
+  const b = interpretTemplateTokens(tokensOf('<p>ratio .foo="$(x)" end</p>'))
+  assert.doesNotMatch(b, /__bind\("prop"/)
+})
+
+test('an on* attribute in tag position is reserved for handlers (binds even for on-words)', () => {
+  const body = interpretTemplateTokens(tokensOf('<el online="$(handler)"></el>'))
+  assert.match(body, /__bind\("event", "line", \(handler\)\)/)
+})
+
+test('a > inside an earlier quoted attribute value does not defeat a later binding', () => {
+  const body = interpretTemplateTokens(tokensOf('<a title="x>y" onclick="$(fn)">z</a>'))
+  assert.match(body, /__bind\("event", "click", \(fn\)\)/)
+})
+
+test('every binding on one element is captured (tag state crosses chunks)', () => {
+  // The opening `<` of the 2nd/3rd binding lives in an earlier chunk (split by the
+  // preceding $(…) value), so tag-position must be tracked across chunks.
+  const body = interpretTemplateTokens(tokensOf('<input .value="$(v)" oninput="$(a)" onblur="$(b)">'))
+  assert.match(body, /__bind\("prop", "value", \(v\)\)/)
+  assert.match(body, /__bind\("event", "input", \(a\)\)/)
+  assert.match(body, /__bind\("event", "blur", \(b\)\)/)
+})
+
+test('a binding after an interpolated attribute value is still captured', () => {
+  const body = interpretTemplateTokens(tokensOf('<div class="$(c)" onclick="$(fn)">x</div>'))
+  assert.match(body, /__bind\("event", "click", \(fn\)\)/)
+})

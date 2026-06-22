@@ -122,6 +122,9 @@ are compiled only inside `<script type="jst">`. They do not run in raw top-level
 HTML. The `on<event>` value must be a single `$(...)` expression — raw inline
 JavaScript in an `on*` attribute (e.g. `onclick="doThing()"`) is rejected at
 compile time, so an `on*` handler never silently becomes a native inline handler.
+`on*` is reserved for handlers: the event name must start with a letter
+(`onclick`, `onitem-selected`), so an `on…` attribute that isn't a valid handler
+(e.g. `on3d-ready`) is a compile error rather than a silently-ignored attribute.
 
 ## 5. Template syntax
 

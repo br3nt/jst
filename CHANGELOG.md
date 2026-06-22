@@ -27,6 +27,11 @@ Major stays `0`; per 0.x semantics the breaking changes bump the minor.
   value is not a single `$(...)` expression (e.g. `onclick="alert(1)"`) is a
   compile error, so a JST `on*` handler can never silently become a native inline
   handler.
+- **`on*` is reserved for event handlers; the event name must start with a
+  letter.** An `on…="$(...)"` attribute whose event name does not start with a
+  letter (e.g. `on3d-ready`, `on-foo`) now throws a clear compile error — and is
+  flagged in the VS Code editor (diagnostics run the real compiler) — instead of
+  silently degrading to a literal attribute (#19).
 
 ### Removed (breaking)
 
@@ -66,6 +71,11 @@ Major stays `0`; per 0.x semantics the breaking changes bump the minor.
   whole-subtree binding pass re-applies them. New runtime tests cover the
   string/object `setAttribute` path and a router-parent-delegating-to-child case,
   and a load-bearing comment documents why the order must not change.
+- **`on*`/`.prop` sequences in template text are no longer misread as bindings.**
+  Binding detection is now gated to genuine tag-attribute position (tracking
+  tag/quote state, so a `>` inside an earlier attribute value doesn't defeat a
+  later binding), so prose like `online="$(x)"` in text content is left as literal
+  text instead of binding a spurious `line` event or erroring (#19).
 
 ### Migration (old → new)
 
