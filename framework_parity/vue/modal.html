@@ -51,14 +51,15 @@
     }
     const entered = Boolean(document.querySelector('.mask'));
     document.getElementById('close').click();
-    timeout = Date.now() + 1000;
-    while (Date.now() < timeout && document.querySelector('.mask') && !document.querySelector('.modal-fade-leave-active')) {
-      await new Promise(resolve => setTimeout(resolve, 25));
-    }
-    const leaving = document.querySelector('.modal-fade-leave-active');
-    leaving?.dispatchEvent(new Event('transitionend', { bubbles: true }));
+    // Drive the leave transition to completion deterministically. The leave listener
+    // (transitionend + fallback) is registered inside a double-rAF, which a throttled
+    // headless renderer can delay past a single dispatch — so re-dispatch transitionend
+    // on the current leave-active node every ~25ms until the modal is fully gone or we
+    // hit the deadline. This cannot miss a not-yet-registered listener (issue #18).
     timeout = Date.now() + 1000;
     while (Date.now() < timeout && document.querySelector('.mask')) {
+      const leaving = document.querySelector('.modal-fade-leave-active');
+      leaving?.dispatchEvent(new Event('transitionend', { bubbles: true }));
       await new Promise(resolve => setTimeout(resolve, 25));
     }
     return { ok: entered && !document.querySelector('.mask'), detail: 'conditional enter and leave' };
