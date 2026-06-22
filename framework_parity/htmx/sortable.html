@@ -30,10 +30,10 @@
   <ul data-testid="list">
     $ (items || []).forEach(it => {
       <li draggable="true" jst-key="$(it.id)" data-testid="item-$(it.id)"
-          @dragstart="$(e => e.dataTransfer.setData('text/plain', String(it.id)))"
-          @dragover="$(e => { e.preventDefault(); e.currentTarget.classList.add('drag-over'); })"
-          @dragleave="$(e => e.currentTarget.classList.remove('drag-over'))"
-          @drop="$(e => {
+          ondragstart="$(e => e.dataTransfer.setData('text/plain', String(it.id)))"
+          ondragover="$(e => { e.preventDefault(); e.currentTarget.classList.add('drag-over'); })"
+          ondragleave="$(e => e.currentTarget.classList.remove('drag-over'))"
+          ondrop="$(e => {
             e.preventDefault();
             el.emit('reorder', { draggedId: Number(e.dataTransfer.getData('text/plain')), targetId: it.id });
           })">$(it.label)</li>

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!--
+  Source: https://github.com/bigskysoftware/fixi#readme  (Bulk Update)
+  Demonstrates: a "toggle all" plus per-row checkboxes stage a draft of changes, then one
+  POST applies them all and a toast summarises the activations/deactivations. In fixi the
+  form posts its serialized checkboxes via `fx-action`/`fx-method="put"` and swaps a summary.
+  JST status: ✓ exact match. The page owns users; the table is a dumb renderer; checkbox
+  changes (and "toggle all") stage a draft, "Apply Changes" POSTs it, the response drives
+  state + a toast. Props down, events up.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JST · fixi · bulk-update</title>
+<script type="module" src="../../jst.js"></script>
+<script src="../../framework_parity/lib/mock-fetch.js"></script>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 36rem; margin: 3rem auto; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: .4rem .6rem; border-bottom: 1px solid #ddd; }
+  #toast { margin-top: 1rem; color: #2e7d32; min-height: 1.2em; }
+  button { padding: .4rem .8rem; cursor: pointer; margin-top: .8rem; }
+</style>
+</head>
+<body>
+
+<script type="jst" name="user-table" props="users draft">
+  $ const d = draft || {};
+  $ const effective = u => (d[u.id] !== undefined ? d[u.id] : u.active);
+  $ const list = users || [];
+  $ const allOn = list.length > 0 && list.every(effective);
+  <table>
+    <thead><tr>
+      <th>Name</th><th>Email</th>
+      <th><label><input type="checkbox" data-testid="toggle-all" .checked="$(allOn)"
+                 onchange="$(e => el.emit('toggle-all', { active: e.target.checked }))"> Active</label></th>
+    </tr></thead>
+    <tbody>
+      $ list.forEach(u => {
+        <tr data-testid="row-$(u.id)">
+          <td>$(u.name)</td>
+          <td>$(u.email)</td>
+          <td><input type="checkbox" data-testid="cb-$(u.id)"
+                     .checked="$(effective(u))"
+                     onchange="$(e => el.emit('toggle', { id: u.id, active: e.target.checked }))"></td>
+        </tr>
+      $ })
+    </tbody>
+  </table>
+  <button data-testid="apply" onclick="$(() => el.emit('apply'))">Apply Changes</button>
+</script>
+
+<h1>Bulk Update</h1>
+<user-table id="tbl"></user-table>
+<div id="toast" data-testid="toast"></div>
+
+<script>
+  JSTMock.route('POST /api/users', req => {
+    const desired = JSON.parse(req.form.changes);
+    let activated = 0, deactivated = 0;
+    users.forEach(u => {
+      if (desired[u.id] !== undefined && desired[u.id] !== u.active) {
+        desired[u.id] ? activated++ : deactivated++;
+      }
+    });
+    return { json: { activated, deactivated, users: users.map(u => ({ ...u, active: desired[u.id] ?? u.active })) } };
+  }, { delay: 120 });
+
+  const tbl = document.getElementById('tbl');
+  const toast = document.getElementById('toast');
+  let users = [
+    { id: 1, name: 'Joe Smith', email: 'joe@smith.org', active: true },
+    { id: 2, name: 'Angie MacDowell', email: 'angie@macdowell.org', active: true },
+    { id: 3, name: 'Fuqua Tarkenton', email: 'fuqua@tarkenton.org', active: false },
+    { id: 4, name: 'Kim Yee', email: 'kim@yee.org', active: false },
+  ];
+  let draft = {};
+  tbl.users = users;
+  tbl.draft = draft;
+
+  tbl.addEventListener('toggle', e => {
+    draft = { ...draft, [e.detail.id]: e.detail.active };
+    tbl.draft = draft;
+  });
+
+  tbl.addEventListener('toggle-all', e => {
+    draft = { ...draft };
+    users.forEach(u => { draft[u.id] = e.detail.active; });
+    tbl.draft = draft;
+  });
+
+  tbl.addEventListener('apply', async () => {
+    const res = await fetch('/api/users', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ changes: JSON.stringify(draft) }),
+    });
+    const data = await res.json();
+    users = data.users;
+    draft = {};
+    tbl.users = users;
+    tbl.draft = draft;
+    toast.textContent = `Activated ${data.activated} and deactivated ${data.deactivated} users.`;
+  });
+
+  window.__parityTest = async () => {
+    document.querySelector('[data-testid="toggle-all"]').click();   // stage: all active
+    document.querySelector('[data-testid="apply"]').click();        // apply draft
+    for (let i = 0; i < 20 && !toast.textContent; i++) await new Promise(r => setTimeout(r, 100));
+    return { ok: /Activated 2 and deactivated 0/.test(toast.textContent), detail: 'toggle-all stages draft, one POST applies + toast' };
+  };
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

@@ -113,11 +113,35 @@ test('a malformed .prop binding throws at compile time instead of degrading to a
   )
 })
 
-test('a malformed @event binding (text around the expression) throws at compile time', () => {
+test('a malformed on* event binding (text around the expression) throws at compile time', () => {
   assert.throws(
-    () => interpretTemplateTokens(tokensOf('<button @click="run $(fn)">x</button>')),
-    /click=.*exactly one/,
+    () => interpretTemplateTokens(tokensOf('<button onclick="run $(fn)">x</button>')),
+    /onclick=.*exactly one/,
   )
+})
+
+test('raw inline JavaScript in an on* handler is rejected at compile time', () => {
+  assert.throws(
+    () => interpretTemplateTokens(tokensOf('<button onclick="alert(1)">x</button>')),
+    /Raw inline JavaScript/,
+  )
+})
+
+test('the removed @event syntax throws a migration error pointing at on<event>', () => {
+  assert.throws(
+    () => interpretTemplateTokens(tokensOf('<button @click="$(fn)">x</button>')),
+    /@click=.*was removed.*onclick=/s,
+  )
+})
+
+test('on<event> compiles to an event binding with the on prefix stripped', () => {
+  const body = interpretTemplateTokens(tokensOf('<button onclick="$(handler)">x</button>'))
+  assert.match(body, /__bind\("event", "click", \(handler\)\)/)
+})
+
+test('on<event> modifiers are preserved on the event descriptor', () => {
+  const body = interpretTemplateTokens(tokensOf('<form onsubmit.prevent="$(save)"></form>'))
+  assert.match(body, /__bind\("event", "submit\.prevent", \(save\)\)/)
 })
 
 test('a well-formed .prop binding still compiles cleanly', () => {

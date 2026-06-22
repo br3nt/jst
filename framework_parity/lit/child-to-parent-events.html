@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!--
+  Source: https://lit.dev/docs/components/events/#dispatching-events
+  Demonstrates: dispatching a custom event from a child up to a parent. Lit fires
+  `this.dispatchEvent(new CustomEvent('item-selected', { detail, bubbles: true, composed: true }))`
+  and the parent listens with `@item-selected` / addEventListener, reading `e.detail`.
+  Maps from: Lit `dispatchEvent(CustomEvent(..., {bubbles, composed}))` ↔ JST
+  `el.emit('item-selected', detail)` (a bubbling CustomEvent); parent binds `@item-selected`.
+  JST status: ✓ exact — `el.emit` is JST's "events up" primitive and bubbles to the parent.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JST · Lit child-to-parent events</title>
+<script type="module" src="../../jst.js"></script>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 460px; margin: 3rem auto; }
+  button { font-size: 1rem; padding: 6px 14px; cursor: pointer; margin: .2rem; }
+  .selected { font-weight: 600; color: #2e7d32; }
+</style>
+</head>
+<body>
+<h1>Child → parent events</h1>
+
+<!-- Child emits a bubbling 'item-selected' event carrying the chosen item as detail. -->
+<script type="jst" name="menu-item" props="label">
+  <button onclick="$(() => el.emit('item-selected', { label }))">$(label)</button>
+</script>
+
+<!-- Parent listens for 'item-selected' and records detail.label as its own state. -->
+<script type="jst" name="menu-board" props="items selected">
+  <div onitem-selected="$(e => el.selected = e.detail.label)">
+    $ (items || []).forEach(label => {
+      <menu-item label="$(label)"></menu-item>
+    $ })
+    <p class="selected" data-testid="selected">
+      $ if (selected) {
+        Selected: $(selected)
+      $ } else {
+        Nothing selected yet.
+      $ }
+    </p>
+  </div>
+</script>
+
+<menu-board id="board"></menu-board>
+
+<script>
+  document.getElementById('board').items = ['Espresso', 'Latte', 'Cortado'];
+
+  window.__parityTest = async () => {
+    const board = document.getElementById('board');
+    const buttons = board.querySelectorAll('menu-item button');
+    buttons[1].click();   // Latte
+    await new Promise(r => setTimeout(r, 0));
+    const text = board.querySelector('[data-testid="selected"]').textContent.trim();
+    return { ok: text === 'Selected: Latte', detail: 'child emit bubbled to parent: ' + text };
+  };
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

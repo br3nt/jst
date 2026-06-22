@@ -8,7 +8,7 @@
         </div>
         $ if (status === 'running' || status === 'pending') {
             <div class="bar-track"><div class="bar" style="width: $(progress || 0)%"></div></div>
-            <button class="task-cancel" @click="$(() => el.emit('task-cancel', el.id))">Cancel</button>
+            <button class="task-cancel" onclick="$(() => el.emit('task-cancel', el.id))">Cancel</button>
         $ }
     </div>
 </script>

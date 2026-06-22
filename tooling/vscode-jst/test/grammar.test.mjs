@@ -134,27 +134,37 @@ test('$identifier interpolation is scoped as a variable', async () => {
   assert.ok(variable, 'identifier interpolation scoped as variable');
 });
 
-test('.prop and @event binding attributes are scoped distinctly', async () => {
+test('.prop and on<event> binding attributes are scoped distinctly', async () => {
   const grammar = await makeGrammar();
-  const tokens = tokenize(grammar, '<script type="jst" name="x-bind" props="item">\n  <input .checked="$(item.done)" @change="$(() => el.emit(\'t\'))">\n</script>');
+  const tokens = tokenize(grammar, '<script type="jst" name="x-bind" props="item">\n  <input .checked="$(item.done)" onchange="$(() => el.emit(\'t\'))">\n</script>');
 
   const attrNames = tokens.filter(token => hasScope(token, 'entity.other.attribute-name.jst')).map(token => token.text);
   assert.ok(attrNames.includes('checked'), 'prop binding name scoped');
-  assert.ok(attrNames.includes('change'), 'event binding name scoped');
+  assert.ok(attrNames.includes('onchange'), 'event binding name scoped');
 
   const sigils = tokens.filter(token => hasScope(token, 'punctuation.definition.jst.binding')).map(token => token.text);
   assert.ok(sigils.includes('.'), 'prop sigil scoped');
-  assert.ok(sigils.includes('@'), 'event sigil scoped');
+});
+
+test('a dotted on<event> modifier tail is part of the event attribute name', async () => {
+  const grammar = await makeGrammar();
+  const tokens = tokenize(grammar, '<script type="jst" name="x-mod">\n  <form onsubmit.prevent="$(() => el.emit(\'go\'))"></form>\n</script>');
+
+  const attrNames = tokens.filter(token => hasScope(token, 'entity.other.attribute-name.jst')).map(token => token.text);
+  assert.ok(attrNames.includes('onsubmit.prevent'), 'modifier tail scoped with the event name');
+
+  const embedded = findContaining(tokens, 'meta.embedded.jst.expression');
+  assert.ok(embedded, 'expression inside the modified handler is marked embedded JST');
 });
 
 test('islands fire inside an attribute binding, not just text content', async () => {
   // the regression that motivated the two-grammar split: $(...) inside
-  // @event="..." must still tokenize as embedded JST, not flat string.
+  // on<event>="..." must still tokenize as embedded JST, not flat string.
   const grammar = await makeGrammar();
-  const tokens = tokenize(grammar, '<script type="jst" name="x-a" props="count">\n  <button @click="$(() => el.emit(\'go\', count))">x</button>\n</script>');
+  const tokens = tokenize(grammar, '<script type="jst" name="x-a" props="count">\n  <button onclick="$(() => el.emit(\'go\', count))">x</button>\n</script>');
 
-  const sigil = tokens.filter(token => hasScope(token, 'punctuation.definition.jst.binding')).map(token => token.text);
-  assert.ok(sigil.includes('@'), 'event sigil scoped inside the tag');
+  const attrNames = tokens.filter(token => hasScope(token, 'entity.other.attribute-name.jst')).map(token => token.text);
+  assert.ok(attrNames.includes('onclick'), 'event attribute name scoped inside the tag');
 
   const embedded = findContaining(tokens, 'meta.embedded.jst.expression');
   assert.ok(embedded, 'expression inside the attribute value is marked embedded JST');

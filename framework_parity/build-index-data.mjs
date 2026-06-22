@@ -13,6 +13,7 @@ const md = fs.readFileSync(path.join(dir, 'README.md'), 'utf8');
 
 const frameworkOf = {
   '## HTMX': 'HTMX', '## Alpine.js': 'Alpine.js', '## Vue': 'Vue', '## React': 'React',
+  '## fixi': 'fixi', '## Lit': 'Lit',
 };
 
 let current = null;

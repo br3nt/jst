@@ -98,10 +98,10 @@
     <div class="toolbar">
         <input type="search" class="search" placeholder="Search cards…"
                .value="$(f.text || '')"
-               @input="$(event => el.emit('search', event.target.value))">
+               oninput="$(event => el.emit('search', event.target.value))">
 
         <select class="priority" .value="$(f.priority || '')"
-                @change="$(event => el.emit('priority', event.target.value))">
+                onchange="$(event => el.emit('priority', event.target.value))">
             <option value="">All priorities</option>
             <option value="high">High</option>
             <option value="medium">Medium</option>
@@ -109,10 +109,10 @@
         </select>
 
         $ if (f.tag) {
-            <button class="tag-filter" @click="$(() => el.emit('tag', ''))">#$(f.tag) ✕</button>
+            <button class="tag-filter" onclick="$(() => el.emit('tag', ''))">#$(f.tag) ✕</button>
         $ }
 
-        <button class="primary add" @click="$(() => el.emit('add'))">+ New card</button>
+        <button class="primary add" onclick="$(() => el.emit('add'))">+ New card</button>
     </div>
 </script>
 
@@ -122,12 +122,12 @@
      ==================================================================== -->
 <script type="jst" name="kanban-card" props="card">
     <div class="card prio-$(card.priority)" draggable="true"
-         @dragstart="$(event => event.dataTransfer.setData('text/plain', String(card.id)))"
-         @click="$(() => el.emit('edit', card))">
+         ondragstart="$(event => event.dataTransfer.setData('text/plain', String(card.id)))"
+         onclick="$(() => el.emit('edit', card))">
         <div class="card-top">
             <span class="card-title">$(card.title)</span>
             <button class="card-del" title="Delete"
-                    @click="$(event => { event.stopPropagation(); el.emit('remove', card); })">✕</button>
+                    onclick="$(event => { event.stopPropagation(); el.emit('remove', card); })">✕</button>
         </div>
         $ if (card.description) {
             <p class="card-desc">$(card.description)</p>
@@ -135,7 +135,7 @@
         $ if (card.tags && card.tags.length) {
             <div class="card-tags">
                 $ card.tags.forEach(tag => {
-                    <button class="tag" @click="$(event => { event.stopPropagation(); el.emit('tag', tag); })">#$(tag)</button>
+                    <button class="tag" onclick="$(event => { event.stopPropagation(); el.emit('tag', tag); })">#$(tag)</button>
                 $ })
             </div>
         $ }
@@ -148,8 +148,8 @@
      ==================================================================== -->
 <script type="jst" name="kanban-column" props="column cards">
     <div class="column"
-         @dragover="$(event => event.preventDefault())"
-         @drop="$(event => {
+         ondragover="$(event => event.preventDefault())"
+         ondrop="$(event => {
              event.preventDefault();
              const cardId = Number(event.dataTransfer.getData('text/plain'));
              el.emit('card-drop', { cardId, columnId: column.id });
@@ -197,7 +197,7 @@
 <script type="jst" name="card-editor" props="card columns open">
     $ if (open) {
     $   const c = card || {};
-        <div class="overlay" @click="$(event => { if (event.target === event.currentTarget) el.emit('cancel'); })">
+        <div class="overlay" onclick="$(event => { if (event.target === event.currentTarget) el.emit('cancel'); })">
             <div class="dialog">
                 <h2>$(c.id ? 'Edit card' : 'New card')</h2>
                 <label>Title
@@ -226,8 +226,8 @@
                     <input class="f-tags" .value="$((c.tags || []).join(', '))">
                 </label>
                 <div class="dialog-actions">
-                    <button @click="$(() => el.emit('cancel'))">Cancel</button>
-                    <button class="primary" @click="$(() => el.emit('save', {
+                    <button onclick="$(() => el.emit('cancel'))">Cancel</button>
+                    <button class="primary" onclick="$(() => el.emit('save', {
                         id: c.id,
                         title: el.querySelector('.f-title').value.trim(),
                         description: el.querySelector('.f-desc').value.trim(),

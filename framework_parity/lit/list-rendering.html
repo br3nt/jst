@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!--
+  Source: https://lit.dev/docs/templates/lists/
+  Demonstrates: rendering a list. Lit's `map(this.items, i => html`<li>${i}</li>`)`
+  turns an array into repeated markup inside a `<ul>`.
+  Maps from: Lit `map(items, fn)` ↔ JST `$ items.forEach(...)` emitting markup per item.
+  JST status: ✓ exact — `$ items.forEach` is the idiomatic list form.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JST · Lit list rendering</title>
+<script type="module" src="../../jst.js"></script>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 460px; margin: 3rem auto; }
+  ul { padding-left: 1.2rem; }
+  li { margin: .3rem 0; }
+</style>
+</head>
+<body>
+<h1>List rendering</h1>
+
+<!-- map(items, i => html`<li>${i}</li>`) ↔ $ items.forEach(item => <li>$(item)</li>) -->
+<script type="jst" name="my-list" props="items">
+  <ul data-testid="list">
+    $ (items || []).forEach(item => {
+      <li>$(item)</li>
+    $ })
+  </ul>
+</script>
+
+<my-list id="list"></my-list>
+
+<script>
+  document.getElementById('list').items = ['Red', 'Green', 'Blue', 'Yellow'];
+
+  window.__parityTest = async () => {
+    await new Promise(r => setTimeout(r, 0));
+    const items = [...document.querySelectorAll('[data-testid="list"] li')].map(li => li.textContent.trim());
+    return {
+      ok: items.length === 4 && items.join(',') === 'Red,Green,Blue,Yellow',
+      detail: 'forEach rendered ' + items.length + ' <li> items',
+    };
+  };
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

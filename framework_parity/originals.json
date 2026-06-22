@@ -278,5 +278,157 @@
   "react/tic-tac-toe.html": {
     "lang": "jsx",
     "code": "import { useState } from 'react';\n\nfunction Square({ value, onSquareClick }) {\n  return (\n    <button className=\"square\" onClick={onSquareClick}>\n      {value}\n    </button>\n  );\n}\n\nfunction Board({ xIsNext, squares, onPlay }) {\n  function handleClick(i) {\n    if (calculateWinner(squares) || squares[i]) {\n      return;\n    }\n    const nextSquares = squares.slice();\n    nextSquares[i] = xIsNext ? 'X' : 'O';\n    onPlay(nextSquares);\n  }\n\n  const winner = calculateWinner(squares);\n  const status = winner\n    ? 'Winner: ' + winner\n    : 'Next player: ' + (xIsNext ? 'X' : 'O');\n\n  return (\n    <>\n      <div className=\"status\">{status}</div>\n      {[0, 1, 2].map(row => (\n        <div className=\"board-row\" key={row}>\n          {[0, 1, 2].map(col => {\n            const i = row * 3 + col;\n            return (\n              <Square\n                key={i}\n                value={squares[i]}\n                onSquareClick={() => handleClick(i)}\n              />\n            );\n          })}\n        </div>\n      ))}\n    </>\n  );\n}\n\nexport default function Game() {\n  const [history, setHistory] = useState([Array(9).fill(null)]);\n  const [currentMove, setCurrentMove] = useState(0);\n  const xIsNext = currentMove % 2 === 0;\n  const currentSquares = history[currentMove];\n\n  function handlePlay(nextSquares) {\n    const nextHistory = [...history.slice(0, currentMove + 1), nextSquares];\n    setHistory(nextHistory);\n    setCurrentMove(nextHistory.length - 1);\n  }\n\n  function jumpTo(nextMove) {\n    setCurrentMove(nextMove);\n  }\n\n  const moves = history.map((squares, move) => {\n    const description = move > 0 ? 'Go to move #' + move : 'Go to game start';\n    return (\n      <li key={move}>\n        <button onClick={() => jumpTo(move)}>{description}</button>\n      </li>\n    );\n  });\n\n  return (\n    <div className=\"game\">\n      <div className=\"game-board\">\n        <Board xIsNext={xIsNext} squares={currentSquares} onPlay={handlePlay} />\n      </div>\n      <div className=\"game-info\">\n        <ol>{moves}</ol>\n      </div>\n    </div>\n  );\n}\n\nfunction calculateWinner(squares) {\n  const lines = [\n    [0, 1, 2], [3, 4, 5], [6, 7, 8],\n    [0, 3, 6], [1, 4, 7], [2, 5, 8],\n    [0, 4, 8], [2, 4, 6],\n  ];\n  for (let i = 0; i < lines.length; i++) {\n    const [a, b, c] = lines[i];\n    if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {\n      return squares[a];\n    }\n  }\n  return null;\n}"
+  },
+  "fixi/click-to-edit.html": {
+    "lang": "html",
+    "code": "<div id=\"target-div\">\n  <div><label>First Name</label>: Joe</div>\n  <div><label>Last Name</label>: Blow</div>\n  <div><label>Email</label>: joe@blow.com</div>\n  <button fx-action=\"/contact/1/edit\" fx-target=\"#target-div\">Click To Edit</button>\n</div>"
+  },
+  "fixi/delete-row.html": {
+    "lang": "html",
+    "code": "<tr id=\"row-1\">\n  <td>Angie MacDowell</td><td>angie@macdowell.org</td>\n  <td>\n    <button fx-action=\"/contact/1\" fx-method=\"delete\" fx-target=\"#row-1\">Delete</button>\n  </td>\n</tr>"
+  },
+  "fixi/confirm-delete.html": {
+    "lang": "html",
+    "code": "<button fx-action=\"/demo\" fx-method=\"delete\" ext-fx-confirm=\"Are you sure?\">\n  Delete It\n</button>\n<!-- ext-fx-confirm is a user-land extension: it sets cfg.confirm in an fx:config handler.\n     fixi has no hx-confirm-style attribute in core. -->"
+  },
+  "fixi/lazy-load.html": {
+    "lang": "html",
+    "code": "<div fx-action=\"/lazy-content\" fx-trigger=\"fx:inited\">\n  Content Loading...\n</div>\n<!-- fx-trigger=\"fx:inited\" is fixi's \"on load\" idiom: request fires once the\n     element is initialized. -->"
+  },
+  "fixi/click-to-load.html": {
+    "lang": "html",
+    "code": "<tr id=\"replaceMe\">\n  <td colspan=\"3\">\n    <button fx-action=\"/contacts/?page=2\"\n            fx-target=\"#replaceMe\" fx-swap=\"outerHTML\">Load More</button>\n  </td>\n</tr>\n<!-- fixi mirrors the htmx click-to-load example. -->"
+  },
+  "fixi/infinite-scroll.html": {
+    "lang": "html",
+    "code": "<tr fx-action=\"/contacts/?page=2\" fx-trigger=\"intersect\" fx-swap=\"afterend\">\n  <td>Agent Smith</td><td>void29@null.org</td>\n</tr>\n<!-- 'intersect' is a user-land IntersectionObserver extension; fixi core has no\n     visibility trigger. -->"
+  },
+  "fixi/active-search.html": {
+    "lang": "html",
+    "code": "<form fx-action=\"/search\" fx-target=\"#results\" fx-swap=\"innerHTML\">\n  <input type=\"search\" name=\"search\"\n         fx-action=\"/search\" fx-trigger=\"input\" ext-fx-debounce=\"200\"\n         fx-target=\"#results\" fx-swap=\"innerHTML\">\n</form>\n<table><tbody id=\"results\"></tbody></table>\n<!-- ext-fx-debounce is a user-land extension; fixi core has no debounce modifier. -->"
+  },
+  "fixi/inline-validation.html": {
+    "lang": "html",
+    "code": "<form fx-action=\"/contacts/1\" fx-method=\"PUT\">\n  <input name=\"email\" value=\"joe@x.com\" type=\"email\" required>\n  <button>save</button>\n</form>\n<!-- fixi leans on native HTML5 constraints (required, type=email) alongside the\n     server round-trip. -->"
+  },
+  "fixi/value-select.html": {
+    "lang": "html",
+    "code": "<select name=\"make\" fx-action=\"/models\"\n        fx-target=\"#models\" fx-swap=\"innerHTML\"></select>\n<select id=\"models\" name=\"model\"></select>\n<!-- A <select> defaults to the 'change' trigger; the dependent select's options\n     are swapped in. -->"
+  },
+  "fixi/bulk-update.html": {
+    "lang": "html",
+    "code": "<input type=\"checkbox\" id=\"toggle-all\"\n       fx-action=\"/items/toggle-all\" fx-method=\"post\"\n       fx-target=\"#items\" fx-swap=\"morph\">\n<!-- fx-swap=\"morph\" is provided by paxi (a fixi companion lib). -->"
+  },
+  "fixi/add-and-reset.html": {
+    "lang": "html",
+    "code": "<form class=\"add\" fx-action=\"/items\" fx-method=\"post\"\n      fx-target=\"#items\" fx-swap=\"morph\"\n      on-fx:after=\"this.reset(); q('next input').focus()\">\n  <input name=\"title\" placeholder=\"what needs doing?\" required autofocus>\n</form>\n<!-- on-fx:after is provided by moxi (a fixi companion lib). -->"
+  },
+  "fixi/swap-to-property.html": {
+    "lang": "html",
+    "code": "<button fx-action=\"/token\" fx-target=\"#field\" fx-swap=\"value\">Generate</button>\n<input id=\"field\">\n<!-- fx-swap accepts ANY element property (value, className, ...), not just\n     innerHTML/outerHTML — the response is written straight to the property. -->"
+  },
+  "fixi/relative-target.html": {
+    "lang": "html",
+    "code": "<button fx-action=\"/demo\" fx-target=\"next output\">Get Data</button>\n<output></output>\n<!-- 'next'/'closest'/'find' relative selectors are a user-land extension; fixi\n     core takes a plain CSS selector. -->"
+  },
+  "fixi/request-indicator.html": {
+    "lang": "html",
+    "code": "<button fx-action=\"/demo\" ext-fx-indicator=\"#indicator\">\n  Demo <img src=\"spinner.gif\" id=\"indicator\">\n</button>\n<!-- ext-fx-indicator toggles an in-flight class in fx:before/fx:after; fixi core\n     has no hx-indicator. -->"
+  },
+  "fixi/polling.html": {
+    "lang": "html",
+    "code": "<div fx-action=\"/news\" fx-trigger=\"poll\" ext-fx-poll-interval=\"300\">\n  ...initial content...\n</div>\n<!-- ext-fx-poll-interval dispatches a 'poll' event via setInterval; fixi core has\n     no polling trigger. -->"
+  },
+  "fixi/mock-template.html": {
+    "lang": "html",
+    "code": "<button fx-action=\"/demo\">Replace Me With A Template</button>\n<template id=\"/demo\">Some Template Content...</template>\n<!-- fixi \"Mocking\": replace cfg.fetch in an fx:config handler to serve the\n     matching <template> instead of a real request. -->"
+  },
+  "fixi/view-transition.html": {
+    "lang": "html",
+    "code": "<button fx-action=\"/next\" fx-target=\"#panel\" fx-swap=\"innerHTML\">Next</button>\n<div id=\"panel\">...</div>\n<!-- fixi performs swaps inside the View Transition API automatically, so the\n     enter/leave animation is declared in CSS via ::view-transition-*. -->"
+  },
+  "fixi/fx-ignore.html": {
+    "lang": "html",
+    "code": "<div fx-ignore>\n  <!-- fixi will not process fx-* attributes on this element or its descendants;\n       safe for hosting third-party widgets. -->\n  <div id=\"third-party-widget\"></div>\n</div>"
+  },
+  "lit/hello-world.html": {
+    "lang": "js",
+    "code": "import {LitElement, html} from 'lit';\nimport {customElement} from 'lit/decorators.js';\n\n@customElement('simple-greeting')\nexport class SimpleGreeting extends LitElement {\n  render() {\n    return html`<p>Hello world!</p>`;\n  }\n}"
+  },
+  "lit/reactive-properties.html": {
+    "lang": "js",
+    "code": "class MyElement extends LitElement {\n  static properties = { name: {} };\n  constructor() { super(); this.name = 'World'; }\n  render() { return html`<p>Hello, ${this.name}!</p>`; }\n}"
+  },
+  "lit/attribute-vs-property.html": {
+    "lang": "js",
+    "code": "class MyEl extends LitElement {\n  static properties = {\n    count: {type: Number},     // <my-el count=\"3\">  -> number 3\n    data:  {attribute: false}  // set only via .data property\n  };\n}"
+  },
+  "lit/boolean-attribute.html": {
+    "lang": "js",
+    "code": "render() {\n  return html`<div ?hidden=${!this.show}>Content</div>`;\n}"
+  },
+  "lit/property-expression.html": {
+    "lang": "js",
+    "code": "render() {\n  return html`<my-list .items=${this.items}></my-list>`;\n}"
+  },
+  "lit/events.html": {
+    "lang": "js",
+    "code": "class MyElement extends LitElement {\n  render() {\n    return html`<button @click=${this._handleClick}>click</button>`;\n  }\n  _handleClick(e) { this.count++; }\n}"
+  },
+  "lit/child-to-parent-events.html": {
+    "lang": "js",
+    "code": "// child dispatches a bubbling, composed CustomEvent\n_handleUserAction() {\n  this.dispatchEvent(new CustomEvent('item-selected', {\n    detail: {selectedItem: this.item}, bubbles: true, composed: true\n  }));\n}\n\n// parent listens declaratively\nrender() {\n  return html`<child-element @item-selected=${this._onItemSelected}></child-element>`;\n}"
+  },
+  "lit/conditional-rendering.html": {
+    "lang": "js",
+    "code": "import {when} from 'lit/directives/when.js';\n\nrender() {\n  return html`${when(this.user,\n    () => html`User: ${this.user.username}`,\n    () => html`<button>Sign In</button>`)}`;\n}"
+  },
+  "lit/list-rendering.html": {
+    "lang": "js",
+    "code": "import {map} from 'lit/directives/map.js';\n\nrender() {\n  return html`<ul>${map(this.items, (i) => html`<li>${i}</li>`)}</ul>`;\n}"
+  },
+  "lit/repeat-keyed.html": {
+    "lang": "js",
+    "code": "import {repeat} from 'lit/directives/repeat.js';\n\nrender() {\n  return html`<ul>${repeat(this.items,\n    (item) => item.id,\n    (item, index) => html`<li>${index}: ${item.name}</li>`)}</ul>`;\n}"
+  },
+  "lit/styles.html": {
+    "lang": "js",
+    "code": "import {LitElement, html, css} from 'lit';\n\nclass MyElement extends LitElement {\n  static styles = css`\n    :host { display: block; }\n    p { color: blue; }\n  `;\n  render() { return html`<p>styled</p>`; }\n}"
+  },
+  "lit/classmap-stylemap.html": {
+    "lang": "js",
+    "code": "import {classMap} from 'lit/directives/class-map.js';\nimport {styleMap} from 'lit/directives/style-map.js';\n\nrender() {\n  const classes = {active: this.active, big: this.big};\n  const styles = {color: this.color};\n  return html`<div class=${classMap(classes)} style=${styleMap(styles)}>Hi</div>`;\n}"
+  },
+  "lit/ifdefined.html": {
+    "lang": "js",
+    "code": "import {ifDefined} from 'lit/directives/if-defined.js';\n\nrender() {\n  return html`<img src=\"/images/${ifDefined(this.filename)}\">`;\n}"
+  },
+  "lit/forms-live.html": {
+    "lang": "js",
+    "code": "import {live} from 'lit/directives/live.js';\n\nrender() {\n  return html`<input .value=${live(this.value)}\n                @input=${(e) => this.value = e.target.value}>`;\n}"
+  },
+  "lit/ref-directive.html": {
+    "lang": "js",
+    "code": "import {createRef, ref} from 'lit/directives/ref.js';\n\nclass MyEl extends LitElement {\n  inputRef = createRef();\n  render() { return html`<input ${ref(this.inputRef)}>`; }\n  firstUpdated() { this.inputRef.value.focus(); }\n}"
+  },
+  "lit/lifecycle.html": {
+    "lang": "js",
+    "code": "connectedCallback() {\n  super.connectedCallback();\n  window.addEventListener('keydown', this._handleKeydown);\n}\ndisconnectedCallback() {\n  super.disconnectedCallback();\n  window.removeEventListener('keydown', this._handleKeydown);\n}\nfirstUpdated() {\n  this.renderRoot.getElementById('my-text-area').focus();\n}"
+  },
+  "lit/will-update.html": {
+    "lang": "js",
+    "code": "willUpdate(changedProperties) {\n  if (changedProperties.has('firstName') || changedProperties.has('lastName')) {\n    this.fullName = `${this.firstName} ${this.lastName}`;\n  }\n}"
+  },
+  "lit/async-until.html": {
+    "lang": "js",
+    "code": "import {until} from 'lit/directives/until.js';\n\nrender() {\n  return html`${until(this.contentPromise, html`<span>Loading...</span>`)}`;\n}"
+  },
+  "lit/context.html": {
+    "lang": "js",
+    "code": "import {createContext, provide, consume} from '@lit/context';\nexport const myContext = createContext(Symbol('my-context'));\n\n// provider\nclass MyApp extends LitElement {\n  @provide({context: myContext}) myData = {/* ... */};\n}\n// consumer (any depth, no prop-drilling)\nclass MyEl extends LitElement {\n  @consume({context: myContext}) myData;\n}"
+  },
+  "lit/async-task.html": {
+    "lang": "js",
+    "code": "import {Task} from '@lit/task';\n\nclass MyElement extends LitElement {\n  @property() productId;\n  private _productTask = new Task(this, {\n    task: async ([productId], {signal}) => {\n      const response = await fetch(`/product/${productId}`, {signal});\n      if (!response.ok) throw new Error(response.status);\n      return response.json();\n    },\n    args: () => [this.productId]\n  });\n  render() {\n    return this._productTask.render({\n      pending: () => html`<p>Loading product...</p>`,\n      complete: (p) => html`<h1>${p.name}</h1>`,\n      error: (e) => html`<p>Error: ${e}</p>`\n    });\n  }\n}"
   }
 }

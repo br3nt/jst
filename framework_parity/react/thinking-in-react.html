@@ -32,11 +32,11 @@
   <div>
     <input type="text" data-testid="search" placeholder="Search…"
            .value="$(filterText || '')"
-           @input="$(e => el.emit('search', e.target.value))">
+           oninput="$(e => el.emit('search', e.target.value))">
     <label>
       <input type="checkbox" data-testid="instock"
              .checked="$(!!inStock)"
-             @change="$(e => el.emit('stock', e.target.checked))">
+             onchange="$(e => el.emit('stock', e.target.checked))">
       Only show products in stock
     </label>
   </div>

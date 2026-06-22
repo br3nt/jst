@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!--
+  Source: https://lit.dev/docs/components/overview/
+  Demonstrates: a minimal custom element. Lit's first example defines
+  <simple-greeting> with `render() { return html`<p>Hello world!</p>`; }`.
+  Maps from: Lit `LitElement` + `render()` ↔ JST `<script type="jst">` template.
+  JST status: ✓ exact — a JST `<script type="jst">` compiles to a real custom
+  element (inspectable in the DOM, upgraded via customElements), identical to Lit.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JST · Lit hello world</title>
+<script type="module" src="../../jst.js"></script>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 420px; margin: 3rem auto; }
+  p.greeting { color: #324fff; font-weight: 600; }
+</style>
+</head>
+<body>
+<h1>Hello world</h1>
+
+<!-- Static render — no props, no state. The element IS a custom element. -->
+<script type="jst" name="simple-greeting">
+  <p class="greeting" data-testid="greeting">Hello world!</p>
+</script>
+
+<simple-greeting id="greeting"></simple-greeting>
+
+<p style="color:#666; font-size:.9rem">
+  <code>&lt;simple-greeting&gt;</code> is a genuine custom element — inspect it in
+  devtools, it upgraded just like a Lit component.
+</p>
+
+<script>
+  window.__parityTest = async () => {
+    const el = document.getElementById('greeting');
+    const isCustom = el.tagName.includes('-') && el.querySelector('[data-testid="greeting"]');
+    return {
+      ok: Boolean(isCustom) && el.textContent.trim() === 'Hello world!',
+      detail: 'simple-greeting rendered "Hello world!"',
+    };
+  };
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

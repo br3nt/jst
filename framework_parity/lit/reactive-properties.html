@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!--
+  Source: https://lit.dev/docs/components/properties/
+  Demonstrates: a reactive property. Lit declares `static properties = { name: {} }`
+  (or `@property() name`); assigning `el.name = '...'` schedules a re-render so the
+  template's `Hello, ${this.name}!` updates.
+  Maps from: Lit reactive property / `@property` ↔ JST `props="name"` (each prop is
+  also a settable property that re-renders on assignment).
+  JST status: ✓ exact — `el.name = '...'` mutates the prop and re-renders, same as Lit.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JST · Lit reactive properties</title>
+<script type="module" src="../../jst.js"></script>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 420px; margin: 3rem auto; }
+  button { font-size: 1rem; padding: 8px 16px; cursor: pointer; margin-top: 1rem; }
+  p.greeting { font-size: 1.4rem; }
+</style>
+</head>
+<body>
+<h1>Reactive properties</h1>
+
+<!-- `name` is a reactive property; assigning to it re-renders the greeting. -->
+<script type="jst" name="name-greeting" props="name">
+  <p class="greeting" data-testid="greeting">Hello, $(name || 'World')!</p>
+</script>
+
+<name-greeting id="greeting" name="World"></name-greeting>
+<button id="change">Change name</button>
+
+<script>
+  const names = ['Ada', 'Grace', 'Linus', 'World'];
+  let i = 0;
+  const el = document.getElementById('greeting');
+  document.getElementById('change').addEventListener('click', () => {
+    i = (i + 1) % names.length;
+    el.name = names[i];        // setting the property re-renders, just like Lit
+  });
+
+  window.__parityTest = async () => {
+    el.name = 'Marie';
+    await new Promise(r => setTimeout(r, 0));
+    const text = document.querySelector('[data-testid="greeting"]').textContent.trim();
+    return { ok: text === 'Hello, Marie!', detail: 'setting el.name re-rendered: ' + text };
+  };
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

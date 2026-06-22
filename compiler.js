@@ -62,8 +62,6 @@ const reservedPropNames = new Set([
   'yield',
   'el',
   'trustedHTML',
-  'raw',
-  'unsafeHTML',
   'slot',
   'url',
   'once',

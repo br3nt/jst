@@ -24,7 +24,7 @@
 
 <!-- count is declared as a prop; it doubles as this component's local state. -->
 <script type="jst" name="my-counter" props="count">
-  <button @click="$(() => el.count = (el.count || 0) + 1)">
+  <button onclick="$(() => el.count = (el.count || 0) + 1)">
     Clicked $(count || 0) times
   </button>
 </script>

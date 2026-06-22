@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!--
+  Source: https://lit.dev/docs/data/context/
+  Demonstrates: @lit/context provide/consume — a provider sets a value and any
+  descendant consumer reads it directly, with NO intermediate component
+  forwarding it.
+  JST status: (i) partial — JST has no context protocol. The honest equivalents:
+  (a) prop-drill the value through every layer, and (b) keep it in a page-level
+  store. This file does both: a page store holds `user`, it is drilled
+  app -> nav -> avatar via .user="$(user)" bindings (a parent re-render
+  cascades the change down), and components can also reach it via el.closest()
+  for an imperative read. The gap: every intermediate MUST forward the prop, and
+  closest()-reads are NOT auto-reactive — that boilerplate is exactly what
+  @lit/context removes.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JST — context (provide / consume)</title>
+<script type="module" src="../../jst.js"></script>
+<style>
+  body { font-family:system-ui, sans-serif; max-width:480px; margin:3rem auto; }
+  .nav { display:flex; align-items:center; gap:.75rem; padding:.75rem 1rem; background:#1f2937; color:#f9fafb; border-radius:10px; }
+  .avatar { width:32px; height:32px; border-radius:50%; background:#6750a4; color:#fff; display:grid; place-items:center; font-weight:600; }
+  button { padding:6px 12px; cursor:pointer; }
+</style>
+</head>
+<body>
+<h1>Passing data deeply (context)</h1>
+
+<!-- Deep consumer: just wants the current user. In Lit it would @consume the
+     context; here it receives the value as a forwarded prop. -->
+<script type="jst" name="user-avatar" props="user">
+  $ const name = (user && user.name) || '?';
+  <div class="avatar" data-testid="avatar" title="$(name)">$(name.slice(0,1).toUpperCase())</div>
+  <span data-testid="avatar-name">$(name)</span>
+</script>
+
+<!-- Intermediate layer: owns no user state, yet must forward it down. -->
+<script type="jst" name="app-nav" props="user">
+  <div class="nav">
+    <strong>MyApp</strong>
+    <span style="flex:1"></span>
+    <user-avatar .user="$(user)"></user-avatar>
+  </div>
+</script>
+
+<!-- Provider at the top of the tree: holds the value. -->
+<script type="jst" name="app-shell" props="user">
+  <app-nav .user="$(user)"></app-nav>
+</script>
+
+<app-shell id="app"></app-shell>
+<button id="switch">Switch user</button>
+
+<script>
+  // Page-level store — the closest JST has to a Provider.
+  const userStore = { value: { name: 'Ada' } };
+  const app = document.getElementById('app');
+  app.user = userStore.value;            // provide
+
+  document.getElementById('switch').addEventListener('click', () => {
+    userStore.value = userStore.value.name === 'Ada' ? { name: 'Grace' } : { name: 'Ada' };
+    app.user = userStore.value;          // cascades down via .user bindings
+  });
+
+  window.__parityTest = async () => {
+    await new Promise(r => setTimeout(r, 0));
+    const avatarName = () => app.querySelector('[data-testid="avatar-name"]').textContent;
+    const reached = avatarName() === 'Ada';                 // provider value reached deep consumer
+    document.getElementById('switch').click();
+    await new Promise(r => setTimeout(r, 0));
+    const cascaded = avatarName() === 'Grace';              // change cascaded through the tree
+    return { ok: reached && cascaded, detail: 'provider value reaches deep consumer; updates cascade via prop-drill' };
+  };
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!--
+  Source: https://github.com/bigskysoftware/fixi#readme  (Click To Edit example)
+  Demonstrates: fixi swaps a contact's view for an edit form, then PUTs the edit and
+  swaps the fresh record back. In fixi this is `fx-action`/`fx-method="put"`/`fx-target`
+  with `fx-swap="outerHTML"` on the button, and a second action on the form's submit.
+  JST status: ✓ exact match. A single <contact-card> renders either view or edit form from
+  an `editing` flag; the page owns the contact, fetch persists with PUT, props re-render.
+  fixi's declarative fx-action/fx-target swap is the one thing JST hand-writes (a 4-line PUT).
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JST · fixi · click-to-edit</title>
+<script type="module" src="../../jst.js"></script>
+<script src="../../framework_parity/lib/mock-fetch.js"></script>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 30rem; margin: 3rem auto; }
+  label { font-weight: 600; }
+  .row { margin: .4rem 0; }
+  input { padding: .3rem; }
+  button { padding: .4rem .8rem; cursor: pointer; }
+</style>
+</head>
+<body>
+
+<script type="jst" name="contact-card" props="contact editing">
+  $ const c = contact || {};
+  $ if (!editing) {
+    <div data-testid="view">
+      <div class="row"><label>First Name</label>: <span data-testid="firstName">$(c.firstName)</span></div>
+      <div class="row"><label>Last Name</label>: <span data-testid="lastName">$(c.lastName)</span></div>
+      <div class="row"><label>Email</label>: <span data-testid="email">$(c.email)</span></div>
+      <button data-testid="edit-btn" onclick="$(() => el.emit('edit'))">Click To Edit</button>
+    </div>
+  $ } else {
+    <form data-testid="form" onsubmit="$(e => {
+      e.preventDefault();
+      el.emit('save', {
+        firstName: el.querySelector('[name=firstName]').value,
+        lastName:  el.querySelector('[name=lastName]').value,
+        email:     el.querySelector('[name=email]').value,
+      });
+    })">
+      <div class="row"><label>First Name</label><br><input name="firstName" .value="$(c.firstName || '')"></div>
+      <div class="row"><label>Last Name</label><br><input name="lastName" .value="$(c.lastName || '')"></div>
+      <div class="row"><label>Email</label><br><input name="email" .value="$(c.email || '')"></div>
+      <button type="submit" data-testid="save-btn">Save</button>
+      <button type="button" data-testid="cancel-btn" onclick="$(() => el.emit('cancel'))">Cancel</button>
+    </form>
+  $ }
+</script>
+
+<h1>Click To Edit</h1>
+<contact-card id="card"></contact-card>
+
+<script>
+  JSTMock.route('PUT /api/contact/1', req => ({ json: { contact: req.form } }), { delay: 150 });
+
+  const card = document.getElementById('card');
+  let contact = { firstName: 'Joe', lastName: 'Blow', email: 'joe@blow.com' };
+  card.contact = contact;
+
+  card.addEventListener('edit', () => { card.editing = true; });
+  card.addEventListener('cancel', () => { card.editing = false; });
+  card.addEventListener('save', async e => {
+    const res = await fetch('/api/contact/1', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(e.detail),
+    });
+    contact = (await res.json()).contact;
+    card.contact = contact;
+    card.editing = false;
+  });
+
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

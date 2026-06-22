@@ -109,7 +109,7 @@
     "source": "https://htmx.org/examples/sortable/",
     "status": "exact",
     "file": "htmx/sortable.html",
-    "note": "Native HTML5 DnD via `@dragstart/@dragover/@drop`; reorders a page array + POSTs order. `jst-key` preserves row identity when needed."
+    "note": "Native HTML5 DnD via `ondragstart/ondragover/ondrop`; reorders a page array + POSTs order. `jst-key` preserves row identity when needed."
   },
   {
     "framework": "HTMX",
@@ -117,7 +117,7 @@
     "source": "https://htmx.org/examples/keyboard-shortcuts/",
     "status": "partial",
     "file": "htmx/keyboard-shortcuts.html",
-    "note": "Result panel clean, but global shortcut is a hand-written `document.addEventListener` (`@event` only binds template elements)."
+    "note": "Result panel clean, but global shortcut is a hand-written `document.addEventListener` (`on<event>` only binds template elements)."
   },
   {
     "framework": "HTMX",
@@ -149,7 +149,7 @@
     "source": "https://alpinejs.dev/directives/html",
     "status": "exact",
     "file": "alpine/html.html",
-    "note": "`$(raw(expr))` opts out of escaping."
+    "note": "`$(trustedHTML(expr))` opts out of escaping."
   },
   {
     "framework": "Alpine.js",
@@ -165,7 +165,7 @@
     "source": "https://alpinejs.dev/directives/on",
     "status": "exact",
     "file": "alpine/on.html",
-    "note": "`@event` covers listeners plus `.enter`, `.prevent`, `.stop`, `.outside`, and debounce modifiers."
+    "note": "`on<event>` covers listeners plus `.enter`, `.prevent`, `.stop`, `.outside`, and debounce modifiers."
   },
   {
     "framework": "Alpine.js",
@@ -277,7 +277,7 @@
     "source": "https://alpinejs.dev/component/dropdown",
     "status": "exact",
     "file": "alpine/dropdown.html",
-    "note": "Open/close local state plus `@click.outside`."
+    "note": "Open/close local state plus `onclick.outside`."
   },
   {
     "framework": "Alpine.js",
@@ -293,7 +293,7 @@
     "source": "https://vuejs.org/examples/#hello-world",
     "status": "partial",
     "file": "vue/hello-world.html",
-    "note": "Reactive text exact; the v-model input is manual `.value` + `@input`."
+    "note": "Reactive text exact; the v-model input is manual `.value` + `oninput`."
   },
   {
     "framework": "Vue",
@@ -301,7 +301,7 @@
     "source": "https://vuejs.org/examples/#handling-input",
     "status": "exact",
     "file": "vue/handling-input.html",
-    "note": "\"methods\" are plain functions from `@click`."
+    "note": "\"methods\" are plain functions from `onclick`."
   },
   {
     "framework": "Vue",
@@ -413,7 +413,7 @@
     "source": "https://vuejs.org/examples/#markdown",
     "status": "partial",
     "file": "vue/markdown.html",
-    "note": "`$(raw())` renders md; property-aware morphing keeps the textarea stable."
+    "note": "`$(trustedHTML())` renders md; property-aware morphing keeps the textarea stable."
   },
   {
     "framework": "Vue",
@@ -485,7 +485,7 @@
     "source": "https://react.dev/learn/responding-to-events",
     "status": "exact",
     "file": "react/responding-to-events.html",
-    "note": "`@event` + `el.emit`; stopPropagation works."
+    "note": "`on<event>` + `el.emit`; stopPropagation works."
   },
   {
     "framework": "React",
@@ -558,5 +558,309 @@
     "status": "exact",
     "file": "react/tic-tac-toe.html",
     "note": "Immutable history + currentMove in page; board is a dumb renderer. *(verified incl. time travel)*"
+  },
+  {
+    "framework": "fixi",
+    "name": "click-to-edit",
+    "source": "https://github.com/bigskysoftware/fixi",
+    "status": "exact",
+    "file": "fixi/click-to-edit.html",
+    "note": "`<contact-card>` toggles view↔edit on an `editing` flag; PUT persists. fixi's declarative `fx-action`/`fx-target` swap is a 4-line handler."
+  },
+  {
+    "framework": "fixi",
+    "name": "delete-row",
+    "source": "https://github.com/bigskysoftware/fixi",
+    "status": "exact",
+    "file": "fixi/delete-row.html",
+    "note": "Page owns the rows; Delete issues `fx-method=\"delete\"` then filters the row out. fixi-core has no built-in confirm."
+  },
+  {
+    "framework": "fixi",
+    "name": "confirm-delete",
+    "source": "https://github.com/bigskysoftware/fixi",
+    "status": "partial",
+    "file": "fixi/confirm-delete.html",
+    "note": "fixi wires confirmation via `cfg.confirm` in `fx:config` (no attribute); JST gates the DELETE with an in-page confirm UI."
+  },
+  {
+    "framework": "fixi",
+    "name": "lazy-load",
+    "source": "https://github.com/bigskysoftware/fixi",
+    "status": "exact",
+    "file": "fixi/lazy-load.html",
+    "note": "`once()` is the analog of fixi's `fx-trigger=\"fx:inited\"`: fetches a fragment carrying its own `<script type=\"jst\">` def + markup, auto-upgraded."
+  },
+  {
+    "framework": "fixi",
+    "name": "click-to-load",
+    "source": "https://github.com/bigskysoftware/fixi",
+    "status": "exact",
+    "file": "fixi/click-to-load.html",
+    "note": "\"Load More\" fetches the next page, concatenates into a page-owned array, re-renders."
+  },
+  {
+    "framework": "fixi",
+    "name": "infinite-scroll",
+    "source": "https://github.com/bigskysoftware/fixi",
+    "status": "partial",
+    "file": "fixi/infinite-scroll.html",
+    "note": "Fetch/append idiomatic; the trigger is a hand-wired IntersectionObserver on a sentinel. fixi-core needs its Intersection Events extension too."
+  },
+  {
+    "framework": "fixi",
+    "name": "active-search",
+    "source": "https://github.com/bigskysoftware/fixi",
+    "status": "partial",
+    "file": "fixi/active-search.html",
+    "note": "`<search-results>` renderer is clean; the debounced keystroke trigger is hand-written `setTimeout`. fixi-core also omits debounce."
+  },
+  {
+    "framework": "fixi",
+    "name": "inline-validation",
+    "source": "https://github.com/bigskysoftware/fixi",
+    "status": "exact",
+    "file": "fixi/inline-validation.html",
+    "note": "Plain input (keeps focus) POSTs per keystroke; `<field-status>` renders the verdict; native `required`/`type=email` gate submit."
+  },
+  {
+    "framework": "fixi",
+    "name": "value-select (cascading)",
+    "source": "https://github.com/bigskysoftware/fixi",
+    "status": "exact",
+    "file": "fixi/value-select.html",
+    "note": "Changing make fetches models and sets a prop on `<model-select>` (default `change` trigger)."
+  },
+  {
+    "framework": "fixi",
+    "name": "bulk-update",
+    "source": "https://github.com/bigskysoftware/fixi",
+    "status": "exact",
+    "file": "fixi/bulk-update.html",
+    "note": "\"Toggle all\" + per-row checkboxes stage a draft; one POST applies all and shows a toast."
+  },
+  {
+    "framework": "fixi",
+    "name": "add-and-reset",
+    "source": "https://github.com/bigskysoftware/fixi",
+    "status": "exact",
+    "file": "fixi/add-and-reset.html",
+    "note": "A \"new item\" form POSTs, appends the created item to a page-owned list, then resets and refocuses the input."
+  },
+  {
+    "framework": "fixi",
+    "name": "swap-to-property",
+    "source": "https://github.com/bigskysoftware/fixi",
+    "status": "exact",
+    "file": "fixi/swap-to-property.html",
+    "note": "fixi's distinctive `fx-swap` into a property maps 1:1: the response is written straight into `el.value` and `el.className`."
+  },
+  {
+    "framework": "fixi",
+    "name": "relative-target",
+    "source": "https://github.com/bigskysoftware/fixi",
+    "status": "partial",
+    "file": "fixi/relative-target.html",
+    "note": "fixi's `next`/`closest`/`find` are an extension; JST resolves the trigger-relative `<output>` via `el.closest(...)`, no global ids."
+  },
+  {
+    "framework": "fixi",
+    "name": "request-indicator",
+    "source": "https://github.com/bigskysoftware/fixi",
+    "status": "partial",
+    "file": "fixi/request-indicator.html",
+    "note": "fixi-core has no `hx-indicator`; the handler toggles a `loading` prop (spinner + disabled) around the fetch, mirroring `fx:before`/`fx:after`."
+  },
+  {
+    "framework": "fixi",
+    "name": "polling",
+    "source": "https://github.com/bigskysoftware/fixi",
+    "status": "partial",
+    "file": "fixi/polling.html",
+    "note": "fixi-core has no polling trigger; a hand-written `setInterval`, torn down via `onDisconnect`."
+  },
+  {
+    "framework": "fixi",
+    "name": "mock-template",
+    "source": "https://github.com/bigskysoftware/fixi",
+    "status": "exact",
+    "file": "fixi/mock-template.html",
+    "note": "JST's mock-fetch is the same idea as fixi's `cfg.fetch` override; the fetched fragment carries its own component def and auto-registers."
+  },
+  {
+    "framework": "fixi",
+    "name": "view-transition",
+    "source": "https://github.com/bigskysoftware/fixi",
+    "status": "partial",
+    "file": "fixi/view-transition.html",
+    "note": "fixi swaps via the View Transition API natively; JST has no native VT swap, so a keyed node + `jst-transition` does the enter/leave (CSS-owned)."
+  },
+  {
+    "framework": "fixi",
+    "name": "fx-ignore",
+    "source": "https://github.com/bigskysoftware/fixi",
+    "status": "partial",
+    "file": "fixi/fx-ignore.html",
+    "note": "No `jst-ignore` directive yet (open proposal); an uncontrolled third-party widget survives re-renders by living in a projected slot, not the morphed subtree."
+  },
+  {
+    "framework": "Lit",
+    "name": "hello-world",
+    "source": "https://lit.dev/docs/components/overview/",
+    "status": "exact",
+    "file": "lit/hello-world.html",
+    "note": "`LitElement` + `render()` ↔ a `<script type=\"jst\">` that compiles to a real, inspectable custom element."
+  },
+  {
+    "framework": "Lit",
+    "name": "reactive-properties",
+    "source": "https://lit.dev/docs/components/properties/",
+    "status": "exact",
+    "file": "lit/reactive-properties.html",
+    "note": "`@property name` ↔ `props=\"name\"`; `el.name = '…'` re-renders, identical to a reactive property."
+  },
+  {
+    "framework": "Lit",
+    "name": "attribute-vs-property",
+    "source": "https://lit.dev/docs/components/properties/#attributes",
+    "status": "exact",
+    "file": "lit/attribute-vs-property.html",
+    "note": "Lit's attribute converter (`count=\"3\"`→Number) ↔ JST's JSON-parsed attribute; rich objects via `.data=\"$(obj)\"`."
+  },
+  {
+    "framework": "Lit",
+    "name": "boolean-attribute",
+    "source": "https://lit.dev/docs/templates/expressions/#boolean-attribute-expressions",
+    "status": "exact",
+    "file": "lit/boolean-attribute.html",
+    "note": "Lit `?hidden=${!show}` ↔ JST `.hidden=\"$(!show)\"`, which genuinely adds/removes the boolean attribute."
+  },
+  {
+    "framework": "Lit",
+    "name": "property-expression",
+    "source": "https://lit.dev/docs/templates/expressions/#property-expressions",
+    "status": "exact",
+    "file": "lit/property-expression.html",
+    "note": "Lit `.items=${this.items}` ↔ JST `.items=\"$(arr)\"` passing an array to a child."
+  },
+  {
+    "framework": "Lit",
+    "name": "events",
+    "source": "https://lit.dev/docs/components/events/",
+    "status": "exact",
+    "file": "lit/events.html",
+    "note": "Lit `@click=${this._handleClick}` ↔ JST `onclick=\"$(fn)\"` mutating a local prop."
+  },
+  {
+    "framework": "Lit",
+    "name": "child-to-parent-events",
+    "source": "https://lit.dev/docs/components/events/#dispatching-events",
+    "status": "exact",
+    "file": "lit/child-to-parent-events.html",
+    "note": "Lit `dispatchEvent(new CustomEvent(…,{bubbles,composed}))` ↔ JST `el.emit('item-selected', detail)`; parent binds `onitem-selected`."
+  },
+  {
+    "framework": "Lit",
+    "name": "conditional-rendering",
+    "source": "https://lit.dev/docs/templates/conditionals/",
+    "status": "exact",
+    "file": "lit/conditional-rendering.html",
+    "note": "Lit `when(cond, a, b)` ↔ JST `$ if (user) {…} $ else {…}` (signed-in/out toggle)."
+  },
+  {
+    "framework": "Lit",
+    "name": "list-rendering",
+    "source": "https://lit.dev/docs/templates/lists/",
+    "status": "exact",
+    "file": "lit/list-rendering.html",
+    "note": "Lit `map(items, i => html\\`<li>${i}</li>\\`)` ↔ JST `$ items.forEach`."
+  },
+  {
+    "framework": "Lit",
+    "name": "repeat-keyed",
+    "source": "https://lit.dev/docs/templates/lists/#the-repeat-directive",
+    "status": "exact",
+    "file": "lit/repeat-keyed.html",
+    "note": "Lit `repeat(items, i => i.id, tpl)` ↔ JST `forEach` + `jst-key`; reorder preserves node identity and a typed input value."
+  },
+  {
+    "framework": "Lit",
+    "name": "styles",
+    "source": "https://lit.dev/docs/components/styles/",
+    "status": "partial",
+    "file": "lit/styles.html",
+    "note": "Lit's `static styles = css\\`…\\`` is Shadow-DOM-scoped; JST is light-DOM, so styling is ordinary global CSS — the encapsulation is the genuine gap."
+  },
+  {
+    "framework": "Lit",
+    "name": "classmap-stylemap",
+    "source": "https://lit.dev/docs/templates/directives/#classmap",
+    "status": "exact",
+    "file": "lit/classmap-stylemap.html",
+    "note": "`classMap`/`styleMap` objects ↔ expression-built class/style strings. No object sugar, but covers every case."
+  },
+  {
+    "framework": "Lit",
+    "name": "ifDefined",
+    "source": "https://lit.dev/docs/templates/directives/#ifdefined",
+    "status": "exact",
+    "file": "lit/ifdefined.html",
+    "note": "`ifDefined(x)` ↔ a conditional attribute emitted only when the value is defined, so the attribute appears/disappears."
+  },
+  {
+    "framework": "Lit",
+    "name": "live (forms)",
+    "source": "https://lit.dev/docs/templates/directives/#live",
+    "status": "exact",
+    "file": "lit/forms-live.html",
+    "note": "`live(x)` ↔ `jst-model`: the prop is the source of truth and property-aware morphing preserves caret/focus while external writes flow back."
+  },
+  {
+    "framework": "Lit",
+    "name": "ref",
+    "source": "https://lit.dev/docs/templates/directives/#ref",
+    "status": "partial",
+    "file": "lit/ref-directive.html",
+    "note": "`ref(createRef())` ↔ `el.querySelector(...)` after render — reaches the node to `.focus()`, but it's a manual lookup, not an auto-populated ref."
+  },
+  {
+    "framework": "Lit",
+    "name": "lifecycle",
+    "source": "https://lit.dev/docs/components/lifecycle/",
+    "status": "exact",
+    "file": "lit/lifecycle.html",
+    "note": "`connectedCallback`/`firstUpdated`/`disconnectedCallback` ↔ `once()` (returns cleanup) + `onDisconnect()`; a Remove button proves teardown fires."
+  },
+  {
+    "framework": "Lit",
+    "name": "willUpdate",
+    "source": "https://lit.dev/docs/components/lifecycle/#willupdate",
+    "status": "exact",
+    "file": "lit/will-update.html",
+    "note": "`willUpdate()` ↔ a `$ const fullName = …` derive line in the template, run before render."
+  },
+  {
+    "framework": "Lit",
+    "name": "async until",
+    "source": "https://lit.dev/docs/templates/directives/#until",
+    "status": "partial",
+    "file": "lit/async-until.html",
+    "note": "`until(promise, placeholder)` ↔ a `once()`-driven fetch that sets `loading`/`result` props plus a guarded `$ if`; no `until` primitive, async wiring is explicit."
+  },
+  {
+    "framework": "Lit",
+    "name": "context",
+    "source": "https://lit.dev/docs/data/context/",
+    "status": "partial",
+    "file": "lit/context.html",
+    "note": "`@lit/context` provide/consume ↔ prop-drill through a page-level store; intermediates must forward and reads aren't auto-reactive."
+  },
+  {
+    "framework": "Lit",
+    "name": "async task",
+    "source": "https://lit.dev/docs/data/task/",
+    "status": "partial",
+    "file": "lit/async-task.html",
+    "note": "`@lit/task` ↔ a hand-written controller: a `productId` change runs a guarded fetch walking a `status` prop through pending→complete→error."
   }
 ]

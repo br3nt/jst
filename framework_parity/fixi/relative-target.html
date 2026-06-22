@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!--
+  Source: https://github.com/bigskysoftware/fixi (README, commit d31fc1d) — relative selectors EXTENSION
+  Demonstrates: placing a response into a RELATIVE target (fixi's next/closest/find selectors)
+  instead of a global id. fixi-core only takes a CSS selector for fx-target; next/closest/find
+  are an opt-in extension.
+  JST status: (i) workaround. JST has no relative-selector directive. Here each trigger finds its
+  neighbouring <output> via the standard DOM (event target → el.closest('.row').querySelector),
+  so no global ids are needed. fixi-core lacks the extended selectors; this is parity.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JST · fixi relative-target</title>
+<script type="module" src="../../jst.js"></script>
+<script src="../../framework_parity/lib/mock-fetch.js"></script>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 30rem; margin: 3rem auto; }
+  .row { display: flex; align-items: center; gap: .8rem; padding: .4rem 0; border-bottom: 1px solid #eee; }
+  .row button { padding: .25rem .7rem; cursor: pointer; }
+  output { font-weight: 600; color: #3f51b5; }
+</style>
+</head>
+<body>
+
+<script type="jst" name="lookup-list" props="terms">
+  <div data-testid="rows">
+    $ (terms || []).forEach(t => {
+      <div class="row" data-testid="row-$(t)">
+        <button class="lookup" data-testid="lookup-$(t)" data-term="$(t)">Resolve "$(t)"</button>
+        <output data-testid="out-$(t)">—</output>
+      </div>
+    $ })
+  </div>
+</script>
+
+<h1>Relative target (no global ids)</h1>
+<lookup-list id="list"></lookup-list>
+
+<script>
+  JSTMock.route('GET /api/lookup/:term', req => ({ json: { answer: req.params.term.toUpperCase() + ' ✓' } }), { delay: 60 });
+
+  const list = document.getElementById('list');
+  list.terms = ['alpha', 'bravo', 'charlie'];
+
+  // Delegated handler: resolve the target RELATIVE to the clicked trigger. No id lookup.
+  list.addEventListener('click', async e => {
+    const btn = e.target.closest('button.lookup');
+    if (!btn) return;
+    const out = btn.closest('.row').querySelector('output');   // fixi "next <output>" / "closest"
+    out.textContent = '…';
+    const r = await (await fetch('/api/lookup/' + btn.dataset.term)).json();
+    out.textContent = r.answer;
+  });
+
+  window.__parityTest = async () => {
+    const until = async (cond, ms = 3000) => { const t0 = Date.now(); while (Date.now() - t0 < ms) { if (cond()) return true; await new Promise(r => setTimeout(r, 50)); } return cond(); };
+    document.querySelector('[data-testid="lookup-bravo"]').click();
+    const hit = await until(() => document.querySelector('[data-testid="out-bravo"]').textContent === 'BRAVO ✓');
+    const otherUntouched = document.querySelector('[data-testid="out-alpha"]').textContent === '—';
+    return { ok: hit && otherUntouched, detail: 'response placed into the trigger-relative <output> only' };
+  };
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

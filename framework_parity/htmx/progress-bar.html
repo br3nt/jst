@@ -29,12 +29,12 @@
     <div class="bar" data-testid="bar" style="width: $(progress)%"></div>
   </div>
   $ if (state === 'idle') {
-    <button data-testid="start" @click="$(() => el.emit('start'))">Start Job</button>
+    <button data-testid="start" onclick="$(() => el.emit('start'))">Start Job</button>
   $ } else if (state === 'running') {
     <p data-testid="running">Running… $(progress)%</p>
   $ } else if (state === 'done') {
     <p data-testid="done">Complete!</p>
-    <button data-testid="restart" @click="$(() => el.emit('start'))">Restart Job</button>
+    <button data-testid="restart" onclick="$(() => el.emit('start'))">Restart Job</button>
   $ }
 </script>
 

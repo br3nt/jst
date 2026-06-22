@@ -27,14 +27,14 @@
 <body>
 
 <script type="jst" name="modal-demo" props="open">
-  <button id="show" @click="$(() => el.open = true)">Show Modal</button>
+  <button id="show" onclick="$(() => el.open = true)">Show Modal</button>
   $ if (open) {
     <div class="mask" jst-key="$('modal')" jst-transition="modal-fade"
-         @click="$(e => { if (e.target === e.currentTarget) el.open = false; })">
+         onclick="$(e => { if (e.target === e.currentTarget) el.open = false; })">
       <div class="modal">
         <h3 id="modal-title">Hello from a JST modal!</h3>
         <p>This modal animates in and out with CSS transitions.</p>
-        <button id="close" @click="$(() => el.open = false)">Close</button>
+        <button id="close" onclick="$(() => el.open = false)">Close</button>
       </div>
     </div>
   $ }

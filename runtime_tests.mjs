@@ -562,28 +562,6 @@ test('interpolated values are HTML-escaped by default', async () => {
   }
 });
 
-test('raw() opts out of escaping', async () => {
-  const runtime = await loadRuntime([
-    {
-      name: 'x-raw',
-      attributes: [{ name: 'props', value: 'html' }],
-      innerHTML: '<div>$(raw(html))</div>',
-    },
-  ]);
-
-  try {
-    const RawClass = runtime.customElements.get('x-raw');
-    const element = new RawClass();
-    element.html = '<b>bold</b>';
-    runtime.connect(element);
-    await flushRenders();
-
-    assert.match(element.innerHTML, /<b>bold<\/b>/);
-  } finally {
-    runtime.cleanup();
-  }
-});
-
 test('trustedHTML() opts out of escaping', async () => {
   const runtime = await loadRuntime([
     {
@@ -633,7 +611,7 @@ test('name is an ordinary prop when declared in props', async () => {
     {
       name: 'x-hello',
       attributes: [{ name: 'props', value: 'name' }],
-      innerHTML: '<p>Hello, $(name)!</p><button @click="$(() => el.name = \'world\')">reset</button>',
+      innerHTML: '<p>Hello, $(name)!</p><button onclick="$(() => el.name = \'world\')">reset</button>',
     },
   ]);
 
@@ -663,7 +641,7 @@ test('precompiled templates register without runtime compilation', async () => {
       'x-precompiled',
       ['name'],
       { name: 'name' },
-      function render(name, el, raw, unsafeHTML, slot, onDisconnect, __esc) {
+      function render(name, el, slot, onDisconnect, __esc) {
         const lines = [];
         lines.push('<p>Hello ');
         lines.push(__esc(name));

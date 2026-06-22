@@ -50,26 +50,52 @@ function mergeJsTokens(templateTokens) {
   return processedTokens
 }
 
-// Matches a tag-position binding prefix at the end of an HTML chunk:
-//   `.prop="` assigns the expression value as a JS property after morphing
-//   `@event="` attaches the expression value with addEventListener after morphing
-const bindingTailPattern = /(^|\s)([.@])([a-zA-Z_$][\w$-]*(?:\.[\w$-]+)*)\s*=\s*(["'])$/
-// Same opener, but anywhere in the chunk — used to detect a binding whose value
-// has leading literal text (`@click="run $(fn)"`) before the expression.
-const bindingOpenerPattern = /(^|\s)([.@])([a-zA-Z_$][\w$-]*(?:\.[\w$-]+)*)\s*=\s*(["'])/g
+// Tag-position binding attributes whose value is a single $(…) expression:
+//   `.prop="$(expr)"`     assigns the value as a JS property after morphing
+//   `onevent="$(fn)"`     attaches the value with addEventListener after morphing
+// Event handlers use the native `on<event>` attribute name with an optional
+// dotted modifier tail (`onclick.stop`, `onkeydown.enter.prevent`); the `on`
+// prefix is stripped to recover the event descriptor.
+const bindingName = '(\\.[a-zA-Z_$][\\w$-]*(?:\\.[\\w$-]+)*|on[a-zA-Z][\\w$-]*(?:\\.[\\w$-]+)*)'
+// At the very end of an HTML chunk: a valid opener, immediately followed by the
+// $(…) expression token (which split the chunk here).
+const bindingTailPattern = new RegExp(`(^|\\s)${bindingName}\\s*=\\s*(["'])$`)
+// The same opener anywhere in the chunk — used to reject values that are not a
+// lone $(…) expression (leading text, or raw inline JavaScript in an on* handler).
+const bindingOpenerPattern = new RegExp(`(^|\\s)${bindingName}\\s*=\\s*(["'])`, 'g')
+// Legacy `@event="$(fn)"` syntax (removed): detect and point at the replacement.
+const legacyEventTailPattern = /(^|\s)@([a-zA-Z][\w$-]*(?:\.[\w$-]+)*)\s*=\s*["']$/
 
-// A binding opener with trailing literal text and no closing quote in the same
-// chunk means the value is text + expression (e.g. `@click="run $(fn)"`). A valid
-// binding has the opener at the very end of the chunk (empty remainder). Fail loud
-// rather than silently degrading the binding to a plain string attribute.
-function assertNoLeadingTextBinding(html) {
+function classifyBindingName(rawName) {
+  if (rawName[0] === '.') return { kind: 'prop', name: rawName.slice(1) }
+  return { kind: 'event', name: rawName.slice(2) }
+}
+
+// A valid binding opener sits at the very end of its HTML chunk, because the
+// $(…) value token splits the chunk there. Any opener with trailing content in
+// the same chunk means the value is not a lone $(…) expression — leading literal
+// text (`onclick="run $(fn)"`) or raw inline JavaScript (`onclick="alert(1)"`).
+// Fail loud rather than silently degrading the binding to a string attribute.
+function assertNoInvalidBinding(html) {
   bindingOpenerPattern.lastIndex = 0
   let match
   while ((match = bindingOpenerPattern.exec(html))) {
+    const [, , rawName, quote] = match
     const remainder = html.slice(bindingOpenerPattern.lastIndex)
-    if (remainder.length > 0 && !remainder.includes(match[4])) {
-      throw new Error(`JST: ${match[2]}${match[3]}="…" must contain exactly one $(…) expression and nothing else inside the quotes.`)
+    if (remainder.length === 0) continue
+
+    const isEvent = rawName[0] !== '.'
+    if (isEvent && remainder.includes(quote)) {
+      throw new Error(`JST: ${rawName}="…" must be a single $(…) expression. Raw inline JavaScript in on* handlers is not allowed; wrap the handler in $(…).`)
     }
+    throw new Error(`JST: ${rawName}="…" must contain exactly one $(…) expression and nothing else inside the quotes.`)
+  }
+}
+
+function assertNoLegacyEventBinding(token, expressionToken) {
+  const match = token.html.match(legacyEventTailPattern)
+  if (match && expressionToken instanceof JsExpressionToken) {
+    throw new Error(`JST: the @${match[2]}="…" event syntax was removed. Use on${match[2]}="…" instead.`)
   }
 }
 
@@ -80,21 +106,23 @@ function matchBinding(tokens, i) {
 
   if (!(token instanceof HtmlToken)) return null
 
-  assertNoLeadingTextBinding(token.html)
+  assertNoInvalidBinding(token.html)
+  assertNoLegacyEventBinding(token, expressionToken)
 
   const match = token.html.match(bindingTailPattern)
   if (!match) return null
 
-  const [fullMatch, leading, sigil, name, quote] = match
+  const [fullMatch, leading, rawName, quote] = match
+  const { kind, name } = classifyBindingName(rawName)
 
   if (!(expressionToken instanceof JsExpressionToken)
     || !(closingToken instanceof HtmlToken)
     || !closingToken.html.startsWith(quote)) {
-    throw new Error(`JST: ${sigil}${name}="…" must contain exactly one $(…) expression and nothing else inside the quotes.`)
+    throw new Error(`JST: ${rawName}="…" must contain exactly one $(…) expression and nothing else inside the quotes.`)
   }
 
   return {
-    kind: sigil === '.' ? 'prop' : 'event',
+    kind,
     name,
     expression: expressionToken.expression,
     htmlPrefix: token.html.slice(0, token.html.length - fullMatch.length + leading.length),

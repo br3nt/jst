@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!--
+  Source: https://github.com/bigskysoftware/fixi (README, commit d31fc1d) — "Mocking" (cfg.fetch)
+  Demonstrates: fixi's README mocks the backend by replacing cfg.fetch, serving a <template>'s
+  content as the response so a request swaps in canned markup with no server.
+  JST status: ✓ exact. JST's mock-fetch IS the same idea as fixi's cfg.fetch override: it
+  intercepts fetch and returns a fragment. Here the fragment is a full <template>-style chunk —
+  it even carries its OWN component definition, which JST auto-registers on insertion.
+  Mapping: fixi cfg.fetch returns template HTML  ≡  JSTMock.route returns an HTML fragment.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JST · fixi mock-template</title>
+<script type="module" src="../../jst.js"></script>
+<script src="../../framework_parity/lib/mock-fetch.js"></script>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 32rem; margin: 3rem auto; }
+  button { padding: .5rem 1rem; cursor: pointer; }
+  .card { margin-top: 1rem; padding: 1rem 1.2rem; border: 1px solid #ddd; border-radius: 8px; background: #fafafa; }
+  .card h3 { margin: 0 0 .3rem; }
+</style>
+</head>
+<body>
+
+<h1>Render a mocked template</h1>
+<button id="load" data-testid="load">Fetch template</button>
+<div id="mount" data-testid="mount"></div>
+
+<script>
+  // cfg.fetch override equivalent: return canned <template>-style HTML, component def included.
+  JSTMock.route('GET /api/card', () => `
+    <scr` + `ipt type="jst" name="info-card" props="title body">
+      <article class="card">
+        <h3 data-testid="card-title">$(title)</h3>
+        <p data-testid="card-body">$(body)</p>
+      </article>
+    </scr` + `ipt>
+    <info-card title="Fetched Card" body="This component arrived whole from the mock backend and rendered itself."></info-card>
+  `, { delay: 60 });
+
+  const mount = document.getElementById('mount');
+  document.getElementById('load').addEventListener('click', async () => {
+    const html = await (await fetch('/api/card')).text();
+    mount.innerHTML = html;            // JST's MutationObserver registers the inserted definition
+  });
+
+  window.__parityTest = async () => {
+    document.getElementById('load').click();
+    await new Promise(r => setTimeout(r, 350));
+    const title = document.querySelector('[data-testid="card-title"]');
+    return { ok: !!title && title.textContent === 'Fetched Card', detail: 'mocked template fragment fetched and rendered' };
+  };
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

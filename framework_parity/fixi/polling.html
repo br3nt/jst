@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!--
+  Source: https://github.com/bigskysoftware/fixi (README, commit d31fc1d) — polling is an EXTENSION
+  Demonstrates: a region that refreshes itself on an interval. fixi-core has NO polling
+  trigger (no hx-trigger="every 1s"); you add it as user-land JS.
+  JST status: (i) workaround. JST also has no interval trigger, so the loop is a hand-written
+  setInterval started once per component (guarded) and torn down via onDisconnect — the
+  idiomatic JST cleanup hook. fixi-core lacks polling; this is parity.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JST · fixi polling</title>
+<script type="module" src="../../jst.js"></script>
+<script src="../../framework_parity/lib/mock-fetch.js"></script>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 30rem; margin: 3rem auto; }
+  .reading { font-size: 2rem; font-variant-numeric: tabular-nums; }
+  button { padding: .4rem 1rem; cursor: pointer; }
+</style>
+</head>
+<body>
+
+<script type="jst" name="live-feed" props="reading ticks stopped">
+  ${
+    if (!el._started && !stopped) {
+      el._started = true;
+      const timer = setInterval(async () => {
+        const r = await (await fetch('/api/reading')).json();
+        el.ticks = (el.ticks || 0) + 1;
+        el.reading = r.value;
+      }, 300);
+      // JST's teardown hook — clears the interval when the component disconnects.
+      onDisconnect(() => clearInterval(timer));
+      el._stop = () => clearInterval(timer);
+    }
+  }
+  <div>
+    <p class="reading">Sensor: <strong data-testid="reading">$(reading != null ? reading : '…')</strong></p>
+    <p>Polls received: <span data-testid="ticks">$(ticks || 0)</span></p>
+    <button data-testid="stop" onclick="$(() => { el._stop && el._stop(); el.stopped = true; })">Stop polling</button>
+  </div>
+</script>
+
+<h1>Self-polling region</h1>
+<live-feed id="feed"></live-feed>
+
+<script>
+  let n = 0;
+  JSTMock.route('GET /api/reading', () => { n++; return { json: { value: (20 + (n % 7)).toFixed(1) } }; }, { delay: 30 });
+
+  window.__parityTest = async () => {
+    const until = async (cond, ms = 4000) => { const t0 = Date.now(); while (Date.now() - t0 < ms) { if (cond()) return true; await new Promise(r => setTimeout(r, 50)); } return cond(); };
+    const ticks = () => Number(document.querySelector('[data-testid="ticks"]').textContent);
+    const before = ticks();
+    const polled = await until(() => ticks() > before);
+    // and confirm Stop halts the loop. Clear the interval, let any single
+    // in-flight fetch resolve, then confirm the count is frozen across a window.
+    document.querySelector('[data-testid="stop"]').click();
+    await new Promise(r => setTimeout(r, 700));
+    const settled = ticks();
+    await new Promise(r => setTimeout(r, 600));
+    const stillStopped = ticks() === settled;
+    return { ok: polled && stillStopped, detail: 'setInterval polls; onDisconnect/Stop tears it down' };
+  };
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

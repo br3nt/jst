@@ -32,7 +32,7 @@
     </tbody>
   </table>
   $ if (more) {
-    <button data-testid="load-more" .disabled="$(loading)" @click="$(() => el.emit('load'))">
+    <button data-testid="load-more" .disabled="$(loading)" onclick="$(() => el.emit('load'))">
       $(loading ? 'Loading…' : 'Load More Agents…')
     </button>
   $ }

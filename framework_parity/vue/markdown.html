@@ -53,7 +53,7 @@
   $   el.__t = setTimeout(() => { el.querySelector('#preview').innerHTML = renderMarkdown(v); }, 100);
   $ };
   <div class="editor">
-    <textarea id="src" @input="$(onInput)">$(input)</textarea>
+    <textarea id="src" oninput="$(onInput)">$(input)</textarea>
     <div class="preview" id="preview"></div>
   </div>
 </script>

@@ -10,13 +10,13 @@ the extension's own.
 TextMate grammars **injected into HTML**. `jst.injection` marks the
 `<script type="jst">` block with a distinctive scope; `jst.islands` injects the
 JST constructs into anything carrying that scope — so they highlight inside HTML
-tags and attribute-value strings too (`@click="$(…)"`), not only in text. The
+tags and attribute-value strings too (`onclick="$(…)"`), not only in text. The
 embedded JavaScript is delegated to the editor's own `source.js` grammar:
 
 - `$(expr)` and `$identifier` — interpolation
 - `${ ... }` and `$ …` line directives — embedded code
 - `$$` — escaped literal `$`
-- `.prop=` / `@event=` — binding attributes
+- `.prop=` / `on<event>=` — binding attributes (e.g. `onclick.stop`)
 
 **Tier 2 — diagnostics** (`src/diagnostics.mjs`)
 Runs the **real JST compiler** (`../../compiler.js`) over each template, so
@@ -57,7 +57,7 @@ npm install
 npm test
 ```
 
-26 tests: grammar tokenization (through the real `vscode-textmate` engine),
+32 tests: grammar tokenization (through the real `vscode-textmate` engine),
 diagnostics (through the real JST compiler), and providers (including against
 the actual `examples/kanban.html`).
 
@@ -83,8 +83,10 @@ the actual `examples/kanban.html`).
   locals, props, member properties). That gap is exactly what Tier 4 (virtual
   TS documents, see `TODO.md`) closes. So an expression may look slightly less
   colorful than the same code in a standalone script — by design, for now.
-- **`@`/`.` attribute names** are non-standard HTML, so VS Code's HTML tag
-  parser can still get mildly confused around them in some tags. The islands
+- **`.prop` / `on<event>` attribute names** can be non-standard HTML (the
+  leading-`.` property bindings and dotted modifier tails like `onclick.stop`),
+  so VS Code's HTML tag parser can still get mildly confused around them in some
+  tags. The islands
   grammar now colors the binding names and their `$(…)` values, which masks most
   of it; if a tag still mis-highlights after the binding, the fix is to give the
   injection grammar its own tag/attribute handling instead of deferring to HTML

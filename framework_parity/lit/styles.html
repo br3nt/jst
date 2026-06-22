@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!--
+  Source: https://lit.dev/docs/components/styles/
+  Demonstrates: Lit's scoped component styling via `static styles = css`...``,
+  which the Shadow DOM encapsulates so selectors never leak in or out.
+  JST status: (i) partial — JST renders to LIGHT DOM, so there is no Shadow-DOM
+  style scoping. You style a JST component with ordinary global CSS (here keyed
+  on the custom-element tag name). This visibly styles the component, but the
+  rules are global: a `p` rule inside the component would hit every `p` on the
+  page. That encapsulation is the genuine gap; JST trades it for zero-config
+  interop with page CSS, slots, and form controls.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JST — Styles (light DOM)</title>
+<script type="module" src="../../jst.js"></script>
+<style>
+  /* In Lit these would live in `static styles` and be shadow-scoped.
+     In JST they are plain global rules scoped by the tag name instead. */
+  styled-card { display:block; max-width:320px; margin:2rem 0; font-family:system-ui, sans-serif; }
+  styled-card .card { border:1px solid #d0d7de; border-radius:12px; overflow:hidden; box-shadow:0 1px 4px rgba(0,0,0,.08); }
+  styled-card .title { background:#6750a4; color:#fff; padding:12px 16px; font-weight:600; }
+  styled-card .body { padding:16px; color:#1f2328; }
+  styled-card .pill { display:inline-block; background:#eaddff; color:#21005d; border-radius:999px; padding:2px 10px; font-size:.8rem; }
+</style>
+</head>
+<body>
+<h1>Styling a component (light DOM)</h1>
+
+<script type="jst" name="styled-card" props="title">
+  <div class="card" data-testid="card">
+    <div class="title">$(title)</div>
+    <div class="body">
+      <p>Styled with ordinary global CSS, not Shadow-DOM-scoped styles.</p>
+      <span class="pill">light DOM</span>
+    </div>
+  </div>
+</script>
+
+<styled-card id="app" title="Hello, styles"></styled-card>
+
+<script>
+  window.__parityTest = async () => {
+    await new Promise(r => setTimeout(r, 0));
+    const title = document.querySelector('#app .title');
+    const bg = getComputedStyle(title).backgroundColor;
+    // #6750a4 -> rgb(103, 80, 164)
+    return { ok: bg === 'rgb(103, 80, 164)', detail: `title background applied (${bg})` };
+  };
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

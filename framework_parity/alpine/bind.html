@@ -26,10 +26,10 @@
     <!-- :class — class string driven by state -->
     <span class="pill $(on ? 'active' : '')" data-testid="pill"
           aria-pressed="$(on ? 'true' : 'false')"
-          @click="$(() => el.on = !el.on)">Toggle me</span>
+          onclick="$(() => el.on = !el.on)">Toggle me</span>
 
     <!-- :attribute — bind disabled -->
-    <button data-testid="btn" $(on ? '' : 'disabled') @click="$(() => alert('clicked'))">
+    <button data-testid="btn" $(on ? '' : 'disabled') onclick="$(() => alert('clicked'))">
       Enabled only when toggled on
     </button>
   </div>

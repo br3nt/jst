@@ -33,7 +33,7 @@
       <div class="board-row">
         $ [0, 1, 2].forEach(col => {
           $ const i = row * 3 + col;
-          <button class="square" data-i="$(i)" @click="$(() => el.emit('play', i))">$((squares || [])[i] || '')</button>
+          <button class="square" data-i="$(i)" onclick="$(() => el.emit('play', i))">$((squares || [])[i] || '')</button>
         $ })
       </div>
     $ })
@@ -45,7 +45,7 @@
   <ol data-testid="moves">
     $ Array.from({ length: count || 0 }).forEach((_, m) => {
       <li>
-        <button @click="$(() => el.emit('jump', m))">
+        <button onclick="$(() => el.emit('jump', m))">
           $(m === 0 ? 'Go to game start' : 'Go to move #' + m)$(m === current ? ' (current)' : '')
         </button>
       </li>

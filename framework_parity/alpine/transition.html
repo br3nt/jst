@@ -27,7 +27,7 @@
 
 <script type="jst" name="x-transition-demo" props="open">
   <div>
-    <button data-testid="toggle" @click="$(() => el.open = !el.open)">$(open ? 'Leave' : 'Enter')</button>
+    <button data-testid="toggle" onclick="$(() => el.open = !el.open)">$(open ? 'Leave' : 'Enter')</button>
     $ if (open) {
       <div class="box" jst-transition="fade" data-testid="box">I fade + slide using CSS transition classes.</div>
     $ }

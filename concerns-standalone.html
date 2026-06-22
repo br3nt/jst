@@ -75,9 +75,6 @@ class EndOfInputToken extends Token {
 
 }
 
-
-const Tokens = { Token, Escaped$Token, WhitespaceToken, JsIdentifierToken, JsExpressionToken, JsCodeToken, HtmlToken, EndOfInputToken };
-
 /* ===== input_reader.js ===== */
 class InputReader {
   #input;
@@ -105,6 +102,8 @@ class InputReader {
 
   peekAt(offset) { return this.#input.charAt(this.position + offset); }
 
+  startsWith(str) { return this.#input.startsWith(str, this.position); }
+
   endOfInput() { return this.peek() === ''; }
 
   croak(msg) { throw new Error(`${msg} (${this.line}:${this.col})`); }
@@ -127,105 +126,225 @@ class InputReader {
 
   readBalanced(chOpen, chClose) {
     const startPosition = this.position;
-    let braceCount = 1;
-    let quote = null;
-    let escaped = false;
-    let lineComment = false;
-    let blockComment = false;
-    let regex = false;
-    let regexClass = false;
-    let previousSignificant = chOpen;
-
     this.skipChar(chOpen);
+    let depth = 1;
+    const prev = { char: '', word: '' };
 
-    const canStartRegex = previous => !previous || /[({[=,:;!&|?+\-*~%^<>]/.test(previous);
-    const remember = ch => {
-      if (!/\s/.test(ch)) previousSignificant = ch;
-    };
+    while (!this.endOfInput() && depth > 0) {
+      if (this.#skipJsAtom(prev)) continue;
 
-    while (!this.endOfInput() && braceCount > 0) {
-      const peek = this.peek();
-      const peekNext = this.peekNext();
+      const ch = this.peek();
 
-      if (lineComment) {
-        this.next();
-        if (peek === '\n' || peek === '\r') lineComment = false;
-        continue;
-      }
+      if (ch === chOpen) depth += 1;
+      else if (ch === chClose) depth -= 1;
 
-      if (blockComment) {
-        this.next();
-        if (peek === '*' && this.peek() === '/') {
-          this.next();
-          blockComment = false;
-        }
-        continue;
-      }
-
-      if (quote) {
-        if (escaped) {
-          escaped = false;
-        } else if (peek === '\\') {
-          escaped = true;
-        } else if (peek === quote) {
-          quote = null;
-        }
-        this.next();
-        continue;
-      }
-
-      if (regex) {
-        if (escaped) {
-          escaped = false;
-        } else if (peek === '\\') {
-          escaped = true;
-        } else if (peek === '[') {
-          regexClass = true;
-        } else if (peek === ']') {
-          regexClass = false;
-        } else if (peek === '/' && !regexClass) {
-          regex = false;
-        }
-        this.next();
-        continue;
-      }
-
-      if (peek === '/' && peekNext === '/') {
-        lineComment = true;
-        this.next();
-        this.next();
-        continue;
-      }
-
-      if (peek === '/' && peekNext === '*') {
-        blockComment = true;
-        this.next();
-        this.next();
-        continue;
-      }
-
-      if (peek === '/' && canStartRegex(previousSignificant)) {
-        regex = true;
-        this.next();
-        continue;
-      }
-
-      if (peek === "'" || peek === '"' || peek === '`') {
-        quote = peek;
-      } else if (peek === chOpen) {
-        braceCount += 1;
-      } else if (peek === chClose) {
-        braceCount -= 1;
-      }
-
-      remember(peek);
       this.next();
+      this.#advancePrev(prev, ch);
     }
 
-    if (braceCount !== 0) this.croak(`Unbalanced ${chOpen}${chClose}`);
+    if (depth !== 0) this.croak(`Unbalanced ${chOpen}${chClose}`);
 
     const str = this.#input.substring(startPosition, this.position);
     return str;
+  }
+
+  #resetPrev(prev) {
+    prev.char = '';
+    prev.word = '';
+  }
+
+  #markValue(prev) {
+    prev.char = ')';
+    prev.word = '';
+  }
+
+  #advancePrev(prev, ch) {
+    if (/\s/.test(ch)) return;
+    prev.char = ch;
+    prev.word = /[\w$]/.test(ch) ? prev.word + ch : '';
+  }
+
+  static #regexKeywords = new Set([
+    'return',
+    'typeof',
+    'instanceof',
+    'in',
+    'of',
+    'new',
+    'delete',
+    'void',
+    'do',
+    'else',
+    'yield',
+    'await',
+    'case',
+    'throw',
+  ]);
+
+  static #regexAllowedAfter({ char, word }) {
+    if (char === '') return true;
+    if (/[)\]'"`]/.test(char)) return false;
+    if (/[\w$.]/.test(char)) return InputReader.#regexKeywords.has(word);
+    return true;
+  }
+
+  #skipString(quote) {
+    this.next();
+    while (!this.endOfInput()) {
+      const ch = this.peek();
+      if (ch === '\\') {
+        this.next();
+        this.next();
+        continue;
+      }
+      if (ch === quote) {
+        this.next();
+        return;
+      }
+      if (ch === '\n' || ch === '\r') return;
+      this.next();
+    }
+  }
+
+  #skipTemplateLiteral() {
+    this.next();
+    while (!this.endOfInput()) {
+      const ch = this.peek();
+      if (ch === '\\') {
+        this.next();
+        this.next();
+        continue;
+      }
+      if (ch === '`') {
+        this.next();
+        return;
+      }
+      if (ch === '$' && this.peekNext() === '{') {
+        this.next();
+        this.next();
+        this.#skipTemplateInterpolation();
+        continue;
+      }
+      this.next();
+    }
+  }
+
+  #skipTemplateInterpolation() {
+    let depth = 1;
+    const prev = { char: '', word: '' };
+
+    while (!this.endOfInput() && depth > 0) {
+      if (this.#skipJsAtom(prev)) continue;
+
+      const ch = this.peek();
+      if (ch === '{') depth += 1;
+      else if (ch === '}') depth -= 1;
+
+      this.next();
+      this.#advancePrev(prev, ch);
+    }
+  }
+
+  #skipLineComment() {
+    while (!this.endOfInput() && this.peek() !== '\n' && this.peek() !== '\r') this.next();
+  }
+
+  #skipBlockComment() {
+    this.next();
+    this.next();
+    while (!this.endOfInput()) {
+      if (this.peek() === '*' && this.peekNext() === '/') {
+        this.next();
+        this.next();
+        return;
+      }
+      this.next();
+    }
+  }
+
+  #skipRegexLiteral() {
+    this.next();
+    let inCharClass = false;
+
+    while (!this.endOfInput()) {
+      const ch = this.peek();
+      if (ch === '\\') {
+        this.next();
+        this.next();
+        continue;
+      }
+      if (ch === '\n' || ch === '\r') return;
+      if (ch === '[') inCharClass = true;
+      else if (ch === ']') inCharClass = false;
+      else if (ch === '/' && !inCharClass) {
+        this.next();
+        break;
+      }
+      this.next();
+    }
+
+    while (!this.endOfInput() && /[a-z]/i.test(this.peek())) this.next();
+  }
+
+  #skipJsAtom(prev) {
+    const ch = this.peek();
+    const next = this.peekNext();
+
+    if (ch === '/' && next === '/') {
+      this.#skipLineComment();
+      this.#resetPrev(prev);
+      return true;
+    }
+    if (ch === '/' && next === '*') {
+      this.#skipBlockComment();
+      this.#resetPrev(prev);
+      return true;
+    }
+    if (ch === '/' && InputReader.#regexAllowedAfter(prev)) {
+      this.#skipRegexLiteral();
+      this.#markValue(prev);
+      return true;
+    }
+    if (ch === "'" || ch === '"') {
+      this.#skipString(ch);
+      this.#markValue(prev);
+      return true;
+    }
+    if (ch === '`') {
+      this.#skipTemplateLiteral();
+      this.#markValue(prev);
+      return true;
+    }
+
+    return false;
+  }
+
+  readJsLine(isHtmlBoundary) {
+    const startPosition = this.position;
+    const prev = { char: '', word: '' };
+
+    while (!this.endOfInput()) {
+      if (this.#skipJsAtom(prev)) continue;
+
+      const ch = this.peek();
+      const next = this.peekNext();
+
+      if (ch === '\n' || ch === '\r') break;
+      if (ch === '$') break;
+      if (isHtmlBoundary(ch, next)) {
+        const isCloseTag = ch === '<' && next === '/';
+        if (isCloseTag || !this.#prevIsValue(prev)) break;
+      }
+
+      this.next();
+      this.#advancePrev(prev, ch);
+    }
+
+    return this.#input.substring(startPosition, this.position);
+  }
+
+  #prevIsValue(prev) {
+    return /[)\]'"`\w$]/.test(prev.char);
   }
 
   readBalancedInner(chOpen, chClose) {
@@ -304,28 +423,9 @@ class Lexer {
     // Skip leading space after $ if it exists
     if (this.#input.peek() === ' ') this.#input.next();
 
-    let quote = null;
-    let escaped = false;
-
-    const condition = (ch, chNext) => {
-      if (escaped) { escaped = false; return true; }
-
-      if (quote) {
-        if (ch === '\\') { escaped = true; return true; }
-        if (ch === quote) { quote = null; return true; }
-        // Strings other than template literals cannot span lines
-        if ((ch === '\n' || ch === '\r') && quote !== '`') { quote = null; return false; }
-        return true;
-      }
-
-      if (ch === "'" || ch === '"' || ch === '`') { quote = ch; return true; }
-      if (ch === '\n' || ch === '\r') return false;
-      if (ch === '$') return false;
-      // Stop if we see an actual HTML tag start
-      return !(Lexer.isHtmlTagStart(ch, chNext) || Lexer.isHtmlTagEnd(ch, chNext));
-    };
-
-    const str = this.#input.readWhile(condition);
+    const str = this.#input.readJsLine(
+      (ch, chNext) => Lexer.isHtmlTagStart(ch, chNext) || Lexer.isHtmlTagEnd(ch, chNext),
+    );
     return new Tokens.JsCodeToken(str);
   }
 
@@ -467,10 +567,54 @@ function mergeJsTokens(templateTokens) {
   return processedTokens
 }
 
-// Matches a tag-position binding prefix at the end of an HTML chunk:
-//   `.prop="` assigns the expression value as a JS property after morphing
-//   `@event="` attaches the expression value with addEventListener after morphing
-const bindingTailPattern = /(^|\s)([.@])([a-zA-Z_$][\w$-]*(?:\.[\w$-]+)*)\s*=\s*(["'])$/
+// Tag-position binding attributes whose value is a single $(…) expression:
+//   `.prop="$(expr)"`     assigns the value as a JS property after morphing
+//   `onevent="$(fn)"`     attaches the value with addEventListener after morphing
+// Event handlers use the native `on<event>` attribute name with an optional
+// dotted modifier tail (`onclick.stop`, `onkeydown.enter.prevent`); the `on`
+// prefix is stripped to recover the event descriptor.
+const bindingName = '(\\.[a-zA-Z_$][\\w$-]*(?:\\.[\\w$-]+)*|on[a-zA-Z][\\w$-]*(?:\\.[\\w$-]+)*)'
+// At the very end of an HTML chunk: a valid opener, immediately followed by the
+// $(…) expression token (which split the chunk here).
+const bindingTailPattern = new RegExp(`(^|\\s)${bindingName}\\s*=\\s*(["'])$`)
+// The same opener anywhere in the chunk — used to reject values that are not a
+// lone $(…) expression (leading text, or raw inline JavaScript in an on* handler).
+const bindingOpenerPattern = new RegExp(`(^|\\s)${bindingName}\\s*=\\s*(["'])`, 'g')
+// Legacy `@event="$(fn)"` syntax (removed): detect and point at the replacement.
+const legacyEventTailPattern = /(^|\s)@([a-zA-Z][\w$-]*(?:\.[\w$-]+)*)\s*=\s*["']$/
+
+function classifyBindingName(rawName) {
+  if (rawName[0] === '.') return { kind: 'prop', name: rawName.slice(1) }
+  return { kind: 'event', name: rawName.slice(2) }
+}
+
+// A valid binding opener sits at the very end of its HTML chunk, because the
+// $(…) value token splits the chunk there. Any opener with trailing content in
+// the same chunk means the value is not a lone $(…) expression — leading literal
+// text (`onclick="run $(fn)"`) or raw inline JavaScript (`onclick="alert(1)"`).
+// Fail loud rather than silently degrading the binding to a string attribute.
+function assertNoInvalidBinding(html) {
+  bindingOpenerPattern.lastIndex = 0
+  let match
+  while ((match = bindingOpenerPattern.exec(html))) {
+    const [, , rawName, quote] = match
+    const remainder = html.slice(bindingOpenerPattern.lastIndex)
+    if (remainder.length === 0) continue
+
+    const isEvent = rawName[0] !== '.'
+    if (isEvent && remainder.includes(quote)) {
+      throw new Error(`JST: ${rawName}="…" must be a single $(…) expression. Raw inline JavaScript in on* handlers is not allowed; wrap the handler in $(…).`)
+    }
+    throw new Error(`JST: ${rawName}="…" must contain exactly one $(…) expression and nothing else inside the quotes.`)
+  }
+}
+
+function assertNoLegacyEventBinding(token, expressionToken) {
+  const match = token.html.match(legacyEventTailPattern)
+  if (match && expressionToken instanceof JsExpressionToken) {
+    throw new Error(`JST: the @${match[2]}="…" event syntax was removed. Use on${match[2]}="…" instead.`)
+  }
+}
 
 function matchBinding(tokens, i) {
   const token = tokens[i]
@@ -479,19 +623,23 @@ function matchBinding(tokens, i) {
 
   if (!(token instanceof HtmlToken)) return null
 
+  assertNoInvalidBinding(token.html)
+  assertNoLegacyEventBinding(token, expressionToken)
+
   const match = token.html.match(bindingTailPattern)
   if (!match) return null
 
-  const [fullMatch, leading, sigil, name, quote] = match
+  const [fullMatch, leading, rawName, quote] = match
+  const { kind, name } = classifyBindingName(rawName)
 
   if (!(expressionToken instanceof JsExpressionToken)
     || !(closingToken instanceof HtmlToken)
     || !closingToken.html.startsWith(quote)) {
-    throw new Error(`JST binding ${sigil}${name} must contain exactly one $(...) expression`)
+    throw new Error(`JST: ${rawName}="…" must contain exactly one $(…) expression and nothing else inside the quotes.`)
   }
 
   return {
-    kind: sigil === '.' ? 'prop' : 'event',
+    kind,
     name,
     expression: expressionToken.expression,
     htmlPrefix: token.html.slice(0, token.html.length - fullMatch.length + leading.length),
@@ -591,9 +739,10 @@ const reservedPropNames = new Set([
   'with',
   'yield',
   'el',
-  'raw',
-  'unsafeHTML',
+  'trustedHTML',
   'slot',
+  'url',
+  'once',
   'onDisconnect',
   'emit',
   '__esc',
@@ -671,25 +820,26 @@ function compileTemplateRenderingFunction(templateElement) {
  *
  * Inside templates:
  *   $(expr)                 escaped interpolation
- *   $(raw(expr))            unescaped interpolation (opt-in trusted HTML)
- *   $(unsafeHTML(expr))     alias for raw(expr)
+ *   $(trustedHTML(expr))    unescaped interpolation (opt-in trusted HTML)
+ *   $(url(expr))            URL helper for href/src values
  *   $(slot())               project the component's original child nodes
  *   $(slot('name', 'fb'))   project nodes marked slot="name", with a fallback
  *   .prop="$(expr)"         assign expr as a JS property on the element
- *   @event.mod="$(fn)"      addEventListener('event', fn) with optional modifiers
- *   jst-model="prop"        shorthand for .value/checked + emitting prop changes
+ *   onevent.mod="$(fn)"     addEventListener('event', fn) with optional modifiers
+ *   jst-model="prop"        local form shorthand: read prop, update el[prop]
+ *   once('key', setup)      run setup once per connection, after the DOM commits;
+ *                           a returned function is registered as disconnect cleanup
  *   jst-key="$(id)"         preserve keyed node identity while morphing
+ *
+ * State lives in this module. The ES-module exports are the canonical API; a
+ * reduced `window.JST` global mirrors them for non-module/streamed consumers.
  */
-document.jst = {
-  ...document.jst,
-  templates: document.jst?.templates || new Map(),
-  config: {
-    dev: false,
-    autoRegister: true,
-    autoRegisterRoot: null,
-    resolveTemplate: null,
-    ...document.jst?.config,
-  },
+const templates = new Map()
+const config = {
+  dev: false,
+  autoRegister: true,
+  autoRegisterRoot: null,
+  resolveTemplate: null,
 }
 
 let templatesInitialized = false
@@ -701,28 +851,36 @@ class RawHtml {
   constructor(html) { this.html = html }
 }
 
-function raw(value) {
+function trustedHTML(value) {
   if (value instanceof RawHtml) return value
   return new RawHtml(value == null ? '' : String(value))
 }
 
-const unsafeHTML = raw
+function url(value) {
+  const string = value == null ? '' : String(value).trim()
+  const scheme = string.match(/^([a-z][a-z0-9+.-]*):/i)
+  if (scheme && !['http', 'https', 'mailto', 'tel', 'ftp'].includes(scheme[1].toLowerCase())) {
+    console.warn(`JST: blocked unsafe URL scheme in "${string}".`)
+    return '#'
+  }
+  return string
+}
 
 function configure(options = {}) {
-  document.jst.config = {
-    ...document.jst.config,
-    ...options,
-  }
+  const shouldRewire = Object.prototype.hasOwnProperty.call(options, 'autoRegister')
+    || Object.prototype.hasOwnProperty.call(options, 'autoRegisterRoot')
+    || Object.prototype.hasOwnProperty.call(options, 'resolveTemplate');
 
-  if ((Object.prototype.hasOwnProperty.call(options, 'autoRegister')
-    || Object.prototype.hasOwnProperty.call(options, 'autoRegisterRoot')) && templateObserver) {
+  Object.assign(config, options);
+
+  if (shouldRewire && templateObserver) {
     templateObserver.disconnect();
     templateObserver = null;
   }
 
   observeNewTemplates();
 
-  return document.jst.config
+  return config
 }
 
 function isCustomElementName(name) {
@@ -748,9 +906,9 @@ function insertTemplateHtml(html, source) {
 }
 
 async function resolveTemplateForName(name) {
-  const resolver = document.jst.config.resolveTemplate;
+  const resolver = config.resolveTemplate;
   if (typeof resolver !== 'function') return null;
-  if (!isCustomElementName(name) || customElements.get(name) || document.jst.templates.has(name)) return null;
+  if (!isCustomElementName(name) || customElements.get(name) || templates.has(name)) return null;
   if (pendingTemplateResolutions.has(name)) return pendingTemplateResolutions.get(name);
 
   const resolution = Promise.resolve()
@@ -830,7 +988,9 @@ function nodesAreCompatible(currentNode, nextNode) {
 }
 
 function getNodeKey(node) {
-  return node?.nodeType === Node.ELEMENT_NODE ? node.getAttribute('jst-key') : null;
+  if (node?.nodeType !== Node.ELEMENT_NODE) return null;
+  if (node.hasAttribute('data-jst-leaving')) return null;
+  return node.getAttribute('jst-key');
 }
 
 function findKeyedChild(host, nextNode, startIndex) {
@@ -897,14 +1057,9 @@ function afterTransition(element, callback) {
   };
   const timeout = transitionTimeoutMs(element);
 
-  if (timeout <= 0) {
-    setTimeout(finish, 0);
-    return;
-  }
-
   element.addEventListener('transitionend', finish);
   element.addEventListener('animationend', finish);
-  setTimeout(finish, timeout + 50);
+  setTimeout(finish, timeout > 0 ? timeout + 50 : 0);
 }
 
 function removeTransitionClasses(element, name, phase) {
@@ -934,6 +1089,8 @@ function runLeaveTransition(node, remove) {
     return;
   }
 
+  node.setAttribute('data-jst-leaving', '');
+  node.removeAttribute('jst-key');
   node.classList.add(`${name}-leave-from`, `${name}-leave-active`);
   nextFrame(() => {
     node.classList.remove(`${name}-leave-from`);
@@ -964,6 +1121,7 @@ function removeRenderedNode(host, node) {
   runLeaveTransition(node, () => {
     if (node.parentNode === host) host.removeChild(node);
   });
+  return node.parentNode !== host;
 }
 
 function escapeCssIdentifier(value) {
@@ -1065,7 +1223,13 @@ function morphNode(currentNode, nextNode) {
   syncAttributes(currentNode, nextNode);
   syncFormProperties(currentNode, nextNode);
   // Managed elements render their own children; slot elements hold projected
-  // author content. Neither should be morphed from the parent's output.
+  // author content. Neither should have its children morphed from the parent's
+  // output. The early return is below syncAttributes on purpose: syncAttributes
+  // carries this render's fresh `jst-bound`/`jst-bind-N` markers (and attribute
+  // props) onto the existing managed child, so the parent's #applyBindings pass
+  // re-applies its `.prop=`/event bindings to the child — flowing updated data
+  // into a nested managed component's props on a parent re-render — without
+  // touching the child's own DOM. Do not hoist this return above syncAttributes.
   if (isManagedCustomElement(currentNode) || isSlotElement(currentNode)) return;
   morphChildren(currentNode, nextNode);
 }
@@ -1079,8 +1243,7 @@ function morphChildren(host, nextParent) {
     const nextNode = nextNodes[index];
 
     if (!nextNode) {
-      removeRenderedNode(host, currentNode);
-      index++;
+      if (!removeRenderedNode(host, currentNode)) index++;
       continue;
     }
 
@@ -1221,6 +1384,11 @@ function syncModelControl(element, value) {
 function buildEventListener(element, descriptor, handler) {
   const { eventName, modifiers } = parseEventDescriptor(descriptor);
   const modifierSet = new Set(modifiers);
+  const options = {
+    capture: modifierSet.has('capture'),
+    passive: modifierSet.has('passive'),
+    once: modifierSet.has('once'),
+  };
   const keyChecks = modifiers
     .filter(modifier => keyModifiers[modifier])
     .map(modifier => keyModifiers[modifier]);
@@ -1247,6 +1415,7 @@ function buildEventListener(element, descriptor, handler) {
   return {
     eventName,
     target: modifierSet.has('outside') ? document : element,
+    options,
     listener: modifierSet.has('outside')
       ? event => {
           if (!element.contains(event.target)) listener(event);
@@ -1263,18 +1432,21 @@ function applyBinding(element, { kind, name, value }) {
 
   const listeners = boundListeners.get(element) || {}
   if (listeners[name]) {
-    listeners[name].target.removeEventListener(listeners[name].eventName, listeners[name].listener)
+    listeners[name].target.removeEventListener(listeners[name].eventName, listeners[name].listener, listeners[name].options)
   }
 
   if (typeof value === 'function') {
     const binding = buildEventListener(element, name, value)
-    binding.target.addEventListener(binding.eventName, binding.listener)
+    binding.target.addEventListener(binding.eventName, binding.listener, binding.options)
     listeners[name] = binding
+    boundListeners.set(element, listeners)
+    return binding
   } else {
     delete listeners[name]
   }
 
   boundListeners.set(element, listeners)
+  return null
 }
 
 function applyModelBinding(host, element, propName, paramNames) {
@@ -1324,12 +1496,13 @@ function registerCustomElementFromTemplate(templateElement) {
     createRenderFunction: () => new Function(
       ...renderFunction.functionParams,
       'el',
-      'raw',
-      'unsafeHTML',
       'slot',
       'onDisconnect',
       '__esc',
       '__bind',
+      'url',
+      'once',
+      'trustedHTML',
       renderFunction.functionBody,
     ),
   });
@@ -1362,12 +1535,12 @@ function defineCustomElementFromRender({
   source,
   createRenderFunction,
 }) {
-  if (document.jst.templates.has(customElementName)) {
+  if (templates.has(customElementName)) {
     console.warn(`JST: Duplicate template name "${customElementName}" ignored.`, source);
     return customElements.get(customElementName);
   }
 
-  document.jst.templates.set(customElementName, {
+  templates.set(customElementName, {
     functionParams: paramNames,
     paramMap: attributeToParam,
     source,
@@ -1388,12 +1561,18 @@ function defineCustomElementFromRender({
     #rendering = false;
     #slotObserver = null;
     #disconnectCleanups = new Set();
+    #onceKeys = new Set();
+    #connectionEpoch = 0;
+    #outsideTracked = new WeakSet();
 
     static get observedAttributes() {
       return Object.keys(attributeToParam);
     }
 
     connectedCallback() {
+      // Each connection is its own epoch; deferred once() setups captured under
+      // a stale epoch (e.g. a synchronous disconnect+reconnect) are discarded.
+      this.#connectionEpoch++;
       this.#captureSlotContent();
       this.#observeSlotMutations();
       this.#upgradeProperties();
@@ -1412,6 +1591,7 @@ function defineCustomElementFromRender({
         }
       });
       this.#disconnectCleanups.clear();
+      this.#onceKeys.clear();
     }
 
     attributeChangedCallback(name, oldValue, newValue) {
@@ -1447,12 +1627,13 @@ function defineCustomElementFromRender({
           this,
           ...paramNames.map(param => this.#params[param]),
           this,
-          raw,
-          unsafeHTML,
           createSlotPlaceholder,
           cleanup => this.#registerDisconnectCleanup(cleanup),
           escapeHtml,
           (kind, name, value) => ` jst-bound jst-bind-${bindings.push({ kind, name, value }) - 1}=""`,
+          url,
+          (key, setupFn) => this.#runOnce(key, setupFn),
+          trustedHTML,
         );
 
         this.#slotObserver?.disconnect();
@@ -1473,7 +1654,7 @@ function defineCustomElementFromRender({
         console.groupCollapsed('--- Problematic Generated Code ---');
         console.log(renderFunctionBody);
         console.groupEnd();
-        if (document.jst.config.dev) this.#showDevError(e);
+        if (config.dev) this.#showDevError(e);
       }
     }
 
@@ -1491,6 +1672,32 @@ function defineCustomElementFromRender({
       if (typeof cleanup !== 'function') return cleanup;
       this.#disconnectCleanups.add(cleanup);
       return cleanup;
+    }
+
+    #runOnce(key, setupFn) {
+      if (this.#onceKeys.has(key)) return undefined;
+      if (typeof setupFn !== 'function') return undefined;
+
+      this.#onceKeys.add(key);
+
+      // The template body runs before this render commits, so the component's
+      // own rendered DOM and projected slots don't exist yet. Defer setup to a
+      // microtask so it sees the committed DOM, and register whatever it returns
+      // as disconnect cleanup, so callers never have to wire teardown by hand.
+      const epoch = this.#connectionEpoch;
+      queueMicrotask(() => {
+        if (!this.isConnected || this.#connectionEpoch !== epoch || !this.#onceKeys.has(key)) return;
+        try {
+          const cleanup = setupFn();
+          if (typeof cleanup === 'function') this.#registerDisconnectCleanup(cleanup);
+        } catch (error) {
+          this.#onceKeys.delete(key);
+          console.error(`JST once("${key}") setup error in <${customElementName}>:`, error);
+          if (config.dev) this.#showDevError(error);
+        }
+      });
+
+      return undefined;
     }
 
     #showDevError(error) {
@@ -1595,7 +1802,24 @@ function defineCustomElementFromRender({
 
           element.removeAttribute(attribute.name);
           const binding = bindings[Number(match[1])];
-          if (binding) applyBinding(element, binding);
+          if (!binding) return;
+          const applied = applyBinding(element, binding);
+          // `.outside` listeners live on `document`, so they outlive the host
+          // unless explicitly removed. Element-targeted listeners die with their
+          // element; document-targeted ones leak and fire after disconnect.
+          // Register one cleanup per element that strips its document listeners.
+          if (applied && applied.target === document && !this.#outsideTracked.has(element)) {
+            this.#outsideTracked.add(element);
+            this.#registerDisconnectCleanup(() => {
+              const current = boundListeners.get(element);
+              if (!current) return;
+              Object.values(current).forEach(b => {
+                if (b.target === document) {
+                  b.target.removeEventListener(b.eventName, b.listener, b.options);
+                }
+              });
+            });
+          }
         });
 
         element.removeAttribute('jst-bound');
@@ -1651,19 +1875,19 @@ function defineCustomElementFromRender({
   });
 
   customElements.define(customElementName, CustomElementClass);
-  if (document.jst.config.dev) console.log(`JST: Registered <${customElementName}>`, source);
+  if (config.dev) console.log(`JST: Registered <${customElementName}>`, source);
   return CustomElementClass;
 }
 
 function initializeTemplates() {
-  if (templatesInitialized) return document.jst.templates;
+  if (templatesInitialized) return templates;
   templatesInitialized = true;
 
   document.querySelectorAll('script[type="jst"]').forEach(registerCustomElementFromTemplate);
   observeNewTemplates();
   scanForMissingTemplates(document.documentElement);
 
-  return document.jst.templates;
+  return templates;
 }
 
 /**
@@ -1672,39 +1896,53 @@ function initializeTemplates() {
  */
 function observeNewTemplates() {
   if (templateObserver || typeof MutationObserver === 'undefined') return;
-  if (document.jst.config.autoRegister === false) return;
+  if (config.autoRegister === false
+    && typeof config.resolveTemplate !== 'function') return;
 
   templateObserver = new MutationObserver(mutations => {
     mutations.forEach(mutation => {
       mutation.addedNodes.forEach(node => {
         if (node.nodeType !== Node.ELEMENT_NODE) return;
-        if (node.matches?.('script[type="jst"]')) registerCustomElementFromTemplate(node);
-        node.querySelectorAll?.('script[type="jst"]').forEach(registerCustomElementFromTemplate);
+        if (config.autoRegister !== false) {
+          if (node.matches?.('script[type="jst"]')) registerCustomElementFromTemplate(node);
+          node.querySelectorAll?.('script[type="jst"]').forEach(registerCustomElementFromTemplate);
+        }
         scanForMissingTemplates(node);
       });
     });
   });
 
-  const root = document.jst.config.autoRegisterRoot || document.documentElement;
+  const root = config.autoRegisterRoot || document.documentElement;
   templateObserver.observe(root, { childList: true, subtree: true });
 }
 
 function resetJstForTests() {
-  document.jst?.templates?.clear();
+  templates.clear();
 }
 
+/**
+ * The ES-module exports are canonical. This publishes a reduced `window.JST`
+ * global — the handful of entry points a non-module or server-streamed page
+ * needs (configure, trustedHTML/url helpers, register/init) plus the live
+ * `config` object — without re-exposing internal state like the template map.
+ */
+function publishJstApi() {
+  if (typeof window === 'undefined') return;
+
+  window.JST = {
+    ...window.JST,
+    configure,
+    trustedHTML,
+    url,
+    registerCustomElementFromTemplate,
+    registerPrecompiledTemplate,
+    initializeTemplates,
+    config,
+  };
+}
+
+publishJstApi();
 initializeTemplates();
-
-window.JST = {
-  configure,
-  raw,
-  unsafeHTML,
-  escapeHtml,
-  registerCustomElementFromTemplate,
-  registerPrecompiledTemplate,
-  initializeTemplates,
-};
-
 })();
 </script>
 <style>
@@ -1972,7 +2210,7 @@ window.JST = {
 
   <script type="jst" name="concern-parent-field" props="value">
     <label>Parent value
-      <input .value="$(value || '')" @input="$(event => el.emit('value-change', event.target.value))">
+      <input .value="$(value || '')" oninput="$(event => el.emit('value-change', event.target.value))">
     </label>
     <p>Prop from parent: <strong>$(value || '')</strong></p>
   </script>
@@ -1995,18 +2233,18 @@ window.JST = {
 
   <script type="jst" name="concern-stale-counter" props="count">
     <p>Count: <strong>$(count || 0)</strong></p>
-    <button @click="$(() => { el.count = (count || 0) + 1; el.count = (count || 0) + 1; })">
+    <button onclick="$(() => { el.count = (count || 0) + 1; el.count = (count || 0) + 1; })">
       Add twice using render value
     </button>
-    <button class="primary" @click="$(() => { el.count = (el.count || 0) + 1; el.count = (el.count || 0) + 1; })">
+    <button class="primary" onclick="$(() => { el.count = (el.count || 0) + 1; el.count = (el.count || 0) + 1; })">
       Add twice using el.count
     </button>
   </script>
 
   <section>
-    <h2>4. Escaped interpolation is safe; `unsafeHTML` is a trust boundary</h2>
+    <h2>4. Escaped interpolation is safe; `trustedHTML` is a trust boundary</h2>
     <span class="kind boundary">Trust boundary</span>
-    <p class="lede">This distinction has to stay explicit in docs, examples, and tooling. `unsafeHTML` is for trusted HTML, not user content.</p>
+    <p class="lede">This distinction has to stay explicit in docs, examples, and tooling. `trustedHTML` is for trusted HTML, not user content.</p>
     <div class="concern">
       <div class="demo">
         <span class="flag">Concern: HTML trust</span>
@@ -2031,7 +2269,7 @@ window.JST = {
       </div>
       <div>
         <h3>Trusted only</h3>
-        <div class="box">$(unsafeHTML(trustedhtml))</div>
+        <div class="box">$(trustedHTML(trustedhtml))</div>
       </div>
     </div>
   </script>

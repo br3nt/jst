@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!--
+  Source: https://lit.dev/docs/templates/directives/#until
+  Demonstrates: Lit's until(promise, placeholder) — render a placeholder until a
+  promise settles, then swap in the resolved value, all inline in the template.
+  JST status: (i) partial — JST has NO `until` primitive that accepts a promise
+  in template position. The honest equivalent: a page/once()-driven fetch writes
+  a `loading`/`result` prop, and a guarded render block (`$ if (loading)`) shows
+  the placeholder vs the result. Same end state, but the async wiring is explicit
+  and lives outside the template expression rather than inside an `until(...)`.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JST — until (async placeholder)</title>
+<script type="module" src="../../jst.js"></script>
+<script src="../../framework_parity/lib/mock-fetch.js"></script>
+<style>
+  body { font-family:system-ui, sans-serif; max-width:460px; margin:3rem auto; }
+  .quote { padding:1rem; border-left:4px solid #6750a4; background:#f7f5fb; border-radius:4px; }
+  .placeholder { color:#888; font-style:italic; }
+</style>
+</head>
+<body>
+<h1>until: loading placeholder then result</h1>
+
+<script>
+  JSTMock.route('GET /api/quote', () => '<blockquote>The best way to predict the future is to invent it.</blockquote>', { delay: 300 });
+</script>
+
+<!-- once() fires the fetch after first commit; the guarded block is the "until". -->
+<script type="jst" name="quote-box" props="loading result">
+  ${
+    once('load-quote', () => {
+      el.loading = true;
+      fetch('/api/quote')
+        .then(r => r.text())
+        .then(html => { el.result = html.replace(/<\/?blockquote>/g, '').trim(); el.loading = false; });
+    });
+  }
+  $ if (loading) {
+    <p class="placeholder" data-testid="status">Loading…</p>
+  $ } else {
+    <div class="quote" data-testid="quote">$(result)</div>
+  $ }
+</script>
+
+<quote-box id="app" loading="true"></quote-box>
+
+<script>
+  // Capture the transient placeholder while the initial fetch is still pending
+  // (it resolves ~300ms after load, long before the headless test runs). A
+  // MutationObserver started during parse reliably catches it whenever JST first
+  // renders the loading branch, regardless of script/render ordering.
+  window.__sawPlaceholder = false;
+  new MutationObserver(() => {
+    if (document.querySelector('[data-testid="status"]')) window.__sawPlaceholder = true;
+  }).observe(document.documentElement, { childList: true, subtree: true });
+  window.__parityTest = async () => {
+    const app = document.getElementById('app');
+    const result = app.querySelector('[data-testid="quote"]');
+    return { ok: window.__sawPlaceholder === true && !!result && result.textContent.includes('invent it'), detail: 'placeholder shown, then resolved result' };
+  };
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

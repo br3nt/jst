@@ -31,9 +31,9 @@
   $ const pop = () => el.items = list.slice(0, -1);
   $ const reset = () => el.items = [1,2,3,4,5];
   <div>
-    <button id="add" @click="$(append)">Append item</button>
-    <button id="remove" @click="$(pop)">Remove last</button>
-    <button id="reset" @click="$(reset)">Reset</button>
+    <button id="add" onclick="$(append)">Append item</button>
+    <button id="remove" onclick="$(pop)">Remove last</button>
+    <button id="reset" onclick="$(reset)">Reset</button>
   </div>
   <ul id="list">
     $ list.forEach(n => {

@@ -33,18 +33,18 @@
             <td><input data-testid="name-$(r.id)" name="name" .value="$(r.name)"></td>
             <td><input data-testid="email-$(r.id)" name="email" .value="$(r.email)"></td>
             <td>
-              <button data-testid="save-$(r.id)" @click="$(ev => {
+              <button data-testid="save-$(r.id)" onclick="$(ev => {
                 const tr = ev.target.closest('tr');
                 el.emit('save', { id: r.id, name: tr.querySelector('[name=name]').value, email: tr.querySelector('[name=email]').value });
               })">Save</button>
-              <button @click="$(() => el.emit('cancel'))">Cancel</button>
+              <button onclick="$(() => el.emit('cancel'))">Cancel</button>
             </td>
           </tr>
         $ } else {
           <tr data-testid="row-$(r.id)">
             <td>$(r.name)</td><td>$(r.email)</td>
             <td><button data-testid="edit-$(r.id)" .disabled="$(editingId != null)"
-                        @click="$(() => el.emit('edit', r.id))">Edit</button></td>
+                        onclick="$(() => el.emit('edit', r.id))">Edit</button></td>
           </tr>
         $ }
       $ })

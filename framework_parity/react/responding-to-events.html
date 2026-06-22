@@ -5,7 +5,7 @@
   Demonstrates: event handlers, passing handler behaviour via props, and
   event propagation / stopPropagation. (alert() is avoided so the page runs
   cleanly headless; we append to a visible log instead.)
-  JST status: ✓ exact — @event="$(fn)" is addEventListener; el.emit bubbles
+  JST status: ✓ exact — onevent="$(fn)" is addEventListener; el.emit bubbles
   events up; event.stopPropagation() works as in the DOM.
 -->
 <html lang="en">
@@ -26,10 +26,10 @@
 <!-- The toolbar background click bubbles; inner buttons stopPropagation so
      only their own handler fires. message is a prop = "passing handler data". -->
 <script type="jst" name="event-toolbar" props="message">
-  <div class="toolbar" @click="$(() => el.emit('log', 'toolbar background clicked'))">
-    <button @click="$(e => { e.stopPropagation(); el.emit('log', message + ' #1'); })">Play</button>
-    <button @click="$(e => { e.stopPropagation(); el.emit('log', message + ' #2'); })">Upload</button>
-    <button @click="$(() => el.emit('log', 'this one lets the click bubble'))">Bubbles up</button>
+  <div class="toolbar" onclick="$(() => el.emit('log', 'toolbar background clicked'))">
+    <button onclick="$(e => { e.stopPropagation(); el.emit('log', message + ' #1'); })">Play</button>
+    <button onclick="$(e => { e.stopPropagation(); el.emit('log', message + ' #2'); })">Upload</button>
+    <button onclick="$(() => el.emit('log', 'this one lets the click bubble'))">Bubbles up</button>
   </div>
 </script>
 

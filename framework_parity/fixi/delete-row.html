@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!--
+  Source: https://github.com/bigskysoftware/fixi#readme  (Delete Row example)
+  Demonstrates: a Delete button on each row issues `fx-method="delete"` to
+  `fx-action="/contact/:id"` and removes the row (fixi swaps the row out with
+  `fx-target="closest tr" fx-swap="outerHTML"` against an empty response).
+  JST status: ✓ exact match. The page owns the rows array; the Delete handler DELETEs and
+  filters the row out, then re-renders. Note: fixi-core has NO built-in confirm dialog
+  (htmx's hx-confirm has no fixi analog) — a confirm would be user-land JS in fixi too.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JST · fixi · delete-row</title>
+<script type="module" src="../../jst.js"></script>
+<script src="../../framework_parity/lib/mock-fetch.js"></script>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 36rem; margin: 3rem auto; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: .4rem .6rem; border-bottom: 1px solid #ddd; }
+  button { padding: .25rem .6rem; cursor: pointer; }
+</style>
+</head>
+<body>
+
+<script type="jst" name="contact-table" props="rows">
+  <table>
+    <thead><tr><th>Name</th><th>Email</th><th>Status</th><th></th></tr></thead>
+    <tbody data-testid="rows">
+      $ (rows || []).forEach(r => {
+        <tr data-testid="row-$(r.id)" jst-key="$(r.id)">
+          <td>$(r.name)</td><td>$(r.email)</td><td>$(r.status)</td>
+          <td><button data-testid="del-$(r.id)" onclick="$(() => el.emit('remove', r.id))">Delete</button></td>
+        </tr>
+      $ })
+    </tbody>
+  </table>
+</script>
+
+<h1>Delete Row</h1>
+<contact-table id="tbl"></contact-table>
+
+<script>
+  JSTMock.route('DELETE /api/contact/:id', () => ({ status: 200, body: '' }), { delay: 100 });
+
+  const tbl = document.getElementById('tbl');
+  let rows = [
+    { id: 1, name: 'Joe Smith', email: 'joe@smith.org', status: 'Active' },
+    { id: 2, name: 'Angie MacDowell', email: 'angie@macdowell.org', status: 'Active' },
+    { id: 3, name: 'Fuqua Tarkenton', email: 'fuqua@tarkenton.org', status: 'Active' },
+  ];
+  tbl.rows = rows;
+
+  tbl.addEventListener('remove', async e => {
+    const id = e.detail;
+    await fetch(`/api/contact/${id}`, { method: 'DELETE' });
+    rows = rows.filter(r => r.id !== id);
+    tbl.rows = rows;
+  });
+
+  window.__parityTest = async () => {
+    document.querySelector('[data-testid="del-1"]').click();
+    await new Promise(resolve => setTimeout(resolve, 350));
+    return { ok: !document.querySelector('[data-testid="row-1"]'), detail: 'DELETE removes the row' };
+  };
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

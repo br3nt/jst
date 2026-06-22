@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!--
+  Source: https://lit.dev/docs/templates/expressions/#property-expressions
+  Demonstrates: a property expression. Lit's `.items=${this.items}` sets a JS property
+  (not an attribute) on a child element, the canonical way to pass rich data like an
+  array down the tree.
+  Maps from: Lit `.prop=${value}` ↔ JST `.prop="$(value)"` property binding.
+  JST status: ✓ exact — `.items="$(arr)"` assigns the array as a property on the child,
+  which re-renders its list.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JST · Lit property expression</title>
+<script type="module" src="../../jst.js"></script>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 460px; margin: 3rem auto; }
+  ul { padding-left: 1.2rem; }
+  li { margin: .3rem 0; }
+</style>
+</head>
+<body>
+<h1>Property expression</h1>
+
+<!-- Leaf: receives an array via the .items property and renders it. -->
+<script type="jst" name="fruit-list" props="items">
+  <ul data-testid="list">
+    $ (items || []).forEach(item => {
+      <li>$(item)</li>
+    $ })
+  </ul>
+</script>
+
+<!-- Parent passes its array down with .items="$(fruits)" (Lit .items=${this.fruits}). -->
+<script type="jst" name="fruit-board" props="fruits">
+  <div>
+    <fruit-list id="leaf" .items="$(fruits)"></fruit-list>
+  </div>
+</script>
+
+<fruit-board id="board"></fruit-board>
+
+<script>
+  document.getElementById('board').fruits = ['Apple', 'Banana', 'Cherry', 'Date'];
+
+  window.__parityTest = async () => {
+    await new Promise(r => setTimeout(r, 0));
+    const items = [...document.querySelectorAll('[data-testid="list"] li')].map(li => li.textContent.trim());
+    return {
+      ok: items.length === 4 && items[0] === 'Apple' && items[3] === 'Date',
+      detail: 'array passed via .items rendered ' + items.length + ' items',
+    };
+  };
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

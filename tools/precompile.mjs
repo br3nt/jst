@@ -113,8 +113,6 @@ allTemplates.forEach((template, index) => {
   const args = [
     ...template.params,
     'el',
-    'raw',
-    'unsafeHTML',
     'slot',
     'onDisconnect',
     '__esc',

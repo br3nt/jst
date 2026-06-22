@@ -38,7 +38,7 @@
   <p>
     $ ['main','dev'].forEach(b => {
       <label><input type="radio" name="branch" .checked="$(branch === b)"
-        @change="$(() => el.emit('branch-change', b))"> $(b)</label>
+        onchange="$(() => el.emit('branch-change', b))"> $(b)</label>
     $ })
   </p>
   <p>commits for <strong>$(branch)</strong>:</p>

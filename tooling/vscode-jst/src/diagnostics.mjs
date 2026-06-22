@@ -91,7 +91,7 @@ export function computeDiagnostics(text) {
 
     // Validate the embedded JavaScript using V8 itself -----------------
     try {
-      const args = [...compiled.functionParams, 'el', 'raw', 'slot', '__esc', '__bind', compiled.functionBody];
+      const args = [...compiled.functionParams, 'el', 'slot', 'onDisconnect', '__esc', '__bind', 'url', 'once', 'trustedHTML', compiled.functionBody];
       // eslint-disable-next-line no-new-func
       new Function(...args);
     } catch (error) {

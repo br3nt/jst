@@ -162,28 +162,40 @@
                 isEqual(false, body.includes('.data='), "Should strip the .prop= source from output HTML");
             });
 
-            t.case("Compiles @event= to an event binding", () => {
-                const script = '<button @click="$(handler)">go</button>';
+            t.case("Compiles on<event>= to an event binding", () => {
+                const script = '<button onclick="$(handler)">go</button>';
                 const program = parseTemplateScript(script);
                 const body = interpretTemplateTokens(program.tokens);
 
-                isEqual(true, body.includes('__bind("event", "click", (handler))'), "Should emit an event binding");
+                isEqual(true, body.includes('__bind("event", "click", (handler))'), "Should emit an event binding with the on prefix stripped");
+            });
+
+            t.case("Rejects raw inline JavaScript in on* handlers", () => {
+                let threw = false;
+                try {
+                    const program = parseTemplateScript('<button onclick="alert(1)">go</button>');
+                    interpretTemplateTokens(program.tokens);
+                } catch (error) {
+                    threw = /Raw inline JavaScript/.test(error.message);
+                }
+                isEqual(true, threw, "Should reject a raw inline on* handler");
             });
         });
 
         await suite.testAsync("JST Runtime: configure API Is Exposed Deliberately", async () => {
-            const originalDev = document.jst.config.dev;
-            const configReference = document.jst.config;
+            // document.jst was removed: the ES-module exports are canonical and a
+            // reduced window.JST mirrors them. document.jst must not exist.
+            const originalDev = window.JST.config.dev;
+            const configReference = window.JST.config;
 
             try {
-                isEqual(configure, document.jst.configure, 'Expected document.jst.configure to mirror the module export');
+                isEqual(undefined, document.jst, 'Expected document.jst to be removed');
                 isEqual(configure, window.JST.configure, 'Expected window.JST.configure to mirror the module export');
                 isEqual(configReference, window.JST.config, 'Expected window.JST.config to reference the live config object');
 
                 const result = window.JST.configure({ dev: !originalDev });
 
                 isEqual(configReference, result, 'Expected configure to preserve config object identity');
-                isEqual(!originalDev, document.jst.config.dev, 'Expected document.jst.config to update');
                 isEqual(!originalDev, window.JST.config.dev, 'Expected window.JST.config to stay live');
             } finally {
                 configure({ dev: originalDev });
@@ -372,12 +384,12 @@
             }
         });
 
-        await suite.testAsync("JST Runtime: raw() Opts Out Of Escaping", async () => {
-            const componentName = nextName('x-raw');
+        await suite.testAsync("JST Runtime: trustedHTML() Opts Out Of Escaping", async () => {
+            const componentName = nextName('x-trusted');
             registerCustomElementFromTemplate(createTemplate({
                 name: componentName,
                 attributes: [{ name: 'props', value: 'html' }],
-                body: `<div class="out">$(raw(html))</div>`,
+                body: `<div class="out">$(trustedHTML(html))</div>`,
             }));
 
             const element = document.createElement(componentName);
@@ -386,7 +398,7 @@
             await flushRender();
 
             try {
-                isEqual('bold', element.querySelector('.bold')?.textContent, 'Expected raw() HTML to be parsed as markup');
+                isEqual('bold', element.querySelector('.bold')?.textContent, 'Expected trustedHTML() HTML to be parsed as markup');
             } finally {
                 element.remove();
             }
@@ -518,12 +530,87 @@
             }
         });
 
+        await suite.testAsync("JST Runtime: Parent Morph Flows .prop Into Nested Managed Child", async () => {
+            const childName = nextName('x-i14-child');
+            const parentName = nextName('x-i14-parent');
+
+            registerCustomElementFromTemplate(createTemplate({
+                name: childName,
+                attributes: [{ name: 'props', value: 'value' }],
+                body: `<div class="child">child:$(value && value.label ? value.label : value)</div>`,
+            }));
+            registerCustomElementFromTemplate(createTemplate({
+                name: parentName,
+                attributes: [{ name: 'props', value: 'payload' }],
+                body: `<${childName} .value="$(payload)"></${childName}>`,
+            }));
+
+            const element = document.createElement(parentName);
+            document.body.appendChild(element);
+            element.payload = 'first';
+            await flushRender();
+
+            try {
+                isEqual('child:first', element.querySelector('.child').textContent, 'initial property render');
+                element.setAttribute('payload', JSON.stringify('second'));
+                await flushRender();
+                isEqual('child:second', element.querySelector('.child').textContent, 'string setAttribute should flow into child .prop');
+
+                element.setAttribute('payload', JSON.stringify({ label: 'obj' }));
+                await flushRender();
+                isEqual('child:obj', element.querySelector('.child').textContent, 'object setAttribute should flow into child .prop');
+
+                // Identity-stable mutation via property re-assign of a fresh object
+                element.payload = { label: 'mutated' };
+                await flushRender();
+                isEqual('child:mutated', element.querySelector('.child').textContent, 'object property should flow into child .prop');
+            } finally {
+                element.remove();
+            }
+        });
+
+        await suite.testAsync("JST Runtime: Router Parent Flows New Data Into Per-Kind Child", async () => {
+            const aName = nextName('x-i14-a');
+            const bName = nextName('x-i14-b');
+            const routerName = nextName('x-i14-router');
+
+            registerCustomElementFromTemplate(createTemplate({
+                name: aName, attributes: [{ name: 'props', value: 'item' }],
+                body: `<div class="a">A:$(item.body)</div>`,
+            }));
+            registerCustomElementFromTemplate(createTemplate({
+                name: bName, attributes: [{ name: 'props', value: 'item' }],
+                body: `<div class="b">B:$(item.body)</div>`,
+            }));
+            registerCustomElementFromTemplate(createTemplate({
+                name: routerName, attributes: [{ name: 'props', value: 'kind item' }],
+                body: `$ if (kind === 'a') {\n<${aName} .item="$(item)"></${aName}>\n$ } else {\n<${bName} .item="$(item)"></${bName}>\n$ }`,
+            }));
+
+            const element = document.createElement(routerName);
+            document.body.appendChild(element);
+            element.setAttribute('kind', 'a');
+            element.item = { body: 'one' };
+            await flushRender();
+
+            try {
+                isEqual('A:one', element.querySelector('.a').textContent, 'router initial child A');
+                // Same kind, new data via setAttribute on parent
+                element.item = { body: 'two' };
+                element.setAttribute('kind', 'a');
+                await flushRender();
+                isEqual('A:two', element.querySelector('.a').textContent, 'router same-kind new data flows to child');
+            } finally {
+                element.remove();
+            }
+        });
+
         await suite.testAsync("JST Runtime: @event Bindings And emit()", async () => {
             const componentName = nextName('x-emitter');
             registerCustomElementFromTemplate(createTemplate({
                 name: componentName,
                 attributes: [{ name: 'props', value: 'count' }],
-                body: `<button class="btn" @click="$(() => el.emit('poke', { count }))">go</button>`,
+                body: `<button class="btn" onclick="$(() => el.emit('poke', { count }))">go</button>`,
             }));
 
             const element = document.createElement(componentName);
@@ -548,10 +635,10 @@
             registerCustomElementFromTemplate(createTemplate({
                 name: componentName,
                 attributes: [],
-                body: `<form class="form" @submit.prevent="$(() => el.emit('saved'))">
-                         <input class="key" @keydown.enter="$(event => el.emit('commit', event.key))">
-                         <button class="inside" type="button" @click.outside="$(() => el.emit('outside'))">inside</button>
-                         <button class="once" type="button" @click.once="$(() => el.emit('once-fired'))">once</button>
+                body: `<form class="form" onsubmit.prevent="$(() => el.emit('saved'))">
+                         <input class="key" onkeydown.enter="$(event => el.emit('commit', event.key))">
+                         <button class="inside" type="button" onclick.outside="$(() => el.emit('outside'))">inside</button>
+                         <button class="once" type="button" onclick.once="$(() => el.emit('once-fired'))">once</button>
                        </form>`,
             }));
 
@@ -595,7 +682,7 @@
             registerCustomElementFromTemplate(createTemplate({
                 name: componentName,
                 attributes: [],
-                body: `<button class="inside" type="button" @click.outside="$(() => el.emit('outside-after-remove'))">inside</button>`,
+                body: `<button class="inside" type="button" onclick.outside="$(() => el.emit('outside-after-remove'))">inside</button>`,
             }));
 
             const element = document.createElement(componentName);
@@ -688,39 +775,12 @@
             }
         });
 
-        await suite.testAsync("JST Runtime: SSR Hydration Adopts Server-Rendered DOM", async () => {
-            const componentName = nextName('x-ssr');
-            registerCustomElementFromTemplate(createTemplate({
-                name: componentName,
-                attributes: [{ name: 'props', value: 'label' }],
-                body: `<p class="out">$(label)</p>`,
-            }));
-
-            const host = document.createElement('div');
-            host.innerHTML = `<${componentName} label="Hi" jst-ssr><p class="out">Hi</p></${componentName}>`;
-            const element = host.firstElementChild;
-            const serverNode = element.querySelector('.out');
-            document.body.appendChild(host);
-            await flushRender();
-
-            try {
-                isEqual(serverNode, element.querySelector('.out'), 'Expected hydration to adopt the existing node, not replace it');
-                isEqual(false, element.hasAttribute('jst-ssr'), 'Expected the jst-ssr marker to be removed after hydration');
-
-                element.label = 'Updated';
-                await flushRender();
-                isEqual('Updated', element.querySelector('.out').textContent, 'Expected the hydrated component to stay reactive');
-            } finally {
-                host.remove();
-            }
-        });
-
         await suite.testAsync("JST Runtime: Re-Renders Do Not Duplicate Event Listeners", async () => {
             const componentName = nextName('x-once');
             registerCustomElementFromTemplate(createTemplate({
                 name: componentName,
                 attributes: [{ name: 'props', value: 'count' }],
-                body: `<div>$(count)<button class="btn" @click="$(() => el.emit('fired'))">go</button></div>`,
+                body: `<div>$(count)<button class="btn" onclick="$(() => el.emit('fired'))">go</button></div>`,
             }));
 
             const element = document.createElement(componentName);
@@ -1795,7 +1855,7 @@
             registerCustomElementFromTemplate(createTemplate({
                 name: childName,
                 attributes: [{ name: 'props', value: 'count' }],
-                body: `<button class="inc" @click="$(() => el.count = (el.count || 0) + 1)">$(count || 0)</button>`,
+                body: `<button class="inc" onclick="$(() => el.count = (el.count || 0) + 1)">$(count || 0)</button>`,
             }));
 
             registerCustomElementFromTemplate(createTemplate({

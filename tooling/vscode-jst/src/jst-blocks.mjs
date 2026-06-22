@@ -7,7 +7,7 @@
 // (0-based line/character, LSP-style) so engine errors can be mapped back.
 
 const blockPattern = /(<script\b[^>]*?\btype\s*=\s*(['"])jst\2[^>]*?>)([\s\S]*?)(<\/script\s*>)/gi;
-const attrPattern = /([.@]?[A-Za-z_:][\w:.-]*)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|(\S+)))?/g;
+const attrPattern = /(\.?[A-Za-z_:][\w:.-]*)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|(\S+)))?/g;
 
 function parseProps(value) {
   return value ? value.split(/[\s,]+/).filter(Boolean) : [];

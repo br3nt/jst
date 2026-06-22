@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!--
+  Source: https://lit.dev/docs/templates/directives/#classmap
+          https://lit.dev/docs/templates/directives/#stylemap
+  Demonstrates: Lit's classMap({...}) / styleMap({...}) directives that toggle
+  classes and inline styles from an object of state flags.
+  JST status: ✓ exact (different ergonomics) — JST has no object sugar, but the
+  class and inline-style strings are built with plain expressions in the
+  attribute, covering every case classMap/styleMap do. Buttons flip the flags.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JST — classMap / styleMap</title>
+<script type="module" src="../../jst.js"></script>
+<style>
+  body { font-family:system-ui, sans-serif; max-width:460px; margin:3rem auto; }
+  .box { padding:1rem; border:1px solid #ccc; border-radius:8px; margin:1rem 0; transition:all .15s; }
+  .active { background:#dff0d8; border-color:#3c763d; }
+  .big { font-size:1.6rem; }
+  button { padding:6px 12px; margin-right:.4rem; cursor:pointer; }
+</style>
+</head>
+<body>
+<h1>classMap &amp; styleMap</h1>
+
+<script type="jst" name="map-demo" props="active big color">
+  $ // classMap({box:true, active, big}) -> an expression-built class string
+  $ const cls = ['box', active ? 'active' : '', big ? 'big' : ''].filter(Boolean).join(' ');
+  $ // styleMap({color, fontWeight: big ? 'bold' : 'normal'}) -> a style string
+  $ const style = `color:${color}; font-weight:${big ? 'bold' : 'normal'}`;
+  <div id="target" data-testid="box" class="$(cls)" style="$(style)">
+    active=$(String(active)) · big=$(String(big)) · color=$(color)
+  </div>
+  <button id="toggle-active" onclick="$(() => el.active = !el.active)">Toggle active</button>
+  <button id="toggle-big" onclick="$(() => el.big = !el.big)">Toggle big</button>
+  <button id="cycle-color" onclick="$(() => el.color = el.color === '#a00' ? '#06c' : '#a00')">Cycle color</button>
+</script>
+
+<map-demo id="app" active="false" big="false" color="#06c"></map-demo>
+
+<script>
+  window.__parityTest = async () => {
+    await new Promise(r => setTimeout(r, 0));
+    const app = document.getElementById('app');
+    const box = () => app.querySelector('[data-testid="box"]');
+    const noActive = !box().classList.contains('active');
+    app.querySelector('#toggle-active').click();
+    await new Promise(r => setTimeout(r, 0));
+    const gotActive = box().classList.contains('active');
+    app.querySelector('#toggle-big').click();
+    await new Promise(r => setTimeout(r, 0));
+    const gotBig = box().classList.contains('big') && box().style.fontWeight === 'bold';
+    return { ok: noActive && gotActive && gotBig, detail: 'class + style strings track state flags' };
+  };
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!--
+  Source: https://lit.dev/docs/templates/lists/#the-repeat-directive
+  Demonstrates: keyed list reconciliation. Lit's `repeat(items, item => item.id, tpl)`
+  associates each rendered row with a key so that on reorder Lit MOVES existing DOM
+  nodes instead of re-creating them — preserving node-local state (focus, input values).
+  Maps from: Lit `repeat(items, keyFn, tpl)` ↔ JST `$ items.forEach` + `jst-key="$(item.id)"`.
+  JST status: ✓ exact — `jst-key` preserves DOM identity across reorders; the text typed
+  into each row's input survives a shuffle, proving nodes were moved, not rebuilt.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JST · Lit repeat (keyed)</title>
+<script type="module" src="../../jst.js"></script>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 480px; margin: 3rem auto; }
+  li { margin: .4rem 0; }
+  input { margin-left: .5rem; }
+  button { margin-top: 1rem; padding: 8px 14px; cursor: pointer; }
+</style>
+</head>
+<body>
+<h1>repeat (keyed)</h1>
+
+<!-- repeat(items, i => i.id, tpl) ↔ forEach + jst-key="$(item.id)". -->
+<script type="jst" name="keyed-list" props="items">
+  <ul data-testid="list">
+    $ (items || []).forEach(item => {
+      <li jst-key="$(item.id)">
+        <b>$(item.name)</b>
+        <input data-key="$(item.id)" placeholder="scratch note">
+      </li>
+    $ })
+  </ul>
+</script>
+
+<keyed-list id="list"></keyed-list>
+<button id="shuffle">Reverse order</button>
+
+<p style="color:#666; font-size:.9rem">
+  Type into a row's input, then reverse. The note follows its row because
+  <code>jst-key</code> moves the existing DOM node instead of rebuilding it.
+</p>
+
+<script>
+  let items = [
+    { id: 'a', name: 'Alpha' },
+    { id: 'b', name: 'Bravo' },
+    { id: 'c', name: 'Charlie' },
+  ];
+  const list = document.getElementById('list');
+  list.items = items;
+  document.getElementById('shuffle').addEventListener('click', () => {
+    items = items.slice().reverse();
+    list.items = items;
+  });
+
+  window.__parityTest = async () => {
+    await new Promise(r => setTimeout(r, 0));
+    // Type into the row keyed 'a' and capture the exact node.
+    const inputA = list.querySelector('input[data-key="a"]');
+    inputA.value = 'typed-into-A';
+    // Reverse the order.
+    document.getElementById('shuffle').click();
+    await new Promise(r => setTimeout(r, 0));
+    const afterInputA = list.querySelector('input[data-key="a"]');
+    const rows = [...list.querySelectorAll('li b')].map(b => b.textContent.trim());
+    return {
+      ok: rows.join(',') === 'Charlie,Bravo,Alpha'   // order actually reversed
+        && afterInputA === inputA                      // same DOM node identity
+        && afterInputA.value === 'typed-into-A',       // its state survived
+      detail: 'reorder preserved node identity + input value via jst-key',
+    };
+  };
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

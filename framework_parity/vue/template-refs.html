@@ -25,9 +25,9 @@
   $     box.offsetWidth + ' x ' + box.offsetHeight + ' px';
   $ };
   <input id="the-input" placeholder="I can be focused imperatively">
-  <button id="focus" @click="$(focusInput)">Focus the input (ref-style)</button>
+  <button id="focus" onclick="$(focusInput)">Focus the input (ref-style)</button>
   <div id="box" style="width:120px;height:40px;background:#cde">a box</div>
-  <button id="do-measure" @click="$(measure)">Measure the box via its ref</button>
+  <button id="do-measure" onclick="$(measure)">Measure the box via its ref</button>
   <p id="dims">dimensions: (click measure)</p>
 </script>
 
