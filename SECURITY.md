@@ -7,8 +7,8 @@ JST has two separate trust boundaries.
 `$(expr)` is escaped by default. Values are converted to text and cannot create
 HTML nodes, attributes, or scripts.
 
-Use `raw(value)` or `unsafeHTML(value)` only for trusted HTML that your
-application intentionally wants to insert. Treat it like `innerHTML`.
+Use `trustedHTML(value)` only for trusted HTML that your application
+intentionally wants to insert. Treat it like `innerHTML`.
 
 HTML escaping does not make every attribute safe. For URL-bearing attributes,
 use `url(value)`:

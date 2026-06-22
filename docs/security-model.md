@@ -48,7 +48,7 @@ otherwise:
 
 Do not interpolate untrusted data into inline `style` containing expressions, or
 into inline event-handler attributes, or into `<script>` bodies. `$()` does not
-escape for those contexts. Use JST's `@event` bindings (which attach real
+escape for those contexts. Use JST's `on<event>` bindings (which attach real
 listeners, no string-to-code) and bind discrete style properties rather than
 splicing untrusted strings into CSS.
 
@@ -59,9 +59,8 @@ HTML you produce or sanitise yourself. Passing untrusted input to
 `trustedHTML()` is an XSS bug. If you must render user HTML, sanitise it first
 with a real sanitiser, then pass the sanitized result to `trustedHTML()`.
 
-`raw(value)` and `unsafeHTML(value)` remain compatibility aliases. Other
-frameworks often use those names; JST documents `trustedHTML()` first because it
-states the contract more clearly.
+`trustedHTML()` is the only helper that opts out of escaping; it states the
+contract clearly: the value is HTML you have already produced or sanitised.
 
 ## Fetched templates are application code
 

@@ -25,7 +25,7 @@
 * [x] Runtime configuration: `autoRegister`, `autoRegisterRoot`,
       `resolveTemplate`, and duplicate/source logging.
 * [x] Lazy missing-template resolution for trusted server-streamed components.
-* [x] `unsafeHTML()` alias for explicit trusted HTML.
+* [x] `trustedHTML()` for explicit trusted HTML.
 * [x] Precompile CLI and `registerPrecompiledTemplate()` for strict CSP paths.
 * [x] Production docs, decision guide, HATEOAS notes, `SECURITY.md`, license,
       and package metadata.
@@ -33,7 +33,7 @@
 ## Editor Tooling
 
 * [x] Tier 1: TextMate injection grammar for `$(...)`, `$ ...`, `${...}`, `$$`,
-      `.prop`, `@event`, and modifiers inside `<script type="jst">`.
+      `.prop`, `on<event>`, and modifiers inside `<script type="jst">`.
 * [x] Tier 2: diagnostics run the real JST compiler over each block.
 * [x] Tier 3: cross-file go-to-definition, hover, completion, and symbols.
 * [ ] Manual VS Code extension-host check for grammar injection and LSP wiring.

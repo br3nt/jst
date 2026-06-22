@@ -97,7 +97,7 @@ Rails ERB:
 <script type="jst" name="task-row" props="taskId title done">
   <li class="$(done ? 'done' : '')" data-task-id="$(taskId)">
     $(title)
-    <button @click="$(() => el.emit('complete', taskId))">Complete</button>
+    <button onclick="$(() => el.emit('complete', taskId))">Complete</button>
   </li>
 </script>
 
@@ -114,7 +114,7 @@ ASP.NET Razor:
 <script type="jst" name="task-row" props="taskId title done">
   <li class="$(done ? 'done' : '')" data-task-id="$(taskId)">
     $(title)
-    <button @@click="$(() => el.emit('complete', taskId))">Complete</button>
+    <button onclick="$(() => el.emit('complete', taskId))">Complete</button>
   </li>
 </script>
 
@@ -125,6 +125,7 @@ ASP.NET Razor:
 </task-row>
 ```
 
-Razor uses `@@click` above so it renders a literal JST `@click` attribute.
+JST event handlers use native-style `on<event>` attributes (here `onclick`), so
+no Razor `@`-escaping is needed.
 
 Fragments are code. Only load JST fragments from trusted sources.

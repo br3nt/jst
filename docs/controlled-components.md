@@ -14,7 +14,7 @@ preserved.
 <script type="jst" name="todo-item" props="item onToggle">
   <li class="$(item.done ? 'done' : '')">
     $(item.text)
-    <button @click.stop="$(() => onToggle(item))">Toggle</button>
+    <button onclick.stop="$(() => onToggle(item))">Toggle</button>
   </li>
 </script>
 ```
@@ -53,7 +53,7 @@ A component reports what happened by emitting a bubbling, composed
 <script type="jst" name="todo-item" props="item">
   <li>
     $(item.text)
-    <button @click="$(() => el.emit('remove', item))">x</button>
+    <button onclick="$(() => el.emit('remove', item))">x</button>
   </li>
 </script>
 ```
@@ -66,21 +66,21 @@ document.querySelector('todo-list').addEventListener('remove', event => {
 });
 ```
 
-A parent JST component can listen with `@event`. Because events bubble and are
+A parent JST component can listen with `on<event>`. Because events bubble and are
 composed, a single listener up the tree can handle them:
 
 ```html
-<ul @remove="$(e => removeTodo(e.detail.id))">
+<ul onremove="$(e => removeTodo(e.detail.id))">
   <todo-item .item="$(...)"></todo-item>
 </ul>
 ```
 
-`@event` bindings attach a real `addEventListener`, and support modifiers in the
+`on<event>` bindings attach a real `addEventListener`, and support modifiers in the
 name: `.prevent .stop .self .once .capture .passive`, key guards like
 `.enter`/`.escape`, `.debounce` / `.debounce.300`, and `.outside`.
 
 There is no separate `events="..."` declaration today. DOM events are open by
-design: emit them with `el.emit(...)`, listen with `@event`, and let tooling
+design: emit them with `el.emit(...)`, listen with `on<event>`, and let tooling
 learn common names from templates. Function callbacks such as `onToggle` are just
 props; use them when a direct callback is clearer than bubbling an event.
 
@@ -108,7 +108,7 @@ assigning a fresh value for immutable-style updates.
 reads `el.text` into the field and writes `el.text` back on input - local,
 component-owned UI state (a draft value), not hidden parent state. When a parent
 or the server owns the value, stay explicit: bind `.value="$(text)"` and report
-changes with `@input="$(e => el.emit('text-change', e.target.value))"`, so the
+changes with `oninput="$(e => el.emit('text-change', e.target.value))"`, so the
 boundary stays props-down / events-up. For checkboxes and selects, `jst-model`
 reads and writes `el[prop]` via `.checked` / `.value` accordingly.
 

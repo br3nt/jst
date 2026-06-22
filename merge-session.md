@@ -1,5 +1,17 @@
 # JST Merge Session Log
 
+> **Audit correction (issue #13):** the `jst-ssr` / "SSR adoption" / "SSR
+> hydration" feature ported during this session (see Turn 7 below) was **removed**
+> in a later release. It was never requested and it contradicts JST's rendering
+> model: the server ships a component fragment + data, and the client's `jst.js`
+> is the sole renderer — nothing pre-rendered is ever inserted into the DOM. The
+> `#hydrating` field, the `jst-ssr` attribute handling, the SSR hydration test,
+> and the SSR docs were all deleted. This log is kept as a historical record;
+> read every `jst-ssr` / SSR reference below as describing work that has since
+> been reverted. (Passing trusted rendered content as an attribute placed with
+> `trustedHTML(...)` remains legitimate; adopting pre-rendered component output
+> does not.)
+
 Append-only collaboration log between **claude** (`jst-hardening`) and **codex**
 (`codex-jst-roadmap`), merging both into `jst-integrated-roadmap`.
 

@@ -70,8 +70,17 @@
   table.pos th, table.pos td { text-align:left; padding:.4rem .55rem; border-bottom:1px solid var(--line); vertical-align:top; }
   table.pos th { color:var(--muted); font-weight:600; }
   .example { margin-top: 1.5rem; }
-  .example h3 { margin: 0 0 .2rem; font-size: 1.05rem; }
+  .example h3 { margin: 0; font-size: 1.05rem; }
   .example .blurb { margin: 0 0 .6rem; color: var(--muted); font-size: .92rem; }
+  /* Each embedded example is also clearly openable as its own page, so it can be
+     interacted with, inspected in DevTools, and view-sourced without the iframe. */
+  .example-head { display: flex; align-items: baseline; justify-content: space-between; gap: .5rem .8rem; flex-wrap: wrap; margin: 0 0 .2rem; }
+  .example-actions { display: flex; gap: .5rem; flex-wrap: wrap; }
+  .open-standalone { display: inline-flex; align-items: center; gap: .3rem; padding: .32rem .75rem; border-radius: 3px; font-size: .84rem; font-weight: 600; text-decoration: none; border: 1px solid var(--accent); color: #fff; background: var(--accent); white-space: nowrap; }
+  .open-standalone:hover { background: #35459c; }
+  .open-standalone:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .embed-shield:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .embed-shield:focus-visible .hint { background: var(--accent); }
   .demo-frame { display: block; width: 100%; border: 0; background: transparent; min-height: 120px; }
   .breakout { width: 100vw; margin-left: calc(50% - 50vw); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
   /* Click-to-interact shield: lets the page scroll smoothly past the demo
@@ -131,7 +140,7 @@
 
     <!-- A live JST component, defined inline. -->
     <script type="jst" name="jst-demo-counter" props="count">
-      <button class="demo-btn" @click="$(() => el.count = (el.count || 0) + 1)">
+      <button class="demo-btn" onclick="$(() => el.count = (el.count || 0) + 1)">
         Clicked $(count || 0) time$(count === 1 ? '' : 's')
       </button>
     </script>
@@ -145,7 +154,7 @@
       <div class="panel code-example">
         <h3>Source</h3>
 <pre class="code"><span class="t">&lt;script</span> <span class="k ann" tabindex="0" data-label="type=&quot;jst&quot;" data-detail="This marks the block as a JST template. The runtime compiles it into a real custom element.">type</span>=<span class="s">"jst"</span> <span class="k ann" tabindex="0" data-label="Component name" data-detail="The name becomes the custom element tag. Custom element names must contain a hyphen.">name</span>=<span class="s">"jst-demo-counter"</span> <span class="k ann" tabindex="0" data-label="Props" data-detail="props declares the template locals and host properties. Here count is available as count and el.count.">props</span>=<span class="s">"count"</span><span class="t">&gt;</span>
-  <span class="t">&lt;button</span> <span class="e ann" tabindex="0" data-label="@click" data-detail="@event attaches a real addEventListener after render. This handler updates the host property.">@click</span>=<span class="s">"$(() =&gt; el.count = (el.count || 0) + 1)"</span><span class="t">&gt;</span>
+  <span class="t">&lt;button</span> <span class="e ann" tabindex="0" data-label="onclick" data-detail="An on&lt;event&gt; attribute attaches a real addEventListener after render. The value must be a single $(…) expression — raw inline JavaScript is rejected. This handler updates the host property.">onclick</span>=<span class="s">"$(() =&gt; el.count = (el.count || 0) + 1)"</span><span class="t">&gt;</span>
     Clicked <span class="j ann" tabindex="0" data-label="$(count)" data-detail="$(expr) evaluates JavaScript and HTML-escapes the result before insertion.">$(count)</span> times
   <span class="t">&lt;/button&gt;</span>
 <span class="t">&lt;/script&gt;</span>
@@ -248,36 +257,53 @@
   <div class="wrap">
     <h2>Examples</h2>
     <p class="lede">Each of these is running live below — real JST components on this page, in
-      isolated frames. View source on any of them: it's plain HTML and <code>jst.js</code>.</p>
+      isolated frames. Use <strong>Open standalone ↗</strong> on any example to interact with it
+      on its own page, inspect it in DevTools, or view its source: it's plain HTML and
+      <code>jst.js</code>.</p>
 
     <div class="example">
-      <h3>Kanban board</h3>
+      <div class="example-head">
+        <h3 id="example-kanban">Kanban board</h3>
+        <div class="example-actions">
+          <a class="open-standalone" href="examples/kanban.html" target="_blank" rel="noopener" aria-label="Open the Kanban board example as its own page">Open standalone ↗</a>
+        </div>
+      </div>
       <p class="blurb">A three-level component tree (board → column → card), native drag &amp; drop,
         a modal editor, composable filters, and an insights panel whose component definition is
-        fetched from the "server" at runtime. <a class="src" href="examples/kanban.html" target="_blank" rel="noopener">open ↗</a></p>
+        fetched from the "server" at runtime.</p>
       <div class="embed breakout">
-        <iframe class="demo-frame" data-autosize src="examples/kanban.html" loading="lazy" title="Kanban board"></iframe>
-        <button class="embed-shield" aria-label="Activate this demo"><span class="hint">click to interact</span></button>
+        <iframe class="demo-frame" data-autosize src="examples/kanban.html" loading="lazy" title="Kanban board (live preview)" aria-describedby="example-kanban"></iframe>
+        <button class="embed-shield" aria-label="Activate this preview to interact in place (or use Open standalone above)"><span class="hint">click to interact</span></button>
       </div>
     </div>
 
     <div class="example">
-      <h3>Todo app</h3>
+      <div class="example-head">
+        <h3 id="example-todo">Todo app</h3>
+        <div class="example-actions">
+          <a class="open-standalone" href="examples/todo_app.html" target="_blank" rel="noopener" aria-label="Open the Todo app example as its own page">Open standalone ↗</a>
+        </div>
+      </div>
       <p class="blurb">Props down, events up: the page owns the list, components are dumb renderers,
-        and interpolation is escaped by default. <a class="src" href="examples/todo_app.html" target="_blank" rel="noopener">open ↗</a></p>
+        and interpolation is escaped by default.</p>
       <div class="embed breakout">
-        <iframe class="demo-frame" data-autosize src="examples/todo_app.html" loading="lazy" title="Todo app"></iframe>
-        <button class="embed-shield" aria-label="Activate this demo"><span class="hint">click to interact</span></button>
+        <iframe class="demo-frame" data-autosize src="examples/todo_app.html" loading="lazy" title="Todo app (live preview)" aria-describedby="example-todo"></iframe>
+        <button class="embed-shield" aria-label="Activate this preview to interact in place (or use Open standalone above)"><span class="hint">click to interact</span></button>
       </div>
     </div>
 
     <div class="example">
-      <h3>Slots &amp; composition</h3>
+      <div class="example-head">
+        <h3 id="example-slots">Slots &amp; composition</h3>
+        <div class="example-actions">
+          <a class="open-standalone" href="examples/slots.html" target="_blank" rel="noopener" aria-label="Open the Slots and composition example as its own page">Open standalone ↗</a>
+        </div>
+      </div>
       <p class="blurb">Light-DOM slots: a component projects the author's children via
-        <code>$(slot())</code> and named <code>$(slot('name', 'fallback'))</code>. <a class="src" href="examples/slots.html" target="_blank" rel="noopener">open ↗</a></p>
+        <code>$(slot())</code> and named <code>$(slot('name', 'fallback'))</code>.</p>
       <div class="embed breakout">
-        <iframe class="demo-frame" data-autosize src="examples/slots.html" loading="lazy" title="Slots and composition"></iframe>
-        <button class="embed-shield" aria-label="Activate this demo"><span class="hint">click to interact</span></button>
+        <iframe class="demo-frame" data-autosize src="examples/slots.html" loading="lazy" title="Slots and composition (live preview)" aria-describedby="example-slots"></iframe>
+        <button class="embed-shield" aria-label="Activate this preview to interact in place (or use Open standalone above)"><span class="hint">click to interact</span></button>
       </div>
     </div>
   </div>
@@ -290,14 +316,14 @@
       tools rather than reinventing them. The <a href="tooling/vscode-jst/README.md">extension</a>
       adds three tiers — all tested headlessly.</p>
     <div class="tiers">
-      <div class="tier"><h4>Syntax highlighting</h4><p>TextMate injection grammars highlight <code>$(…)</code>, <code>$ …</code> and <code>.prop</code>/<code>@event</code> inside <code>&lt;script type="jst"&gt;</code>, delegating the embedded JS to the editor's own <code>source.js</code>.</p></div>
+      <div class="tier"><h4>Syntax highlighting</h4><p>TextMate injection grammars highlight <code>$(…)</code>, <code>$ …</code> and <code>.prop</code>/<code>on&lt;event&gt;</code> inside <code>&lt;script type="jst"&gt;</code>, delegating the embedded JS to the editor's own <code>source.js</code>.</p></div>
       <div class="tier"><h4>Diagnostics</h4><p>Runs the <em>real</em> JST compiler over each template, so an editor squiggle is exactly what the runtime would reject. Embedded-JS syntax errors are caught by V8 itself.</p></div>
       <div class="tier"><h4>Language server</h4><p>Cross-file go-to-definition (a <code>&lt;my-card&gt;</code> tag → its <code>&lt;script type="jst" name="my-card"&gt;</code>), hover with a component's props, completion, and document symbols.</p></div>
     </div>
     <div class="code-example">
 <pre class="code"><span class="c">&lt;!-- the grammar highlights these as embedded JS --&gt;</span>
 <span class="t">&lt;script</span> <span class="k">type</span>=<span class="s">"jst"</span> <span class="k">name</span>=<span class="s">"todo-item"</span> <span class="k">props</span>=<span class="s">"item"</span><span class="t">&gt;</span>
-  <span class="t">&lt;li</span> <span class="e ann" tabindex="0" data-label="@click" data-detail="The VS Code extension highlights JST event bindings and validates them using the real compiler.">@click</span>=<span class="s">"$(() =&gt; el.emit('toggle', item))"</span><span class="t">&gt;</span><span class="j ann" tabindex="0" data-label="$(item.title)" data-detail="Embedded JavaScript is delegated to the editor's JavaScript grammar.">$(item.title)</span><span class="t">&lt;/li&gt;</span>
+  <span class="t">&lt;li</span> <span class="e ann" tabindex="0" data-label="onclick" data-detail="The VS Code extension highlights JST event bindings and validates them using the real compiler.">onclick</span>=<span class="s">"$(() =&gt; el.emit('toggle', item))"</span><span class="t">&gt;</span><span class="j ann" tabindex="0" data-label="$(item.title)" data-detail="Embedded JavaScript is delegated to the editor's JavaScript grammar.">$(item.title)</span><span class="t">&lt;/li&gt;</span>
 <span class="t">&lt;/script&gt;</span></pre>
       <div class="snippet-detail" aria-live="polite"><strong>Hover over the code</strong><span>Hover over parts of the code snippet to get a detailed explanation.</span></div>
     </div>
