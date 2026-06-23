@@ -79,6 +79,11 @@ async function main() {
   const userDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'jst-verify-'));
   const chromeArgs = [
     '--headless=new', '--disable-gpu', '--no-first-run', '--no-default-browser-check',
+    // Keep rAF/timers running at full rate: headless Chrome otherwise throttles or
+    // pauses a backgrounded/occluded renderer, which stalls CSS transitions and makes
+    // the transition assertions flaky (issue #18).
+    '--disable-background-timer-throttling', '--disable-backgrounding-occluded-windows',
+    '--disable-renderer-backgrounding',
     `--remote-debugging-port=${debugPort}`, `--user-data-dir=${userDataDir}`, 'about:blank',
   ];
   if (process.platform === 'linux') {

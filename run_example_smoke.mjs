@@ -296,6 +296,11 @@ async function main() {
     '--disable-gpu',
     '--no-first-run',
     '--no-default-browser-check',
+    // Keep rAF/timers running at full rate so CSS transitions progress promptly
+    // even when the headless renderer is backgrounded/occluded (issue #18).
+    '--disable-background-timer-throttling',
+    '--disable-backgrounding-occluded-windows',
+    '--disable-renderer-backgrounding',
     `--remote-debugging-port=${debugPort}`,
     `--user-data-dir=${userDataDir}`,
     'about:blank',

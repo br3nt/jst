@@ -124,6 +124,11 @@ async function runChrome(url) {
     const chromeArgs = [
       '--headless=new',
       '--disable-gpu',
+      // Keep rAF/timers running at full rate so CSS transitions progress promptly
+      // even when the headless renderer is backgrounded/occluded (issue #18).
+      '--disable-background-timer-throttling',
+      '--disable-backgrounding-occluded-windows',
+      '--disable-renderer-backgrounding',
       '--disable-background-networking',
       '--disable-breakpad',
       '--disable-client-side-phishing-detection',
