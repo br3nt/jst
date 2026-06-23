@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!--
+  Source: https://lit.dev/docs/templates/expressions/#boolean-attribute-expressions
+  Demonstrates: a boolean attribute expression. Lit's `?hidden=${!this.show}` adds the
+  `hidden` attribute when the expression is truthy and removes it when falsy.
+  Maps from: Lit `?attr=${bool}` ↔ JST property binding `.hidden="$(bool)"`, which sets
+  the element's boolean `hidden` IDL property (reflected to/from the attribute) so the
+  attribute is genuinely added and removed.
+  JST status: ✓ exact — `.hidden="$(!show)"` adds/removes the boolean attribute, like Lit.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JST · Lit boolean attribute</title>
+<script type="module" src="../../jst.js"></script>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 420px; margin: 3rem auto; }
+  button { font-size: 1rem; padding: 8px 16px; cursor: pointer; margin-top: 1rem; }
+  .panel { background: #eef3ff; border-radius: 8px; padding: 1rem; }
+</style>
+</head>
+<body>
+<h1>Boolean attribute</h1>
+
+<!-- ?hidden=${!show} → JST .hidden="$(!show)": adds/removes the boolean attribute. -->
+<script type="jst" name="toggle-panel" props="show">
+  <div>
+    <p class="panel" id="panel" data-testid="panel" .hidden="$(!show)">
+      You can see me when <code>show</code> is true.
+    </p>
+    <button id="toggle" onclick="$(() => el.show = !el.show)">
+      $(show ? 'Hide' : 'Show') panel
+    </button>
+  </div>
+</script>
+
+<toggle-panel id="tp" show="true"></toggle-panel>
+
+<script>
+  window.__parityTest = async () => {
+    const tp = document.getElementById('tp');
+    const panel = () => tp.querySelector('#panel');
+    const visibleStart = !panel().hasAttribute('hidden');
+    tp.querySelector('#toggle').click();
+    await new Promise(r => setTimeout(r, 0));
+    const hiddenNow = panel().hasAttribute('hidden');
+    tp.querySelector('#toggle').click();
+    await new Promise(r => setTimeout(r, 0));
+    const visibleAgain = !panel().hasAttribute('hidden');
+    return {
+      ok: visibleStart && hiddenNow && visibleAgain,
+      detail: 'toggle adds then removes the hidden boolean attribute',
+    };
+  };
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

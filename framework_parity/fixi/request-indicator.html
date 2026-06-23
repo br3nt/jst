@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!--
+  Source: https://github.com/bigskysoftware/fixi (README, commit d31fc1d) — fx:before / fx:after
+  Demonstrates: an in-flight request indicator. fixi-core has NO hx-indicator; you toggle a
+  busy state yourself in fx:before / fx:after lifecycle handlers.
+  JST status: (i) workaround. JST has no built-in indicator either; the click handler sets a
+  `loading` prop (spinner shown + button disabled) before the fetch and clears it after. The
+  busy state lives in the component; the manual toggle is the parity with fixi-core.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JST · fixi request-indicator</title>
+<script type="module" src="../../jst.js"></script>
+<script src="../../framework_parity/lib/mock-fetch.js"></script>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 30rem; margin: 3rem auto; }
+  button { padding: .5rem 1rem; cursor: pointer; }
+  .spinner { display: inline-block; width: 1rem; height: 1rem; margin-left: .5rem;
+             border: 2px solid #bbb; border-top-color: #3f51b5; border-radius: 50%;
+             vertical-align: middle; animation: spin .6s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .result { margin-top: 1rem; padding: .6rem .8rem; background: #f1f3f9; border-radius: 6px; }
+</style>
+</head>
+<body>
+
+<script type="jst" name="load-button" props="loading result">
+  <div>
+    <button data-testid="btn" .disabled="$(!!loading)" onclick="$(() => el.emit('load'))">
+      $(loading ? 'Loading…' : 'Load report')
+    </button>
+    $ if (loading) {
+      <span class="spinner" data-testid="spinner" aria-label="loading"></span>
+    $ }
+    $ if (result) {
+      <p class="result" data-testid="result">$(result)</p>
+    $ }
+  </div>
+</script>
+
+<h1>Request indicator</h1>
+<load-button id="loader"></load-button>
+
+<script>
+  JSTMock.route('GET /api/report', () => ({ json: { message: 'Report ready: 1,284 rows processed.' } }), { delay: 300 });
+
+  const loader = document.getElementById('loader');
+  loader.addEventListener('load', async () => {
+    loader.loading = true;                 // fx:before equivalent — show busy state
+    const r = await (await fetch('/api/report')).json();
+    loader.result = r.message;
+    loader.loading = false;                // fx:after equivalent — clear busy state
+  });
+
+  window.__parityTest = async () => {
+    document.querySelector('[data-testid="btn"]').click();
+    await new Promise(r => setTimeout(r, 60));
+    const busy = !!document.querySelector('[data-testid="spinner"]') &&
+                 document.querySelector('[data-testid="btn"]').disabled === true;
+    await new Promise(r => setTimeout(r, 400));
+    const done = !!document.querySelector('[data-testid="result"]') &&
+                 document.querySelector('[data-testid="btn"]').disabled === false &&
+                 !document.querySelector('[data-testid="spinner"]');
+    return { ok: busy && done, detail: 'spinner + disabled while in flight, cleared after' };
+  };
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

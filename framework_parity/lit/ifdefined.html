@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!--
+  Source: https://lit.dev/docs/templates/directives/#ifdefined
+  Demonstrates: Lit's ifDefined(x) — when x is undefined/null the attribute is
+  REMOVED from the element entirely rather than rendered as "undefined".
+  JST status: ✓ exact — a conditional attribute. JST evaluates the attribute
+  expression per render; emitting the whole `name="value"` only when the value is
+  present (and nothing otherwise) makes the attribute appear/disappear, exactly
+  like ifDefined.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JST — ifDefined</title>
+<script type="module" src="../../jst.js"></script>
+<style>
+  body { font-family:system-ui, sans-serif; max-width:460px; margin:3rem auto; }
+  .frame { border:1px dashed #bbb; padding:1rem; border-radius:8px; }
+  code { background:#f3f4f6; padding:1px 5px; border-radius:4px; }
+  button { padding:6px 12px; cursor:pointer; }
+</style>
+</head>
+<body>
+<h1>ifDefined (conditional attribute)</h1>
+
+<script type="jst" name="if-defined" props="tip">
+  $ // ifDefined(tip): include the title attribute only when tip is defined.
+  $ // trustedHTML lets the built `name="value"` fragment render as a real
+  $ // attribute (interpolation is HTML-escaped by default, which would mangle it).
+  $ const tipAttr = (tip === undefined || tip === null || tip === '') ? '' : `title="${tip}"`;
+  <div class="frame">
+    <span id="target" data-testid="target" $(trustedHTML(tipAttr))>Hover me (has title attr only when defined)</span>
+    <p>Current title attribute: <code data-testid="readout">$(tipAttr || '(removed)')</code></p>
+  </div>
+  <button id="set" onclick="$(() => el.tip = 'A helpful tooltip')">Set title</button>
+  <button id="clear" onclick="$(() => el.tip = undefined)">Clear title</button>
+</script>
+
+<if-defined id="app"></if-defined>
+
+<script>
+  window.__parityTest = async () => {
+    await new Promise(r => setTimeout(r, 0));
+    const app = document.getElementById('app');
+    const target = () => app.querySelector('[data-testid="target"]');
+    const startsAbsent = !target().hasAttribute('title');
+    app.querySelector('#set').click();
+    await new Promise(r => setTimeout(r, 0));
+    const present = target().getAttribute('title') === 'A helpful tooltip';
+    app.querySelector('#clear').click();
+    await new Promise(r => setTimeout(r, 0));
+    const removedAgain = !target().hasAttribute('title');
+    return { ok: startsAbsent && present && removedAgain, detail: 'attribute appears/disappears with the value' };
+  };
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

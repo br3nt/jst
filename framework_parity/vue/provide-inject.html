@@ -27,7 +27,7 @@
   $ const theme = provider ? provider.theme : 'light';
   <div class="$(theme)">
     <p>Injected theme: <strong id="injected">$(theme)</strong></p>
-    <button id="toggle" @click="$(() => provider && provider.setTheme(theme === 'light' ? 'dark' : 'light'))">
+    <button id="toggle" onclick="$(() => provider && provider.setTheme(theme === 'light' ? 'dark' : 'light'))">
       Toggle theme (mutates the provider)
     </button>
   </div>

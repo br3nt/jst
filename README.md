@@ -14,7 +14,7 @@ inspectable in DevTools, scriptable with plain properties and
 
 <script type="jst" name="hello-name" props="name">
   <p>Hello, <strong>$(name)</strong>!</p>
-  <button @click="$(() => el.name = 'world')">reset</button>
+  <button onclick="$(() => el.name = 'world')">reset</button>
 </script>
 
 <hello-name name="JST"></hello-name>
@@ -50,7 +50,7 @@ Props are declared in the case-preserving `props` attribute:
 ```html
 <script type="jst" name="todo-item" props="item">
   <li jst-key="$(item.id)">
-    <button @click.stop="$(() => el.emit('toggle', item))">Done</button>
+    <button onclick.stop="$(() => el.emit('toggle', item))">Done</button>
     $(item.text)
   </li>
 </script>
@@ -78,7 +78,7 @@ Props are declared in the case-preserving `props` attribute:
 - In ordinary HTML, use normal JavaScript property assignment and
   `addEventListener`. Inside a JST template, `.prop="$(expr)"` passes rich
   JavaScript values without stringifying.
-- Inside a JST template, `@event="$(fn)"` attaches listeners; modifiers are supported:
+- Inside a JST template, `on<event>="$(fn)"` attaches listeners; modifiers are supported:
   `.prevent`, `.stop`, `.self`, `.outside`, `.once`, `.capture`, `.passive`,
   key filters like `.enter`, and `.debounce.300`.
 - `jst-model="title"` is local form shorthand: read from `title` and update

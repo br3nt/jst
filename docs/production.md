@@ -138,7 +138,7 @@ renders.
 For explicit controlled components:
 
 ```html
-<input .value="$(title)" @input="$(e => el.emit('title', e.target.value))">
+<input .value="$(title)" oninput="$(e => el.emit('title', e.target.value))">
 ```
 
 For local controlled shorthand:
@@ -148,7 +148,7 @@ For local controlled shorthand:
 ```
 
 `jst-model` reads from the declared prop and updates `el[prop]` when the user
-changes it. For parent-owned state, keep the explicit `.value` plus `@input`
+changes it. For parent-owned state, keep the explicit `.value` plus `oninput`
 event pattern.
 
 ## State Updates
@@ -167,7 +167,7 @@ depends on the current value inside an event handler, read the live element
 property, not the value captured when the template rendered:
 
 ```html
-<button @click="$(() => el.count = (el.count || 0) + 1)">
+<button onclick="$(() => el.count = (el.count || 0) + 1)">
   Add
 </button>
 ```

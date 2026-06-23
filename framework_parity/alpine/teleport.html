@@ -28,17 +28,17 @@
 <!-- trigger lives inside a clipped box; modal must escape it -->
 <script type="jst" name="teleport-trigger">
   <div>
-    <button data-testid="open" @click="$(() => el.emit('open'))">Open modal (teleported to body)</button>
+    <button data-testid="open" onclick="$(() => el.emit('open'))">Open modal (teleported to body)</button>
   </div>
 </script>
 
 <!-- the modal is its OWN component, mounted at body level (the manual "teleport target") -->
 <script type="jst" name="teleport-modal" props="open">
   $ if (open) {
-    <div class="overlay" data-testid="overlay" @click="$(e => { if (e.target === e.currentTarget) el.emit('close'); })">
+    <div class="overlay" data-testid="overlay" onclick="$(e => { if (e.target === e.currentTarget) el.emit('close'); })">
       <div class="modal">
         <p>I rendered at the end of &lt;body&gt;, not inside the clipped box.</p>
-        <button data-testid="close" @click="$(() => el.emit('close'))">Close</button>
+        <button data-testid="close" onclick="$(() => el.emit('close'))">Close</button>
       </div>
     </div>
   $ }

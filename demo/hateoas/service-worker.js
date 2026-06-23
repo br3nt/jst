@@ -77,7 +77,7 @@ const FEED_ITEM_DEF = `
       </header>
       <p class="body">$(item.body)</p>
       <div class="actions">
-        <button class="act like" @click="$(async () => {
+        <button class="act like" onclick="$(async () => {
           const res = await fetch('api/item/' + item.id + '/like', { method: 'POST' });
           el.querySelector('.actions').innerHTML = await res.text();
         })">&#9825; Like</button>
@@ -90,7 +90,7 @@ const FEED_ITEM_DEF = `
 const LIKE_BADGE_DEF = `
 <script type="jst" name="like-badge" props="count itemId">
   <span class="badge">&#9829; Liked &middot; <strong>$(count)</strong></span>
-  <button class="act link" @click.prevent="$(async () => {
+  <button class="act link" onclick.prevent="$(async () => {
     const list = el.querySelector('.likers');
     list.textContent = 'loading…';
     list.innerHTML = await (await fetch('api/item/' + itemId + '/likers')).text();

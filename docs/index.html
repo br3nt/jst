@@ -413,7 +413,7 @@ node tools/precompile.mjs components.html <span class="tok-attr ann" tabindex="0
       <div class="code-example">
         <pre><code><span class="tok-tag">&lt;script</span> <span class="tok-attr">type</span>=<span class="tok-string">"jst"</span> <span class="tok-attr ann" tabindex="0" data-label="Component name" data-detail="The name becomes the custom element tag. Custom element names must contain a hyphen, so hello-name is valid and hello is not.">name</span>=<span class="tok-string">"hello-name"</span> <span class="tok-attr ann" tabindex="0" data-label="Props" data-detail="Props are case-preserved JavaScript identifiers. Declaring name and count gives the template bare locals named name and count, and element properties el.name and el.count.">props</span>=<span class="tok-string">"name count"</span><span class="tok-tag">&gt;</span>
   <span class="tok-tag">&lt;p&gt;</span>Hello, <span class="tok-tag">&lt;strong&gt;</span><span class="tok-jst ann" tabindex="0" data-label="$(name)" data-detail="$(expr) evaluates JavaScript and HTML-escapes the result before inserting it into the output.">$(name)</span><span class="tok-tag">&lt;/strong&gt;</span>.<span class="tok-tag">&lt;/p&gt;</span>
-  <span class="tok-tag">&lt;button</span> <span class="tok-event ann" tabindex="0" data-label="@click" data-detail="@event attaches a real addEventListener after render. Modifiers such as .prevent, .stop, .enter, .outside, and .debounce.300 are supported.">@click</span>=<span class="tok-string">"$(() =&gt; el.count = (el.count || 0) + 1)"</span><span class="tok-tag">&gt;</span>
+  <span class="tok-tag">&lt;button</span> <span class="tok-event ann" tabindex="0" data-label="onclick" data-detail="on&lt;event&gt; attaches a real addEventListener after render. Modifiers such as .prevent, .stop, .enter, .outside, and .debounce.300 are supported. The value must be exactly one $(...) expression; raw inline JavaScript is rejected.">onclick</span>=<span class="tok-string">"$(() =&gt; el.count = (el.count || 0) + 1)"</span><span class="tok-tag">&gt;</span>
     Clicked <span class="tok-jst ann" tabindex="0" data-label="$(count || 0)" data-detail="This is plain JavaScript. There is no second expression language; use the operators and functions you already know.">$(count || 0)</span> times
   <span class="tok-tag">&lt;/button&gt;</span>
 <span class="tok-tag">&lt;/script&gt;</span>
@@ -433,7 +433,7 @@ node tools/precompile.mjs components.html <span class="tok-attr ann" tabindex="0
         <tr><td><code class="chip js">$ statement</code></td><td>Run a JavaScript statement line.</td></tr>
         <tr><td><code class="chip js">${ ... }</code></td><td>Run a JavaScript block.</td></tr>
         <tr><td><code class="chip prop">.prop="$(expr)"</code></td><td>Set a JavaScript property on a rendered element.</td></tr>
-        <tr><td><code class="chip event">@event="$(fn)"</code></td><td>Add an event listener.</td></tr>
+        <tr><td><code class="chip event">on&lt;event&gt;="$(fn)"</code></td><td>Add an event listener.</td></tr>
         <tr><td><code class="chip attr">jst-key="$(id)"</code></td><td>Preserve DOM identity in lists.</td></tr>
         <tr><td><code class="chip attr">jst-model="prop"</code></td><td>Local form shorthand: read/write <code>el[prop]</code>.</td></tr>
         <tr><td><code class="chip jst">$(slot())</code></td><td>Project the component's original children.</td></tr>
@@ -459,7 +459,7 @@ node tools/precompile.mjs components.html <span class="tok-attr ann" tabindex="0
 
     <section id="data-flow">
       <h2>Data Flow</h2>
-      <p>In raw top-level HTML, pass simple values as attributes and rich values with normal JavaScript properties. Inside a JST template, use <code>.prop</code> and <code>@event</code> bindings.</p>
+      <p>In raw top-level HTML, pass simple values as attributes and rich values with normal JavaScript properties. Inside a JST template, use <code>.prop</code> and <code>on&lt;event&gt;</code> bindings.</p>
       <div class="grid">
         <div>
           <h3>Raw HTML + page JavaScript</h3>
@@ -486,7 +486,7 @@ node tools/precompile.mjs components.html <span class="tok-attr ann" tabindex="0
     <span class="tok-tag">&lt;todo-item</span>
       <span class="tok-attr">jst-key</span>=<span class="tok-string">"$(item.id)"</span>
       <span class="tok-prop ann" tabindex="0" data-label=".item binding" data-detail=".prop is JST-only syntax. It assigns the actual JavaScript value to the child element after render.">.item</span>=<span class="tok-string">"$(item)"</span>
-      <span class="tok-event ann" tabindex="0" data-label="@toggle listener" data-detail="@event is JST-only syntax. It attaches a real listener and can re-emit events upward.">@toggle</span>=<span class="tok-string">"$(event =&gt; el.emit('toggle', event.detail))"</span><span class="tok-tag">&gt;</span>
+      <span class="tok-event ann" tabindex="0" data-label="ontoggle listener" data-detail="on&lt;event&gt; is JST-only syntax. It attaches a real listener and can re-emit events upward.">ontoggle</span>=<span class="tok-string">"$(event =&gt; el.emit('toggle', event.detail))"</span><span class="tok-tag">&gt;</span>
     <span class="tok-tag">&lt;/todo-item&gt;</span>
   <span class="tok-js">$ })</span>
 <span class="tok-tag">&lt;/script&gt;</span></code></pre>
@@ -494,7 +494,7 @@ node tools/precompile.mjs components.html <span class="tok-attr ann" tabindex="0
           </div>
         </div>
       </div>
-      <div class="callout"><code>.prop</code> and <code>@event</code> are JST template syntax. They are compiled only inside <code>&lt;script type="jst"&gt;</code>, not in raw top-level HTML.</div>
+      <div class="callout"><code>.prop</code> and <code>on&lt;event&gt;</code> are JST template syntax. They are compiled only inside <code>&lt;script type="jst"&gt;</code>, not in raw top-level HTML. An <code>on*</code> value must be exactly one <code>$(...)</code> expression; raw inline JavaScript like <code>onclick="alert(1)"</code> is rejected at compile time.</div>
     </section>
 
     <section id="state-and-forms">
@@ -517,7 +517,7 @@ node tools/precompile.mjs components.html <span class="tok-attr ann" tabindex="0
         <pre><code><span class="tok-comment">&lt;!-- Parent-owned value: explicit props-down, events-up. --&gt;</span>
 <span class="tok-tag">&lt;input</span>
   <span class="tok-prop ann" tabindex="0" data-label=".value" data-detail="JST morphs form controls through properties, so value, checked, selected state, focus, and caret position stay stable across renders.">.value</span>=<span class="tok-string">"$(title)"</span>
-  <span class="tok-event">@input</span>=<span class="tok-string">"$(event =&gt; el.emit('title-change', event.target.value))"</span><span class="tok-tag">&gt;</span>
+  <span class="tok-event">oninput</span>=<span class="tok-string">"$(event =&gt; el.emit('title-change', event.target.value))"</span><span class="tok-tag">&gt;</span>
 
 <span class="tok-comment">&lt;!-- Local draft value: reads and writes el.title. --&gt;</span>
 <span class="tok-tag">&lt;input</span> <span class="tok-attr ann" tabindex="0" data-label="jst-model" data-detail="jst-model is local host-property sugar. It reads from el.title and writes back to el.title; it is not hidden parent state.">jst-model</span>=<span class="tok-string">"title"</span><span class="tok-tag">&gt;</span></code></pre>
@@ -576,7 +576,7 @@ node tools/precompile.mjs components.html <span class="tok-attr ann" tabindex="0
         <div class="mini">
           <h3>ASP.NET Razor</h3>
           <div class="code-example"><pre><code><span class="tok-tag">&lt;script</span> <span class="tok-attr">type</span>=<span class="tok-string">"jst"</span> <span class="tok-attr">name</span>=<span class="tok-string">"task-row"</span> <span class="tok-attr">props</span>=<span class="tok-string">"taskId title done"</span><span class="tok-tag">&gt;</span>
-  <span class="tok-tag">&lt;button</span> <span class="tok-event ann" tabindex="0" data-label="Razor @@click" data-detail="Razor treats @ as syntax, so use @@click to render a literal JST @click attribute.">@@click</span>=<span class="tok-string">"$(() =&gt; el.emit('complete', taskId))"</span><span class="tok-tag">&gt;</span>Complete<span class="tok-tag">&lt;/button&gt;</span>
+  <span class="tok-tag">&lt;button</span> <span class="tok-event ann" tabindex="0" data-label="onclick" data-detail="JST event handlers use native-style on&lt;event&gt; attributes, so no Razor @-escaping is needed.">onclick</span>=<span class="tok-string">"$(() =&gt; el.emit('complete', taskId))"</span><span class="tok-tag">&gt;</span>Complete<span class="tok-tag">&lt;/button&gt;</span>
 <span class="tok-tag">&lt;/script&gt;</span>
 
 <span class="tok-tag">&lt;task-row</span> <span class="tok-attr">task-id</span>=<span class="tok-string">"@Model.Task.Id"</span> <span class="tok-attr">title</span>=<span class="tok-string">"@Model.Task.Title"</span><span class="tok-tag">&gt;&lt;/task-row&gt;</span></code></pre><div class="snippet-detail" aria-live="polite"><strong>Hover over the code</strong><span>Hover over parts of the code snippet to get a detailed explanation.</span></div></div>
@@ -630,8 +630,7 @@ node tools/precompile.mjs components.html <span class="tok-attr ann" tabindex="0
       <ul>
         <li><code>$(expr)</code> escapes HTML by default.</li>
         <li><code>url(value)</code> blocks dangerous URL schemes in URL-bearing attributes.</li>
-        <li><code>trustedHTML(value)</code> bypasses escaping. Only use it for HTML your app produced or sanitized.</li>
-        <li><code>raw(value)</code> and <code>unsafeHTML(value)</code> remain compatibility aliases. Other frameworks often use names like raw or unsafe HTML; JST should teach the safer intent first.</li>
+        <li><code>trustedHTML(value)</code> bypasses escaping. It is the only opt-out-of-escaping helper; only use it for HTML your app produced or sanitized.</li>
         <li>Fetched JST templates are code. Scope them with <code>autoRegisterRoot</code> and allowlist names in <code>resolveTemplate</code>.</li>
       </ul>
       <div class="code-example">
@@ -670,7 +669,6 @@ configure({
         <li><strong>Keyed reconciliation:</strong> shipped and tested, but still a high-risk area that should keep gaining adversarial tests.</li>
         <li><strong>Transitions:</strong> CSS-driven v1 shipped for keyed enter/leave; richer move/FLIP behavior may grow later.</li>
         <li><strong>Light DOM:</strong> deliberate. There is no style or id encapsulation, so prefer classes and derive ids from props.</li>
-        <li><strong>SSR hydration plus projected slots:</strong> planned edge. Use SSR adoption or client-side slot projection, not both together yet.</li>
         <li><strong>HTMX-style triggers/swaps:</strong> worth exploring, especially when kept resourceful and explicit.</li>
       </ul>
     </section>

@@ -117,7 +117,7 @@ async function waitForJson(baseUrl, pathName, timeoutMs = 10000) {
 async function runChrome(url) {
   const chromePath = process.env.CHROME_PATH || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
   const userDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'jst-chrome-'));
-  const port = 9222;
+  const port = Number(process.env.CHROME_DEBUG_PORT) || 9222;
   let chrome;
 
   try {

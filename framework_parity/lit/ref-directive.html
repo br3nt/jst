@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!--
+  Source: https://lit.dev/docs/templates/directives/#ref
+  Demonstrates: Lit's ref(createRef()) — register a rendered element so you can
+  reach it imperatively (e.g. to call .focus()).
+  JST status: (i) partial — JST has NO ref registry/directive. The equivalent is
+  to query the rendered light DOM after a render: `el.querySelector(...)`. It
+  reaches the same node and works for imperative calls, but it is a manual
+  lookup by selector rather than a declared, auto-populated reference object.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JST — ref (querySelector)</title>
+<script type="module" src="../../jst.js"></script>
+<style>
+  body { font-family:system-ui, sans-serif; max-width:460px; margin:3rem auto; }
+  input { padding:8px; font-size:1rem; width:60%; }
+  button { padding:8px 12px; cursor:pointer; }
+</style>
+</head>
+<body>
+<h1>Element reference (focus)</h1>
+
+<script type="jst" name="focus-field" props="focusCount">
+  <input type="text" id="the-input" data-testid="field" placeholder="I get focused">
+  <!-- Lit: this.inputRef.value.focus(). JST: query the rendered node, then focus. -->
+  <button id="focus-btn" onclick="$(() => {
+    const input = el.querySelector('#the-input');   // no ref registry — find it by selector
+    input.focus();
+    el.focusCount = (el.focusCount || 0) + 1;
+  })">Focus the input</button>
+  <p data-testid="count">focused $(focusCount || 0) time(s)</p>
+</script>
+
+<focus-field id="app" focus-count="0"></focus-field>
+
+<script>
+  window.__parityTest = async () => {
+    await new Promise(r => setTimeout(r, 0));
+    const app = document.getElementById('app');
+    const field = app.querySelector('[data-testid="field"]');
+    app.querySelector('#focus-btn').click();
+    await new Promise(r => setTimeout(r, 0));
+    const focused = document.activeElement === field;
+    const counted = app.querySelector('[data-testid="count"]').textContent.includes('1 time');
+    return { ok: focused && counted, detail: 'querySelector reaches the node; .focus() runs' };
+  };
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

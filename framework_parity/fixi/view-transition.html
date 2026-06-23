@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!--
+  Source: https://github.com/bigskysoftware/fixi (README, commit d31fc1d) — native View Transitions
+  Demonstrates: fixi swaps content through the View Transition API natively, so old → new content
+  animates with zero extra code.
+  JST status: (i) workaround. JST has no native View-Transition swap. The enter/leave animation is
+  reproduced with a keyed node (jst-key) + jst-transition, where the CSS owns the animation. Note:
+  this is CSS-driven, NOT the browser View Transition API, so it doesn't capture/snapshot the old
+  frame the way fixi does — it cross-animates two live nodes instead.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JST · fixi view-transition</title>
+<script type="module" src="../../jst.js"></script>
+<script src="../../framework_parity/lib/mock-fetch.js"></script>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 30rem; margin: 3rem auto; }
+  .stage { position: relative; height: 8rem; }
+  .panel { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+           border-radius: 10px; color: white; font-size: 1.4rem; }
+  /* CSS-owned enter/leave — the substitute for the View Transition API */
+  .vt-enter-active, .vt-leave-active { transition: opacity .4s ease, transform .4s ease; }
+  .vt-enter-from { opacity: 0; transform: translateX(30px); }
+  .vt-enter-to   { opacity: 1; transform: translateX(0); }
+  .vt-leave-from { opacity: 1; transform: translateX(0); }
+  .vt-leave-to   { opacity: 0; transform: translateX(-30px); }
+  button { padding: .5rem 1rem; cursor: pointer; margin-top: 1rem; }
+</style>
+</head>
+<body>
+
+<script type="jst" name="panel-swapper" props="index panels">
+  $ const list = panels || [];
+  $ const cur = list[index] || {};
+  <div class="stage">
+    <div class="panel" data-testid="panel" jst-key="$(index)" jst-transition="vt" style="background: $(cur.color)">
+      <span data-testid="panel-title">$(cur.title)</span>
+    </div>
+  </div>
+  <button data-testid="next" onclick="$(() => el.index = ((el.index || 0) + 1) % list.length)">Next panel</button>
+</script>
+
+<h1>Animated content swap</h1>
+<panel-swapper id="swap"></panel-swapper>
+
+<script>
+  const swap = document.getElementById('swap');
+  swap.panels = [
+    { title: 'Panel one',   color: '#3f51b5' },
+    { title: 'Panel two',   color: '#2e7d32' },
+    { title: 'Panel three', color: '#c62828' },
+  ];
+  swap.index = 0;
+
+  window.__parityTest = async () => {
+    const before = document.querySelector('[data-testid="panel-title"]').textContent;
+    document.querySelector('[data-testid="next"]').click();
+    await new Promise(r => setTimeout(r, 650));   // let the CSS leave/enter finish
+    const after = document.querySelector('[data-testid="panel-title"]').textContent;
+    return { ok: before === 'Panel one' && after === 'Panel two', detail: 'keyed node swaps with CSS enter/leave (not VT API)' };
+  };
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

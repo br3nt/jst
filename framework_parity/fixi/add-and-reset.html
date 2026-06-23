@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!--
+  Source: https://github.com/bigskysoftware/fixi (README, commit d31fc1d) — "add item" form pattern
+  Demonstrates: a form POSTs a new item, the server-created record is appended to a list, and the
+  form clears and refocuses its input for fast repeated entry.
+  JST status: ✓ exact. The form emits the draft (events up); the page POSTs via mock-fetch, appends
+  the created item to a page-owned array, re-renders the list, then resets the field and refocuses
+  it. Clean props-down / events-up.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JST · fixi add-and-reset</title>
+<script type="module" src="../../jst.js"></script>
+<script src="../../framework_parity/lib/mock-fetch.js"></script>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 30rem; margin: 3rem auto; }
+  form { display: flex; gap: .5rem; margin-bottom: 1rem; }
+  input { flex: 1; font-size: 1rem; padding: .4rem .6rem; }
+  button { padding: .4rem 1rem; cursor: pointer; }
+  ul { padding-left: 1.2rem; }
+  li { padding: .2rem 0; }
+</style>
+</head>
+<body>
+
+<script type="jst" name="add-form" props="draft">
+  <form data-testid="form" onsubmit.prevent="$(() => {
+      const text = (el.draft || '').trim();
+      if (text) el.emit('add', text);
+    })">
+    <input data-testid="input" jst-model="draft" placeholder="New todo…" autofocus>
+    <button data-testid="add" type="submit">Add</button>
+  </form>
+</script>
+
+<script type="jst" name="item-list" props="items">
+  <ul data-testid="list">
+    $ (items || []).forEach(it => {
+      <li data-testid="item-$(it.id)" jst-key="$(it.id)">$(it.text)</li>
+    $ })
+  </ul>
+</script>
+
+<h1>Add item, reset and refocus</h1>
+<add-form id="form"></add-form>
+<item-list id="list"></item-list>
+
+<script>
+  let nextId = 3;
+  JSTMock.route('POST /api/items', req => {
+    return { json: { item: { id: ++nextId, text: req.form.text } } };
+  }, { delay: 60 });
+
+  const form = document.getElementById('form');
+  const list = document.getElementById('list');
+  let items = [
+    { id: 1, text: 'Read the fixi README' },
+    { id: 2, text: 'Port the demos to JST' },
+  ];
+  list.items = items;
+
+  form.addEventListener('add', async e => {
+    const r = await (await fetch('/api/items', {
+      method: 'POST',
+      body: new URLSearchParams({ text: e.detail }),
+    })).json();
+    items = [...items, r.item];
+    list.items = items;
+    form.draft = '';   // reset the field
+    requestAnimationFrame(() => form.querySelector('[data-testid="input"]')?.focus());  // refocus
+  });
+
+  window.__parityTest = async () => {
+    form.draft = 'Ship the parity suite';
+    document.querySelector('[data-testid="form"]').requestSubmit
+      ? document.querySelector('[data-testid="form"]').requestSubmit()
+      : document.querySelector('[data-testid="add"]').click();
+    const until = async (cond, ms = 3000) => { const t0 = Date.now(); while (Date.now() - t0 < ms) { if (cond()) return true; await new Promise(r => setTimeout(r, 50)); } return cond(); };
+    const ok = await until(() => {
+      const item = document.querySelector('[data-testid="item-4"]');
+      const cleared = document.querySelector('[data-testid="input"]').value === '';
+      return !!item && item.textContent === 'Ship the parity suite' && cleared;
+    });
+    return { ok, detail: 'POST appends item, form resets to empty' };
+  };
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

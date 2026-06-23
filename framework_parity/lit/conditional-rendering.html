@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!--
+  Source: https://lit.dev/docs/templates/conditionals/
+  Demonstrates: conditional rendering. Lit picks a branch with a ternary or the
+  `when(cond, () => trueTpl, () => falseTpl)` directive — here, showing the signed-in
+  user vs a "Sign In" button.
+  Maps from: Lit `when(cond, a, b)` / ternary ↔ JST `$ if (user) { … } $ else { … }`,
+  the native control-flow form.
+  JST status: ✓ exact — `$ if/else` chooses which markup to render, like Lit's `when`.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JST · Lit conditional rendering</title>
+<script type="module" src="../../jst.js"></script>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 420px; margin: 3rem auto; }
+  button { font-size: 1rem; padding: 8px 16px; cursor: pointer; }
+  .user { font-weight: 600; color: #2e7d32; }
+</style>
+</head>
+<body>
+<h1>Conditional rendering</h1>
+
+<!-- when(user, signed-in view, sign-in button) ↔ $ if (user) { … } $ else { … } -->
+<script type="jst" name="auth-status" props="user">
+  <div>
+    $ if (user) {
+      <p class="user" data-testid="status">User: $(user.name)</p>
+      <button id="action" onclick="$(() => el.user = null)">Sign Out</button>
+    $ } else {
+      <p data-testid="status">You are signed out.</p>
+      <button id="action" onclick="$(() => el.user = { name: 'Ada' })">Sign In</button>
+    $ }
+  </div>
+</script>
+
+<auth-status id="auth"></auth-status>
+
+<script>
+  window.__parityTest = async () => {
+    const auth = document.getElementById('auth');
+    const status = () => auth.querySelector('[data-testid="status"]').textContent.trim();
+    const signedOut = status() === 'You are signed out.';
+    auth.querySelector('#action').click();          // Sign In
+    await new Promise(r => setTimeout(r, 0));
+    const signedIn = status() === 'User: Ada';
+    auth.querySelector('#action').click();          // Sign Out
+    await new Promise(r => setTimeout(r, 0));
+    const backOut = status() === 'You are signed out.';
+    return { ok: signedOut && signedIn && backOut, detail: 'if/else switched signed-out ↔ signed-in' };
+  };
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

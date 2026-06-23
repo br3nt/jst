@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!--
+  Source: https://lit.dev/docs/components/lifecycle/
+  Demonstrates: Lit's lifecycle callbacks — connectedCallback / firstUpdated set
+  things up, disconnectedCallback tears them down.
+  JST status: ✓ exact — `once('key', setup)` runs after the first DOM commit
+  (like firstUpdated/connected) and the cleanup it RETURNS runs on disconnect
+  (like disconnectedCallback). Here once() starts an interval and returns its
+  clearInterval; `onDisconnect(fn)` adds an extra teardown log. Removing the
+  element proves both teardown paths fire.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JST — Lifecycle (connected / disconnected)</title>
+<script type="module" src="../../jst.js"></script>
+<style>
+  body { font-family:system-ui, sans-serif; max-width:460px; margin:3rem auto; }
+  .clock { font-size:2rem; font-variant-numeric:tabular-nums; }
+  button { padding:6px 12px; cursor:pointer; }
+</style>
+</head>
+<body>
+<h1>Lifecycle: a self-cleaning timer</h1>
+
+<script type="jst" name="tick-clock" props="ticks">
+  $ once('start-timer', () => {
+  $   el.ticks = el.ticks || 0;
+  $   const id = setInterval(() => { el.ticks = (el.ticks || 0) + 1; }, 100);
+  $   onDisconnect(() => { window.__clockOnDisconnect = true; });   // extra teardown hook
+  $   return () => { clearInterval(id); window.__clockCleanup = true; };   // disconnectedCallback equiv
+  $ });
+  <p class="clock" data-testid="ticks">$(ticks || 0)</p>
+  <p>Ticks while connected; the interval is cleared on disconnect.</p>
+</script>
+
+<div id="host">
+  <tick-clock id="app" ticks="0"></tick-clock>
+</div>
+<button id="remove" onclick="document.getElementById('app').remove()">Remove element (trigger teardown)</button>
+
+<script>
+  window.__parityTest = async () => {
+    await new Promise(r => setTimeout(r, 250));   // let a couple ticks land
+    const app = document.getElementById('app');
+    const started = Number(app.querySelector('[data-testid="ticks"]').textContent) > 0;
+    app.remove();
+    await new Promise(r => setTimeout(r, 50));
+    const cleaned = window.__clockCleanup === true && window.__clockOnDisconnect === true;
+    return { ok: started && cleaned, detail: 'once() timer ran; cleanup + onDisconnect fired on removal' };
+  };
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

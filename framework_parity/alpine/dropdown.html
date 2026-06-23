@@ -22,14 +22,14 @@
 <body>
 
 <script type="jst" name="dropdown-menu" props="open choice">
-  <div style="position:relative; display:inline-block;" @click.outside="$(() => el.open = false)">
-    <button data-testid="toggle" @click="$(() => el.open = !el.open)">
+  <div style="position:relative; display:inline-block;" onclick.outside="$(() => el.open = false)">
+    <button data-testid="toggle" onclick="$(() => el.open = !el.open)">
       $(choice || 'Choose…') ▾
     </button>
     $ if (open) {
       <div class="menu" data-testid="menu">
         $ ['Edit', 'Duplicate', 'Delete'].forEach(item => {
-          <button @click="$(() => { el.choice = item; el.open = false; })">$(item)</button>
+          <button onclick="$(() => { el.choice = item; el.open = false; })">$(item)</button>
         $ })
       </div>
     $ }

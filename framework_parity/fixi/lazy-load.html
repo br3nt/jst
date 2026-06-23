@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!--
+  Source: https://github.com/bigskysoftware/fixi#readme  (Lazy Loading example)
+  Demonstrates: fixi loads content on init with `fx-trigger="fx:inited"` — the element
+  fetches its own content the moment it is processed, swapping a spinner for the result.
+  JST status: ✓ exact match. JST's analog of fixi's `fx:inited` is `once('key', setup)`,
+  which runs exactly once after the component's first commit. Here it fetches a fragment that
+  itself ships a `<script type="jst">` definition + markup; JST's MutationObserver upgrades
+  the late-arriving component automatically (the documented "server sends components" path).
+  A "Loading…" spinner shows until the fragment resolves.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JST · fixi · lazy-load</title>
+<script type="module" src="../../jst.js"></script>
+<script src="../../framework_parity/lib/mock-fetch.js"></script>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 32rem; margin: 3rem auto; }
+  .spinner { color: #888; }
+  .chart { height: 8rem; background: linear-gradient(90deg,#5c6bc0,#3f51b5); border-radius: 8px;
+           color: white; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; }
+</style>
+</head>
+<body>
+
+<script type="jst" name="lazy-graph">
+  $ once('inited', async () => {
+  $   const html = await (await fetch('/api/graph')).text();
+  $   el.querySelector('[data-testid="mount"]').innerHTML = html;
+  $ });
+  <div data-testid="mount"><span class="spinner" data-testid="spinner">Loading graph…</span></div>
+</script>
+
+<h1>Lazy Loading</h1>
+<lazy-graph id="graph"></lazy-graph>
+
+<script>
+  JSTMock.route('GET /api/graph', () => `
+    <script type="jst" name="revenue-chart" props="label">
+      <div class="chart" data-testid="chart">$(label)<\/div>
+    <\/script>
+    <revenue-chart label="Revenue is up 42%"></revenue-chart>
+  `, { delay: 300 });
+
+  window.__parityTest = async () => {
+    for (let i = 0; i < 20 && !document.querySelector('[data-testid="chart"]'); i++) {
+      await new Promise(r => setTimeout(r, 100));
+    }
+    const chart = document.querySelector('[data-testid="chart"]');
+    return { ok: Boolean(chart && /Revenue/.test(chart.textContent)), detail: 'fx:inited via once() injected late component' };
+  };
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

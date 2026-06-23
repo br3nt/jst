@@ -21,7 +21,7 @@ the components inline. No bundler, no `node_modules`, no watch process.
 <script type="module" src="/jst.js"></script>
 
 <script type="jst" name="copy-button" props="text">
-  <button @click="$(() => navigator.clipboard.writeText(text))">Copy</button>
+  <button onclick="$(() => navigator.clipboard.writeText(text))">Copy</button>
 </script>
 
 <copy-button text="npm i jst"></copy-button>

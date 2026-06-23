@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!--
+  Source: https://lit.dev/docs/components/lifecycle/#willupdate
+  Demonstrates: Lit's willUpdate() — derive values from changed props BEFORE the
+  template renders (the canonical first + last -> fullName example).
+  JST status: ✓ exact — derive in the template with a `$ const` line. It runs as
+  part of each render, before the markup that uses it, so the derived value is
+  always consistent with the inputs. No separate willUpdate hook is needed.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JST — willUpdate (derived value)</title>
+<script type="module" src="../../jst.js"></script>
+<style>
+  body { font-family:system-ui, sans-serif; max-width:460px; margin:3rem auto; }
+  input { padding:8px; font-size:1rem; }
+  .full { font-size:1.4rem; margin-top:1rem; padding:.5rem; background:#eef; border-radius:8px; }
+  label { display:block; margin:.5rem 0; }
+</style>
+</head>
+<body>
+<h1>Derived value (willUpdate)</h1>
+
+<script type="jst" name="name-tag" props="first last">
+  $ // willUpdate equivalent: derive before the markup that uses it.
+  $ const fullName = [first, last].filter(Boolean).join(' ').trim();
+  <label>First <input type="text" data-testid="first" jst-model="first"></label>
+  <label>Last  <input type="text" data-testid="last"  jst-model="last"></label>
+  <p class="full" data-testid="full">Full name: <strong>$(fullName || '(empty)')</strong></p>
+</script>
+
+<name-tag id="app" first="Ada" last="Lovelace"></name-tag>
+
+<script>
+  window.__parityTest = async () => {
+    await new Promise(r => setTimeout(r, 0));
+    const app = document.getElementById('app');
+    const full = () => app.querySelector('[data-testid="full"]').textContent;
+    const initial = full().includes('Ada Lovelace');
+    const last = app.querySelector('[data-testid="last"]');
+    last.value = 'Byron';
+    last.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: 'n' }));
+    await new Promise(r => setTimeout(r, 0));
+    const derived = full().includes('Ada Byron');
+    return { ok: initial && derived, detail: 'fullName derived from first+last before render' };
+  };
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

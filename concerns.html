@@ -269,7 +269,7 @@
 
   <script type="jst" name="concern-parent-field" props="value">
     <label>Parent value
-      <input .value="$(value || '')" @input="$(event => el.emit('value-change', event.target.value))">
+      <input .value="$(value || '')" oninput="$(event => el.emit('value-change', event.target.value))">
     </label>
     <p>Prop from parent: <strong>$(value || '')</strong></p>
   </script>
@@ -292,18 +292,18 @@
 
   <script type="jst" name="concern-stale-counter" props="count">
     <p>Count: <strong>$(count || 0)</strong></p>
-    <button @click="$(() => { el.count = (count || 0) + 1; el.count = (count || 0) + 1; })">
+    <button onclick="$(() => { el.count = (count || 0) + 1; el.count = (count || 0) + 1; })">
       Add twice using render value
     </button>
-    <button class="primary" @click="$(() => { el.count = (el.count || 0) + 1; el.count = (el.count || 0) + 1; })">
+    <button class="primary" onclick="$(() => { el.count = (el.count || 0) + 1; el.count = (el.count || 0) + 1; })">
       Add twice using el.count
     </button>
   </script>
 
   <section>
-    <h2>4. Escaped interpolation is safe; `unsafeHTML` is a trust boundary</h2>
+    <h2>4. Escaped interpolation is safe; `trustedHTML` is a trust boundary</h2>
     <span class="kind boundary">Trust boundary</span>
-    <p class="lede">This distinction has to stay explicit in docs, examples, and tooling. `unsafeHTML` is for trusted HTML, not user content.</p>
+    <p class="lede">This distinction has to stay explicit in docs, examples, and tooling. `trustedHTML` is for trusted HTML, not user content.</p>
     <div class="concern">
       <div class="demo">
         <span class="flag">Concern: HTML trust</span>
@@ -328,7 +328,7 @@
       </div>
       <div>
         <h3>Trusted only</h3>
-        <div class="box">$(unsafeHTML(trustedhtml))</div>
+        <div class="box">$(trustedHTML(trustedhtml))</div>
       </div>
     </div>
   </script>

@@ -24,7 +24,7 @@ Cheaper interim: prop types via JSDoc on the template, surfaced in hover.
 A `tree-sitter-jst` grammar gives highlighting in Neovim, Zed, Helix, and
 GitHub's code view from one definition (vs the VS-Code-only TextMate grammar).
 Could also back a faster/structural diagnostics path. Scope: injection grammar
-for the `$(...)`, `$ …`, `${...}`, `$$`, `.prop`/`@event` constructs inside
+for the `$(...)`, `$ …`, `${...}`, `$$`, `.prop`/`on<event>` constructs inside
 HTML `script` elements.
 
 ## Prettier plugin
@@ -36,9 +36,10 @@ plugin with an `embed` for the `<script type="jst">` regions.
 ## Smaller refinements
 
 - **Own the tag/attribute parsing inside JST blocks** instead of deferring to
-  VS Code's HTML grammar. HTML's tag parser can get mildly confused by `@`/`.`
-  attribute names (non-standard). Giving the injection grammar explicit
-  start-tag handling that knows about `.prop`/`@event` would remove the last
+  VS Code's HTML grammar. HTML's tag parser can get mildly confused by `.prop`
+  and dotted `on<event>` modifier attribute names (non-standard). Giving the
+  injection grammar explicit start-tag handling that knows about
+  `.prop`/`on<event>` would remove the last
   highlighting glitches around bindings — at the cost of reimplementing basic
   tag/attribute/string highlighting (the Vue/Svelte approach).
 - Highlight the `props="..."` names on the `<script type="jst" name=…>`
@@ -46,7 +47,7 @@ plugin with an `embed` for the `<script type="jst">` regions.
 - Diagnostics: warn on a `.prop`/attribute usage at a call site that isn't a
   declared prop of the target component (needs the cross-file index, which the
   Tier 3 server already builds — wire it into `computeDiagnostics`).
-- Completion: suggest `slot()`, `raw()`, `el.emit()` inside `$(...)`.
+- Completion: suggest `slot()`, `trustedHTML()`, `el.emit()` inside `$(...)`.
 - Go-to-definition from a `.prop` binding to the prop declaration on the component.
 - Workspace indexing: index `.html` files on disk, not just open documents, so
   navigation works before a file is opened.

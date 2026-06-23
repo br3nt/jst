@@ -38,9 +38,9 @@
 -->
 <script type="jst" name="todo-item" props="item">
     <div class="todo-item $(item.done ? 'done' : '')">
-        <input type="checkbox" .checked="$(item.done)" @change="$(() => el.emit('toggle', item))">
+        <input type="checkbox" .checked="$(item.done)" onchange="$(() => el.emit('toggle', item))">
         <span class="text">$(item.text)</span>
-        <button class="del" @click="$(() => el.emit('remove', item))">×</button>
+        <button class="del" onclick="$(() => el.emit('remove', item))">×</button>
     </div>
 </script>
 

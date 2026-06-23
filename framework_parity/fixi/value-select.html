@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!--
+  Source: https://github.com/bigskysoftware/fixi#readme  (Value Select / cascading selects)
+  Demonstrates: choosing a make repopulates the model dropdown from the server. In fixi the
+  make <select> has `fx-trigger="change"` (the input default), `fx-action="/models"`, and
+  `fx-target="#models" fx-swap="innerHTML"` to replace the second select's options.
+  JST status: ✓ exact match. The page owns the selected make + the models list; changing the
+  first select fetches models and re-renders the <model-select>. Props down, events up.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JST · fixi · value-select</title>
+<script type="module" src="../../jst.js"></script>
+<script src="../../framework_parity/lib/mock-fetch.js"></script>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 28rem; margin: 3rem auto; }
+  label { display: block; margin: .8rem 0; }
+  select { padding: .4rem; width: 100%; }
+</style>
+</head>
+<body>
+
+<script type="jst" name="model-select" props="models loading">
+  <select data-testid="model" .disabled="$(loading)">
+    $ if (loading) {
+      <option>Loading…</option>
+    $ } else {
+      $ (models || []).forEach(m => {
+        <option value="$(m)">$(m)</option>
+      $ })
+    $ }
+  </select>
+</script>
+
+<h1>Cascading Selects</h1>
+<label>Make
+  <select id="make" data-testid="make">
+    <option value="audi">Audi</option>
+    <option value="toyota">Toyota</option>
+    <option value="bmw">BMW</option>
+  </select>
+</label>
+<label>Model
+  <model-select id="models"></model-select>
+</label>
+
+<script>
+  const DB = {
+    audi: ['A1', 'A4', 'A6'],
+    toyota: ['Corolla', 'Camry', 'Prius', 'Hilux'],
+    bmw: ['Series 1', 'Series 3', 'Series 5'],
+  };
+  JSTMock.route('GET /api/models', req => ({ json: { models: DB[req.query.make] || [] } }), { delay: 100 });
+
+  const make = document.getElementById('make');
+  const models = document.getElementById('models');
+
+  async function loadModels(makeId) {
+    models.loading = true;
+    const data = await (await fetch(`/api/models?make=${makeId}`)).json();
+    models.models = data.models;
+    models.loading = false;
+  }
+
+  make.addEventListener('change', () => loadModels(make.value));
+  loadModels(make.value).then(() => { window.__exampleReady = true; });
+</script>
+</body>
+</html>

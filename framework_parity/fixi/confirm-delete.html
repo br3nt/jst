@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!--
+  Source: https://github.com/bigskysoftware/fixi (README, commit d31fc1d) — "Confirm" / cfg.confirm
+  Demonstrates: a guarded DELETE. fixi has NO hx-confirm attribute; you wire confirmation
+  yourself in an fx:config handler by overriding cfg.confirm before the request fires.
+  JST status: (i) workaround. JST likewise has no declarative confirm — the guard is
+  hand-wired. Here a custom in-page confirm UI (NOT window.confirm, which blocks headless)
+  gates the DELETE, then the item is removed. Same "you build it" story as fixi-core.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JST · fixi confirm-delete</title>
+<script type="module" src="../../jst.js"></script>
+<script src="../../framework_parity/lib/mock-fetch.js"></script>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 30rem; margin: 3rem auto; }
+  ul { list-style: none; padding: 0; }
+  li { display: flex; align-items: center; gap: .6rem; padding: .4rem 0; border-bottom: 1px solid #eee; }
+  li span.name { flex: 1; }
+  .confirm { color: #c62828; display: flex; align-items: center; gap: .4rem; }
+  button { padding: .25rem .7rem; cursor: pointer; }
+</style>
+</head>
+<body>
+
+<script type="jst" name="delete-list" props="items pendingId">
+  <ul data-testid="list">
+    $ (items || []).forEach(item => {
+      <li data-testid="item-$(item.id)" jst-key="$(item.id)">
+        <span class="name">$(item.name)</span>
+        $ if (pendingId === item.id) {
+          <span class="confirm" data-testid="confirm-$(item.id)">
+            Delete?
+            <button data-testid="yes-$(item.id)" onclick="$(() => el.emit('confirm', item.id))">Yes</button>
+            <button data-testid="no-$(item.id)" onclick="$(() => el.pendingId = null)">No</button>
+          </span>
+        $ } else {
+          <button data-testid="del-$(item.id)" onclick="$(() => el.pendingId = item.id)">Delete</button>
+        $ }
+      </li>
+    $ })
+  </ul>
+</script>
+
+<h1>Confirm before delete</h1>
+<delete-list id="list"></delete-list>
+
+<script>
+  JSTMock.route('DELETE /api/item/:id', () => ({ status: 200, body: '' }), { delay: 80 });
+
+  const list = document.getElementById('list');
+  let items = [
+    { id: 1, name: 'Draft proposal' },
+    { id: 2, name: 'Old screenshot' },
+    { id: 3, name: 'Temp export' },
+  ];
+  list.items = items;
+  list.pendingId = null;
+
+  // The "confirm" hook fixi puts on cfg.confirm — here a guarded handler.
+  list.addEventListener('confirm', async e => {
+    const id = e.detail;
+    await fetch(`/api/item/${id}`, { method: 'DELETE' });
+    items = items.filter(i => i.id !== id);
+    list.items = items;
+    list.pendingId = null;
+  });
+
+  window.__parityTest = async () => {
+    document.querySelector('[data-testid="del-1"]').click();
+    await new Promise(r => setTimeout(r, 50));   // let the confirm UI render
+    const armed = !!document.querySelector('[data-testid="confirm-1"]');
+    document.querySelector('[data-testid="yes-1"]').click();
+    await new Promise(r => setTimeout(r, 300));
+    const gone = !document.querySelector('[data-testid="item-1"]');
+    const others = !!document.querySelector('[data-testid="item-2"]');
+    return { ok: armed && gone && others, detail: 'confirm UI gates DELETE, then removes item' };
+  };
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

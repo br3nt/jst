@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!--
+  Source: https://lit.dev/docs/templates/directives/#live
+  Demonstrates: Lit's live(x) — a two-way-ish binding that checks the input's
+  LIVE DOM value before updating, so external state and the field stay in sync
+  even after user edits.
+  JST status: ✓ exact — `jst-model="prop"` reads from the prop and writes
+  `el[prop]` on every keystroke, making the prop the single source of truth.
+  JST's property-aware DOM morphing re-syncs the input's value without replacing
+  the node, so the caret and focus stay put while the echo updates live.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JST — live / two-way input</title>
+<script type="module" src="../../jst.js"></script>
+<style>
+  body { font-family:system-ui, sans-serif; max-width:460px; margin:3rem auto; }
+  input { width:100%; padding:8px; font-size:1rem; box-sizing:border-box; }
+  .echo { margin-top:1rem; padding:.75rem; background:#f3f4f6; border-radius:8px; min-height:1.4em; }
+  button { padding:6px 12px; cursor:pointer; }
+</style>
+</head>
+<body>
+<h1>Two-way input (live)</h1>
+
+<script type="jst" name="live-input" props="name">
+  <label>Your name
+    <input type="text" data-testid="field" jst-model="name" placeholder="Type here…">
+  </label>
+  <p class="echo" data-testid="echo">Hello, <strong>$(name || 'stranger')</strong>!</p>
+  <!-- External writes also flow back into the field because the prop is the source of truth. -->
+  <button id="reset" onclick="$(() => el.name = '')">Reset</button>
+</script>
+
+<live-input id="app" name=""></live-input>
+
+<script>
+  window.__parityTest = async () => {
+    await new Promise(r => setTimeout(r, 0));
+    const app = document.getElementById('app');
+    const field = app.querySelector('[data-testid="field"]');
+    field.focus();
+    field.value = 'Ada';
+    field.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: 'a' }));
+    await new Promise(r => setTimeout(r, 0));
+    const propSynced = app.name === 'Ada';
+    const echoLive = app.querySelector('[data-testid="echo"]').textContent.includes('Ada');
+    const focusKept = document.activeElement === field;       // morph preserved focus
+    app.querySelector('#reset').click();
+    await new Promise(r => setTimeout(r, 0));
+    const resetFlowed = field.value === '';                   // external write -> field
+    return { ok: propSynced && echoLive && focusKept && resetFlowed, detail: 'prop is source of truth; focus preserved; external write flows back' };
+  };
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

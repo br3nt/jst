@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!--
+  Source: https://github.com/bigskysoftware/fixi (README, commit d31fc1d) — fx-ignore
+  Demonstrates: fx-ignore marks a region fixi must NOT process, so third-party widgets that own
+  their own DOM are left alone during swaps.
+  JST status: (i) workaround. JST has NO jst-ignore directive yet (open proposal). The equivalent
+  is to keep the widget OUT of the component's rendered subtree: mount the vanilla widget into the
+  component's slot children, which JST projects (moves real nodes) rather than re-renders. Host
+  re-renders then can't clobber it — the widget keeps its own state. Gap: no declarative jst-ignore.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JST · fixi fx-ignore</title>
+<script type="module" src="../../jst.js"></script>
+<script src="../../framework_parity/lib/mock-fetch.js"></script>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 32rem; margin: 3rem auto; }
+  section { padding: 1rem; border: 1px solid #ddd; border-radius: 8px; }
+  .ignored { margin-top: 1rem; padding: .8rem; border: 2px dashed #c00; border-radius: 6px; }
+  button { padding: .35rem .8rem; cursor: pointer; }
+</style>
+</head>
+<body>
+
+<script type="jst" name="widget-host" props="count">
+  <section>
+    <p>Host re-renders: <strong data-testid="renders">$(count || 0)</strong></p>
+    <button data-testid="rerender" onclick="$(() => el.count = (el.count || 0) + 1)">Re-render host</button>
+    <div class="ignored">
+      <small>Uncontrolled region (projected slot — JST does not re-render this):</small>
+      $(slot())
+    </div>
+  </section>
+</script>
+
+<h1>Uncontrolled (fx-ignore) region</h1>
+<widget-host id="host">
+  <div id="widget" data-testid="widget"></div>
+</widget-host>
+
+<script>
+  // A "third-party" vanilla-JS widget that owns its own DOM + state.
+  const mountPoint = document.getElementById('widget');
+  let widgetCount = 0;
+  const out = document.createElement('span');
+  out.dataset.testid = 'widget-count';
+  out.textContent = '0';
+  const inc = document.createElement('button');
+  inc.dataset.testid = 'widget-inc';
+  inc.textContent = 'widget +1';
+  inc.addEventListener('click', () => { widgetCount++; out.textContent = String(widgetCount); });
+  mountPoint.append('Vanilla counter: ', out, ' ', inc);
+
+  const host = document.getElementById('host');
+  host.count = 0;
+
+  window.__parityTest = async () => {
+    // drive the third-party widget
+    const wInc = document.querySelector('[data-testid="widget-inc"]');
+    wInc.click(); wInc.click(); wInc.click();
+    const widgetAt = document.querySelector('[data-testid="widget-count"]').textContent;
+    // force host re-renders
+    const hostBtn = document.querySelector('[data-testid="rerender"]');
+    hostBtn.click(); hostBtn.click();
+    await new Promise(r => setTimeout(r, 100));
+    const stillThere = document.querySelector('[data-testid="widget-count"]');
+    const hostRendered = document.querySelector('[data-testid="renders"]').textContent === '2';
+    return {
+      ok: hostRendered && !!stillThere && stillThere.textContent === '3' && widgetAt === '3',
+      detail: 'widget state survives host re-renders (slot projection, no jst-ignore needed)',
+    };
+  };
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

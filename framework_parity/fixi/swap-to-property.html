@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!--
+  Source: https://github.com/bigskysoftware/fixi (README, commit d31fc1d) — fx-swap as a PROPERTY
+  Demonstrates: fixi's distinctive fx-swap can name ANY element property (e.g. value, className),
+  not just innerHTML/outerHTML. The response text is assigned to that property.
+  JST status: ✓ exact. JST's model IS properties: a fetched value is written straight into a
+  component property — el.value (the field text) and el.tone (its className) — which re-renders.
+  Mapping: fixi fx-swap="value"  ≡  JST `el.value = responseText`.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JST · fixi swap-to-property</title>
+<script type="module" src="../../jst.js"></script>
+<script src="../../framework_parity/lib/mock-fetch.js"></script>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 30rem; margin: 3rem auto; }
+  input { font-size: 1rem; padding: .4rem .6rem; width: 18rem; }
+  input.good { border: 2px solid #2e7d32; background: #f1f8f1; }
+  input.warn { border: 2px solid #c62828; background: #fbeeee; }
+  button { padding: .5rem 1rem; cursor: pointer; margin-top: .8rem; }
+</style>
+</head>
+<body>
+
+<script type="jst" name="swap-field" props="value tone">
+  <label>
+    Suggestion:
+    <input data-testid="field" .value="$(value || '')" .className="$(tone || '')" readonly>
+  </label>
+</script>
+
+<h1>Swap into a property, not HTML</h1>
+<swap-field id="field"></swap-field>
+<div>
+  <button id="fetch" data-testid="fetch">Fetch suggestion</button>
+</div>
+
+<script>
+  // The response is data destined for a PROPERTY, not an HTML fragment.
+  JSTMock.route('GET /api/suggestion', () => ({ json: { value: 'reactive-web-components', tone: 'good' } }), { delay: 60 });
+
+  const field = document.getElementById('field');
+  document.getElementById('fetch').addEventListener('click', async () => {
+    const r = await (await fetch('/api/suggestion')).json();
+    field.value = r.value;   // fx-swap="value"      — response → input.value
+    field.tone = r.tone;     // fx-swap="className"  — response → element.className
+  });
+
+  window.__parityTest = async () => {
+    const until = async (cond, ms = 3000) => { const t0 = Date.now(); while (Date.now() - t0 < ms) { if (cond()) return true; await new Promise(r => setTimeout(r, 50)); } return cond(); };
+    document.getElementById('fetch').click();
+    const input = document.querySelector('[data-testid="field"]');
+    const ok = await until(() => input.value === 'reactive-web-components' && input.className === 'good');
+    return {
+      ok,
+      detail: 'response written into el.value and el.className',
+    };
+  };
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

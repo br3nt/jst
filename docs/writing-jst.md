@@ -26,7 +26,7 @@ A JST component is a `<script type="jst">` block with:
 ```html
 <script type="jst" name="hello-name" props="name count">
   <p>Hello, <strong>$(name)</strong>.</p>
-  <button @click="$(() => el.count = (el.count || 0) + 1)">
+  <button onclick="$(() => el.count = (el.count || 0) + 1)">
     Clicked $(count || 0) times
   </button>
 </script>
@@ -117,9 +117,14 @@ Inside another JST template, use `.prop="$(expr)"`:
 </script>
 ```
 
-Important: `.prop="$(expr)"` and `@event="$(fn)"` are JST template syntax. They
+Important: `.prop="$(expr)"` and `on<event>="$(fn)"` are JST template syntax. They
 are compiled only inside `<script type="jst">`. They do not run in raw top-level
-HTML.
+HTML. The `on<event>` value must be a single `$(...)` expression — raw inline
+JavaScript in an `on*` attribute (e.g. `onclick="doThing()"`) is rejected at
+compile time, so an `on*` handler never silently becomes a native inline handler.
+`on*` is reserved for handlers: the event name must start with a letter
+(`onclick`, `onitem-selected`), so an `on…` attribute that isn't a valid handler
+(e.g. `on3d-ready`) is a compile error rather than a silently-ignored attribute.
 
 ## 5. Template syntax
 
@@ -131,7 +136,7 @@ HTML.
 | `$ statement` | A JavaScript statement line. |
 | `${ ... }` | A JavaScript block. |
 | `.prop="$(expr)"` | Set a JavaScript property on the rendered element. |
-| `@event="$(fn)"` | Add an event listener to the rendered element. |
+| `on<event>="$(fn)"` | Add an event listener to the rendered element. Optional modifiers: `onclick.stop`, `onkeydown.enter.prevent`, `onsubmit.prevent`, `oninput.debounce.300`, `onclick.outside`, `onclick.once`. |
 | `jst-key="$(id)"` | Preserve DOM identity across list changes. |
 | `jst-model="prop"` | Local form shorthand: read/write `el[prop]`. |
 | `$(slot())` | Project original child nodes. |
@@ -165,7 +170,7 @@ decide what state changes.
     <input
       type="checkbox"
       .checked="$(item.done)"
-      @change="$(() => el.emit('toggle', item))">
+      onchange="$(() => el.emit('toggle', item))">
     $(item.text)
   </li>
 </script>
@@ -179,12 +184,12 @@ document.querySelector('todo-list').addEventListener('toggle', event => {
 });
 ```
 
-Or a parent JST component can listen with `@event`:
+Or a parent JST component can listen with `on<event>`:
 
 ```html
 <todo-item
   .item="$(item)"
-  @toggle="$(event => el.emit('toggle', event.detail))">
+  ontoggle="$(event => el.emit('toggle', event.detail))">
 </todo-item>
 ```
 
@@ -212,9 +217,9 @@ from the event rather than from `el`:
 <script type="jst" name="kanban-board" props="columns">
   $ columns.forEach(col => {
     <div class="col"
-         @dragover.prevent="$(event => event.currentTarget.classList.add('over'))"
-         @dragleave="$(event => event.currentTarget.classList.remove('over'))"
-         @click="$(() => el.selected = col.id)">
+         ondragover.prevent="$(event => event.currentTarget.classList.add('over'))"
+         ondragleave="$(event => event.currentTarget.classList.remove('over'))"
+         onclick="$(() => el.selected = col.id)">
       $(col.name)
     </div>
   $ })
@@ -224,7 +229,7 @@ from the event rather than from `el`:
 In the dragover handler `el` is the `kanban-board`, not the hovered `.col`, so
 `el.classList.add('over')` would highlight the whole board. Use
 `event.currentTarget` for the column. Reach for `el` only when you want host
-state, as in the `@click` handler that sets `el.selected`.
+state, as in the `onclick` handler that sets `el.selected`.
 
 ## 7. State updates
 
@@ -255,7 +260,7 @@ For parent-owned state, keep the boundary explicit:
 ```html
 <input
   .value="$(title)"
-  @input="$(event => el.emit('title-change', event.target.value))">
+  oninput="$(event => el.emit('title-change', event.target.value))">
 ```
 
 For local draft state inside the component, use `jst-model`:
@@ -321,8 +326,9 @@ sanitizes:
 <article>$(trustedHTML(renderedMarkdown))</article>
 ```
 
-`raw(value)` and `unsafeHTML(value)` remain compatibility aliases, but
-`trustedHTML()` is the name to teach first.
+`trustedHTML()` is the only opt-out-of-escaping helper. (The earlier `raw()` and
+`unsafeHTML()` aliases have been removed — replace any remaining calls with
+`trustedHTML()`.)
 
 ## 12. Lazy templates and HATEOAS fragments
 
@@ -383,12 +389,66 @@ template cannot `import`; keep it to one named object (see
 the surface needs a component at all
 ([decision-guide.md](./decision-guide.md#component-granularity)).
 
+## 14. Avoiding id collisions in the light DOM
+
+JST renders into the **light DOM**, not a shadow root. That is deliberate — it is
+what lets JST components compose with server HTML and share page CSS. The tradeoff:
+a template that hard-codes an `id` produces a **duplicate id** the moment a second
+instance is on the page, which breaks `getElementById`, `label[for=...]`, and aria
+references (`aria-controls`, `aria-describedby`). Id uniqueness is the author's
+responsibility.
+
+**1. Prefer no internal id.** Use a class and query *within the component* — `el`
+already scopes the search to this instance, so you never need a global lookup:
+
+```html
+<script type="jst" name="search-box" props="value">
+  <input class="field" type="search" .value="$(value)"
+    oninput="$(e => el.emit('search', e.target.value))">
+  <button class="clear" onclick="$(() => el.emit('search', ''))">×</button>
+</script>
+```
+
+```js
+// inside the component, reach internals by class — never document.getElementById:
+const input = el.querySelector('.field');
+```
+
+**2. When an id is genuinely required** (associating a `<label for>` or wiring an
+aria relationship), derive a **unique per-instance id** and point `for`/`aria-*` at
+that derived id — never a hard-coded literal. Derive it from a prop that is unique
+per instance:
+
+```html
+<script type="jst" name="form-field" props="name label">
+  <label for="$('f-' + name)">$(label)</label>
+  <input id="$('f-' + name)" name="$(name)">
+</script>
+```
+
+If no naturally-unique prop exists, stamp a generated token on the element once and
+reuse it across renders:
+
+```html
+<script type="jst" name="hint-input" props="label hint">
+  $ el.uid ??= 'h' + Math.random().toString(36).slice(2, 8);
+  <input aria-describedby="$(el.uid)" aria-label="$(label)">
+  <p id="$(el.uid)" class="hint">$(hint)</p>
+</script>
+```
+
+Shadow DOM would scope ids per root, but JST is light DOM by design, so prefer
+classes, and derive ids per instance when you must have one. See
+[known-gaps.md](./known-gaps.md#light-dom-no-style-or-id-encapsulation-by-design).
+
 ## Common mistakes
 
 - Custom element names must include a hyphen: `todo-item`, not `todo`.
+- Prefer classes over internal ids; if you must have an id, derive it per instance
+  (section 14) so two instances never collide.
 - Declare every prop in `props="..."`.
 - Use camelCase in `props`, kebab-case in normal HTML attributes.
-- Remember that `.prop` and `@event` bindings only compile inside JST templates.
+- Remember that `.prop` and `on<event>` bindings only compile inside JST templates.
 - Add `jst-key` to real lists.
 - Use `trustedHTML()` only for trusted HTML.
 - Avoid prop names that clash with native HTML attributes such as `title`.

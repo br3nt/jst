@@ -14,7 +14,7 @@ done, that's a finding - mark it `(i)` or `x`. Do not "fix" it by editing the fr
 <script type="jst" name="my-counter" props="count label">
   <div>
     <strong>$(label)</strong>: $(count)
-    <button @click="$(() => el.count = (el.count || 0) + 1)">+</button>
+    <button onclick="$(() => el.count = (el.count || 0) + 1)">+</button>
   </div>
 </script>
 
@@ -33,13 +33,12 @@ done, that's a finding - mark it `(i)` or `x`. Do not "fix" it by editing the fr
 |---|---|
 | `$(expr)` | Interpolate, **HTML-escaped** by default |
 | `$(trustedHTML(expr))` | Interpolate without escaping (opt-in; only for trusted HTML) |
-| `$(raw(expr))` / `$(unsafeHTML(expr))` | Compatibility aliases for trusted HTML |
 | `$identifier` | Shorthand interpolation of a single identifier |
 | `$ statement` | A line of JS (to end of line). Use for `if`, `for`, `const`, loops |
 | `${ ... }` | A block of JS |
 | `$$` | A literal `$` |
 | `.prop="$(expr)"` | Set a **JS property** on the child element to expr's value (pass rich data/objects) |
-| `@event.mod="$(fn)"` | `addEventListener('event', fn)` with modifiers like `.prevent`, `.stop`, `.enter`, `.outside`, `.debounce.300` |
+| `on<event>.mod="$(fn)"` | `addEventListener('event', fn)` with modifiers like `.prevent`, `.stop`, `.enter`, `.outside`, `.debounce.300`. The value must be exactly one `$(...)` expression |
 | `jst-model="prop"` | Local form shorthand: read from `prop`, update `el[prop]` on user input |
 | `jst-key="$(id)"` | Preserve DOM identity during list inserts/reorders |
 | `$(slot())` | Project the component's original child nodes (default slot) |
@@ -80,7 +79,7 @@ Inside a template you can use the props by name plus these globals:
 - **Data OUT:** `el.emit('change', detail)` dispatches a **bubbling** `CustomEvent`.
   Parents/pages listen with `addEventListener('change', e => ... e.detail ...)`.
 - **Local state:** a component can update *its own* props:
-  `@click="$(() => el.count = (el.count || 0) + 1)"` re-renders it.
+  `onclick="$(() => el.count = (el.count || 0) + 1)"` re-renders it.
   This is how you build self-contained interactive widgets (Alpine/Vue style).
 - **Shared/app state:** keep it in the page (a plain JS object/array); pass down via
   properties, mutate on events, reassign to re-render.

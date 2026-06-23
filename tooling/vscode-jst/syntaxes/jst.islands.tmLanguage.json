@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
   "scopeName": "jst.islands",
-  "comment": "Injected into anything carrying meta.embedded.block.jst (set by jst.injection). This selector reaches inside HTML tags and attribute-value strings, so $(...) highlights inside @event=\"...\" / .prop=\"...\" too.",
+  "comment": "Injected into anything carrying meta.embedded.block.jst (set by jst.injection). This selector reaches inside HTML tags and attribute-value strings, so $(...) highlights inside on<event>=\"...\" / .prop=\"...\" too.",
   "injectionSelector": "L:meta.embedded.block.jst",
   "patterns": [{ "include": "#jst-islands" }],
   "repository": {
@@ -70,15 +70,16 @@
     },
 
     "jst-binding-attribute": {
-      "comment": "Owns the whole .prop=\"...\" / @event=\"...\" binding, including the quoted value, so the embedded JS is highlighted by source.js directly instead of inheriting HTML's attribute-string scope (which made it render as a flat string).",
-      "begin": "([.@])([A-Za-z_$][\\w$-]*)\\s*(=)\\s*([\"'])",
+      "comment": "Owns the whole .prop=\"...\" / on<event>=\"...\" binding, including the quoted value, so the embedded JS is highlighted by source.js directly instead of inheriting HTML's attribute-string scope (which made it render as a flat string). Event handlers use the native on<event> attribute name with an optional dotted modifier tail (onclick.stop, onkeydown.enter.prevent).",
+      "begin": "(?:(\\.)([A-Za-z_$][\\w$-]*)|(on[a-zA-Z][\\w$-]*(?:\\.[\\w$-]+)*))\\s*(=)\\s*([\"'])",
       "beginCaptures": {
         "1": { "name": "punctuation.definition.jst.binding" },
         "2": { "name": "entity.other.attribute-name.jst" },
-        "3": { "name": "punctuation.separator.key-value.html" },
-        "4": { "name": "punctuation.definition.string.begin.html" }
+        "3": { "name": "entity.other.attribute-name.jst" },
+        "4": { "name": "punctuation.separator.key-value.html" },
+        "5": { "name": "punctuation.definition.string.begin.html" }
       },
-      "end": "\\4",
+      "end": "\\5",
       "endCaptures": {
         "0": { "name": "punctuation.definition.string.end.html" }
       },

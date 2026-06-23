@@ -113,13 +113,88 @@ test('a malformed .prop binding throws at compile time instead of degrading to a
   )
 })
 
-test('a malformed @event binding (text around the expression) throws at compile time', () => {
+test('a malformed on* event binding (text around the expression) throws at compile time', () => {
   assert.throws(
-    () => interpretTemplateTokens(tokensOf('<button @click="run $(fn)">x</button>')),
-    /click=.*exactly one/,
+    () => interpretTemplateTokens(tokensOf('<button onclick="run $(fn)">x</button>')),
+    /onclick=.*exactly one/,
   )
+})
+
+test('raw inline JavaScript in an on* handler is rejected at compile time', () => {
+  assert.throws(
+    () => interpretTemplateTokens(tokensOf('<button onclick="alert(1)">x</button>')),
+    /Raw inline JavaScript/,
+  )
+})
+
+test('the removed @event syntax throws a migration error pointing at on<event>', () => {
+  assert.throws(
+    () => interpretTemplateTokens(tokensOf('<button @click="$(fn)">x</button>')),
+    /@click=.*was removed.*onclick=/s,
+  )
+})
+
+test('on<event> compiles to an event binding with the on prefix stripped', () => {
+  const body = interpretTemplateTokens(tokensOf('<button onclick="$(handler)">x</button>'))
+  assert.match(body, /__bind\("event", "click", \(handler\)\)/)
+})
+
+test('on<event> modifiers are preserved on the event descriptor', () => {
+  const body = interpretTemplateTokens(tokensOf('<form onsubmit.prevent="$(save)"></form>'))
+  assert.match(body, /__bind\("event", "submit\.prevent", \(save\)\)/)
 })
 
 test('a well-formed .prop binding still compiles cleanly', () => {
   assert.doesNotThrow(() => interpretTemplateTokens(tokensOf('<x .items="$(rows)"></x>')))
+})
+
+test('an on* handler whose event name does not start with a letter is rejected', () => {
+  assert.throws(
+    () => interpretTemplateTokens(tokensOf('<x on3d-ready="$(fn)"></x>')),
+    /on3d-ready=.*not a valid JST event handler.*must start with a letter/s,
+  )
+  assert.throws(
+    () => interpretTemplateTokens(tokensOf('<x on-foo="$(fn)"></x>')),
+    /on-foo=.*must start with a letter/s,
+  )
+})
+
+test('a hyphenated custom event whose name starts with a letter still binds', () => {
+  const body = interpretTemplateTokens(tokensOf('<x-c onitem-selected="$(fn)"></x-c>'))
+  assert.match(body, /__bind\("event", "item-selected", \(fn\)\)/)
+})
+
+test('on* / .prop sequences in template text are not misread as bindings', () => {
+  // `online="$(x)"` in body text must not bind an `line` event, and must not throw.
+  const a = interpretTemplateTokens(tokensOf('<p>plan: online="$(x)" today</p>'))
+  assert.doesNotMatch(a, /__bind\("event"/)
+  // bare `online="x"` prose must not be rejected as a raw on* handler.
+  assert.doesNotThrow(() => interpretTemplateTokens(tokensOf('<p>status online="active" now</p>')))
+  // `.foo="$(x)"` in text must not bind a prop.
+  const b = interpretTemplateTokens(tokensOf('<p>ratio .foo="$(x)" end</p>'))
+  assert.doesNotMatch(b, /__bind\("prop"/)
+})
+
+test('an on* attribute in tag position is reserved for handlers (binds even for on-words)', () => {
+  const body = interpretTemplateTokens(tokensOf('<el online="$(handler)"></el>'))
+  assert.match(body, /__bind\("event", "line", \(handler\)\)/)
+})
+
+test('a > inside an earlier quoted attribute value does not defeat a later binding', () => {
+  const body = interpretTemplateTokens(tokensOf('<a title="x>y" onclick="$(fn)">z</a>'))
+  assert.match(body, /__bind\("event", "click", \(fn\)\)/)
+})
+
+test('every binding on one element is captured (tag state crosses chunks)', () => {
+  // The opening `<` of the 2nd/3rd binding lives in an earlier chunk (split by the
+  // preceding $(…) value), so tag-position must be tracked across chunks.
+  const body = interpretTemplateTokens(tokensOf('<input .value="$(v)" oninput="$(a)" onblur="$(b)">'))
+  assert.match(body, /__bind\("prop", "value", \(v\)\)/)
+  assert.match(body, /__bind\("event", "input", \(a\)\)/)
+  assert.match(body, /__bind\("event", "blur", \(b\)\)/)
+})
+
+test('a binding after an interpolated attribute value is still captured', () => {
+  const body = interpretTemplateTokens(tokensOf('<div class="$(c)" onclick="$(fn)">x</div>'))
+  assert.match(body, /__bind\("event", "click", \(fn\)\)/)
 })

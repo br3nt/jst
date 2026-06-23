@@ -99,6 +99,30 @@ test('malformed property bindings are diagnostics', () => {
   assert.ok(diagnostics.some(d => /exactly one/.test(d.message)));
 });
 
+test('raw inline JavaScript in an on* handler is flagged', () => {
+  // the runtime rejects on*="..." values that are not a single $(…) expression
+  const text = wrap('name="x-on"', '<button onclick="alert(1)">x</button>');
+  const diagnostics = computeDiagnostics(text);
+  const error = diagnostics.find(d => d.severity === 1);
+  assert.ok(error, 'expected a compile error for raw inline JS in an on* handler');
+  assert.match(error.message, /\$\(/);
+});
+
+test('an on* handler wrapping a single $(…) expression is accepted', () => {
+  const text = wrap('name="x-on" props="handler"', '<button onclick="$(handler)">x</button>');
+  assert.deepEqual(computeDiagnostics(text), []);
+});
+
+test('an on* handler whose event name does not start with a letter is flagged', () => {
+  // the runtime rejects on<event> names that do not start with a letter, so the
+  // editor surfaces it too (diagnostics run the real compiler)
+  const text = wrap('name="x-on" props="handler"', '<x on3d-ready="$(handler)"></x>');
+  const diagnostics = computeDiagnostics(text);
+  const error = diagnostics.find(d => d.severity === 1);
+  assert.ok(error, 'expected a compile error for an invalid on<event> handler name');
+  assert.match(error.message, /must start with a letter/);
+});
+
 test('positionAt computes line and character', () => {
   const text = 'ab\ncde\nf';
   assert.deepEqual(positionAt(text, 0), { line: 0, character: 0 });

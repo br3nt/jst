@@ -32,17 +32,25 @@ JST components render into the light DOM, not a shadow root. Consequences:
   same id, and duplicate ids collide across instances. `getElementById` and
   `label[for=...]` will resolve to the first match.
 
-Patterns until/if encapsulation is offered:
+Patterns until/if encapsulation is offered (see
+[writing-jst.md](./writing-jst.md#14-avoiding-id-collisions-in-the-light-dom) for
+worked examples):
 
-- Prefer classes over ids inside components.
-- If you need an id (for `aria-*` or `label for`), derive it from a prop:
-  `id="$('field-' + name)"`.
+- **Prefer no internal id at all.** Use classes and query *within the component*
+  (`el.querySelector('.thing')`), never `document.getElementById`. The component
+  already scopes the search to itself, so a class is enough.
+- **When an id is genuinely required** (a `label for`, or an aria relationship
+  like `aria-controls`/`aria-describedby`), derive a unique *per-instance* id and
+  wire `for`/`aria-*` to that derived id — never a hard-coded literal. Derive it
+  from a prop that is unique per instance, or from a generated token stamped on
+  the element once (a module counter, or a value set in `once()`).
 - Scope styles by a component-specific class or a wrapper class rather than
   relying on the element name.
 
-Light DOM is partly the point: server-rendered HTML and client-rendered HTML are
-the same DOM, and page CSS applies uniformly. But the id-collision sharp edge is
-real, so design around it.
+Shadow DOM would scope ids per root, but JST is light DOM by design (so
+server-rendered HTML and client-rendered HTML are the same DOM and page CSS
+applies uniformly). That makes id uniqueness the author's responsibility — the
+id-collision sharp edge is real, so design around it.
 
 ## Attribute coercion is eager (shipped, know the trap)
 
@@ -65,19 +73,10 @@ node tools/precompile.mjs components.html --out dist/templates.js --runtime ../j
 Load that module alongside `jst.js` and the elements register under a strict
 `script-src 'self'` policy. Unlike a string-replacement shim, precompiled
 templates register through the **normal runtime** (`registerPrecompiledTemplate`),
-so morphing, keyed reconciliation, focus/form-state preservation, SSR adoption,
-and event modifiers all still apply - precompiling only moves template compilation
+so morphing, keyed reconciliation, focus/form-state preservation, and event
+modifiers all still apply - precompiling only moves template compilation
 out of the browser, it does not downgrade rendering. See
 [production.md](./production.md).
-
-## SSR hydration plus projected slots (planned)
-
-`jst-ssr` can adopt server-rendered component output in place, and light-DOM
-slots project correctly during normal client rendering. The combined case - a
-server-rendered component that also needs to preserve already-projected light-DOM
-slot content during hydration - is not covered yet. Treat that combination as a
-planned edge until it has explicit tests and docs. Use either SSR adoption for
-rendered output or client-side slot projection, not both at once.
 
 ## Tooling (partly shipped, partly planned)
 
@@ -122,7 +121,7 @@ argument for an explicit uncontrolled-region directive; report it if you hit one
 ## Summary
 
 JST's core (custom elements, morphing, keyed reconciliation, CSS transitions,
-bindings, lifecycle, SSR adoption, fragment auto-registration, and a v1 precompile
+bindings, lifecycle, fragment auto-registration, and a v1 precompile
 path) is shipped and tested. The remaining gaps are mostly tooling polish
 (formatter, typed expressions, tree-sitter, marketplace) and richer event triggers
 (poll, intersection/revealed). None of them are hidden; pick JST knowing what is

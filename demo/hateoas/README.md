@@ -62,7 +62,7 @@ learns from the responses:
   `api/item/:id/likers`, another fragment the client injects.
 
 The behaviour for the in-component buttons (Like, see who) is shipped *in the
-fragment* via JST `@event` bindings — so the fragment carries its interactivity,
+fragment* via JST `on<event>` bindings — so the fragment carries its interactivity,
 not just its appearance.
 
 ## Running it
@@ -96,7 +96,7 @@ same way you would treat a remote `<script>`: don't inject it.
 JST still gives you defence in depth for the *data* inside trusted fragments:
 
 - `$(expr)` HTML-escapes by default, so post text (`$(item.body)`) cannot inject
-  markup. You opt out explicitly with `$(raw(x))` / `$(unsafeHTML(x))`.
+  markup. You opt out explicitly with `$(trustedHTML(x))`.
 - `$(url(x))` guards `href`/`src` against dangerous schemes. The demo includes a
   post whose `source` is a `javascript:` URL on purpose — `url()` rewrites it to
   `#`, so the "Source" link is inert. (Try clicking it.)

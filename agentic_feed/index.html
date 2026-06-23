@@ -85,7 +85,7 @@
      template owns all markup. Submissions emit a bubbling 'affordance' event
      carrying { docId, action, values } — the page posts it to /interactions. -->
 <script type="jst" name="affordance-form" props="docId action submitLabel fields">
-    <form class="affordance" @submit="$(event => {
+    <form class="affordance" onsubmit="$(event => {
         event.preventDefault();
         const values = {};
         el.querySelectorAll('[name]').forEach(field => values[field.name] = field.value);
@@ -113,7 +113,7 @@
 </script>
 
 <script type="jst" name="feed-composer">
-    <form class="composer" @submit="$(event => {
+    <form class="composer" onsubmit="$(event => {
         event.preventDefault();
         const input = el.querySelector('input');
         if (!input.value.trim()) return;

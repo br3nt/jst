@@ -16,6 +16,14 @@
     "React": {
       "repository": "https://github.com/reactjs/react.dev",
       "revision": "8bb31acb86bf68fa33d97dd0f1b834dfa71e2b1a"
+    },
+    "fixi": {
+      "repository": "https://github.com/bigskysoftware/fixi",
+      "revision": "d31fc1d4128ecf957f48b7d0bbea879eaa53f81d"
+    },
+    "Lit": {
+      "repository": "https://github.com/lit/lit",
+      "revision": "ada3ffce30cdb6a2f9a9d476767eaf747a0b2667"
     }
   }
 }

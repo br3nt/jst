@@ -15,28 +15,25 @@ import { compileTemplateRenderingFunction } from './compiler.js'
  * Inside templates:
  *   $(expr)                 escaped interpolation
  *   $(trustedHTML(expr))    unescaped interpolation (opt-in trusted HTML)
- *   $(raw(expr))            compatibility alias for trustedHTML(expr)
- *   $(unsafeHTML(expr))     compatibility alias for trustedHTML(expr)
  *   $(url(expr))            URL helper for href/src values
  *   $(slot())               project the component's original child nodes
  *   $(slot('name', 'fb'))   project nodes marked slot="name", with a fallback
  *   .prop="$(expr)"         assign expr as a JS property on the element
- *   @event.mod="$(fn)"      addEventListener('event', fn) with optional modifiers
+ *   onevent.mod="$(fn)"     addEventListener('event', fn) with optional modifiers
  *   jst-model="prop"        local form shorthand: read prop, update el[prop]
  *   once('key', setup)      run setup once per connection, after the DOM commits;
  *                           a returned function is registered as disconnect cleanup
  *   jst-key="$(id)"         preserve keyed node identity while morphing
+ *
+ * State lives in this module. The ES-module exports are the canonical API; a
+ * reduced `window.JST` global mirrors them for non-module/streamed consumers.
  */
-document.jst = {
-  ...document.jst,
-  templates: document.jst?.templates || new Map(),
-  config: {
-    dev: false,
-    autoRegister: true,
-    autoRegisterRoot: null,
-    resolveTemplate: null,
-    ...document.jst?.config,
-  },
+const templates = new Map()
+const config = {
+  dev: false,
+  autoRegister: true,
+  autoRegisterRoot: null,
+  resolveTemplate: null,
 }
 
 let templatesInitialized = false
@@ -53,9 +50,6 @@ export function trustedHTML(value) {
   return new RawHtml(value == null ? '' : String(value))
 }
 
-export const raw = trustedHTML
-export const unsafeHTML = raw
-
 export function url(value) {
   const string = value == null ? '' : String(value).trim()
   const scheme = string.match(/^([a-z][a-z0-9+.-]*):/i)
@@ -71,7 +65,7 @@ export function configure(options = {}) {
     || Object.prototype.hasOwnProperty.call(options, 'autoRegisterRoot')
     || Object.prototype.hasOwnProperty.call(options, 'resolveTemplate');
 
-  Object.assign(document.jst.config, options);
+  Object.assign(config, options);
 
   if (shouldRewire && templateObserver) {
     templateObserver.disconnect();
@@ -80,7 +74,7 @@ export function configure(options = {}) {
 
   observeNewTemplates();
 
-  return document.jst.config
+  return config
 }
 
 function isCustomElementName(name) {
@@ -106,9 +100,9 @@ function insertTemplateHtml(html, source) {
 }
 
 async function resolveTemplateForName(name) {
-  const resolver = document.jst.config.resolveTemplate;
+  const resolver = config.resolveTemplate;
   if (typeof resolver !== 'function') return null;
-  if (!isCustomElementName(name) || customElements.get(name) || document.jst.templates.has(name)) return null;
+  if (!isCustomElementName(name) || customElements.get(name) || templates.has(name)) return null;
   if (pendingTemplateResolutions.has(name)) return pendingTemplateResolutions.get(name);
 
   const resolution = Promise.resolve()
@@ -423,7 +417,13 @@ function morphNode(currentNode, nextNode) {
   syncAttributes(currentNode, nextNode);
   syncFormProperties(currentNode, nextNode);
   // Managed elements render their own children; slot elements hold projected
-  // author content. Neither should be morphed from the parent's output.
+  // author content. Neither should have its children morphed from the parent's
+  // output. The early return is below syncAttributes on purpose: syncAttributes
+  // carries this render's fresh `jst-bound`/`jst-bind-N` markers (and attribute
+  // props) onto the existing managed child, so the parent's #applyBindings pass
+  // re-applies its `.prop=`/event bindings to the child — flowing updated data
+  // into a nested managed component's props on a parent re-render — without
+  // touching the child's own DOM. Do not hoist this return above syncAttributes.
   if (isManagedCustomElement(currentNode) || isSlotElement(currentNode)) return;
   morphChildren(currentNode, nextNode);
 }
@@ -690,8 +690,6 @@ export function registerCustomElementFromTemplate(templateElement) {
     createRenderFunction: () => new Function(
       ...renderFunction.functionParams,
       'el',
-      'raw',
-      'unsafeHTML',
       'slot',
       'onDisconnect',
       '__esc',
@@ -731,12 +729,12 @@ function defineCustomElementFromRender({
   source,
   createRenderFunction,
 }) {
-  if (document.jst.templates.has(customElementName)) {
+  if (templates.has(customElementName)) {
     console.warn(`JST: Duplicate template name "${customElementName}" ignored.`, source);
     return customElements.get(customElementName);
   }
 
-  document.jst.templates.set(customElementName, {
+  templates.set(customElementName, {
     functionParams: paramNames,
     paramMap: attributeToParam,
     source,
@@ -760,7 +758,6 @@ function defineCustomElementFromRender({
     #onceKeys = new Set();
     #connectionEpoch = 0;
     #outsideTracked = new WeakSet();
-    #hydrating = false;
 
     static get observedAttributes() {
       return Object.keys(attributeToParam);
@@ -770,15 +767,8 @@ function defineCustomElementFromRender({
       // Each connection is its own epoch; deferred once() setups captured under
       // a stale epoch (e.g. a synchronous disconnect+reconnect) are discarded.
       this.#connectionEpoch++;
-      // SSR/hydration: a server can emit the component already rendered, marked
-      // jst-ssr. The existing children are rendered output, not slot content, so
-      // we skip slot capture/observation and let the first render morph onto the
-      // existing DOM (adopting it, no flash) rather than detaching+replacing.
-      this.#hydrating = typeof this.hasAttribute === 'function' && this.hasAttribute('jst-ssr');
-      if (!this.#hydrating) {
-        this.#captureSlotContent();
-        this.#observeSlotMutations();
-      }
+      this.#captureSlotContent();
+      this.#observeSlotMutations();
       this.#upgradeProperties();
       this.requestRender();
     }
@@ -831,8 +821,6 @@ function defineCustomElementFromRender({
           this,
           ...paramNames.map(param => this.#params[param]),
           this,
-          raw,
-          unsafeHTML,
           createSlotPlaceholder,
           cleanup => this.#registerDisconnectCleanup(cleanup),
           escapeHtml,
@@ -846,14 +834,7 @@ function defineCustomElementFromRender({
         this.#slotObserver = null;
         this.#rendering = true;
         try {
-          if (this.#hydrating) {
-            // First render after SSR: adopt the existing server DOM by morphing
-            // onto it. No slot content was captured, so nothing to detach.
-            this.removeAttribute('jst-ssr');
-            this.#hydrating = false;
-          } else {
-            this.#detachSlotContent();
-          }
+          this.#detachSlotContent();
           applyRenderedHtml(this, html);
           this.#applyBindings(bindings);
           this.#applyModelBindings();
@@ -867,7 +848,7 @@ function defineCustomElementFromRender({
         console.groupCollapsed('--- Problematic Generated Code ---');
         console.log(renderFunctionBody);
         console.groupEnd();
-        if (document.jst.config.dev) this.#showDevError(e);
+        if (config.dev) this.#showDevError(e);
       }
     }
 
@@ -906,7 +887,7 @@ function defineCustomElementFromRender({
         } catch (error) {
           this.#onceKeys.delete(key);
           console.error(`JST once("${key}") setup error in <${customElementName}>:`, error);
-          if (document.jst.config.dev) this.#showDevError(error);
+          if (config.dev) this.#showDevError(error);
         }
       });
 
@@ -1088,19 +1069,19 @@ function defineCustomElementFromRender({
   });
 
   customElements.define(customElementName, CustomElementClass);
-  if (document.jst.config.dev) console.log(`JST: Registered <${customElementName}>`, source);
+  if (config.dev) console.log(`JST: Registered <${customElementName}>`, source);
   return CustomElementClass;
 }
 
 export function initializeTemplates() {
-  if (templatesInitialized) return document.jst.templates;
+  if (templatesInitialized) return templates;
   templatesInitialized = true;
 
   document.querySelectorAll('script[type="jst"]').forEach(registerCustomElementFromTemplate);
   observeNewTemplates();
   scanForMissingTemplates(document.documentElement);
 
-  return document.jst.templates;
+  return templates;
 }
 
 /**
@@ -1109,14 +1090,14 @@ export function initializeTemplates() {
  */
 function observeNewTemplates() {
   if (templateObserver || typeof MutationObserver === 'undefined') return;
-  if (document.jst.config.autoRegister === false
-    && typeof document.jst.config.resolveTemplate !== 'function') return;
+  if (config.autoRegister === false
+    && typeof config.resolveTemplate !== 'function') return;
 
   templateObserver = new MutationObserver(mutations => {
     mutations.forEach(mutation => {
       mutation.addedNodes.forEach(node => {
         if (node.nodeType !== Node.ELEMENT_NODE) return;
-        if (document.jst.config.autoRegister !== false) {
+        if (config.autoRegister !== false) {
           if (node.matches?.('script[type="jst"]')) registerCustomElementFromTemplate(node);
           node.querySelectorAll?.('script[type="jst"]').forEach(registerCustomElementFromTemplate);
         }
@@ -1125,36 +1106,33 @@ function observeNewTemplates() {
     });
   });
 
-  const root = document.jst.config.autoRegisterRoot || document.documentElement;
+  const root = config.autoRegisterRoot || document.documentElement;
   templateObserver.observe(root, { childList: true, subtree: true });
 }
 
 export function resetJstForTests() {
-  document.jst?.templates?.clear();
+  templates.clear();
 }
 
+/**
+ * The ES-module exports are canonical. This publishes a reduced `window.JST`
+ * global — the handful of entry points a non-module or server-streamed page
+ * needs (configure, trustedHTML/url helpers, register/init) plus the live
+ * `config` object — without re-exposing internal state like the template map.
+ */
 function publishJstApi() {
-  const api = {
+  if (typeof window === 'undefined') return;
+
+  window.JST = {
+    ...window.JST,
     configure,
     trustedHTML,
-    raw,
-    unsafeHTML,
     url,
     registerCustomElementFromTemplate,
     registerPrecompiledTemplate,
     initializeTemplates,
+    config,
   };
-
-  Object.assign(document.jst, api);
-
-  if (typeof window !== 'undefined') {
-    window.JST = {
-      ...window.JST,
-      ...api,
-      config: document.jst.config,
-      templates: document.jst.templates,
-    };
-  }
 }
 
 publishJstApi();

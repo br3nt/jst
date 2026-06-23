@@ -19,7 +19,7 @@
 <script type="jst" name="dispatch-demo">
   <div>
     <!-- Alpine's dispatch('notify', {...}) equivalent -->
-    <button data-testid="fire" @click="$(() => el.emit('notify', { msg: 'Hello from child' }))">
+    <button data-testid="fire" onclick="$(() => el.emit('notify', { msg: 'Hello from child' }))">
       Dispatch custom event
     </button>
   </div>

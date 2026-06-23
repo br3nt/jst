@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!--
+  Source: https://lit.dev/docs/components/properties/#attributes
+  Demonstrates: the two data-in paths. Lit attributes are strings deserialized by
+  the property's `type` converter (`count="3"` → Number 3), while rich data
+  (objects/arrays) is set imperatively as a property (`el.data = {...}`) and is NOT
+  reflected through an attribute.
+  Maps from: Lit attribute + converter ↔ JST attribute (JSON-parsed primitive);
+  Lit property assignment / `.data=${obj}` ↔ JST `.data="$(obj)"` property binding.
+  JST status: ✓ exact — `count="3"` parses to the number 3; `.data` carries the object.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JST · Lit attribute vs property</title>
+<script type="module" src="../../jst.js"></script>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 460px; margin: 3rem auto; }
+  .box { border: 1px solid #ddd; border-radius: 10px; padding: 1rem; margin: .75rem 0; }
+  code { background: #f3f3f3; padding: 1px 5px; border-radius: 4px; }
+</style>
+</head>
+<body>
+<h1>Attribute vs property</h1>
+
+<!-- count arrives as an attribute (string → number); data arrives as a property (object). -->
+<script type="jst" name="data-view" props="count data">
+  $ const d = data || {};
+  <div class="box">
+    <p data-testid="count">count + 1 = $(count + 1) (type: $(typeof count))</p>
+    <p data-testid="data">user: $(d.name || '—'), role: $(d.role || '—')</p>
+  </div>
+</script>
+
+<!-- Primitive via attribute (JSON-parsed to a number). Rich object set as a property below. -->
+<data-view id="view" count="3"></data-view>
+
+<p style="color:#666; font-size:.9rem">
+  <code>count="3"</code> deserializes to the number 3 (so <code>count + 1</code> is 4,
+  not "31"); the object came in through the <code>.data</code> property.
+</p>
+
+<script>
+  const view = document.getElementById('view');
+  view.data = { name: 'Ada Lovelace', role: 'Mathematician' };   // rich data → property
+
+  window.__parityTest = async () => {
+    await new Promise(r => setTimeout(r, 0));
+    const count = document.querySelector('[data-testid="count"]').textContent;
+    const data = document.querySelector('[data-testid="data"]').textContent;
+    return {
+      ok: count.includes('count + 1 = 4') && count.includes('number') && data.includes('Ada Lovelace'),
+      detail: 'attribute→number 4 and property→object both rendered',
+    };
+  };
+  window.__exampleReady = true;
+</script>
+</body>
+</html>

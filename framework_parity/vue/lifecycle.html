@@ -25,7 +25,7 @@
   <p id="message">$(message)</p>
   <p id="mounted-text">not mounted yet</p>
   <p id="render-count">renders: $(el.__renders)</p>
-  <button id="bump" @click="$(() => el.message = (el.message || '') + '!')">Trigger update</button>
+  <button id="bump" onclick="$(() => el.message = (el.message || '') + '!')">Trigger update</button>
 </script>
 
 <lifecycle-demo id="app" message="Hello"></lifecycle-demo>

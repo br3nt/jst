@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!--
+  Source: https://lit.dev/docs/data/task/
+  Demonstrates: @lit/task's Task — a reactive async controller that re-runs when
+  its arguments change and exposes pending / complete / error states to render.
+  JST status: (i) partial — JST has NO Task primitive. You hand-write the
+  controller: a prop change (productId) triggers a guarded fetch that walks a
+  `status` prop through pending -> complete | error, and the template renders one
+  branch per state. Same three-state UX, but the orchestration (run-on-change,
+  state transitions, stale-guarding) is manual rather than provided by Task.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JST — async task (pending/complete/error)</title>
+<script type="module" src="../../jst.js"></script>
+<script src="../../framework_parity/lib/mock-fetch.js"></script>
+<style>
+  body { font-family:system-ui, sans-serif; max-width:460px; margin:3rem auto; }
+  .card { margin-top:1rem; padding:1rem; border:1px solid #ddd; border-radius:8px; }
+  .pending { color:#888; }
+  .error { color:#b00020; }
+  button { padding:6px 12px; cursor:pointer; }
+  input { padding:6px; width:80px; }
+</style>
+</head>
+<body>
+<h1>Async controller (Task-style states)</h1>
+
+<script>
+  JSTMock.route('GET /api/product/:id', req => {
+    const db = { '1': { name: 'Widget', price: 9.99 }, '2': { name: 'Gadget', price: 19.99 } };
+    const product = db[req.params.id];
+    if (!product) return { status: 404, json: { error: 'not found' } };
+    return { json: product };
+  }, { delay: 250 });
+</script>
+
+<!-- Hand-written task: a productId change runs the fetch and walks `status`. -->
+<script type="jst" name="product-task" props="productId status product error">
+  ${
+    if (el._lastId !== productId) {
+      el._lastId = productId;
+      el.status = 'pending';
+      el.product = null;
+      el.error = null;
+      const myId = productId;
+      fetch('/api/product/' + productId)
+        .then(async r => {
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          return r.json();
+        })
+        .then(data => { if (el._lastId === myId) { el.product = data; el.status = 'complete'; } })
+        .catch(err => { if (el._lastId === myId) { el.error = err.message; el.status = 'error'; } });
+    }
+  }
+  $ if (status === 'pending') {
+    <p class="pending" data-testid="status">Loading product $(productId)…</p>
+  $ } else if (status === 'error') {
+    <p class="error" data-testid="error">Could not load product $(productId): $(error)</p>
+  $ } else if (status === 'complete') {
+    <div class="card" data-testid="product">
+      <strong>$(product.name)</strong> — $$$(product.price)
+    </div>
+  $ }
+</script>
+
+<p>
+  <label>Product id <input id="id-input" type="text" value="1"></label>
+  <button id="load">Load</button>
+  <span style="color:#888">(try 1, 2, or 99 for the error state)</span>
+</p>
+<product-task id="app" product-id="1" status="pending"></product-task>
+
+<script>
+  const app = document.getElementById('app');
+  document.getElementById('load').addEventListener('click', () => {
+    app.productId = document.getElementById('id-input').value;   // arg change re-runs the task
+  });
+
+  // Capture the transient "pending" state while the initial fetch is in flight.
+  // A MutationObserver started during parse catches it whenever JST first renders
+  // the pending branch, regardless of script/render ordering.
+  window.__sawPending = false;
+  new MutationObserver(() => {
+    if (document.querySelector('[data-testid="status"]')) window.__sawPending = true;
+  }).observe(document.documentElement, { childList: true, subtree: true });
+  window.__parityTest = async () => {
+    // The initial fetch has resolved by now (delay 250ms < harness 1400ms wait).
+    const complete = app.querySelector('[data-testid="product"]')?.textContent.includes('Widget');
+    // Drive the error path with a missing id.
+    document.getElementById('id-input').value = '99';
+    document.getElementById('load').click();
+    await new Promise(r => setTimeout(r, 450));
+    const errored = !!app.querySelector('[data-testid="error"]');
+    return { ok: window.__sawPending === true && complete && errored, detail: 'pending -> complete, then error path on missing id' };
+  };
+  window.__exampleReady = true;
+</script>
+</body>
+</html>
