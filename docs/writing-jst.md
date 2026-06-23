@@ -217,9 +217,9 @@ from the event rather than from `el`:
 <script type="jst" name="kanban-board" props="columns">
   $ columns.forEach(col => {
     <div class="col"
-         @dragover.prevent="$(event => event.currentTarget.classList.add('over'))"
-         @dragleave="$(event => event.currentTarget.classList.remove('over'))"
-         @click="$(() => el.selected = col.id)">
+         ondragover.prevent="$(event => event.currentTarget.classList.add('over'))"
+         ondragleave="$(event => event.currentTarget.classList.remove('over'))"
+         onclick="$(() => el.selected = col.id)">
       $(col.name)
     </div>
   $ })
@@ -229,7 +229,7 @@ from the event rather than from `el`:
 In the dragover handler `el` is the `kanban-board`, not the hovered `.col`, so
 `el.classList.add('over')` would highlight the whole board. Use
 `event.currentTarget` for the column. Reach for `el` only when you want host
-state, as in the `@click` handler that sets `el.selected`.
+state, as in the `onclick` handler that sets `el.selected`.
 
 ## 7. State updates
 
