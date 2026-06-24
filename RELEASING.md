@@ -37,9 +37,18 @@ We are in `0.x`. Major stays `0`:
 - **Breaking change** → bump the **minor** (`0.1.x` → `0.2.0`).
 - **Feature or fix (backwards-compatible)** → bump the **patch** (`0.2.0` → `0.2.1`).
 
-The version lives in `package.json` and as the top entry in `CHANGELOG.md`
-(Keep a Changelog format, with an `old → new` migration table for breaking
-releases). Bump both **in the PR** that completes the release's work.
+The version lives in **three** places that must stay in lockstep:
+
+- `package.json` `version`,
+- the `export const version` constant in `jst.js` (the runtime's in-page
+  `JST.version` — a browser ES module can't read `package.json`, so this is a
+  hand-kept copy), and
+- the top entry in `CHANGELOG.md` (Keep a Changelog format, with an
+  `old → new` migration table for breaking releases).
+
+Bump all three **in the PR** that completes the release's work. A drift test
+(`runtime_tests.mjs`) fails CI if `jst.js` and `package.json` disagree, so a
+missed bump can't merge.
 
 ## Cutting a release
 
@@ -69,7 +78,7 @@ gh release delete vX.Y.Z --yes --cleanup-tag   # removes the GitHub release + ta
 ## Checklist
 
 - [ ] Branch off latest `main`; PR targets `main` with `Closes #NN`.
-- [ ] `package.json` + `CHANGELOG.md` bumped in the PR (minor for breaking in 0.x, else patch).
+- [ ] `package.json` + `jst.js` `version` + `CHANGELOG.md` bumped in the PR (minor for breaking in 0.x, else patch).
 - [ ] CI green (`npm test`).
 - [ ] Branch rebased onto `main` (no merge-from-main commits); merged.
 - [ ] On `main`: `vX.Y.Z` tag pushed, GitHub release created from the tag.

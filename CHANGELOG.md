@@ -5,6 +5,54 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.2.1 - 2026-06-24
+
+Follow-up release from upgrading a real server-rendered app to v0.2. Fixes a
+correctness gap in initial-load template resolution, ships migration tooling so a
+breaking-syntax leftover fails the build instead of a browser render, exposes the
+runtime version, and fills two doc gaps. No breaking changes (patch bump).
+
+### Fixed
+
+- **`resolveTemplate` now resolves components already in the initial HTML.**
+  Auto-init runs at module eval — before an importing module can call
+  `configure({ resolveTemplate })` — so components present in the server-rendered
+  HTML were scanned while the resolver was still `null` and silently never
+  upgraded (only later-injected components worked, via the observer). `configure()`
+  now re-runs the missing-template scan when a resolver is set after init. The scan
+  is idempotent (it ignores already-registered names and coalesces in-flight
+  fetches), so this is safe and cheap. Consumers can delete the eager
+  fetch-and-register workaround. (#21)
+
+### Added
+
+- **`tools/codemod.mjs` (`jst-codemod`)** — mechanical `@event` → `on<event>`
+  migration that rewrites bindings only inside `<script type="jst">` blocks
+  (preserving modifiers and the `$(...)` value), so it is safe to run over server
+  views and fragments without touching `@media`, decorators, emails, or
+  other-framework `@click`. `--dry-run` previews. (#22)
+- **`tools/lint.mjs` (`jst-lint`)** — scans every `<script type="jst">` block
+  across any file type for removed/renamed syntax (`@event`, `raw()`,
+  `unsafeHTML()`, `document.jst`) and exits non-zero with `file:line:col`, turning
+  a render-time-only failure into a build/CI failure. `--runtime jst.js` also
+  flags a stale vendored runtime (`jst-ssr`/`document.jst`). Dogfooded over JST's
+  own surfaces via `npm run test:lint`. (#22)
+- **`JST.version`** — the loaded runtime version as an ES export (`import { version }`)
+  and on `window.JST`, sourced from `package.json` and kept honest by a drift test.
+  With `configure({ dev: true })` the runtime also logs `JST x.y.z` once on load,
+  so confirming an upgrade (vs. a stale cache that renders identically) is a
+  one-liner. (#23)
+
+### Docs
+
+- **Serving and caching the no-build assets** — dev `Cache-Control: no-cache`,
+  prod fingerprint/version — in `install.md`, to preempt stale-asset confusion. (#24)
+- **Server-rendered initial data and large payloads** — JSON attribute for small
+  structured data; a `<script type="application/json">` sidecar read in `once()`
+  (or slot projection) for large/newline-heavy payloads — in `writing-jst.md`. (#24)
+- **Upgrading across breaking releases** and **Which version is live** sections in
+  `install.md` documenting the codemod, lint, and `JST.version`.
+
 ## 0.2.0 - 2026-06-23
 
 Breaking cleanup release. Event-handler syntax moves to the native `on<event>`

@@ -86,6 +86,78 @@ python3 -m http.server 8000
 # then open http://localhost:8000/
 ```
 
+## Serving and caching the no-build assets
+
+Because JST serves source files directly with no build step, a stale cached copy
+is the easiest way to confuse yourself: an edited `jst.js` or component file
+served from a heuristically-cached copy (a server that sends only
+`Last-Modified` and no `Cache-Control` lets the browser guess a freshness
+window) looks unchanged, so an applied edit appears not to have applied — and a
+cached v0.1 `jst.js` renders *identically* to v0.2, so "the page looks fine"
+proves nothing. (See [`JST.version`](#which-version-is-live) for confirming which
+runtime is actually live.)
+
+Set an explicit cache policy for the JST module files and your component files:
+
+- **Development:** serve them with revalidation — `Cache-Control: no-cache` (or
+  `max-age=0, must-revalidate`) — so an edit shows on the next reload instead of
+  from a guessed cache window.
+- **Production:** fingerprint/version the assets (a tagged CDN path like
+  `…/jst@v0.2.1/jst.js`, or your own digest in the URL) and serve them
+  immutable, so a deploy is never served stale. If you cannot fingerprint, set an
+  explicit short `max-age` rather than leaving caching to the server's heuristic.
+
+This applies equally to the component `.html` files fetched by
+[`resolveTemplate`](./production.md) — they are assets too.
+
+## Which version is live
+
+Because a stale cache renders identically, confirm the loaded runtime by reading
+its version rather than diffing source:
+
+```js
+import { version } from '/jst/jst.js';
+console.log(version);            // "0.2.1"
+// or, without importing:
+console.log(window.JST.version); // mirrors the export
+```
+
+`JST.version` is the runtime's own constant (a browser ES module can't read
+`package.json`), so it reflects the file actually served. With
+`configure({ dev: true })`, the runtime also logs `JST x.y.z` once to the console
+on load. Assert `JST.version` in a smoke test or the console to be sure an
+upgrade took effect.
+
+## Upgrading across breaking releases
+
+JST templates live in several places — standalone `.html` files, inline
+`<script type="jst">` in server views (`.erb`, `.php`, …), and streamed
+fragments. A removed/renamed construct (for example v0.2's `@event` → `onevent`,
+or the removal of `raw()`/`unsafeHTML()`/`document.jst`) is a **render-time**
+compile error: it only throws when that specific component renders in a browser,
+so it is invisible to server-side and unit tests and easy to miss in one
+surface. Two tools turn that into a build-time signal:
+
+```sh
+# Rewrite @event="$(fn)" -> onevent="$(fn)" (preserves modifiers and the value),
+# only inside <script type="jst"> blocks — safe to point at views and fragments.
+node tools/lint.mjs   "app/views/**/*.erb" "public/jst/**/*.html"   # find what's left
+node tools/codemod.mjs "app/views/**/*.erb" "public/jst/**/*.html"  # apply @event migration
+```
+
+- **`tools/codemod.mjs`** (`npx jst-codemod`) — mechanical `@event` → `onevent`
+  across every `<script type="jst">` block in the files you pass; `--dry-run`
+  previews. It does **not** rewrite `raw()`/`unsafeHTML()` (those need a judgement
+  call to `trustedHTML()`); lint flags them so you do it deliberately.
+- **`tools/lint.mjs`** (`npx jst-lint`) — scans `<script type="jst">` blocks for
+  removed syntax and exits non-zero with `file:line:col`. Pass `--runtime jst.js`
+  to also catch a stale vendored runtime (leftover `jst-ssr`/`document.jst`). Wire
+  it into CI so a leftover binding fails the build instead of a page.
+
+Because both scope the template rules to `<script type="jst">` blocks, they
+ignore `@media`, decorators, email addresses, and other-framework `@click`
+(Alpine/Vue) in the surrounding markup.
+
 ## Direct `file://` mode
 
 The current runtime is an ES module build. Chrome and several other browsers
@@ -110,14 +182,17 @@ There are three practical paths:
 From the repo root:
 
 ```sh
-node --test runtime_tests.mjs regression_tests.mjs
+node --test runtime_tests.mjs regression_tests.mjs tools_tests.mjs
+npm run test:lint
 node run_browser_tests.mjs
 node run_example_smoke.mjs
 (cd framework_parity && node verify.mjs $(find htmx alpine vue react -name '*.html'))
 ```
 
-- `node --test runtime_tests.mjs regression_tests.mjs` runs the framework unit
-  and regression tests in Node.
+- `node --test runtime_tests.mjs regression_tests.mjs tools_tests.mjs` runs the
+  framework unit/regression tests and the codemod/lint tool tests in Node.
+- `npm run test:lint` dogfoods `tools/lint.mjs` over JST's own template surfaces
+  and runtime, so a removed-syntax regression fails the build.
 - `node run_browser_tests.mjs` runs the framework tests in headless Chrome.
 - `node run_example_smoke.mjs` drives the example pages in headless Chrome.
 - The `framework_parity` command verifies readiness, console/JST errors, and a

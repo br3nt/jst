@@ -28,6 +28,16 @@ import { compileTemplateRenderingFunction } from './compiler.js'
  * State lives in this module. The ES-module exports are the canonical API; a
  * reduced `window.JST` global mirrors them for non-module/streamed consumers.
  */
+/**
+ * The version of the loaded runtime. Sourced from package.json and kept in sync
+ * by a drift test (runtime_tests.mjs) — a browser ES module can't read
+ * package.json at runtime, so this constant is the single in-runtime source of
+ * truth. Useful given the no-build "serve the file directly" model: a stale
+ * v0.1 cache renders identically to v0.2, so `JST.version` is the one-liner that
+ * tells you which runtime is actually live.
+ */
+export const version = '0.2.1'
+
 const templates = new Map()
 const config = {
   dev: false,
@@ -38,7 +48,16 @@ const config = {
 
 let templatesInitialized = false
 let templateObserver = null
+let versionAnnounced = false
 const pendingTemplateResolutions = new Map()
+
+/** In dev, log the live runtime version once so a stale cache is obvious. */
+function announceVersion() {
+  if (versionAnnounced || !config.dev) return;
+  if (typeof console === 'undefined' || typeof console.info !== 'function') return;
+  versionAnnounced = true;
+  console.info(`JST ${version}`);
+}
 
 /** Values wrapped in RawHtml bypass interpolation escaping. */
 class RawHtml {
@@ -66,6 +85,7 @@ export function configure(options = {}) {
     || Object.prototype.hasOwnProperty.call(options, 'resolveTemplate');
 
   Object.assign(config, options);
+  announceVersion();
 
   if (shouldRewire && templateObserver) {
     templateObserver.disconnect();
@@ -73,6 +93,17 @@ export function configure(options = {}) {
   }
 
   observeNewTemplates();
+
+  // Auto-init runs at module eval, before an importing module can call
+  // configure() — so any resolveTemplate set here was null during the initial
+  // scanForMissingTemplates, and components already in the server-rendered HTML
+  // were skipped (resolveTemplateForName bails when the resolver isn't a
+  // function). Re-scan now that the resolver exists. This is idempotent:
+  // resolveTemplateForName ignores names already defined/registered and
+  // coalesces in-flight fetches, so re-scanning costs nothing for resolved ones.
+  if (templatesInitialized && typeof config.resolveTemplate === 'function') {
+    scanForMissingTemplates(document.documentElement);
+  }
 
   return config
 }
@@ -1076,6 +1107,7 @@ function defineCustomElementFromRender({
 export function initializeTemplates() {
   if (templatesInitialized) return templates;
   templatesInitialized = true;
+  announceVersion();
 
   document.querySelectorAll('script[type="jst"]').forEach(registerCustomElementFromTemplate);
   observeNewTemplates();
@@ -1125,6 +1157,7 @@ function publishJstApi() {
 
   window.JST = {
     ...window.JST,
+    version,
     configure,
     trustedHTML,
     url,
