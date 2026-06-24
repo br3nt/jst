@@ -855,3 +855,16 @@ test('props declarations reject helper and JavaScript keyword names', () => {
     /Invalid JST prop "url"/,
   );
 });
+
+test('jst.js version constant matches package.json (no drift)', () => {
+  const source = fs.readFileSync(path.join(repoRoot, 'jst.js'), 'utf8');
+  const match = source.match(/export const version = '([^']+)'/);
+  assert.ok(match, 'Expected an `export const version = \'…\'` in jst.js');
+
+  const pkg = JSON.parse(fs.readFileSync(path.join(repoRoot, 'package.json'), 'utf8'));
+  assert.equal(
+    match[1],
+    pkg.version,
+    `jst.js version (${match[1]}) must match package.json (${pkg.version}) — bump both together on release`,
+  );
+});

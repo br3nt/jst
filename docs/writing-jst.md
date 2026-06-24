@@ -126,6 +126,48 @@ compile time, so an `on*` handler never silently becomes a native inline handler
 (`onclick`, `onitem-selected`), so an `on…` attribute that isn't a valid handler
 (e.g. `on3d-ready`) is a compile error rather than a silently-ignored attribute.
 
+### Server-rendered initial data (no `.prop` channel)
+
+On first paint of server-rendered HTML there is no property channel: `.prop` is
+template syntax that runs only inside another JST template, and setting `el.prop`
+needs page JS that runs *after* the element exists. So for a component rendered
+into the initial HTML, **attributes are the only way the server hands it data on
+first paint.** Pick by payload size:
+
+- **Simple values** — plain attributes, coerced as above.
+- **Structured data (small/medium)** — one JSON attribute. JST already tries
+  `JSON.parse` on attribute values, so `meta='{"id":7,"tags":["a","b"]}'` arrives
+  as a parsed object in the `meta` prop. No client JS needed.
+- **Large or newline-heavy payloads** (a rendered-markdown body, a long
+  document) — do **not** stretch it across an attribute, where quote/newline
+  escaping gets fragile. Put it in a `<script type="application/json">` sidecar
+  next to the component, reference the sidecar by id with a small attribute, and
+  read it on connect with `once()` (see [§13](#13-lifecycle-inline-blocks-vs-once)):
+
+  ```html
+  <article-view content-id="post-42"></article-view>
+  <script type="application/json" id="post-42">
+    { "title": "Ship it", "html": "…12KB of rendered markdown…" }
+  </script>
+
+  <script type="jst" name="article-view" props="contentId data">
+    $ once('load-content', () => {
+    $   const sidecar = document.getElementById(el.contentId);
+    $   if (sidecar) el.data = JSON.parse(sidecar.textContent);  // sets prop -> re-renders
+    $ });
+    ${ if (data) { }
+      <h1>$(data.title)</h1>
+      <div>$(trustedHTML(data.html))</div>
+    ${ } }
+  </script>
+  ```
+
+  On the first render `data` is undefined (the guard skips the body); `once()`
+  reads the sidecar after connect, sets `el.data`, and the component re-renders
+  with it. For a payload that is *already rendered HTML* rather than data,
+  projecting it as child nodes and reading it with `$(slot())` is simpler still —
+  the markup ships as real DOM, no parsing or escaping (see [§10](#10-slots)).
+
 ## 5. Template syntax
 
 | Syntax | Meaning |

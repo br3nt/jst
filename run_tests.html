@@ -34,6 +34,7 @@
             configure,
             registerCustomElementFromTemplate,
             resetJstForTests,
+            version,
         } from './jst.js';
 
         const resultsContainer = document.getElementById('test-results');
@@ -190,6 +191,8 @@
 
             try {
                 isEqual(undefined, document.jst, 'Expected document.jst to be removed');
+                isEqual(true, /^\d+\.\d+\.\d+/.test(version), 'Expected the version export to be a semver string');
+                isEqual(version, window.JST.version, 'Expected window.JST.version to mirror the module export');
                 isEqual(configure, window.JST.configure, 'Expected window.JST.configure to mirror the module export');
                 isEqual(configReference, window.JST.config, 'Expected window.JST.config to reference the live config object');
 
@@ -273,6 +276,44 @@
 
             try {
                 isEqual('from resolver', element.querySelector('.resolved')?.textContent, 'Expected missing template resolver to fetch, register, and upgrade the element');
+            } finally {
+                configure({ resolveTemplate: null });
+                element.remove();
+                document.querySelector(`[data-jst-resolved-from="${url}"]`)?.remove();
+            }
+        });
+
+        await suite.testAsync("JST Runtime: Resolver Set After Element Is Present Still Upgrades It (#21)", async () => {
+            // Reproduces the initial-load gap: the element is in the DOM and
+            // scanned (here, by the observer) while resolveTemplate is still
+            // null — exactly the state auto-init leaves at module eval — and the
+            // resolver is configured only afterward. configure() must re-scan so
+            // the already-present element resolves; otherwise it never upgrades.
+            const componentName = nextName('x-initial-load');
+            const fragment = `<script type="jst" name="${componentName}" props="msg"><p class="resolved">$(msg)</p><\/script>`;
+            const url = `data:text/html;charset=utf-8,${encodeURIComponent(fragment)}`;
+
+            // Resolver is null: element present + scanned, nothing resolves it.
+            configure({ resolveTemplate: null });
+            const element = document.createElement(componentName);
+            element.setAttribute('msg', 'from initial load');
+            document.body.appendChild(element);
+            await flushRender();
+            isEqual(undefined, customElements.get(componentName), 'Precondition: element should be unresolved while resolver is null');
+
+            // Now wire the resolver, as an importing module would after eval.
+            configure({
+                resolveTemplate(name) {
+                    return name === componentName ? url : null;
+                },
+            });
+
+            for (let i = 0; i < 20 && !element.querySelector('.resolved'); i++) {
+                await flushRender();
+            }
+
+            try {
+                isEqual('from initial load', element.querySelector('.resolved')?.textContent, 'Expected configure() to re-scan and upgrade the already-present element once the resolver was set');
             } finally {
                 configure({ resolveTemplate: null });
                 element.remove();

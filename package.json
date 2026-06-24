@@ -1,6 +1,6 @@
 {
   "name": "@br3nt/jst",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "JavaScript Templates: no-build reactive web components in plain HTML.",
   "type": "module",
   "private": false,
@@ -23,6 +23,8 @@
     "tokens.js",
     "utils.js",
     "tools/precompile.mjs",
+    "tools/codemod.mjs",
+    "tools/lint.mjs",
     "README.md",
     "SECURITY.md",
     "docs"
@@ -33,11 +35,16 @@
     "./precompile": "./tools/precompile.mjs"
   },
   "bin": {
-    "jst-precompile": "./tools/precompile.mjs"
+    "jst-precompile": "./tools/precompile.mjs",
+    "jst-codemod": "./tools/codemod.mjs",
+    "jst-lint": "./tools/lint.mjs"
   },
   "scripts": {
-    "test": "node --test runtime_tests.mjs regression_tests.mjs && node run_browser_tests.mjs && node run_example_smoke.mjs && npm run test:parity && npm run test:agentic && npm --prefix tooling/vscode-jst test",
-    "test:runtime": "node --test runtime_tests.mjs regression_tests.mjs",
+    "test": "node --test runtime_tests.mjs regression_tests.mjs tools_tests.mjs && npm run test:lint && node run_browser_tests.mjs && node run_example_smoke.mjs && npm run test:parity && npm run test:agentic && npm --prefix tooling/vscode-jst test",
+    "test:runtime": "node --test runtime_tests.mjs regression_tests.mjs tools_tests.mjs",
+    "test:lint": "node tools/lint.mjs --runtime jst.js index.html concerns.html concerns-standalone.html run_tests.html demo/hateoas/index.html agentic_feed/index.html agentic_feed/fragments/*.html examples/*.html",
+    "codemod": "node tools/codemod.mjs",
+    "lint": "node tools/lint.mjs",
     "test:browser": "node run_browser_tests.mjs",
     "test:examples": "node run_example_smoke.mjs",
     "test:parity": "node framework_parity/verify.mjs framework_parity/htmx/*.html framework_parity/alpine/*.html framework_parity/vue/*.html framework_parity/react/*.html",

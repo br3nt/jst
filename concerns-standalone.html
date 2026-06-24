@@ -834,6 +834,8 @@ function compileTemplateRenderingFunction(templateElement) {
  * State lives in this module. The ES-module exports are the canonical API; a
  * reduced `window.JST` global mirrors them for non-module/streamed consumers.
  */
+const version = '0.2.1'
+
 const templates = new Map()
 const config = {
   dev: false,
@@ -844,7 +846,16 @@ const config = {
 
 let templatesInitialized = false
 let templateObserver = null
+let versionAnnounced = false
 const pendingTemplateResolutions = new Map()
+
+/** In dev, log the live runtime version once so a stale cache is obvious. */
+function announceVersion() {
+  if (versionAnnounced || !config.dev) return;
+  if (typeof console === 'undefined' || typeof console.info !== 'function') return;
+  versionAnnounced = true;
+  console.info(`JST ${version}`);
+}
 
 /** Values wrapped in RawHtml bypass interpolation escaping. */
 class RawHtml {
@@ -872,6 +883,7 @@ function configure(options = {}) {
     || Object.prototype.hasOwnProperty.call(options, 'resolveTemplate');
 
   Object.assign(config, options);
+  announceVersion();
 
   if (shouldRewire && templateObserver) {
     templateObserver.disconnect();
@@ -879,6 +891,10 @@ function configure(options = {}) {
   }
 
   observeNewTemplates();
+
+  if (templatesInitialized && typeof config.resolveTemplate === 'function') {
+    scanForMissingTemplates(document.documentElement);
+  }
 
   return config
 }
@@ -1882,6 +1898,7 @@ function defineCustomElementFromRender({
 function initializeTemplates() {
   if (templatesInitialized) return templates;
   templatesInitialized = true;
+  announceVersion();
 
   document.querySelectorAll('script[type="jst"]').forEach(registerCustomElementFromTemplate);
   observeNewTemplates();
@@ -1931,6 +1948,7 @@ function publishJstApi() {
 
   window.JST = {
     ...window.JST,
+    version,
     configure,
     trustedHTML,
     url,
