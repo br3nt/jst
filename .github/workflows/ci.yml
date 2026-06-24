@@ -22,6 +22,14 @@ jobs:
       - name: Node tests
         run: npm run test:runtime
 
+      # Pure-Node gates: removed-syntax lint over JST's own surfaces, and the
+      # global build / standalone are in sync with the module sources. Neither
+      # needs Chrome or esbuild (--check compares without minifying).
+      - name: Lint and build sync
+        run: |
+          npm run test:lint
+          npm run build:check
+
       # --- Browser-backed suites --------------------------------------------
       # run_browser_tests.mjs, run_example_smoke.mjs, framework_parity/verify.mjs
       # and agentic_feed/run_feed_smoke.mjs honor CHROME_PATH, defaulting to the

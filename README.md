@@ -102,6 +102,11 @@ JST has two modes:
   server-streamed trusted components.
 - Runtime templates are executable JavaScript. Only auto-register or resolve
   templates from sources you trust; interpolated data remains escaped by default.
+- **Global build**: load `jst.global.js` — the whole runtime as one classic
+  (non-module) script that exposes `window.JST` and runs from `file://` with no
+  server. For prototypes, copied/generated single files, and CDN drop-ins
+  (`jst.global.min.js` is minified). See
+  [docs/install.md](docs/install.md#global-build-no-modules-or-server).
 - **Precompiled mode**: run `tools/precompile.mjs` and load the generated module.
   This avoids runtime template compilation and is the path for strict CSP apps
   that cannot allow `unsafe-eval`.
@@ -128,10 +133,30 @@ configure({
 });
 ```
 
-- `dev: true` renders visible error boxes instead of leaving stale/empty DOM.
+- `dev: true` renders visible error boxes instead of leaving stale/empty DOM, and
+  logs the runtime version (`JST x.y.z`) once on load.
 - `autoRegister: false` disables MutationObserver registration of arriving templates.
 - `autoRegisterRoot` scopes automatic registration to a known container.
-- `resolveTemplate(name)` lazily fetches missing component definitions.
+- `resolveTemplate(name)` lazily fetches missing component definitions — including
+  components already present in the initial server-rendered HTML.
+
+The loaded runtime version is available as `import { version }` and on
+`window.JST.version`, so confirming an upgrade (vs. a stale cache) is a one-liner.
+
+## Upgrading across breaking releases
+
+Removed/renamed template syntax (e.g. `@event` → `on<event>`) only errors when a
+component actually renders in the browser. Two tools turn that into a build
+signal:
+
+```sh
+node tools/lint.mjs   "app/views/**/*.erb" "public/jst/**/*.html"   # find leftovers (file:line:col)
+node tools/codemod.mjs "app/views/**/*.erb" "public/jst/**/*.html"  # apply @event -> on<event>
+```
+
+Both scope to `<script type="jst">` blocks, so surrounding `@media`/Alpine/Vue
+markup is untouched. See
+[docs/install.md](docs/install.md#upgrading-across-breaking-releases).
 
 ## Try it
 
@@ -152,6 +177,7 @@ python3 -m http.server 8000
 | `index.html` | landing page |
 | `examples/` | kanban, todo, slots, counters |
 | `framework_parity/` | HTMX/Alpine/Vue/React examples rebuilt in JST |
+| `tools/` | `precompile.mjs` (CSP build), `codemod.mjs` + `lint.mjs` (migration) |
 | `tooling/vscode-jst/` | VS Code syntax highlighting, diagnostics, and language server |
 | `agentic_feed/` | a HATEOAS-feed prototype |
 | `docs/` | practical authoring guide, decision guide, production notes |
@@ -160,13 +186,16 @@ python3 -m http.server 8000
 ## Tests
 
 ```sh
-node --test runtime_tests.mjs
+node --test runtime_tests.mjs regression_tests.mjs tools_tests.mjs
+npm run test:lint
 node run_browser_tests.mjs
 node run_example_smoke.mjs
 node framework_parity/verify.mjs framework_parity/{htmx,alpine,vue,react}/*.html
 node agentic_feed/run_feed_smoke.mjs
 npm --prefix tooling/vscode-jst test
 ```
+
+Or just `npm test` to run the whole suite.
 
 Or run the root script:
 

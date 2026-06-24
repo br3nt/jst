@@ -1,6 +1,22 @@
 # Install
 
-JST has no build step and no dependencies. You include one ES module.
+JST has no build step and no runtime dependencies. There are three ways to load
+it; pick by how you serve your page.
+
+## Delivery modes
+
+| Mode | Include | Needs a server? | Use when |
+|---|---|---|---|
+| **ES module** (default) | `<script type="module" src="jst.js">` | Yes (ES modules don't load from `file://`) | Normal apps served over HTTP; the standard path |
+| **Global build** | `<script src="jst.global.js">` | No — runs from `file://` too | Quick prototypes, copied/LLM-generated single files, opening a page straight off disk, a one-line CDN drop-in |
+| **Precompiled** | `<script type="module" src="dist/templates.js">` + `jst.js` | Yes | Strict CSP (no `unsafe-eval`); compiles templates ahead of time |
+
+All three register the same components and render identically — they differ only
+in how the runtime reaches the browser. The global build is the same code as the
+ES-module runtime, concatenated into one classic (non-module) script that exposes
+`window.JST` and self-initializes; because it has no `import` statements, the
+browser will run it from `file://`. See [Global build](#global-build-no-modules-or-server)
+and, for precompiled, [production.md](./production.md).
 
 ## Script-module include
 
@@ -46,15 +62,53 @@ through a CDN; do not depend on a moving branch URL. See
 [production.md](./production.md) for production specifics including CDN
 pinning and CSP.
 
-For the `v0.1.0` release, the version-pinned jsDelivr entry point is:
+Pin a released tag. For the current release the version-pinned jsDelivr entry
+point is:
 
 ```html
-<script type="module" src="https://cdn.jsdelivr.net/gh/br3nt/jst@v0.1.0/jst.js"></script>
+<!-- ES-module runtime (relative imports resolve against the same tag) -->
+<script type="module" src="https://cdn.jsdelivr.net/gh/br3nt/jst@v0.2.2/jst.js"></script>
+
+<!-- or the single-file global build (no modules) -->
+<script src="https://cdn.jsdelivr.net/gh/br3nt/jst@v0.2.2/jst.global.js"></script>
+<!-- minified: jst.global.min.js -->
 ```
 
 The imported modules resolve relative to that same tagged snapshot. Self-host
 the release files if CDN availability is not an acceptable production
 dependency.
+
+## Global build (no modules or server)
+
+The ES-module runtime needs an HTTP server because browsers block module imports
+from `file://`. The **global build** sidesteps that: `jst.global.js` is the whole
+runtime concatenated into one classic script with no `import` statements, so it
+runs straight off disk.
+
+```html
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="jst.global.js"></script>
+  </head>
+  <body>
+    <script type="jst" name="hello-name" props="name">
+      <p>Hello, <strong>$(name)</strong>!</p>
+    </script>
+    <hello-name name="JST"></hello-name>
+  </body>
+</html>
+```
+
+Double-click that file (or any single HTML file that inlines the build) and it
+works — no server, no build. It exposes the same `window.JST` API and the same
+ES-named exports' behavior; `jst.global.min.js` is the minified form for
+production drop-ins. Both ship as release assets and on npm, and are
+CDN-pinnable at a tag (above).
+
+The build is generated from the module sources by `npm run build`
+(`tools/build_global.mjs`); a `--check` mode in CI keeps it in sync, so the
+committed `jst.global.js` never drifts from `jst.js`.
 
 ## Asset pipelines and digested filenames
 
@@ -103,7 +157,7 @@ Set an explicit cache policy for the JST module files and your component files:
   `max-age=0, must-revalidate`) — so an edit shows on the next reload instead of
   from a guessed cache window.
 - **Production:** fingerprint/version the assets (a tagged CDN path like
-  `…/jst@v0.2.1/jst.js`, or your own digest in the URL) and serve them
+  `…/jst@v0.2.2/jst.js`, or your own digest in the URL) and serve them
   immutable, so a deploy is never served stale. If you cannot fingerprint, set an
   explicit short `max-age` rather than leaving caching to the server's heuristic.
 
@@ -117,7 +171,7 @@ its version rather than diffing source:
 
 ```js
 import { version } from '/jst/jst.js';
-console.log(version);            // "0.2.1"
+console.log(version);            // "0.2.2"
 // or, without importing:
 console.log(window.JST.version); // mirrors the export
 ```
@@ -160,22 +214,19 @@ ignore `@media`, decorators, email addresses, and other-framework `@click`
 
 ## Direct `file://` mode
 
-The current runtime is an ES module build. Chrome and several other browsers
-block external module imports from `file://`, so a plain page like this will not
-load directly from disk:
+The ES-module runtime (`<script type="module" src="./jst.js">`) will **not** load
+from disk: Chrome and several other browsers block module imports over `file://`.
+Two paths work without a server:
 
-```html
-<script type="module" src="./jst.js"></script>
-```
+- **Global build** — load `jst.global.js` (a classic, non-module script with no
+  imports). Double-click the HTML file and it runs. See
+  [Global build](#global-build-no-modules-or-server) above. This is the path for
+  copied examples, local prototypes, and single generated HTML files.
+- **Local static server** — for the module runtime during development, a tiny
+  server is enough (`python3 -m http.server`).
 
-There are three practical paths:
-
-- Use a tiny local static server during development (`python3 -m http.server`).
-- Use precompiled production mode for strict CSP and release builds.
-- Add a future classic/global build such as `jst.global.js` for truly
-  file-openable demos. That build would wrap internals in an IIFE and expose only
-  the deliberate `window.JST` API. It is not the primary runtime in this branch
-  yet.
+For strict-CSP release builds, use [precompiled mode](./production.md) (it removes
+runtime `new Function` compilation); that path still serves over HTTP.
 
 ## Running the tests
 
@@ -184,15 +235,19 @@ From the repo root:
 ```sh
 node --test runtime_tests.mjs regression_tests.mjs tools_tests.mjs
 npm run test:lint
+npm run build:check
 node run_browser_tests.mjs
 node run_example_smoke.mjs
 (cd framework_parity && node verify.mjs $(find htmx alpine vue react -name '*.html'))
 ```
 
 - `node --test runtime_tests.mjs regression_tests.mjs tools_tests.mjs` runs the
-  framework unit/regression tests and the codemod/lint tool tests in Node.
+  framework unit/regression tests and the codemod/lint/global-build tool tests in
+  Node.
 - `npm run test:lint` dogfoods `tools/lint.mjs` over JST's own template surfaces
   and runtime, so a removed-syntax regression fails the build.
+- `npm run build:check` verifies `jst.global.js` and the inlined standalone are in
+  sync with the module sources (run `npm run build` to regenerate).
 - `node run_browser_tests.mjs` runs the framework tests in headless Chrome.
 - `node run_example_smoke.mjs` drives the example pages in headless Chrome.
 - The `framework_parity` command verifies readiness, console/JST errors, and a
