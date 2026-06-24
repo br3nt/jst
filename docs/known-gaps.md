@@ -82,16 +82,24 @@ out of the browser, it does not downgrade rendering. See
 
 - VS Code extension: syntax highlighting, diagnostics, and a language server
   exist under `tooling/`. It is not on the marketplace yet; install it manually.
+- Migration codemod + lint (shipped): `tools/codemod.mjs` (`jst-codemod`) rewrites
+  removed `@event` syntax to `on<event>`, and `tools/lint.mjs` (`jst-lint`) flags
+  removed/renamed syntax across every `<script type="jst">` surface with
+  `file:line:col`. See [install.md](./install.md#upgrading-across-breaking-releases).
 - Typed expressions: planned. No type checking of template expressions today.
 - Tree-sitter grammar: planned.
 - Formatter: planned. No official formatter for JST templates yet.
 
-## Direct file-open mode (planned)
+## Direct file-open mode (shipped)
 
-The current runtime is an ES module build, and browsers block external module
-imports from many direct `file://` pages. A classic/global build such as
-`jst.global.js` is planned so copied examples, local prototypes, and
-LLM-generated single HTML files can run directly from disk.
+The default runtime is an ES module build, and browsers block external module
+imports from `file://` pages. The classic/global build `jst.global.js` (and
+minified `jst.global.min.js`) closes that gap: it concatenates the runtime into
+one non-module script with no imports, so copied examples, local prototypes, and
+generated single HTML files run directly from disk. It exposes the same
+`window.JST` API and is built from the module sources by `npm run build`
+(kept in sync by a `--check` test). See
+[install.md](./install.md#global-build-no-modules-or-server).
 
 ## Calling module code from a template needs a global (planned)
 

@@ -1,6 +1,6 @@
 {
   "name": "@br3nt/jst",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "JavaScript Templates: no-build reactive web components in plain HTML.",
   "type": "module",
   "private": false,
@@ -15,6 +15,8 @@
   },
   "files": [
     "jst.js",
+    "jst.global.js",
+    "jst.global.min.js",
     "compiler.js",
     "interpreter.js",
     "lexer.js",
@@ -40,9 +42,11 @@
     "jst-lint": "./tools/lint.mjs"
   },
   "scripts": {
-    "test": "node --test runtime_tests.mjs regression_tests.mjs tools_tests.mjs && npm run test:lint && node run_browser_tests.mjs && node run_example_smoke.mjs && npm run test:parity && npm run test:agentic && npm --prefix tooling/vscode-jst test",
+    "test": "node --test runtime_tests.mjs regression_tests.mjs tools_tests.mjs && npm run test:lint && npm run build:check && node run_browser_tests.mjs && node run_example_smoke.mjs && npm run test:parity && npm run test:agentic && npm --prefix tooling/vscode-jst test",
     "test:runtime": "node --test runtime_tests.mjs regression_tests.mjs tools_tests.mjs",
     "test:lint": "node tools/lint.mjs --runtime jst.js index.html concerns.html concerns-standalone.html run_tests.html demo/hateoas/index.html agentic_feed/index.html agentic_feed/fragments/*.html examples/*.html",
+    "build": "node tools/build_global.mjs",
+    "build:check": "node tools/build_global.mjs --check",
     "codemod": "node tools/codemod.mjs",
     "lint": "node tools/lint.mjs",
     "test:browser": "node run_browser_tests.mjs",
@@ -51,5 +55,8 @@
     "test:agentic": "node agentic_feed/run_feed_smoke.mjs",
     "test:vscode": "npm --prefix tooling/vscode-jst test",
     "precompile": "node tools/precompile.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0"
   }
 }

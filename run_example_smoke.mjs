@@ -71,6 +71,23 @@ const checks = [
     assert: result => result.before === '0' && result.after === '1' && result.running === true,
   },
   {
+    page: '/examples/global_build.html',
+    script: `(async () => {
+      ${flushSnippet}
+      await flush();
+      const counter = document.getElementById('gc');
+      const rendered = counter.querySelector('.count')?.textContent;
+      const version = counter.querySelector('.ver')?.textContent;
+      const hasGlobal = typeof window.JST?.version === 'string';
+      counter.querySelector('button').click();
+      await flush();
+      const after = counter.querySelector('.count')?.textContent;
+      return { rendered, after, version, hasGlobal };
+    })()`,
+    assert: result => result.rendered === '0' && result.after === '1'
+      && result.hasGlobal === true && /^\d+\.\d+\.\d+/.test(result.version || ''),
+  },
+  {
     page: '/examples/counter_button.html',
     script: `(async () => {
       ${flushSnippet}

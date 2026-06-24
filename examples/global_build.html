@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>JST - Global build (no modules, file:// friendly)</title>
+    <!--
+        The classic/global build is a single non-module script. Unlike
+        <script type="module" src="../jst.js">, it has no ES imports, so it loads
+        from file:// with no server and no build step. It exposes window.JST and
+        self-initializes exactly like the module runtime.
+    -->
+    <script src="../jst.global.js"></script>
+    <style>
+        body { font-family: sans-serif; max-width: 420px; margin: 3rem auto; text-align: center; }
+        .count { font-size: 3rem; font-weight: bold; color: #3f51b5; }
+        button { padding: 10px 20px; font-size: 1rem; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<script type="jst" name="global-counter" props="count">
+    <div>
+        <h2>Global build counter</h2>
+        <div class="count">$(count)</div>
+        <button onclick="$(() => el.emit('increment'))">+ Count</button>
+        <p><small>Rendered by window.JST v<span class="ver"></span></small></p>
+    </div>
+</script>
+
+<h1>JST global build</h1>
+<global-counter id="gc" count="0"></global-counter>
+
+<script>
+    // window.JST is available because this is the classic build, not a module.
+    document.addEventListener('DOMContentLoaded', () => {
+        const counter = document.getElementById('gc');
+        counter.addEventListener('increment', () => { counter.count += 1; });
+        const stampVersion = () => {
+            const span = counter.querySelector('.ver');
+            if (span) span.textContent = window.JST.version;
+        };
+        stampVersion();
+        counter.addEventListener('increment', stampVersion);
+    });
+</script>
+
+</body>
+</html>

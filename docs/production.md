@@ -25,9 +25,12 @@ node tools/precompile.mjs components.html --out dist/templates.js --runtime ../j
 Use runtime mode for development and trusted streamed fragments. Use
 precompiled mode for strict CSP and release builds.
 
-Direct `file://` mode is planned, not shipped. The intended shape is a
-classic/global build such as `jst.global.js` that a single HTML file can load
-directly from disk.
+For loading without a server (or straight from `file://`), the classic
+**global build** `jst.global.js` is a third mode: one non-module script, no
+imports, same `window.JST` API. It is meant for prototypes and single-file pages
+rather than CSP-strict production — it still uses `new Function` at runtime, so
+precompiled mode remains the strict-CSP path. See
+[install.md](./install.md#global-build-no-modules-or-server).
 
 ## Choosing between the two no-inline paths
 

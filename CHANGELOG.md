@@ -5,6 +5,41 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.2.2 - 2026-06-24
+
+Adds the classic/global build so JST runs with no server (and from `file://`),
+fixes a latent bug in the inlined standalone demo, and documents the delivery
+modes. No breaking changes (patch bump).
+
+### Added
+
+- **`jst.global.js` + `jst.global.min.js` — classic/global build.** The whole
+  runtime concatenated into one non-module script that exposes `window.JST` and
+  self-initializes. Because it has no `import` statements it loads from `file://`
+  with no server and no build step — for prototypes, copied/generated single
+  files, and one-line CDN drop-ins. Built from the module sources by
+  `npm run build` (`tools/build_global.mjs`); a `build:check` mode in CI keeps the
+  committed artifacts in sync with `jst.js`. Both ship on npm and as release
+  assets. (file-open mode, previously listed as planned)
+- **`examples/global_build.html`** — a browser smoke-tested page that loads the
+  global build via a plain `<script src>` and renders a component.
+
+### Fixed
+
+- **`concerns-standalone.html` was broken at runtime.** The hand-assembled inline
+  bundle stripped `import * as Tokens from './tokens.js'` without re-creating a
+  `Tokens` object, so the lexer threw `ReferenceError: Tokens is not defined` as
+  soon as it tokenized a template — the "open directly from `file://`" demo never
+  worked. It is now regenerated from the modules by the build (which emits the
+  namespace shim) and covered by a functional test.
+
+### Docs
+
+- **Delivery modes** (ES module / global build / precompiled), the global build,
+  `file://` usage, CDN pinning, and dev-vs-prod serving documented in
+  `install.md`, with `production.md` and `known-gaps.md` updated to match
+  (file-open mode marked shipped).
+
 ## 0.2.1 - 2026-06-24
 
 Follow-up release from upgrading a real server-rendered app to v0.2. Fixes a

@@ -9,7 +9,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { promisify } from 'node:util';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const execFileAsync = promisify(execFile);
 const repoRoot = path.dirname(fileURLToPath(import.meta.url));
@@ -123,4 +123,38 @@ test('lint ignores document.jst outside jst blocks (e.g. test assertions)', asyn
     const { code } = await run('node', [lint, f]);
     assert.equal(code, 0, 'document.jst outside a jst block should not be flagged');
   });
+});
+
+// Functional guard for the global build: load jst.global.js with browser globals
+// stubbed and assert it self-inits (window.JST), exposes the version, and can
+// compile a template. This catches the namespace-import regression that left the
+// hand-built standalone throwing `ReferenceError: Tokens is not defined`.
+const globalBundleProbe = `
+globalThis.window = {};
+globalThis.MutationObserver = class { observe(){} disconnect(){} };
+globalThis.customElements = { _m:new Map(), get(n){return this._m.get(n)}, define(n,c){this._m.set(n,c)} };
+globalThis.Node = { ELEMENT_NODE:1, TEXT_NODE:3 };
+globalThis.document = { querySelectorAll:()=>[], documentElement:{nodeType:1,tagName:'HTML',querySelectorAll:()=>[]}, createElement:()=>({setAttribute(){},querySelectorAll:()=>[],appendChild(){},hidden:false}), body:{appendChild(){}}, head:{appendChild(){}} };
+globalThis.HTMLElement = class {};
+await import(${JSON.stringify(pathToFileURL(path.join(repoRoot, 'jst.global.js')).href)});
+const JST = globalThis.window.JST;
+if (!JST) throw new Error('window.JST was not published');
+const pkg = JSON.parse(require('node:fs').readFileSync(${JSON.stringify(path.join(repoRoot, 'package.json'))},'utf8'));
+if (JST.version !== pkg.version) throw new Error('version mismatch: ' + JST.version + ' vs ' + pkg.version);
+const tpl = { getAttribute:n=>({type:'jst',name:'x-global-probe',props:'msg'}[n]??null), attributes:[{name:'type',value:'jst'},{name:'name',value:'x-global-probe'},{name:'props',value:'msg'}], innerHTML:'<p>$(msg)</p>' };
+JST.registerCustomElementFromTemplate(tpl);
+console.log('GLOBAL_OK ' + JST.version);
+`;
+
+test('jst.global.js self-inits, exposes version, and compiles a template', async () => {
+  await withTempFile('probe.mjs', `import { createRequire } from 'node:module'; import { pathToFileURL } from 'node:url'; const require = createRequire(${JSON.stringify(import.meta.url)});\n${globalBundleProbe}`, async (file) => {
+    const { code, stdout, stderr } = await run('node', [file]);
+    assert.equal(code, 0, `global build probe failed: ${stderr}`);
+    assert.match(stdout, /GLOBAL_OK \d+\.\d+\.\d+/);
+  });
+});
+
+test('jst.global.js and concerns-standalone.html are in sync with the modules', async () => {
+  const { code, stdout, stderr } = await run('node', [path.join(repoRoot, 'tools', 'build_global.mjs'), '--check']);
+  assert.equal(code, 0, `build_global --check failed (run npm run build): ${stderr || stdout}`);
 });
