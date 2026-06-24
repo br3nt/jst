@@ -1,6 +1,6 @@
 {
   "name": "@br3nt/jst",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "JavaScript Templates: no-build reactive web components in plain HTML.",
   "type": "module",
   "private": false,
@@ -17,6 +17,9 @@
     "jst.js",
     "jst.global.js",
     "jst.global.min.js",
+    "jst.runtime.js",
+    "jst.runtime.global.js",
+    "jst.runtime.global.min.js",
     "compiler.js",
     "interpreter.js",
     "lexer.js",

@@ -109,7 +109,10 @@ JST has two modes:
   [docs/install.md](docs/install.md#global-build-no-modules-or-server).
 - **Precompiled mode**: run `tools/precompile.mjs` and load the generated module.
   This avoids runtime template compilation and is the path for strict CSP apps
-  that cannot allow `unsafe-eval`.
+  that cannot allow `unsafe-eval`. Pair it with the **runtime-only** build
+  `jst.runtime.js` (or classic `jst.runtime.global.js`), which omits the compiler
+  entirely — ~40% smaller. See
+  [docs/install.md](docs/install.md#precompiled-and-the-runtime-only-builds).
 
 ```sh
 node tools/precompile.mjs index.html --out dist/templates.js --runtime ../jst.js

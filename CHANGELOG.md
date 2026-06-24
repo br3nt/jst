@@ -5,6 +5,37 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.2.3 - 2026-06-24
+
+Adds the runtime-only builds (no compiler) for precompiled deployments, a
+`--global` precompile target to match, and a full "which build, and when" guide.
+No breaking changes (patch bump).
+
+### Added
+
+- **Runtime-only builds — `jst.runtime.js` (ESM) and `jst.runtime.global.js`
+  (+ `.min`, classic).** Same runtime as the full builds with the compile
+  pipeline omitted (`compiler`/`parser`/`lexer`/`interpreter`/`tokens`/
+  `input_reader`), for apps whose templates are precompiled. About **40% smaller**
+  (~16.6 KB vs ~28.2 KB minified) and inherently strict-CSP — no `new Function`.
+  They render only precompiled templates; an inline `<script type="jst">` that
+  reaches them throws a clear "precompile this" error. (#5)
+- **`precompile.mjs --global`** — emits a classic script that reads
+  `window.JST.registerPrecompiledTemplate` (no ES import), to pair with
+  `jst.runtime.global.js` for a no-build/`file://` precompiled drop-in. The
+  default ESM output now recommends `--runtime ./jst.runtime.js`.
+- **`examples/runtime_precompiled.html`** — browser smoke-tested page loading the
+  runtime-only global build with a precompiled template.
+
+### Docs
+
+- A full delivery-modes guide in `install.md`: the four client builds
+  (full/runtime-only × ES-module/classic) with a quick chooser, a
+  Precompiled + runtime-only section, and a table disambiguating the **two build
+  tools** — `precompile.mjs` (compiles *your* templates) vs `build_global.mjs`
+  (bundles *the framework*). `production.md` documents the prod-and-dev
+  "server compiles, client renders" workflow; `known-gaps.md` and README updated.
+
 ## 0.2.2 - 2026-06-24
 
 Adds the classic/global build so JST runs with no server (and from `file://`),

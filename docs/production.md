@@ -14,23 +14,39 @@ Runtime mode compiles templates in the browser:
 Precompiled mode moves that compilation out of the browser:
 
 ```sh
-node tools/precompile.mjs components.html --out dist/templates.js --runtime ../jst.js
+node tools/precompile.mjs components.html --out dist/templates.js --runtime ./jst.runtime.js
 ```
 
 ```html
-<script type="module" src="/jst.js"></script>
+<script type="module" src="/jst.runtime.js"></script>
 <script type="module" src="/dist/templates.js"></script>
 ```
 
-Use runtime mode for development and trusted streamed fragments. Use
-precompiled mode for strict CSP and release builds.
+When you precompile, pair it with the **runtime-only** build `jst.runtime.js`
+rather than the full `jst.js`: the compiler is dead weight once nothing compiles
+in the browser, and dropping it removes ~40% of the runtime (and the last
+`new Function`). The full `jst.js` also works as the runtime for a precompiled
+bundle — it just ships the unused compiler. Use the runtime-only build for the
+leanest, strictest-CSP deployment.
 
-For loading without a server (or straight from `file://`), the classic
-**global build** `jst.global.js` is a third mode: one non-module script, no
-imports, same `window.JST` API. It is meant for prototypes and single-file pages
-rather than CSP-strict production — it still uses `new Function` at runtime, so
-precompiled mode remains the strict-CSP path. See
-[install.md](./install.md#global-build-no-modules-or-server).
+This is the **prod and dev** shape for a server that compiles templates and
+sends the compiled version down:
+
+- **Production:** precompile at build time, serve `dist/templates.js` (fingerprinted).
+- **Development:** a watch step (or a dev server) reruns `precompile.mjs` on
+  change and serves the result; the browser never compiles. The page loads the
+  same `jst.runtime.js`.
+
+Use full **runtime mode** (`jst.js`) for development with inline templates and
+trusted streamed fragments, where in-browser compilation is convenient. Use
+**precompiled + `jst.runtime.js`** for strict CSP and release builds.
+
+For loading without a server (or straight from `file://`), the classic builds
+are a fourth shape: `jst.global.js` (full, compiles in the browser) for
+prototypes and single files, and `jst.runtime.global.js` (no compiler) paired
+with `precompile.mjs --global` output for a precompiled drop-in with no build
+step. See
+[install.md](./install.md#precompiled-and-the-runtime-only-builds).
 
 ## Choosing between the two no-inline paths
 

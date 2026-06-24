@@ -67,15 +67,19 @@ blocks it. `tools/precompile.mjs` compiles templates ahead of time into a plain 
 module (no `new Function`):
 
 ```sh
-node tools/precompile.mjs components.html --out dist/templates.js --runtime ../jst.js
+node tools/precompile.mjs components.html --out dist/templates.js --runtime ./jst.runtime.js
 ```
 
-Load that module alongside `jst.js` and the elements register under a strict
-`script-src 'self'` policy. Unlike a string-replacement shim, precompiled
-templates register through the **normal runtime** (`registerPrecompiledTemplate`),
-so morphing, keyed reconciliation, focus/form-state preservation, and event
-modifiers all still apply - precompiling only moves template compilation
-out of the browser, it does not downgrade rendering. See
+Load that module alongside `jst.runtime.js` (the runtime-only build, no compiler)
+and the elements register under a strict `script-src 'self'` policy. Unlike a
+string-replacement shim, precompiled templates register through the **normal
+runtime** (`registerPrecompiledTemplate`), so morphing, keyed reconciliation,
+focus/form-state preservation, and event modifiers all still apply - precompiling
+only moves template compilation out of the browser, it does not downgrade
+rendering. The full `jst.js` also works here; the runtime-only build just drops
+the now-unused compiler (~40% smaller). For a no-build/`file://` precompiled drop-in,
+`precompile.mjs --global` pairs with `jst.runtime.global.js`. See
+[install.md](./install.md#precompiled-and-the-runtime-only-builds) and
 [production.md](./production.md).
 
 ## Tooling (partly shipped, partly planned)
