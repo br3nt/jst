@@ -158,3 +158,50 @@ test('jst.global.js and concerns-standalone.html are in sync with the modules', 
   const { code, stdout, stderr } = await run('node', [path.join(repoRoot, 'tools', 'build_global.mjs'), '--check']);
   assert.equal(code, 0, `build_global --check failed (run npm run build): ${stderr || stdout}`);
 });
+
+// Runtime-only ESM build (jst.runtime.js): same exports as jst.js but with the
+// compiler stubbed. Precompiled registration works; inline-template compilation
+// throws a clear runtime-only error (issue #5).
+const runtimeEsmProbe = `
+globalThis.window = {};
+globalThis.MutationObserver = class { observe(){} disconnect(){} };
+globalThis.customElements = { _m:new Map(), get(n){return this._m.get(n)}, define(n,c){this._m.set(n,c)} };
+globalThis.Node = { ELEMENT_NODE:1, TEXT_NODE:3 };
+globalThis.document = { querySelectorAll:()=>[], documentElement:{nodeType:1,tagName:'HTML',querySelectorAll:()=>[]}, createElement:()=>({setAttribute(){},querySelectorAll:()=>[],appendChild(){},hidden:false}), body:{appendChild(){}}, head:{appendChild(){}} };
+globalThis.HTMLElement = class {};
+const m = await import(${JSON.stringify(pathToFileURL(path.join(repoRoot, 'jst.runtime.js')).href)});
+const has = k => k in m;
+if (!['version','configure','trustedHTML','registerPrecompiledTemplate','registerCustomElementFromTemplate'].every(has)) throw new Error('missing exports');
+if (typeof globalThis.window.JST.registerPrecompiledTemplate !== 'function') throw new Error('window.JST.registerPrecompiledTemplate missing');
+m.registerPrecompiledTemplate('x-pc', ['msg'], { msg:'msg' }, function(){ return '<p>ok</p>'; }, 'test');
+let threw = '';
+try { m.registerCustomElementFromTemplate({ getAttribute:n=>({name:'x-inline',props:'msg'}[n]??null), attributes:[], innerHTML:'<p>$(msg)</p>' }); }
+catch (e) { threw = e.message; }
+if (!/runtime-only/.test(threw)) throw new Error('expected runtime-only error, got: ' + threw);
+console.log('RUNTIME_OK ' + m.version);
+`;
+
+test('jst.runtime.js omits the compiler: precompiled works, inline compile throws', async () => {
+  await withTempFile('rtprobe.mjs', runtimeEsmProbe, async (file) => {
+    const { code, stdout, stderr } = await run('node', [file]);
+    assert.equal(code, 0, `runtime-only probe failed: ${stderr}`);
+    assert.match(stdout, /RUNTIME_OK \d+\.\d+\.\d+/);
+  });
+});
+
+test('precompile --global emits a classic script that reads window.JST', async () => {
+  const tpl = `<script type="jst" name="pc-greet" props="name"><p class="hi">Hello, $(name)!</p></script>`;
+  await withTempFile('comp.html', tpl, async (input) => {
+    const dir = path.dirname(input);
+    const out = path.join(dir, 'tpl.global.js');
+    const { code, stderr } = await run('node', [path.join(repoRoot, 'tools', 'precompile.mjs'), input, '--out', out, '--global']);
+    assert.equal(code, 0, `precompile --global failed: ${stderr}`);
+    const generated = fs.readFileSync(out, 'utf8');
+    assert.match(generated, /const \{ registerPrecompiledTemplate \} = window\.JST;/);
+    assert.doesNotMatch(generated, /^import /m, 'global output must not use ES imports');
+    assert.match(generated, /registerPrecompiledTemplate\("pc-greet"/);
+    // Must be syntactically valid.
+    const { code: checkCode } = await run('node', ['--check', out]);
+    assert.equal(checkCode, 0, 'generated --global file should parse');
+  });
+});

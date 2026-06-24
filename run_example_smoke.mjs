@@ -88,6 +88,26 @@ const checks = [
       && result.hasGlobal === true && /^\d+\.\d+\.\d+/.test(result.version || ''),
   },
   {
+    page: '/examples/runtime_precompiled.html',
+    script: `(async () => {
+      ${flushSnippet}
+      await flush();
+      const el = document.getElementById('g');
+      const rendered = el.querySelector('.hi')?.textContent;
+      // Runtime-only build: there is no compiler, so compiling an inline
+      // template must throw rather than silently work.
+      let compilerAbsent = false;
+      try {
+        window.JST.registerCustomElementFromTemplate({
+          getAttribute: n => ({ name: 'rt-inline', props: 'm' }[n] ?? null),
+          attributes: [], innerHTML: '<p>$(m)</p>',
+        });
+      } catch (e) { compilerAbsent = /runtime-only/.test(e.message); }
+      return { rendered, compilerAbsent };
+    })()`,
+    assert: result => result.rendered === 'Hello, world!' && result.compilerAbsent === true,
+  },
+  {
     page: '/examples/counter_button.html',
     script: `(async () => {
       ${flushSnippet}

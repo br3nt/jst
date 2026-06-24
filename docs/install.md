@@ -1,22 +1,41 @@
 # Install
 
-JST has no build step and no runtime dependencies. There are three ways to load
-it; pick by how you serve your page.
+JST has no build step and no runtime dependencies. You pick a build by two
+questions: **do you serve over HTTP or open from `file://`?** and **does the
+browser compile your templates, or do you precompile them?**
 
 ## Delivery modes
 
-| Mode | Include | Needs a server? | Use when |
-|---|---|---|---|
-| **ES module** (default) | `<script type="module" src="jst.js">` | Yes (ES modules don't load from `file://`) | Normal apps served over HTTP; the standard path |
-| **Global build** | `<script src="jst.global.js">` | No — runs from `file://` too | Quick prototypes, copied/LLM-generated single files, opening a page straight off disk, a one-line CDN drop-in |
-| **Precompiled** | `<script type="module" src="dist/templates.js">` + `jst.js` | Yes | Strict CSP (no `unsafe-eval`); compiles templates ahead of time |
+The compiler turns `<script type="jst">` templates into render functions. You
+either ship it (the browser compiles inline templates) or precompile templates
+ahead of time and ship a smaller **runtime-only** build that drops the compiler
+(~40% smaller, and no `new Function`).
 
-All three register the same components and render identically — they differ only
-in how the runtime reaches the browser. The global build is the same code as the
-ES-module runtime, concatenated into one classic (non-module) script that exposes
-`window.JST` and self-initializes; because it has no `import` statements, the
-browser will run it from `file://`. See [Global build](#global-build-no-modules-or-server)
-and, for precompiled, [production.md](./production.md).
+| Build | Include | `file://`? | Compiler in browser | Use when |
+|---|---|:--:|:--:|---|
+| **`jst.js`** — ES module, full *(default)* | `<script type="module" src="jst.js">` | No | yes | Normal app served over HTTP, with inline `<script type="jst">` or `resolveTemplate` |
+| **`jst.global.js`** — classic, full | `<script src="jst.global.js">` | **Yes** | yes | Prototypes, copied/generated single files, opening off disk, a one-line CDN drop-in |
+| **`jst.runtime.js`** — ES module, no compiler | `<script type="module" src="jst.runtime.js">` + a precompiled module | No | no | Precompiled app over HTTP; smallest runtime; strict CSP |
+| **`jst.runtime.global.js`** — classic, no compiler | `<script src="jst.runtime.global.js">` + a precompiled `--global` file | **Yes** | no | Precompiled app with no build/server, or a CDN drop-in |
+
+All four register the same components and render identically — they differ only
+in how the runtime reaches the browser and whether it can compile templates
+on the fly. The two **global** builds are the module runtime concatenated into
+one classic (non-module) script that exposes `window.JST` and self-initializes;
+with no `import` statements they run from `file://`. The two **runtime-only**
+builds omit the compile pipeline, so they render only *precompiled* templates —
+calling in-browser compilation throws a clear error telling you to precompile.
+
+**Quick chooser:**
+
+- Serving over HTTP, authoring templates inline → **`jst.js`**.
+- Want to open the page off disk / drop one `<script>` in / no build → **`jst.global.js`**.
+- Precompiling for production (smallest, strict-CSP) → **`jst.runtime.js`** + a precompiled module (see [production.md](./production.md)).
+- Precompiling *and* want no build/server or a CDN drop-in → **`jst.runtime.global.js`** + a precompiled `--global` file.
+
+See [Global build](#global-build-no-modules-or-server),
+[Precompiled + runtime-only](#precompiled-and-the-runtime-only-builds), and
+[The two build tools](#the-two-build-tools) below.
 
 ## Script-module include
 
@@ -109,6 +128,60 @@ CDN-pinnable at a tag (above).
 The build is generated from the module sources by `npm run build`
 (`tools/build_global.mjs`); a `--check` mode in CI keeps it in sync, so the
 committed `jst.global.js` never drifts from `jst.js`.
+
+## Precompiled, and the runtime-only builds
+
+The full builds compile your `<script type="jst">` templates in the browser
+(with `new Function`). If you compile them ahead of time instead — at build, or
+with a dev server that recompiles on change and serves the result — the browser
+never compiles, and you can ship a **runtime-only** build that omits the whole
+compile pipeline (`compiler` + `parser` + `lexer` + `interpreter` + `tokens` +
+`input_reader`): about **40% smaller**, and inherently strict-CSP because there
+is no `new Function` at all.
+
+`tools/precompile.mjs` turns templates into a JS file of render functions that
+register through the normal runtime. There are two output shapes, matched to the
+two runtime-only builds:
+
+```sh
+# ES module output → load with jst.runtime.js
+node tools/precompile.mjs components.html --out dist/templates.js --runtime ./jst.runtime.js
+
+# classic output → load with jst.runtime.global.js (no modules, file:// ok)
+node tools/precompile.mjs components.html --out dist/templates.global.js --global
+```
+
+```html
+<!-- ES-module, precompiled: smallest runtime over HTTP -->
+<script type="module" src="/jst.runtime.js"></script>
+<script type="module" src="/dist/templates.js"></script>
+
+<!-- classic, precompiled: no build, no server -->
+<script src="/jst.runtime.global.js"></script>
+<script src="/dist/templates.global.js"></script>
+```
+
+The runtime-only builds still register, morph, do keyed reconciliation,
+transitions, lifecycle — everything except *compiling a raw template*. If an
+inline `<script type="jst">` reaches one, it throws a clear error pointing you at
+precompilation. Use a **full** build if you need in-browser compilation
+(inline templates or `resolveTemplate`). More on the precompiled path and CSP in
+[production.md](./production.md).
+
+## The two build tools
+
+JST ships two tools under `tools/`. They are easy to confuse — one operates on
+*your templates*, the other on *the framework itself*:
+
+| Tool | Operates on | Produces | You run it |
+|---|---|---|---|
+| **`precompile.mjs`** (`jst-precompile`) | **your** `<script type="jst">` templates | a JS file of render functions (ESM or `--global`) | when you precompile for production/CSP/runtime-only |
+| **`build_global.mjs`** (`npm run build`) | the **framework's** ES modules | the `jst.global.js` / `jst.runtime*.js` build artifacts | only if you hack on JST's runtime; `--check` guards drift in CI |
+
+If you are *using* JST, you only ever touch `precompile.mjs` (and only if you
+precompile). `build_global.mjs` is how this repo generates the shipped
+global/runtime builds from `jst.js` and friends; consumers get those prebuilt on
+npm and as release assets.
 
 ## Asset pipelines and digested filenames
 

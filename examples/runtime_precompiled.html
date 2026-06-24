@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>JST - Runtime-only build + precompiled templates</title>
+    <!--
+        The runtime-only build (jst.runtime.global.js) omits the template
+        compiler (~40% smaller). It can only render PRECOMPILED templates — there
+        is no in-browser compilation. Pair it with a precompiled templates file.
+    -->
+    <script src="../jst.runtime.global.js"></script>
+    <style>
+        body { font-family: sans-serif; max-width: 420px; margin: 3rem auto; text-align: center; }
+        .hi { font-size: 1.5rem; color: #16794c; }
+    </style>
+</head>
+<body>
+
+<h1>Runtime-only + precompiled</h1>
+<rt-greeting id="g" name="world"></rt-greeting>
+
+<!--
+    This is exactly the shape `tools/precompile.mjs --global` emits: a classic
+    script that reads window.JST.registerPrecompiledTemplate and registers a
+    ready-made render function. No compiler runs in the browser.
+-->
+<script>
+    (() => {
+        const { registerPrecompiledTemplate } = window.JST;
+        function render_rt_greeting(name, el, slot, onDisconnect, __esc) {
+            return '<p class="hi">Hello, ' + __esc(name) + '!</p>';
+        }
+        registerPrecompiledTemplate('rt-greeting', ['name'], { name: 'name' }, render_rt_greeting, 'inline');
+    })();
+</script>
+
+</body>
+</html>
