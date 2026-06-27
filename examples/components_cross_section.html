@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>JST components × every framework's look</title>
+  <link rel="stylesheet" href="../jst-layout.css">
+  <link rel="stylesheet" href="../jst-components.css">
+  <script type="module" src="../jst.js"></script>
+  <style>
+    .toolbar {
+      position: sticky; top: 0; z-index: 10;
+      display: flex; flex-wrap: wrap; align-items: center; gap: var(--jst-space-m);
+      padding: var(--jst-space-s) var(--jst-space-l);
+      background: var(--jst-surface); border-block-end: var(--jst-border-width) solid var(--jst-border);
+    }
+    .toolbar label { font-weight: 600; }
+    .card {
+      border: var(--jst-border-width) solid var(--jst-border); border-radius: var(--jst-radius);
+      padding: var(--jst-space-l); background: var(--jst-bg);
+    }
+    .card > header { display: flex; align-items: center; justify-content: space-between; gap: var(--jst-space-m); margin-block-end: var(--jst-space-m); }
+    .card h3 { margin: 0; }
+  </style>
+</head>
+<body data-theme="bootstrap">
+
+  <div class="toolbar">
+    <label for="theme">Re-skin as:</label>
+    <select id="theme">
+      <option value="bootstrap">Bootstrap</option>
+      <option value="shadcn">shadcn/ui</option>
+      <option value="shoelace">Shoelace / Web Awesome</option>
+      <option value="pico">Pico CSS</option>
+      <option value="w3css">W3.CSS (W3Schools)</option>
+      <option value="bulma">Bulma</option>
+    </select>
+    <span style="color: var(--jst-muted)">Same markup. Only the theme tokens change.</span>
+  </div>
+
+  <jst-center style="--measure: 64ch; --gutters: var(--jst-space-l)">
+    <jst-stack style="--space: var(--jst-space-xl); padding-block: var(--jst-space-xl)">
+
+      <jst-stack>
+        <h1>One component, every framework's look</h1>
+        <p>Each card is built <strong>once</strong> in JST and re-skinned by the
+           selector above. The badge says which JST technology it actually needed —
+           often <em>none</em>.</p>
+      </jst-stack>
+
+      <!-- MODAL -->
+      <div class="card">
+        <header>
+          <h3>Modal / Dialog</h3>
+          <span class="jst-tag" data-tech="invoker">command + &lt;dialog&gt;</span>
+        </header>
+        <button command="show-modal" commandfor="demo-modal">Open modal</button>
+        <dialog class="jst-modal" id="demo-modal">
+          <header>Confirm action <button class="jst-modal-close" command="close" commandfor="demo-modal" aria-label="Close">×</button></header>
+          <div class="jst-modal-body"><p style="margin:0">Native <code>&lt;dialog&gt;</code> with focus trap, <kbd>Esc</kbd>, and backdrop — opened and closed entirely by <code>command</code>/<code>commandfor</code>. Zero JavaScript.</p></div>
+          <footer>
+            <button command="close" commandfor="demo-modal" style="background:var(--jst-surface);color:var(--jst-fg)">Cancel</button>
+            <button command="close" commandfor="demo-modal">Confirm</button>
+          </footer>
+        </dialog>
+      </div>
+
+      <!-- ACCORDION -->
+      <div class="card">
+        <header>
+          <h3>Accordion</h3>
+          <span class="jst-tag" data-tech="none">CSS + HTML only</span>
+        </header>
+        <div class="jst-accordion">
+          <details name="acc" open>
+            <summary>What is it?</summary>
+            <div class="jst-accordion-body">Three <code>&lt;details name="acc"&gt;</code> — the shared <code>name</code> makes them mutually exclusive (Baseline). No script, no component.</div>
+          </details>
+          <details name="acc">
+            <summary>How does it animate?</summary>
+            <div class="jst-accordion-body">The marker rotates via CSS. <code>details</code> open/close is the browser's job.</div>
+          </details>
+          <details name="acc">
+            <summary>What did JST add?</summary>
+            <div class="jst-accordion-body">Nothing. This is the "just use HTML + CSS" outcome — and that's a win.</div>
+          </details>
+        </div>
+      </div>
+
+      <!-- DROPDOWN -->
+      <div class="card">
+        <header>
+          <h3>Dropdown menu</h3>
+          <span class="jst-tag" data-tech="invoker">Popover + command</span>
+        </header>
+        <button command="toggle-popover" commandfor="demo-menu">Actions ▾</button>
+        <div class="jst-menu" popover id="demo-menu">
+          <button>Edit</button>
+          <button>Duplicate</button>
+          <button>Move to…</button>
+          <hr>
+          <button style="color:oklch(0.55 0.20 25)">Delete</button>
+        </div>
+        <p style="color:var(--jst-muted);font-size:0.85em;margin-block-start:var(--jst-space-s)">
+          <code>[popover]</code> + <code>command="toggle-popover"</code>. Outside-click and <kbd>Esc</kbd> dismissal are built in; the menu anchors to its button automatically.</p>
+      </div>
+
+    </jst-stack>
+  </jst-center>
+
+  <script type="module">
+    document.getElementById('theme').addEventListener('change', (e) => {
+      document.body.dataset.theme = e.target.value;
+    });
+  </script>
+</body>
+</html>
