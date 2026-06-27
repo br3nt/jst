@@ -207,3 +207,56 @@
   .jst-menu[popover]:popover-open { opacity: 1; transform: none; }
   @starting-style { .jst-menu[popover]:popover-open { opacity: 0; transform: translateY(-0.25rem); } }
 }
+
+/* ============================================================================
+ * Tabs — a JST component (no native equivalent): roving tabindex + ARIA.
+ * ==========================================================================*/
+jst-tabs { display: block; }
+jst-tabs [role="tablist"] { display: flex; gap: var(--jst-space-2xs); border-block-end: var(--jst-border-width) solid var(--jst-border); }
+jst-tabs [role="tab"] {
+  background: none; border: none; border-block-end: 2px solid transparent; border-radius: 0;
+  margin-block-end: -1px; padding: var(--jst-space-xs) var(--jst-space-m);
+  color: var(--jst-muted); cursor: pointer; font: inherit;
+}
+jst-tabs [role="tab"][aria-selected="true"] { color: var(--jst-fg); border-block-end-color: var(--jst-accent); font-weight: 600; }
+jst-tabs [role="tab"]:hover { color: var(--jst-fg); }
+jst-tabs [role="tabpanel"] { padding-block: var(--jst-space-m); color: var(--jst-muted); }
+
+/* ============================================================================
+ * Toaster — a JST component: a fixed stack, pushed via a custom command.
+ * ==========================================================================*/
+jst-toaster {
+  position: fixed; inset-block-end: var(--jst-space-l); inset-inline-end: var(--jst-space-l);
+  display: flex; flex-direction: column; gap: var(--jst-space-xs); z-index: 9999;
+  pointer-events: none;
+}
+jst-toaster .jst-toast {
+  pointer-events: auto;
+  display: flex; align-items: center; gap: var(--jst-space-s);
+  padding: var(--jst-space-s) var(--jst-space-m);
+  border: var(--jst-border-width) solid var(--jst-border); border-radius: var(--jst-radius);
+  background: var(--jst-bg); color: var(--jst-fg); box-shadow: var(--jst-shadow);
+  min-inline-size: 15rem; animation: jst-toast-in 0.18s ease-out;
+}
+jst-toaster .jst-toast[data-variant="success"] { border-inline-start: 4px solid oklch(0.62 0.15 150); }
+jst-toaster .jst-toast[data-variant="error"]   { border-inline-start: 4px solid oklch(0.55 0.20 25); }
+jst-toaster .jst-toast button { margin-inline-start: auto; background: none; border: none; color: var(--jst-muted); cursor: pointer; font-size: 1.1rem; line-height: 1; }
+@keyframes jst-toast-in { from { opacity: 0; transform: translateY(0.5rem); } }
+
+/* ============================================================================
+ * Combobox — a JST component: filter + keyboard + ARIA listbox.
+ * ==========================================================================*/
+jst-combobox { display: block; position: relative; max-inline-size: 22rem; }
+jst-combobox input { inline-size: 100%; }
+jst-combobox [role="listbox"] {
+  position: absolute; inset-inline: 0; z-index: 20; margin-block-start: var(--jst-space-2xs);
+  max-block-size: 14rem; overflow: auto;
+  padding: var(--jst-space-2xs); list-style: none;
+  border: var(--jst-border-width) solid var(--jst-border); border-radius: var(--jst-radius);
+  background: var(--jst-bg); box-shadow: var(--jst-shadow);
+}
+jst-combobox [role="option"] {
+  padding: var(--jst-space-2xs) var(--jst-space-s); border-radius: calc(var(--jst-radius) - 2px); cursor: pointer;
+}
+jst-combobox [role="option"][data-active="true"] { background: var(--jst-accent); color: var(--jst-accent-fg); }
+jst-combobox .jst-empty { padding: var(--jst-space-s); color: var(--jst-muted); }
