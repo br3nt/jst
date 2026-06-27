@@ -51,7 +51,7 @@ too.
     <script type="module" src="/jst.js"></script>
   </head>
   <body>
-    <script type="jst" name="hello-name" props="name">
+    <script type="jst" name="hello-name" attributes="name">
       <p>Hello, <strong>$(name)</strong>!</p>
     </script>
 
@@ -111,7 +111,7 @@ runs straight off disk.
     <script src="jst.global.js"></script>
   </head>
   <body>
-    <script type="jst" name="hello-name" props="name">
+    <script type="jst" name="hello-name" attributes="name">
       <p>Hello, <strong>$(name)</strong>!</p>
     </script>
     <hello-name name="JST"></hello-name>

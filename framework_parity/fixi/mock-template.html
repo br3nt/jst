@@ -31,7 +31,7 @@
 <script>
   // cfg.fetch override equivalent: return canned <template>-style HTML, component def included.
   JSTMock.route('GET /api/card', () => `
-    <scr` + `ipt type="jst" name="info-card" props="title body">
+    <scr` + `ipt type="jst" name="info-card" attributes="title body">
       <article class="card">
         <h3 data-testid="card-title">$(title)</h3>
         <p data-testid="card-body">$(body)</p>

@@ -27,7 +27,7 @@
 <body>
 
 <!-- Board: 9 squares come down, each click goes up as "play" with its index. -->
-<script type="jst" name="game-board" props="squares">
+<script type="jst" name="game-board" attributes="squares">
   <div data-testid="board">
     $ [0, 1, 2].forEach(row => {
       <div class="board-row">
@@ -41,7 +41,7 @@
 </script>
 
 <!-- Move list for time travel. -->
-<script type="jst" name="move-list" props="count current">
+<script type="jst" name="move-list" attributes="count current">
   <ol data-testid="moves">
     $ Array.from({ length: count || 0 }).forEach((_, m) => {
       <li>

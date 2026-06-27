@@ -6,7 +6,7 @@ Runtime mode compiles templates in the browser:
 
 ```html
 <script type="module" src="/jst.js"></script>
-<script type="jst" name="app-card" props="title">
+<script type="jst" name="app-card" attributes="title">
   <article>$(title)</article>
 </script>
 ```
@@ -116,7 +116,7 @@ configure({
 
 ```html
 <!-- /jst/components/app-notice.html -->
-<script type="jst" name="app-notice" props="message">
+<script type="jst" name="app-notice" attributes="message">
   <aside>$(message)</aside>
 </script>
 ```
@@ -230,7 +230,7 @@ rendered DOM and projected slots are available, and registers the function
 `setup` returns as disconnect cleanup:
 
 ```html
-<script type="jst" name="clock-face" props="time">
+<script type="jst" name="clock-face" attributes="time">
   ${ once('tick', () => {
     const id = setInterval(() => el.emit('tick'), 1000)
     return () => clearInterval(id)

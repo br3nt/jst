@@ -5,7 +5,7 @@
   Demonstrates: a reactive property. Lit declares `static properties = { name: {} }`
   (or `@property() name`); assigning `el.name = '...'` schedules a re-render so the
   template's `Hello, ${this.name}!` updates.
-  Maps from: Lit reactive property / `@property` ↔ JST `props="name"` (each prop is
+  Maps from: Lit reactive property / `@property` ↔ JST `attributes="name"` (each prop is
   also a settable property that re-renders on assignment).
   JST status: ✓ exact — `el.name = '...'` mutates the prop and re-renders, same as Lit.
 -->
@@ -24,7 +24,7 @@
 <h1>Reactive properties</h1>
 
 <!-- `name` is a reactive property; assigning to it re-renders the greeting. -->
-<script type="jst" name="name-greeting" props="name">
+<script type="jst" name="name-greeting" attributes="name">
   <p class="greeting" data-testid="greeting">Hello, $(name || 'World')!</p>
 </script>
 

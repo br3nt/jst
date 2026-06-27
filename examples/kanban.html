@@ -81,7 +81,7 @@
 <!-- ====================================================================
      ui-panel: generic chrome with a default slot and a named footer slot.
      ==================================================================== -->
-<script type="jst" name="ui-panel" props="heading">
+<script type="jst" name="ui-panel" attributes="heading">
     <section class="panel">
         <header class="panel-header"><h2>$(heading)</h2></header>
         <div class="panel-body">$(slot())</div>
@@ -93,7 +93,7 @@
      board-toolbar: search, priority filter, active tag chip, add button.
      Holds no state — every input emits an event the page acts on.
      ==================================================================== -->
-<script type="jst" name="board-toolbar" props="filter">
+<script type="jst" name="board-toolbar" attributes="filter">
     $ const f = filter || {};
     <div class="toolbar">
         <input type="search" class="search" placeholder="Search cards…"
@@ -120,7 +120,7 @@
      kanban-card: a dumb renderer. The card object flows in as a property;
      clicks, deletes, tag-filters and drags flow out as events.
      ==================================================================== -->
-<script type="jst" name="kanban-card" props="card">
+<script type="jst" name="kanban-card" attributes="card">
     <div class="card prio-$(card.priority)" draggable="true"
          ondragstart="$(event => event.dataTransfer.setData('text/plain', String(card.id)))"
          onclick="$(() => el.emit('edit', card))">
@@ -146,7 +146,7 @@
      kanban-column: header with live count, native drop target,
      renders each card by passing the live object via .card="$(card)".
      ==================================================================== -->
-<script type="jst" name="kanban-column" props="column cards">
+<script type="jst" name="kanban-column" attributes="column cards">
     <div class="column"
          ondragover="$(event => event.preventDefault())"
          ondrop="$(event => {
@@ -172,7 +172,7 @@
 <!-- ====================================================================
      kanban-board: applies the composed filters, deals cards to columns.
      ==================================================================== -->
-<script type="jst" name="kanban-board" props="cards columns filter">
+<script type="jst" name="kanban-board" attributes="cards columns filter">
     $ const f = filter || {};
     $ const text = (f.text || '').toLowerCase();
     $ const visible = (cards || []).filter(card =>
@@ -194,7 +194,7 @@
      card-editor: modal form. Renders nothing while closed. Reads its own
      fields on save and emits the result — the page decides what to do.
      ==================================================================== -->
-<script type="jst" name="card-editor" props="card columns open">
+<script type="jst" name="card-editor" attributes="card columns open">
     $ if (open) {
     $   const c = card || {};
         <div class="overlay" onclick="$(event => { if (event.target === event.currentTarget) el.emit('cancel'); })">

@@ -30,7 +30,7 @@
 </script>
 
 <!-- once() fires the fetch after first commit; the guarded block is the "until". -->
-<script type="jst" name="quote-box" props="loading result">
+<script type="jst" name="quote-box" attributes="loading result">
   ${
     once('load-quote', () => {
       el.loading = true;

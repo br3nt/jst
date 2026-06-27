@@ -71,7 +71,7 @@ The template language is JavaScript. `$(expr)` is an expression. `$ line` and
 DSL to learn and no reactive runtime to reason about.
 
 ```html
-<script type="jst" name="item-list" props="items">
+<script type="jst" name="item-list" attributes="items">
   <ul>
     $ items.forEach(item => {
       <li jst-key="$(item.id)">$(item.label)</li>

@@ -16,7 +16,7 @@
 </head>
 <body>
 
-<script type="jst" name="lifecycle-demo" props="message">
+<script type="jst" name="lifecycle-demo" attributes="message">
   $ el.__renders = (el.__renders || 0) + 1;     // "onUpdated": runs every render
   $ once('lifecycle', () => {
   $   el.querySelector('#mounted-text').textContent = 'mounted! (the component is now in the DOM)';

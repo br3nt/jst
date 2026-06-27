@@ -54,6 +54,17 @@ const templateRules = [
   },
 ];
 
+// Rules that apply inside a <script type="jst"> OPEN TAG (the attributes on the
+// tag itself, not the template body).
+const openTagRules = [
+  {
+    id: 'props-keyword',
+    find: () => /(^|\s)props\s*=/g,
+    message: () => 'renamed props="…" declaration — use attributes="…" (or the attrs="…" shorthand)',
+    at: m => m.index + m[0].indexOf('props'),
+  },
+];
+
 // Rules for a vendored runtime file (whole-text scan), to catch a stale jst.js.
 const runtimeRules = [
   { id: 'jst-ssr', find: () => /jst-ssr/g, message: () => 'jst-ssr marker present — SSR hydration was removed; this looks like a stale runtime' },
@@ -105,6 +116,18 @@ function jstBlockRanges(source) {
   return ranges;
 }
 
+/** Ranges [start, end) of every jst block OPEN TAG in the source. */
+function jstOpenTagRanges(source) {
+  const ranges = [];
+  scriptPattern.lastIndex = 0;
+  let match;
+  while ((match = scriptPattern.exec(source))) {
+    const openEnd = match.index + match[0].indexOf('>', 0);
+    ranges.push([match.index, openEnd]);
+  }
+  return ranges;
+}
+
 function inRanges(index, ranges) {
   return ranges.some(([start, end]) => index >= start && index < end);
 }
@@ -128,6 +151,18 @@ function scanFile(file, findings) {
     while ((match = re.exec(source))) {
       const at = rule.at(match);
       if (!inRanges(at, ranges)) continue;
+      const { line, col } = locate(source, at);
+      findings.push({ file, line, col, message: rule.message(match) });
+    }
+  }
+
+  const openTagRanges = jstOpenTagRanges(source);
+  for (const rule of openTagRules) {
+    const re = rule.find();
+    let match;
+    while ((match = re.exec(source))) {
+      const at = rule.at(match);
+      if (!inRanges(at, openTagRanges)) continue;
       const { line, col } = locate(source, at);
       findings.push({ file, line, col, message: rule.message(match) });
     }

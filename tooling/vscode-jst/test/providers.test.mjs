@@ -26,11 +26,11 @@ function posOf(text, substr, occurrence = 1) {
 
 const defDoc = {
   uri: 'file:///cards.html',
-  text: '<script type="jst" name="kanban-card" props="card">\n  <div>$(card.title)</div>\n</script>',
+  text: '<script type="jst" name="kanban-card" attributes="card">\n  <div>$(card.title)</div>\n</script>',
 };
 const useDoc = {
   uri: 'file:///board.html',
-  text: '<script type="jst" name="kanban-board" props="cards">\n  <kanban-card .card="$(cards[0])"></kanban-card>\n</script>',
+  text: '<script type="jst" name="kanban-board" attributes="cards">\n  <kanban-card .card="$(cards[0])"></kanban-card>\n</script>',
 };
 
 test('indexComponents indexes components across files', () => {
@@ -65,7 +65,7 @@ test('hover on a component shows its props', () => {
 
   assert.ok(hover);
   assert.match(hover.contents, /<kanban-card>/);
-  assert.match(hover.contents, /Props: card/);
+  assert.match(hover.contents, /Attributes: card/);
 });
 
 test('completion after "<" lists known component tags', () => {

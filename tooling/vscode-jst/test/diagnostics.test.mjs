@@ -10,7 +10,7 @@ import { findJstBlocks, positionAt } from '../src/jst-blocks.mjs';
 const wrap = (attrs, body) => `<!DOCTYPE html>\n<body>\n<script type="jst" ${attrs}>${body}</script>\n</body>`;
 
 test('a well-formed template produces no diagnostics', () => {
-  const text = wrap('name="x-ok" props="count"', '<div>$(count + 1)</div>');
+  const text = wrap('name="x-ok" attributes="count"', '<div>$(count + 1)</div>');
   assert.deepEqual(computeDiagnostics(text), []);
 });
 
@@ -43,7 +43,7 @@ test('duplicate template names warn on the second definition', () => {
 test('an unbalanced $( is reported with a position inside the block', () => {
   // body spans two lines; the error is on the second inner line
   const body = '\n  <div>$(count</div>\n';
-  const text = wrap('name="x-bad" props="count"', body);
+  const text = wrap('name="x-bad" attributes="count"', body);
   const diagnostics = computeDiagnostics(text);
 
   const parseError = diagnostics.find(d => d.severity === 1 && !/hyphen|name/.test(d.message));
@@ -82,19 +82,19 @@ test('multi-line block: a positioned error maps to the right inner line', () => 
 });
 
 test('declared props are extracted from the open tag', () => {
-  const text = wrap('name="todo-item" props="item onToggle"', '<div>$(item)</div>');
+  const text = wrap('name="todo-item" attributes="item onToggle"', '<div>$(item)</div>');
   const block = findJstBlocks(text)[0];
   assert.deepEqual(block.params.sort(), ['item', 'onToggle'].sort());
 });
 
-test('reserved prop names are diagnostics', () => {
-  const text = wrap('name="x-bad" props="item emit"', '<div>$(item)</div>');
+test('reserved attribute names are diagnostics', () => {
+  const text = wrap('name="x-bad" attributes="item emit"', '<div>$(item)</div>');
   const diagnostics = computeDiagnostics(text);
-  assert.ok(diagnostics.some(d => /Invalid JST prop "emit"/.test(d.message)));
+  assert.ok(diagnostics.some(d => /Invalid JST attribute "emit"/.test(d.message)));
 });
 
 test('malformed property bindings are diagnostics', () => {
-  const text = wrap('name="x-bad" props="a b"', '<x-child .items="$(a)$(b)"></x-child>');
+  const text = wrap('name="x-bad" attributes="a b"', '<x-child .items="$(a)$(b)"></x-child>');
   const diagnostics = computeDiagnostics(text);
   assert.ok(diagnostics.some(d => /exactly one/.test(d.message)));
 });
@@ -109,14 +109,14 @@ test('raw inline JavaScript in an on* handler is flagged', () => {
 });
 
 test('an on* handler wrapping a single $(…) expression is accepted', () => {
-  const text = wrap('name="x-on" props="handler"', '<button onclick="$(handler)">x</button>');
+  const text = wrap('name="x-on" attributes="handler"', '<button onclick="$(handler)">x</button>');
   assert.deepEqual(computeDiagnostics(text), []);
 });
 
 test('an on* handler whose event name does not start with a letter is flagged', () => {
   // the runtime rejects on<event> names that do not start with a letter, so the
   // editor surfaces it too (diagnostics run the real compiler)
-  const text = wrap('name="x-on" props="handler"', '<x on3d-ready="$(handler)"></x>');
+  const text = wrap('name="x-on" attributes="handler"', '<x on3d-ready="$(handler)"></x>');
   const diagnostics = computeDiagnostics(text);
   const error = diagnostics.find(d => d.severity === 1);
   assert.ok(error, 'expected a compile error for an invalid on<event> handler name');

@@ -25,7 +25,7 @@
 </head>
 <body>
 
-<script type="jst" name="add-form" props="draft">
+<script type="jst" name="add-form" attributes="draft">
   <form data-testid="form" onsubmit.prevent="$(() => {
       const text = (el.draft || '').trim();
       if (text) el.emit('add', text);
@@ -35,7 +35,7 @@
   </form>
 </script>
 
-<script type="jst" name="item-list" props="items">
+<script type="jst" name="item-list" attributes="items">
   <ul data-testid="list">
     $ (items || []).forEach(it => {
       <li data-testid="item-$(it.id)" jst-key="$(it.id)">$(it.text)</li>

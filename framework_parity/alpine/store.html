@@ -19,7 +19,7 @@
 <body>
 
 <!-- Both components render the shared store and emit an 'inc' event to mutate it -->
-<script type="jst" name="store-view" props="label store">
+<script type="jst" name="store-view" attributes="label store">
   $ const s = store || { count: 0 };
   <div class="card">
     <h3>$(label)</h3>

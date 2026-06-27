@@ -31,8 +31,8 @@ A language server providing, across files:
 
 - **Go-to-definition** — from a `<my-card>` usage to its `<script type="jst"
   name="my-card">` definition (even in another file).
-- **Hover** — a component's declared props.
-- **Completion** — known component tags after `<`; a component's props and
+- **Hover** — a component's declared attributes.
+- **Completion** — known component tags after `<`; a component's attributes and
   `.prop` binding forms inside its open tag.
 - **Document symbols** — every component defined in a file.
 

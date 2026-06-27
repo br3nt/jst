@@ -22,7 +22,7 @@
 <h1>List rendering</h1>
 
 <!-- map(items, i => html`<li>${i}</li>`) ↔ $ items.forEach(item => <li>$(item)</li>) -->
-<script type="jst" name="my-list" props="items">
+<script type="jst" name="my-list" attributes="items">
   <ul data-testid="list">
     $ (items || []).forEach(item => {
       <li>$(item)</li>

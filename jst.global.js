@@ -828,20 +828,20 @@ const reservedPropNames = new Set([
   '__bind',
 ])
 
-function parsePropsAttribute(value) {
+function parseAttributesDeclaration(value) {
   if (!value || !value.trim()) return []
 
   return value
     .split(/[\s,]+/)
     .filter(Boolean)
-    .map(prop => {
-      if (!jsIdentifierPattern.test(prop)) {
-        throw new Error(`Invalid JST prop "${prop}". Props must be valid JavaScript identifiers.`)
+    .map(attr => {
+      if (!jsIdentifierPattern.test(attr)) {
+        throw new Error(`Invalid JST attribute "${attr}". Template attributes must be valid JavaScript identifiers.`)
       }
-      if (reservedPropNames.has(prop)) {
-        throw new Error(`Invalid JST prop "${prop}". Props cannot use JavaScript keywords or JST helper names.`)
+      if (reservedPropNames.has(attr)) {
+        throw new Error(`Invalid JST attribute "${attr}". Template attributes cannot use JavaScript keywords or JST helper names.`)
       }
-      return prop
+      return attr
     })
 }
 
@@ -862,20 +862,31 @@ class TemplateRenderingFunction {
 }
 
 function getTemplateRenderingFunctionParams(templateElement) {
-  // Props are declared in one case-preserving attribute value:
-  //   <script type="jst" name="todo-item" props="item onToggle">
-  // HTML lowercases attribute names, but not quoted attribute values, so this
-  // keeps internal JS identifiers greppable and supports expected names like
-  // `name` without conflicting with the template's own `name` attribute.
-  const paramMap = {}
-  const props = parsePropsAttribute(templateElement.getAttribute('props') || '')
+  // A template's inputs are declared in one case-preserving attribute value:
+  //   <script type="jst" name="todo-item" attributes="item onToggle">
+  // `attrs="…"` is accepted as a shorthand alias. HTML lowercases attribute
+  // names, but not quoted attribute values, so this keeps internal JS
+  // identifiers greppable and supports expected names like `name` without
+  // conflicting with the template's own `name` attribute.
+  // Detect the removed `props="…"` keyword via getAttribute (not hasAttribute):
+  // the precompile tool's lightweight element model implements getAttribute only.
+  if (templateElement.getAttribute('props') != null) {
+    const tag = templateElement.getAttribute('name') || '(unnamed)'
+    throw new Error(`JST: the props="…" declaration was renamed. Use attributes="…" (or the attrs="…" shorthand) on <script type="jst" name="${tag}">.`)
+  }
 
-  props.forEach(prop => {
-    paramMap[camelToKebab(prop)] = prop
+  const paramMap = {}
+  const declared = templateElement.getAttribute('attributes')
+    ?? templateElement.getAttribute('attrs')
+    ?? ''
+  const attributes = parseAttributesDeclaration(declared)
+
+  attributes.forEach(attr => {
+    paramMap[camelToKebab(attr)] = attr
   })
 
   return {
-    functionParams: Array.from(new Set(props)),
+    functionParams: Array.from(new Set(attributes)),
     paramMap,
   }
 }
@@ -895,7 +906,7 @@ function compileTemplateRenderingFunction(templateElement) {
 /**
  * JST Framework Core
  *
- * Templates are declared as <script type="jst" name="tag-name" props="prop otherProp">
+ * Templates are declared as <script type="jst" name="tag-name" attributes="prop otherProp">
  * and registered as real custom elements. Data flows in through attributes
  * (JSON-parsed primitives) or properties (rich values: el.items = [...]).
  * Data flows out through bubbling CustomEvents (el.emit('name', detail)).

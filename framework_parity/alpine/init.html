@@ -15,7 +15,7 @@
 </head>
 <body>
 
-<script type="jst" name="x-init-demo" props="message">
+<script type="jst" name="x-init-demo" attributes="message">
   $ once('init', () => { el.message = 'Initialised once after mount'; });
   <p data-testid="out">$(message || 'waiting for init…')</p>
 </script>

@@ -36,7 +36,7 @@ async function run(cmd, args) {
 const SAMPLE = `<style>@media (max-width: 600px){ .x{color:red} }</style>
 <a href="mailto:foo@bar.com">mail</a>
 <div x-data><button @click="open=true">alpine, not jst</button></div>
-<script type="jst" name="my-widget" props="items">
+<script type="jst" name="my-widget" attributes="items">
   <button @click="$(open)">Open</button>
   <button @item-selected.stop="$(pick)">Pick</button>
   <div .data="$(raw(html))">$(unsafeHTML(body))</div>
@@ -96,8 +96,19 @@ test('lint flags removed syntax inside jst blocks only, with file:line:col', asy
   });
 });
 
+test('lint flags the removed props= keyword on a jst open tag', async () => {
+  const stale = `<p props="decoy">not a jst block</p>\n<script type="jst" name="x-old" props="a b"><p>$(a)</p></script>`;
+  await withTempFile('stale.html', stale, async (file) => {
+    const { code, stderr } = await run('node', [lint, file]);
+    assert.equal(code, 1, 'lint should exit non-zero for props=');
+    assert.match(stderr, /renamed props="…" declaration — use attributes="…"/);
+    assert.match(stderr, /:2:/); // the jst block is on line 2
+    assert.doesNotMatch(stderr, /:1:/); // the decoy props= outside a jst tag is ignored
+  });
+});
+
 test('lint passes a clean jst file', async () => {
-  const clean = `<script type="jst" name="ok" props="x"><button onclick="$(go)">$(x)</button></script>`;
+  const clean = `<script type="jst" name="ok" attributes="x"><button onclick="$(go)">$(x)</button></script>`;
   await withTempFile('clean.html', clean, async (file) => {
     const { code, stdout } = await run('node', [lint, file]);
     assert.equal(code, 0);
@@ -118,7 +129,7 @@ test('lint --runtime flags a stale jst.js (jst-ssr / document.jst)', async () =>
 test('lint ignores document.jst outside jst blocks (e.g. test assertions)', async () => {
   // document.jst in a regular module script is not a template construct.
   const file = `<script type="module">assert(document.jst === undefined)</script>
-<script type="jst" name="ok" props="x"><b>$(x)</b></script>`;
+<script type="jst" name="ok" attributes="x"><b>$(x)</b></script>`;
   await withTempFile('page.html', file, async (f) => {
     const { code } = await run('node', [lint, f]);
     assert.equal(code, 0, 'document.jst outside a jst block should not be flagged');
@@ -141,7 +152,7 @@ const JST = globalThis.window.JST;
 if (!JST) throw new Error('window.JST was not published');
 const pkg = JSON.parse(require('node:fs').readFileSync(${JSON.stringify(path.join(repoRoot, 'package.json'))},'utf8'));
 if (JST.version !== pkg.version) throw new Error('version mismatch: ' + JST.version + ' vs ' + pkg.version);
-const tpl = { getAttribute:n=>({type:'jst',name:'x-global-probe',props:'msg'}[n]??null), attributes:[{name:'type',value:'jst'},{name:'name',value:'x-global-probe'},{name:'props',value:'msg'}], innerHTML:'<p>$(msg)</p>' };
+const tpl = { getAttribute:n=>({type:'jst',name:'x-global-probe',attributes:'msg'}[n]??null), attributes:[{name:'type',value:'jst'},{name:'name',value:'x-global-probe'},{name:'attributes',value:'msg'}], innerHTML:'<p>$(msg)</p>' };
 JST.registerCustomElementFromTemplate(tpl);
 console.log('GLOBAL_OK ' + JST.version);
 `;
@@ -175,7 +186,7 @@ if (!['version','configure','trustedHTML','registerPrecompiledTemplate','registe
 if (typeof globalThis.window.JST.registerPrecompiledTemplate !== 'function') throw new Error('window.JST.registerPrecompiledTemplate missing');
 m.registerPrecompiledTemplate('x-pc', ['msg'], { msg:'msg' }, function(){ return '<p>ok</p>'; }, 'test');
 let threw = '';
-try { m.registerCustomElementFromTemplate({ getAttribute:n=>({name:'x-inline',props:'msg'}[n]??null), attributes:[], innerHTML:'<p>$(msg)</p>' }); }
+try { m.registerCustomElementFromTemplate({ getAttribute:n=>({name:'x-inline',attributes:'msg'}[n]??null), attributes:[], innerHTML:'<p>$(msg)</p>' }); }
 catch (e) { threw = e.message; }
 if (!/runtime-only/.test(threw)) throw new Error('expected runtime-only error, got: ' + threw);
 console.log('RUNTIME_OK ' + m.version);
@@ -190,7 +201,7 @@ test('jst.runtime.js omits the compiler: precompiled works, inline compile throw
 });
 
 test('precompile --global emits a classic script that reads window.JST', async () => {
-  const tpl = `<script type="jst" name="pc-greet" props="name"><p class="hi">Hello, $(name)!</p></script>`;
+  const tpl = `<script type="jst" name="pc-greet" attributes="name"><p class="hi">Hello, $(name)!</p></script>`;
   await withTempFile('comp.html', tpl, async (input) => {
     const dir = path.dirname(input);
     const out = path.join(dir, 'tpl.global.js');

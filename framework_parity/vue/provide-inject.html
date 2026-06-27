@@ -22,7 +22,7 @@
 <body>
 
 <!-- Deepest descendant "injects" by reading the nearest provider ancestor. -->
-<script type="jst" name="theme-button" props="tick">
+<script type="jst" name="theme-button" attributes="tick">
   $ const provider = el.closest('theme-provider');
   $ const theme = provider ? provider.theme : 'light';
   <div class="$(theme)">
@@ -38,7 +38,7 @@
 </script>
 
 <!-- Ancestor "provides" theme. setTheme re-pokes descendants so the read re-runs. -->
-<script type="jst" name="theme-provider" props="theme">
+<script type="jst" name="theme-provider" attributes="theme">
   <div>
     <p>Provider theme is: <strong id="provider-theme">$(theme)</strong></p>
     $(slot())

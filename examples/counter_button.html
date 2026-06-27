@@ -30,7 +30,7 @@
   <section>
     <h2>1. Property Updates</h2>
 
-    <script type="jst" name="jst-counter" props="count">
+    <script type="jst" name="jst-counter" attributes="count">
         <div class="counter-box">
             <strong>Counter Value:</strong> $(count)
         </div>
@@ -76,7 +76,7 @@
   <section>
     <h2>3. Events Up, Properties Down</h2>
 
-    <script type="jst" name="counter-controls" props="count">
+    <script type="jst" name="counter-controls" attributes="count">
         <div class="counter-box">
             <button onclick="$(() => el.emit('change', count - 1))">−</button>
             <strong style="margin: 0 12px;">$(count)</strong>

@@ -19,7 +19,7 @@
 </head>
 <body>
 
-<script type="jst" name="x-for-demo" props="items">
+<script type="jst" name="x-for-demo" attributes="items">
   $ const list = items || [];
   <div>
     <button data-testid="add" onclick="$(() => el.items = [...list, 'Item ' + (list.length + 1)])">Add</button>

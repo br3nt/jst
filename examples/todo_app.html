@@ -36,7 +36,7 @@
     A dumb renderer. It holds no state and knows no business logic:
     the item flows in as a property, actions flow out as bubbling events.
 -->
-<script type="jst" name="todo-item" props="item">
+<script type="jst" name="todo-item" attributes="item">
     <div class="todo-item $(item.done ? 'done' : '')">
         <input type="checkbox" .checked="$(item.done)" onchange="$(() => el.emit('toggle', item))">
         <span class="text">$(item.text)</span>
@@ -49,7 +49,7 @@
     Iterates over the todo array and applies the current filter.
     Each item is passed to <todo-item> as a real object via .item="$(item)".
 -->
-<script type="jst" name="todo-list" props="items filter">
+<script type="jst" name="todo-list" attributes="items filter">
     $ const todos = items || [];
     $ const filtered = todos.filter(t => {
     $   if (filter === 'active') return !t.done;

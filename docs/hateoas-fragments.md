@@ -4,7 +4,7 @@ JST's unusual feature is that a server response can ship both a component
 definition and component markup.
 
 ```html
-<script type="jst" name="app-notice" props="message level">
+<script type="jst" name="app-notice" attributes="message level">
   <aside class="notice $(level)">$(message)</aside>
 </script>
 
@@ -94,7 +94,7 @@ directly.
 Rails ERB:
 
 ```erb
-<script type="jst" name="task-row" props="taskId title done">
+<script type="jst" name="task-row" attributes="taskId title done">
   <li class="$(done ? 'done' : '')" data-task-id="$(taskId)">
     $(title)
     <button onclick="$(() => el.emit('complete', taskId))">Complete</button>
@@ -111,7 +111,7 @@ Rails ERB:
 ASP.NET Razor:
 
 ```cshtml
-<script type="jst" name="task-row" props="taskId title done">
+<script type="jst" name="task-row" attributes="taskId title done">
   <li class="$(done ? 'done' : '')" data-task-id="$(taskId)">
     $(title)
     <button onclick="$(() => el.emit('complete', taskId))">Complete</button>

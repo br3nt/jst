@@ -24,7 +24,7 @@
 </head>
 <body>
 
-<script type="jst" name="widget-host" props="count">
+<script type="jst" name="widget-host" attributes="count">
   <section>
     <p>Host re-renders: <strong data-testid="renders">$(count || 0)</strong></p>
     <button data-testid="rerender" onclick="$(() => el.count = (el.count || 0) + 1)">Re-render host</button>

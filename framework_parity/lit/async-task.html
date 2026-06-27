@@ -38,7 +38,7 @@
 </script>
 
 <!-- Hand-written task: a productId change runs the fetch and walks `status`. -->
-<script type="jst" name="product-task" props="productId status product error">
+<script type="jst" name="product-task" attributes="productId status product error">
   ${
     if (el._lastId !== productId) {
       el._lastId = productId;

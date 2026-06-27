@@ -24,11 +24,11 @@
 </head>
 <body>
 
-<script type="jst" name="metric-value" props="value">
+<script type="jst" name="metric-value" attributes="value">
   <strong data-testid="value">$(value != null ? value : '—')</strong>
 </script>
 
-<script type="jst" name="metric-status" props="status">
+<script type="jst" name="metric-status" attributes="status">
   <span class="badge $(status === 'up' ? 'up' : 'down')" data-testid="status">$(status || '…')</span>
 </script>
 

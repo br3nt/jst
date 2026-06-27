@@ -65,7 +65,7 @@ const shipped = new Set();                 // component definitions already sent
 // MutationObserver the moment the fragment is inserted into the document.
 
 const FEED_ITEM_DEF = `
-<script type="jst" name="feed-item" props="item">
+<script type="jst" name="feed-item" attributes="item">
   <article class="card">
     <div class="avatar" style="--c: $(item.color)">$(item.author.slice(0, 1))</div>
     <div class="content">
@@ -88,7 +88,7 @@ const FEED_ITEM_DEF = `
 </script>`;
 
 const LIKE_BADGE_DEF = `
-<script type="jst" name="like-badge" props="count itemId">
+<script type="jst" name="like-badge" attributes="count itemId">
   <span class="badge">&#9829; Liked &middot; <strong>$(count)</strong></span>
   <button class="act link" onclick.prevent="$(async () => {
     const list = el.querySelector('.likers');

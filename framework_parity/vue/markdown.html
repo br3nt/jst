@@ -42,7 +42,7 @@
 </head>
 <body>
 
-<script type="jst" name="markdown-editor" props="input">
+<script type="jst" name="markdown-editor" attributes="input">
   $ if (!el.__mounted) {
   $   el.__mounted = true;
   $   queueMicrotask(() => { el.querySelector('#preview').innerHTML = renderMarkdown(el.input); });

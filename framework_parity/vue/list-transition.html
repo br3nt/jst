@@ -25,7 +25,7 @@
 </head>
 <body>
 
-<script type="jst" name="list-transition" props="items">
+<script type="jst" name="list-transition" attributes="items">
   $ const list = items || [];
   $ const append = () => el.items = [...list, list.length ? Math.max(...list) + 1 : 1];
   $ const pop = () => el.items = list.slice(0, -1);

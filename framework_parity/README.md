@@ -202,7 +202,7 @@ directives, `@lit/context`, and `@lit/task`.
 | Example | Source | Status | Built | Note |
 |---|---|:--:|---|---|
 | hello-world | [link](https://lit.dev/docs/components/overview/) | ✓ | [lit/hello-world.html](lit/hello-world.html) | `LitElement` + `render()` ↔ a `<script type="jst">` that compiles to a real, inspectable custom element. |
-| reactive-properties | [link](https://lit.dev/docs/components/properties/) | ✓ | [lit/reactive-properties.html](lit/reactive-properties.html) | `@property name` ↔ `props="name"`; `el.name = '…'` re-renders, identical to a reactive property. |
+| reactive-properties | [link](https://lit.dev/docs/components/properties/) | ✓ | [lit/reactive-properties.html](lit/reactive-properties.html) | `@property name` ↔ `attributes="name"`; `el.name = '…'` re-renders, identical to a reactive property. |
 | attribute-vs-property | [link](https://lit.dev/docs/components/properties/#attributes) | ✓ | [lit/attribute-vs-property.html](lit/attribute-vs-property.html) | Lit's attribute converter (`count="3"`→Number) ↔ JST's JSON-parsed attribute; rich objects via `.data="$(obj)"`. |
 | boolean-attribute | [link](https://lit.dev/docs/templates/expressions/#boolean-attribute-expressions) | ✓ | [lit/boolean-attribute.html](lit/boolean-attribute.html) | Lit `?hidden=${!show}` ↔ JST `.hidden="$(!show)"`, which genuinely adds/removes the boolean attribute. |
 | property-expression | [link](https://lit.dev/docs/templates/expressions/#property-expressions) | ✓ | [lit/property-expression.html](lit/property-expression.html) | Lit `.items=${this.items}` ↔ JST `.items="$(arr)"` passing an array to a child. |
@@ -278,7 +278,7 @@ workaround is an acceptable tradeoff. **You decide.**
 Several sharp edges surfaced during the study and are now fixed in core:
 comments are inert, `$item1` scans correctly, balanced expressions understand
 regex/comment delimiters, malformed `.prop="$(a)$(b)"` bindings fail loudly,
-props are declared case-preserved with `props="editingId"`, and `jst-key`
+props are declared case-preserved with `attributes="editingId"`, and `jst-key`
 preserves list identity.
 
 Still worth remembering:

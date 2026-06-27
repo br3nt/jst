@@ -24,7 +24,7 @@
 <body>
 <h1>Lifecycle: a self-cleaning timer</h1>
 
-<script type="jst" name="tick-clock" props="ticks">
+<script type="jst" name="tick-clock" attributes="ticks">
   $ once('start-timer', () => {
   $   el.ticks = el.ticks || 0;
   $   const id = setInterval(() => { el.ticks = (el.ticks || 0) + 1; }, 100);

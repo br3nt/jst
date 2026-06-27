@@ -7,7 +7,7 @@ import { compileTemplateRenderingFunction } from './compiler.js'
 /**
  * JST Framework Core
  *
- * Templates are declared as <script type="jst" name="tag-name" props="prop otherProp">
+ * Templates are declared as <script type="jst" name="tag-name" attributes="prop otherProp">
  * and registered as real custom elements. Data flows in through attributes
  * (JSON-parsed primitives) or properties (rich values: el.items = [...]).
  * Data flows out through bubbling CustomEvents (el.emit('name', detail)).

@@ -29,7 +29,7 @@ export function findDefinition(text, position, components) {
   };
 }
 
-// Hover: cursor on a known component tag -> its name and declared props.
+// Hover: cursor on a known component tag -> its name and declared attributes.
 export function getHover(text, position, components) {
   const offset = offsetAt(text, position);
   const token = wordAt(text, offset);
@@ -40,7 +40,7 @@ export function getHover(text, position, components) {
 
   const params = component.params.length ? component.params.join(', ') : '(none)';
   return {
-    contents: `**<${component.name}>** — JST component\n\nProps: ${params}`,
+    contents: `**<${component.name}>** — JST component\n\nAttributes: ${params}`,
     range: {
       start: positionAt(text, token.start),
       end: positionAt(text, token.end),
@@ -48,7 +48,7 @@ export function getHover(text, position, components) {
   };
 }
 
-// Completion: suggest component tags after "<", and a component's props when
+// Completion: suggest component tags after "<", and a component's attributes when
 // inside its open tag.
 export function getCompletions(text, position, components) {
   const offset = offsetAt(text, position);
@@ -59,11 +59,11 @@ export function getCompletions(text, position, components) {
     return [...components.values()].map(component => ({
       label: component.name,
       kind: 'class',
-      detail: component.params.length ? `props: ${component.params.join(', ')}` : 'no props',
+      detail: component.params.length ? `attributes: ${component.params.join(', ')}` : 'no attributes',
     }));
   }
 
-  // inside a known component's attributes -> its props (attribute and .prop forms)
+  // inside a known component's attributes -> its attributes (attribute and .prop forms)
   if (context && context.inAttributes) {
     const component = components.get(context.tagName);
     if (!component) return [];

@@ -21,7 +21,7 @@
 </head>
 <body>
 
-<script type="jst" name="dropdown-menu" props="open choice">
+<script type="jst" name="dropdown-menu" attributes="open choice">
   <div style="position:relative; display:inline-block;" onclick.outside="$(() => el.open = false)">
     <button data-testid="toggle" onclick="$(() => el.open = !el.open)">
       $(choice || 'Choose…') ▾

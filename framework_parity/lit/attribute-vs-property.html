@@ -25,7 +25,7 @@
 <h1>Attribute vs property</h1>
 
 <!-- count arrives as an attribute (string → number); data arrives as a property (object). -->
-<script type="jst" name="data-view" props="count data">
+<script type="jst" name="data-view" attributes="count data">
   $ const d = data || {};
   <div class="box">
     <p data-testid="count">count + 1 = $(count + 1) (type: $(typeof count))</p>

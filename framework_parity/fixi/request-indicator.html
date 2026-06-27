@@ -26,7 +26,7 @@
 </head>
 <body>
 
-<script type="jst" name="load-button" props="loading result">
+<script type="jst" name="load-button" attributes="loading result">
   <div>
     <button data-testid="btn" .disabled="$(!!loading)" onclick="$(() => el.emit('load'))">
       $(loading ? 'Loading…' : 'Load report')

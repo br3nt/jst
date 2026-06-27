@@ -5,6 +5,20 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Changed (breaking)
+
+- **The template input declaration `props="…"` was renamed to `attributes="…"`**,
+  with `attrs="…"` accepted as a shorthand alias. This reinforces that a
+  template's inputs *are* HTML attributes (and sheds the React-flavoured "props"
+  term). The old `props="…"` keyword is **removed with no alias** — a template
+  that still uses it throws a clear error pointing at the new name:
+  `the props="…" declaration was renamed. Use attributes="…" (or the attrs="…"
+  shorthand)`. Update every `<script type="jst" name="…" props="…">` to
+  `attributes="…"`. Invalid-identifier and reserved-name errors now say
+  "attribute" instead of "prop".
+
 ## 0.2.3 - 2026-06-24
 
 Adds the runtime-only builds (no compiler) for precompiled deployments, a

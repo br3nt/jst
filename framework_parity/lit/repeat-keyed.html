@@ -25,7 +25,7 @@
 <h1>repeat (keyed)</h1>
 
 <!-- repeat(items, i => i.id, tpl) ↔ forEach + jst-key="$(item.id)". -->
-<script type="jst" name="keyed-list" props="items">
+<script type="jst" name="keyed-list" attributes="items">
   <ul data-testid="list">
     $ (items || []).forEach(item => {
       <li jst-key="$(item.id)">

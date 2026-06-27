@@ -29,7 +29,7 @@
 <h1>Extracting state logic into a reducer</h1>
 
 <!-- Dumb renderer: tasks come down, actions go up as one bubbling event. -->
-<script type="jst" name="task-board" props="tasks">
+<script type="jst" name="task-board" attributes="tasks">
   <div class="add">
     <input type="text" data-testid="new" placeholder="Add task"
            onkeydown="$(e => { if (e.key === 'Enter' && e.target.value.trim()) { el.emit('action', { type: 'added', text: e.target.value.trim() }); e.target.value = ''; } })">

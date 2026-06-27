@@ -38,7 +38,7 @@
 </script>
 
 <!-- The effect lives in the ${} block, guarded so it runs once per id change. -->
-<script type="jst" name="bio-card" props="personId bio loading">
+<script type="jst" name="bio-card" attributes="personId bio loading">
   ${
     if (el._lastId !== personId) {
       if (!el._disconnectCleanup) {
