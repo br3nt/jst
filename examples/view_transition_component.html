@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>JST · the view-transition attribute (per instance)</title>
+  <script type="module" src="../jst.js"></script>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 38rem; margin: 3rem auto; padding: 0 1rem; }
+    .row { display: flex; gap: 2.5rem; }
+    .panel { height: 6rem; min-width: 9rem; display: flex; align-items: center; justify-content: center;
+             border-radius: 12px; color: white; font-size: 1.4rem; }
+    button { padding: .45rem 1rem; cursor: pointer; margin-top: .6rem; }
+    /* The animation, expressed only as old/new snapshots (named: vtpanel). */
+    @keyframes vt-in  { from { transform: translateY(22px);  opacity: 0; } }
+    @keyframes vt-out { to   { transform: translateY(-22px); opacity: 0; } }
+    ::view-transition-old(vtpanel) { animation: vt-out .35s ease both; }
+    ::view-transition-new(vtpanel) { animation: vt-in  .35s ease both; }
+  </style>
+</head>
+<body>
+
+  <h1>The <code>view-transition</code> attribute</h1>
+  <p>The <strong>same component</strong>, twice. The right instance has
+     <code>view-transition</code> on it, so its re-renders animate; the left one
+     doesn't, so it snaps. The component's <em>template is identical</em> — the
+     choice belongs to whoever places the element, per instance.</p>
+
+  <!-- Identical template for both. It only adds a view-transition-name when THIS
+       instance opted in (so the animated one animates distinctly). -->
+  <script type="jst" name="vt-panel" attributes="step">
+    $ const colors = ['#3f51b5', '#2e7d32', '#c62828', '#f57c00'];
+    $ const s = step || 0;
+    $ const named = el.getAttribute('view-transition') != null ? 'view-transition-name: vtpanel;' : '';
+    <div class="panel" data-testid="panel" style="background: $(colors[s % colors.length]); $(named)">Step $(s)</div>
+  </script>
+
+  <div class="row">
+    <div>
+      <strong>Plain</strong>
+      <vt-panel id="plain" step="0"></vt-panel>
+      <div><button data-testid="next-plain">Next (snaps)</button></div>
+    </div>
+    <div>
+      <strong>view-transition</strong>
+      <vt-panel id="anim" view-transition step="0"></vt-panel>
+      <div><button data-testid="next-anim">Next (animates)</button></div>
+    </div>
+  </div>
+
+  <script type="module">
+    const bump = (id) => { const el = document.getElementById(id); el.step = (el.step || 0) + 1; };
+    document.querySelector('[data-testid="next-plain"]').addEventListener('click', () => bump('plain'));
+    document.querySelector('[data-testid="next-anim"]').addEventListener('click', () => bump('anim'));
+    window.__exampleReady = true;
+  </script>
+</body>
+</html>

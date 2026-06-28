@@ -5,6 +5,36 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.4.1 - 2026-06-28
+
+Additive — **no breaking changes**.
+
+### Added
+
+- **`view-transition` attribute.** Put it on a component *instance*
+  (`<my-list view-transition>`) to wrap that instance's re-renders in the
+  browser's View Transition API. It's a usage-site, **per-instance** choice (the
+  consumer's presentation decision) — the component template is unchanged. The
+  first paint is never animated; it degrades to an instant render where the API
+  is unsupported. Style with `::view-transition-*` CSS. See
+  `examples/view_transition_component.html` (and `examples/view_transitions.html`
+  for a from-scratch explainer of View Transitions).
+- **`docs/from-other-frameworks.md`** — an explicit "other frameworks do X; in
+  JST you do Y" map: shared store / context → pass via **attributes**; refs →
+  `el.querySelector`; component two-way → explicit `.attr` + event (`jst-model`
+  stays for native inputs only); `computed`/`effect`/`watch` → cheap inline, pass
+  the value in, or `once()` (expensive derivation is business logic — keep it out
+  of templates); `fx-ignore`/`x-ignore` → wrap the widget in a component + project
+  via a slot; scoped styles → light DOM + global CSS.
+
+### Changed
+
+- **Framework parity:** `fixi/fx-ignore` (i)→✓ — encapsulating a third-party
+  widget behind a component interface and projecting its DOM via a slot (preserved
+  across re-renders) is the idiomatic pattern, not a workaround. **fixi now 18/0.**
+- **Closed the `jst-ignore` proposal (#6):** a slot already gives the uncontrolled
+  region (projected nodes are moved, not re-rendered), so no directive is needed.
+
 ## 0.4.0 - 2026-06-28
 
 The directive release: two opt-in libraries of declarative, string-valued

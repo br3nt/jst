@@ -36,7 +36,7 @@ import { compileTemplateRenderingFunction } from './compiler.js'
  * v0.1 cache renders identically to v0.2, so `JST.version` is the one-liner that
  * tells you which runtime is actually live.
  */
-export const version = '0.4.0'
+export const version = '0.4.1'
 
 const templates = new Map()
 const config = {
@@ -781,6 +781,7 @@ function defineCustomElementFromRender({
   const CustomElementClass = class extends HTMLElement {
     #params = {};
     #renderQueued = false;
+    #hasRendered = false;
     #slotContent = null;
     #slotContentDetached = false;
     #rendering = false;
@@ -863,17 +864,32 @@ function defineCustomElementFromRender({
 
         this.#slotObserver?.disconnect();
         this.#slotObserver = null;
-        this.#rendering = true;
-        try {
-          this.#detachSlotContent();
-          applyRenderedHtml(this, html);
-          this.#applyBindings(bindings);
-          this.#applyModelBindings();
-          this.#fillSlots();
-        } finally {
-          this.#rendering = false;
-          this.#observeSlotMutations();
+
+        const applyDom = () => {
+          this.#rendering = true;
+          try {
+            this.#detachSlotContent();
+            applyRenderedHtml(this, html);
+            this.#applyBindings(bindings);
+            this.#applyModelBindings();
+            this.#fillSlots();
+          } finally {
+            this.#rendering = false;
+            this.#observeSlotMutations();
+          }
+        };
+
+        // Opt-in per instance: `<my-el view-transition>` animates this instance's
+        // re-renders via the View Transition API. Skipped on the first paint
+        // (nothing to animate from) and where the API is unsupported.
+        if (this.#hasRendered
+            && this.getAttribute('view-transition') != null
+            && typeof document.startViewTransition === 'function') {
+          document.startViewTransition(applyDom);
+        } else {
+          applyDom();
         }
+        this.#hasRendered = true;
       } catch (e) {
         console.error(`JST Render Error in <${customElementName}>:`, e);
         console.groupCollapsed('--- Problematic Generated Code ---');
