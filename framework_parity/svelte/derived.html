@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!--
+  Source: https://svelte.dev/tutorial/svelte/derived-state
+  Demonstrates: derived state ($derived) — a value computed from other state.
+  JST status: ✓ exact — compute it in a `$` const at the top of the template; it
+  recomputes every render, like a derived rune.
+-->
+<html lang="en"><head><meta charset="UTF-8"><title>JST · Svelte derived</title>
+<script type="module" src="../../jst.js"></script>
+<style>body{font-family:system-ui,sans-serif;max-width:420px;margin:3rem auto}button{cursor:pointer;padding:6px 14px}</style>
+</head><body>
+<h1>Derived state</h1>
+<script type="jst" name="sv-doubler" attributes="count">
+  $ const doubled = (count || 0) * 2;
+  <button onclick="$(() => el.count = (el.count || 0) + 1)">count is $(count || 0)</button>
+  <p data-testid="out">$(count || 0) doubled is $(doubled)</p>
+</script>
+<sv-doubler data-testid="counter" count="0"></sv-doubler>
+<script>
+window.__exampleReady = true;
+window.__parityTest = async () => { const b=document.querySelector('sv-doubler button'); b.click(); b.click(); await new Promise(r=>setTimeout(r,0)); return { ok: document.querySelector('[data-testid=out]').textContent.includes('2 doubled is 4'), detail: 'derived value tracks source' }; };
+</script>
+</body></html>

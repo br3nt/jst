@@ -1,6 +1,6 @@
 # JST framework-parity study
 
-Can JST reproduce the canonical examples of **HTMX, Alpine.js, Vue, React, fixi, and Lit**?
+Can JST reproduce the canonical examples of **HTMX, Alpine.js, Vue, React, fixi, Lit, Svelte, Solid, and Angular**?
 For every example we built a JST equivalent, validated it loads clean, and
 behaviourally spot-checked a representative sample. Where an example needs a
 "backend", a front-end `fetch` intercept (`lib/mock-fetch.js`) returns HTML
@@ -20,9 +20,12 @@ idiomatically, it is recorded as a gap rather than hidden in an example.
 | React | 11 | 3 | 0 | 14 |
 | fixi | 10 | 8 | 0 | 18 |
 | Lit | 15 | 5 | 0 | 20 |
-| **Total** | **72** | **36** | **0** | **108** |
+| Svelte | 6 | 0 | 0 | 6 |
+| Solid | 5 | 1 | 0 | 6 |
+| Angular | 6 | 0 | 0 | 6 |
+| **Total** | **89** | **37** | **0** | **126** |
 
-**Every example was reproduced** — 72 as exact, idiomatic matches and 36 needing
+**Every example was reproduced** — 89 as exact, idiomatic matches and 37 needing
 a documented workaround. **Zero were impossible.** But "no ✗" is not "no gaps":
 several `(i)` rows still contain real tradeoffs, called out in **Gaps** below.
 
@@ -32,7 +35,7 @@ deviation) · **✗** could not reproduce.
 
 ## Browse them as a website
 
-There's a clickable hub — sidebar of all 108 examples grouped by framework with
+There's a clickable hub — sidebar of all 126 examples grouped by framework with
 status badges, a filter, an embedded viewer, prev/next, and shareable `#hash`
 URLs (itself built in JST). From `custom_js_components/`:
 

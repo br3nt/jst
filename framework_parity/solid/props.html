@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!--
+  Source: https://www.solidjs.com/tutorial/props_defaults
+  Demonstrates: passing props to a child component.
+  JST status: ✓ exact — declared attributes, JSON-coerced from HTML.
+-->
+<html lang="en"><head><meta charset="UTF-8"><title>JST · Solid props</title>
+<script type="module" src="../../jst.js"></script>
+<style>body{font-family:system-ui,sans-serif;max-width:420px;margin:3rem auto}</style>
+</head><body>
+<h1>Props</h1>
+<script type="jst" name="so-greeting" attributes="greeting name">
+  <p>$(greeting || 'Hi') $(name)</p>
+</script>
+<so-greeting data-testid="out" greeting="Hello" name="Solid"></so-greeting>
+<so-greeting name="JST"></so-greeting>
+<script>window.__exampleReady = true;</script>
+</body></html>

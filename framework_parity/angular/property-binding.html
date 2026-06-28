@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!--
+  Source: https://angular.dev/guide/templates/property-binding
+  Demonstrates: property binding [disabled]="expr".
+  JST status: ✓ exact — `.disabled="$(expr)"` sets the DOM property after morph.
+-->
+<html lang="en"><head><meta charset="UTF-8"><title>JST · Angular property binding</title>
+<script type="module" src="../../jst.js"></script>
+<style>body{font-family:system-ui,sans-serif;max-width:420px;margin:3rem auto}button{cursor:pointer;padding:6px 14px;margin-inline-end:.5rem}</style>
+</head><body>
+<h1>Property binding</h1>
+<script type="jst" name="ng-prop" attributes="locked">
+  <button onclick="$(() => el.locked = !el.locked)">Toggle</button>
+  <button data-testid="target" .disabled="$(!!locked)">Submit</button>
+  <p data-testid="out">Submit is $(locked ? 'disabled' : 'enabled')</p>
+</script>
+<ng-prop data-testid="host" locked="true"></ng-prop>
+<script>
+window.__exampleReady = true;
+window.__parityTest = async () => { const b=document.querySelector('ng-prop button'); b.click(); await new Promise(r=>setTimeout(r,0)); return { ok: document.querySelector('[data-testid=target]').disabled === false, detail: '[disabled] reflects bound property' }; };
+</script>
+</body></html>

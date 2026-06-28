@@ -97,7 +97,7 @@
   $ const sf = status || 'all';
   $ const vw = view || 'preview';
   $ const shown = all.filter(it => (sf === 'all' || it.status === sf) && (!q || (it.framework + ' ' + it.name).toLowerCase().includes(q)));
-  $ const frameworks = ['HTMX', 'Alpine.js', 'Vue', 'React', 'fixi', 'Lit'];
+  $ const frameworks = ['HTMX', 'Alpine.js', 'Vue', 'React', 'fixi', 'Lit', 'Svelte', 'Solid', 'Angular'];
   $ const cur = all.find(it => it.file === current) || shown[0] || all[0];
   $ const idx = shown.findIndex(it => it.file === (cur && cur.file));
   $ const prev = idx > 0 ? shown[idx - 1] : null;

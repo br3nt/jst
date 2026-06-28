@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!--
+  Source: https://angular.dev/guide/templates/control-flow
+  Demonstrates: @for with track (keyed list).
+  JST status: ✓ exact — `forEach` + `jst-key` (the track equivalent).
+-->
+<html lang="en"><head><meta charset="UTF-8"><title>JST · Angular @for</title>
+<script type="module" src="../../jst.js"></script>
+<style>body{font-family:system-ui,sans-serif;max-width:420px;margin:3rem auto}</style>
+</head><body>
+<h1>@for control flow</h1>
+<script type="jst" name="ng-for" attributes="items">
+  <ul>
+    $ (items || []).forEach(it => {
+      <li jst-key="$(it.id)">$(it.label)</li>
+    $ })
+  </ul>
+</script>
+<ng-for data-testid="out" id="list"></ng-for>
+<script>
+  document.getElementById('list').items = [{id:1,label:'Parry'},{id:2,label:'Kelsier'},{id:3,label:'Vin'}];
+  window.__exampleReady = true;
+</script>
+</body></html>
