@@ -2,19 +2,16 @@
 <!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
 <!--
   Source: https://htmx.org/examples/keyboard-shortcuts/
-  Demonstrates: triggering a server action from a global keyboard shortcut. HTMX does this
-  declaratively with hx-trigger="keyup[...] from:body" plus a key filter.
-  JST status: (i) partial. The result panel is a clean JST component, BUT JST's @event can
-  only bind to elements written in a template — there is no declarative document/body-level
-  listener and no key-filter modifier. So the global shortcut is a hand-written
-  document.addEventListener('keydown', ...) that matches the combo and fires the fetch.
+  Demonstrates: triggering a server action from a global keyboard shortcut.
+  JST status: ✓ exact — jst-nav's `jst-trigger="keydown[Shift+D] from:body"` is
+  htmx's body-level key-filtered trigger; two hidden triggers map two shortcuts
+  to two requests that swap the panel.
 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <title>JST · keyboard-shortcuts</title>
-<script type="module" src="../../jst.js"></script>
-<script src="../../framework_parity/lib/mock-fetch.js"></script>
+<script type="module" src="../../jst-nav.js"></script>
 <style>
   body { font-family: system-ui, sans-serif; max-width: 32rem; margin: 3rem auto; }
   kbd { background: #eee; border: 1px solid #ccc; border-radius: 4px; padding: 1px 6px; }
@@ -23,41 +20,35 @@
 </head>
 <body>
 
-<script type="jst" name="shortcut-panel" attributes="lastKey content count">
-  <div class="panel">
-    <p data-testid="last">Last shortcut: <kbd>$(lastKey || '—')</kbd> (fired $(count || 0)×)</p>
-    $ if (content) {
-      <div data-testid="content">$(content)</div>
-    $ }
-  </div>
-</script>
-
 <h1>Keyboard Shortcuts</h1>
 <p>Press <kbd>Shift</kbd>+<kbd>D</kbd> to fetch details, or <kbd>Shift</kbd>+<kbd>R</kbd> to reset.</p>
-<shortcut-panel id="panel"></shortcut-panel>
+
+<div id="panel" class="panel"><p data-testid="last">Last shortcut: <kbd>—</kbd></p></div>
+
+<!-- Global, declarative, key-filtered triggers (from:body). -->
+<span hidden jst-get="/api/details" jst-trigger="keydown[Shift+D] from:body" jst-target="#panel" jst-swap="innerHTML"></span>
+<span hidden jst-get="/api/reset"   jst-trigger="keydown[Shift+R] from:body" jst-target="#panel" jst-swap="innerHTML"></span>
 
 <script>
-  JSTMock.route('GET /api/details', () => ({ json: { content: 'Details loaded via keyboard shortcut.' } }), { delay: 60 });
-
-  const panel = document.getElementById('panel');
-  let count = 0;
-  panel.count = 0;
-
-  // Workaround: no declarative "from:body keyup[...]" trigger in JST; bind globally by hand.
-  document.addEventListener('keydown', async e => {
-    if (e.shiftKey && (e.key === 'D' || e.key === 'd')) {
-      panel.lastKey = 'Shift+D';
-      panel.count = ++count;
-      const data = await (await fetch('/api/details')).json();
-      panel.content = data.content;
-    } else if (e.shiftKey && (e.key === 'R' || e.key === 'r')) {
-      panel.lastKey = 'Shift+R';
-      panel.count = ++count;
-      panel.content = '';
-    }
-  });
+  let count = 0, last = '—';
+  const panel = (content) => new Response(
+    `<p data-testid="last">Last shortcut: <kbd>${last}</kbd> (fired ${count}×)</p>`
+    + (content ? `<div data-testid="content">${content}</div>` : ''),
+    { headers: { 'Content-Type': 'text/html' } });
+  const origFetch = window.fetch.bind(window);
+  window.fetch = async (url, opts) => {
+    const u = new URL(url, location.origin);
+    if (u.pathname === '/api/details') { count++; last = 'Shift+D'; return panel('Details loaded via keyboard shortcut.'); }
+    if (u.pathname === '/api/reset')   { count++; last = 'Shift+R'; return panel(''); }
+    return origFetch(url, opts);
+  };
 
   window.__exampleReady = true;
+  window.__parityTest = async () => {
+    document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'D', shiftKey: true, bubbles: true }));
+    await new Promise(r => setTimeout(r, 150));
+    return { ok: !!document.querySelector('[data-testid="content"]'), detail: 'Shift+D from:body fetched the details panel' };
+  };
 </script>
 </body>
 </html>

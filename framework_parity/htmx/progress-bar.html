@@ -2,19 +2,17 @@
 <!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
 <!--
   Source: https://htmx.org/examples/progress-bar/
-  Demonstrates: starting a job, then polling the server for progress and updating a bar
-  until the job completes, then showing a "Complete" / restart state.
-  JST status: (i) partial. The bar is a clean JST component driven by a `progress` prop,
-  BUT the polling is the gap: HTMX polls declaratively with hx-trigger="every 600ms" /
-  load-polling. JST has no polling trigger, so the poll loop is a hand-written setInterval
-  that stops itself at 100%.
+  Demonstrates: start a job, poll for progress, update a bar until complete, then
+  show a restart state.
+  JST status: ✓ exact — jst-nav polls declaratively with
+  `jst-trigger="every 200ms"` + `jst-swap="outerHTML"`. The running response keeps
+  the polling element; the done response drops it, so the poll stops itself.
 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <title>JST · progress-bar</title>
-<script type="module" src="../../jst.js"></script>
-<script src="../../framework_parity/lib/mock-fetch.js"></script>
+<script type="module" src="../../jst-nav.js"></script>
 <style>
   body { font-family: system-ui, sans-serif; max-width: 30rem; margin: 3rem auto; }
   .track { background: #eee; border-radius: 999px; height: 20px; overflow: hidden; }
@@ -24,50 +22,41 @@
 </head>
 <body>
 
-<script type="jst" name="job-progress" attributes="progress state">
-  <div role="progressbar" aria-valuenow="$(progress)" class="track">
-    <div class="bar" data-testid="bar" style="width: $(progress)%"></div>
-  </div>
-  $ if (state === 'idle') {
-    <button data-testid="start" onclick="$(() => el.emit('start'))">Start Job</button>
-  $ } else if (state === 'running') {
-    <p data-testid="running">Running… $(progress)%</p>
-  $ } else if (state === 'done') {
-    <p data-testid="done">Complete!</p>
-    <button data-testid="restart" onclick="$(() => el.emit('start'))">Restart Job</button>
-  $ }
-</script>
-
 <h1>Progress Bar</h1>
-<job-progress id="job"></job-progress>
+<div id="job">
+  <button data-testid="start" jst-action="/api/job" method="post" jst-target="#job" jst-swap="innerHTML">Start Job</button>
+</div>
 
 <script>
   let serverProgress = 0;
-  JSTMock.route('POST /api/job', () => { serverProgress = 0; return { json: { progress: 0 } }; });
-  JSTMock.route('GET /api/job', () => {
-    serverProgress = Math.min(100, serverProgress + 25);
-    return { json: { progress: serverProgress } };
-  }, { delay: 60 });
+  const track = (p) => `<div role="progressbar" aria-valuenow="${p}" class="track"><div class="bar" data-testid="bar" style="width:${p}%"></div></div>`;
+  const running = (p) => `<div class="poller" jst-get="/api/job" jst-trigger="every 200ms" jst-target="this" jst-swap="outerHTML">${track(p)}<p data-testid="running">Running… ${p}%</p></div>`;
+  const done = () => `<div>${track(100)}<p data-testid="done">Complete!</p><button data-testid="restart" jst-action="/api/job" method="post" jst-target="#job" jst-swap="innerHTML">Restart Job</button></div>`;
 
-  const job = document.getElementById('job');
-  job.progress = 0;
-  job.state = 'idle';
-  let poll = null;
-
-  job.addEventListener('start', async () => {
-    await fetch('/api/job', { method: 'POST' });
-    job.progress = 0;
-    job.state = 'running';
-    clearInterval(poll);
-    // Workaround: no declarative polling trigger; poll by hand until complete.
-    poll = setInterval(async () => {
-      const { progress } = await (await fetch('/api/job')).json();
-      job.progress = progress;
-      if (progress >= 100) { clearInterval(poll); job.state = 'done'; }
-    }, 200);
-  });
+  const origFetch = window.fetch.bind(window);
+  window.fetch = async (url, opts) => {
+    const u = new URL(url, location.origin);
+    if (u.pathname === '/api/job') {
+      const method = (opts && opts.method || 'GET').toUpperCase();
+      if (method === 'POST') { serverProgress = 0; return new Response(running(0), { headers: { 'Content-Type': 'text/html' } }); }
+      serverProgress = Math.min(100, serverProgress + 25);
+      return new Response(serverProgress >= 100 ? done() : running(serverProgress), { headers: { 'Content-Type': 'text/html' } });
+    }
+    return origFetch(url, opts);
+  };
 
   window.__exampleReady = true;
+  window.__parityTest = async () => {
+    await window.JST.nav.performRequest(document.querySelector('[data-testid="start"]'));
+    await new Promise(r => setTimeout(r, 80));
+    for (let i = 0; i < 6; i++) {
+      const poller = document.querySelector('.poller');
+      if (!poller) break;
+      await window.JST.nav.performRequest(poller);
+      await new Promise(r => setTimeout(r, 60));
+    }
+    return { ok: !!document.querySelector('[data-testid="done"]'), detail: 'polled to completion via the every-Ns trigger, then stopped' };
+  };
 </script>
 </body>
 </html>

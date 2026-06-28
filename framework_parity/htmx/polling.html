@@ -2,19 +2,17 @@
 <!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
 <!--
   Source: https://htmx.org/examples/update-other-content/ (load-polling / value-added polling)
-  Demonstrates: content that refreshes itself on an interval, and a single response that
+  Demonstrates: content that refreshes on an interval, and a single response that
   updates MORE than one region of the page ("update other content").
-  JST status: (i) partial. Updating multiple regions from one response is trivially
-  idiomatic (one fetch sets props on two page-owned components). The polling itself is the
-  gap: HTMX polls declaratively with hx-trigger="every 1s" / load-polling. JST has no
-  polling/interval trigger, so the loop is a hand-written setInterval (it self-stops here).
+  JST status: ✓ exact — jst-nav polls with `jst-trigger="every 500ms"` and the
+  one response updates two separate regions via out-of-band swaps
+  (`jst-swap-oob`), with `jst-swap="none"` on the poller itself.
 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <title>JST · polling</title>
-<script type="module" src="../../jst.js"></script>
-<script src="../../framework_parity/lib/mock-fetch.js"></script>
+<script type="module" src="../../jst-nav.js"></script>
 <style>
   body { font-family: system-ui, sans-serif; max-width: 30rem; margin: 3rem auto; }
   .badge { display: inline-block; padding: .2rem .7rem; border-radius: 999px; color: white; }
@@ -24,47 +22,41 @@
 </head>
 <body>
 
-<script type="jst" name="metric-value" attributes="value">
-  <strong data-testid="value">$(value != null ? value : '—')</strong>
-</script>
-
-<script type="jst" name="metric-status" attributes="status">
-  <span class="badge $(status === 'up' ? 'up' : 'down')" data-testid="status">$(status || '…')</span>
-</script>
-
 <h1>Load Polling</h1>
-<p>Active users: <metric-value id="value"></metric-value> &nbsp; System: <metric-status id="status"></metric-status></p>
+<p>Active users: <strong id="value" data-testid="value">—</strong> &nbsp;
+   System: <span id="status" class="badge" data-testid="status">…</span></p>
 <button id="stop" data-testid="stop">Stop polling</button>
+
+<!-- A poller with jst-swap="none": the response carries OOB spans that update the
+     two regions above. Removing this element stops the poll (interval self-clears). -->
+<div id="poller" hidden jst-get="/api/metrics" jst-trigger="every 500ms" jst-swap="none"></div>
 
 <script>
   let tick = 0;
-  JSTMock.route('GET /api/metrics', () => {
-    tick++;
-    return { json: { value: 100 + tick * 7, status: tick % 3 === 0 ? 'down' : 'up' } };
-  }, { delay: 40 });
-
-  const value = document.getElementById('value');
-  const status = document.getElementById('status');
-
-  // One response updates two separate regions (the "update other content" idea).
-  async function refresh() {
-    const m = await (await fetch('/api/metrics')).json();
-    value.value = m.value;
-    status.status = m.status;
-  }
-
-  // Workaround: no declarative "every 1s" trigger; poll by hand. Self-stops after 5 ticks.
-  let polls = 0;
-  const timer = setInterval(() => { refresh(); if (++polls >= 5) clearInterval(timer); }, 500);
-  document.getElementById('stop').addEventListener('click', () => clearInterval(timer));
-
-  window.__parityTest = async () => {
-    document.getElementById('stop').click();
-    const before = document.querySelector('[data-testid="value"]').textContent;
-    await new Promise(resolve => setTimeout(resolve, 650));
-    return { ok: document.querySelector('[data-testid="value"]').textContent === before, detail: 'stop polling cancels updates' };
+  const origFetch = window.fetch.bind(window);
+  window.fetch = async (url, opts) => {
+    const u = new URL(url, location.origin);
+    if (u.pathname === '/api/metrics') {
+      tick++;
+      const value = 100 + tick * 7;
+      const status = tick % 3 === 0 ? 'down' : 'up';
+      const html = `<strong id="value" jst-swap-oob="true" data-testid="value">${value}</strong>`
+        + `<span id="status" class="badge ${status}" jst-swap-oob="true" data-testid="status">${status}</span>`;
+      return new Response(html, { headers: { 'Content-Type': 'text/html' } });
+    }
+    return origFetch(url, opts);
   };
-  refresh().then(() => { window.__exampleReady = true; });
+
+  document.getElementById('stop').addEventListener('click', () => document.getElementById('poller').remove());
+
+  window.__exampleReady = true;
+  window.__parityTest = async () => {
+    await window.JST.nav.performRequest(document.getElementById('poller')); // one poll
+    await new Promise(r => setTimeout(r, 150));
+    const v = document.querySelector('[data-testid="value"]').textContent;
+    const s = document.querySelector('[data-testid="status"]').textContent;
+    return { ok: v !== '—' && (s === 'up' || s === 'down'), detail: `one response OOB-updated two regions (value=${v}, status=${s})` };
+  };
 </script>
 </body>
 </html>
