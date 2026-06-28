@@ -93,6 +93,35 @@
     $ }
   </script>
 
+  <script type="jst" name="jst-table" attributes="columns rows sortKey sortDir">
+    $ const cols = columns || [];
+    $ const data = rows || [];
+    $ const key = sortKey || null;
+    $ const dir = sortDir || 'asc';
+    $ const sorted = key ? [...data].sort((a, b) => { const x = a[key], y = b[key]; const c = x < y ? -1 : x > y ? 1 : 0; return dir === 'asc' ? c : -c; }) : data;
+    $ const toggleSort = (k) => { if (el.sortKey === k) { el.sortDir = (el.sortDir === 'asc' ? 'desc' : 'asc'); } else { el.sortKey = k; el.sortDir = 'asc'; } };
+    <table>
+      <thead>
+        <tr>
+          $ cols.forEach(c => {
+            <th aria-sort="$(key === c.key ? (dir === 'asc' ? 'ascending' : 'descending') : 'none')">
+              <button type="button" onclick="$(() => toggleSort(c.key))">$(c.label) $(key === c.key ? (dir === 'asc' ? '▲' : '▼') : '')</button>
+            </th>
+          $ })
+        </tr>
+      </thead>
+      <tbody>
+        $ sorted.forEach(r => {
+          <tr jst-key="$(r.id)">
+            $ cols.forEach(c => {
+              <td>$(r[c.key])</td>
+            $ })
+          </tr>
+        $ })
+      </tbody>
+    </table>
+  </script>
+
   <div class="toolbar">
     <label for="theme">Re-skin as:</label>
     <select id="theme">
@@ -205,6 +234,66 @@
         <jst-combobox options='["Apple","Apricot","Banana","Blackberry","Blueberry","Cherry","Date","Fig","Grape","Kiwi","Lemon","Lime","Mango","Melon","Orange","Peach","Pear","Plum","Raspberry","Strawberry"]'></jst-combobox>
         <p style="color:var(--jst-muted);font-size:0.85em;margin-block-start:var(--jst-space-s)">
           Type to filter; <kbd>↑</kbd><kbd>↓</kbd> to move, <kbd>Enter</kbd> to pick, <kbd>Esc</kbd> to close. ARIA <code>combobox</code>/<code>listbox</code> roles.</p>
+      </div>
+
+      <!-- SWITCH -->
+      <div class="card">
+        <header>
+          <h3>Switch</h3>
+          <span class="jst-tag" data-tech="none">CSS + HTML only</span>
+        </header>
+        <jst-cluster style="--space: var(--jst-space-l)">
+          <label class="jst-switch"><input type="checkbox" checked><span class="track"></span> Wi-Fi</label>
+          <label class="jst-switch"><input type="checkbox"><span class="track"></span> Bluetooth</label>
+        </jst-cluster>
+        <p style="color:var(--jst-muted);font-size:0.85em;margin-block-start:var(--jst-space-s)">A native <code>&lt;input type="checkbox"&gt;</code> styled into a toggle — real checkbox semantics, keyboard, and form participation for free.</p>
+      </div>
+
+      <!-- TOOLTIP -->
+      <div class="card">
+        <header>
+          <h3>Tooltip</h3>
+          <span class="jst-tag" data-tech="none">CSS + HTML only</span>
+        </header>
+        <p>Hover or focus <span class="jst-tooltip" tabindex="0" data-tip="Rendered with CSS ::after — no JavaScript, no component.">this term</span> to see the tip.</p>
+      </div>
+
+      <!-- ALERT -->
+      <div class="card">
+        <header>
+          <h3>Alert / Callout</h3>
+          <span class="jst-tag" data-tech="none">CSS + HTML only</span>
+        </header>
+        <jst-stack style="--space: var(--jst-space-xs)">
+          <div class="jst-alert" data-variant="success"><strong>Saved.</strong> Your changes are live.</div>
+          <div class="jst-alert" data-variant="warning"><strong>Heads up.</strong> This action can't be undone.</div>
+          <div class="jst-alert" data-variant="error"><strong>Failed.</strong> Check your connection and retry.</div>
+        </jst-stack>
+      </div>
+
+      <!-- PROGRESS + SPINNER -->
+      <div class="card">
+        <header>
+          <h3>Progress &amp; Spinner</h3>
+          <span class="jst-tag" data-tech="none">CSS + HTML only</span>
+        </header>
+        <jst-stack style="--space: var(--jst-space-m)">
+          <progress class="jst-progress" value="0.66"></progress>
+          <jst-cluster><span class="jst-spinner" role="status" aria-label="Loading"></span> Loading…</jst-cluster>
+        </jst-stack>
+        <p style="color:var(--jst-muted);font-size:0.85em;margin-block-start:var(--jst-space-s)">Native <code>&lt;progress&gt;</code> + a CSS keyframe spinner.</p>
+      </div>
+
+      <!-- SORTABLE TABLE -->
+      <div class="card">
+        <header>
+          <h3>Data table (sortable)</h3>
+          <span class="jst-tag" data-tech="jst">JST component</span>
+        </header>
+        <jst-table
+          columns='[{"key":"name","label":"Name"},{"key":"role","label":"Role"},{"key":"commits","label":"Commits"}]'
+          rows='[{"id":1,"name":"Ada","role":"Lead","commits":312},{"id":2,"name":"Linus","role":"Core","commits":987},{"id":3,"name":"Grace","role":"Core","commits":154},{"id":4,"name":"Alan","role":"Docs","commits":48}]'></jst-table>
+        <p style="color:var(--jst-muted);font-size:0.85em;margin-block-start:var(--jst-space-s)">Click a column header to sort; click again to reverse. <code>aria-sort</code> reflects state. Ties to the datasource proposal (#28).</p>
       </div>
 
     </jst-stack>
