@@ -86,10 +86,10 @@ point is:
 
 ```html
 <!-- ES-module runtime (relative imports resolve against the same tag) -->
-<script type="module" src="https://cdn.jsdelivr.net/gh/br3nt/jst@v0.2.2/jst.js"></script>
+<script type="module" src="https://cdn.jsdelivr.net/gh/br3nt/jst@v0.4.1/jst.js"></script>
 
 <!-- or the single-file global build (no modules) -->
-<script src="https://cdn.jsdelivr.net/gh/br3nt/jst@v0.2.2/jst.global.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/br3nt/jst@v0.4.1/jst.global.js"></script>
 <!-- minified: jst.global.min.js -->
 ```
 
@@ -230,7 +230,7 @@ Set an explicit cache policy for the JST module files and your component files:
   `max-age=0, must-revalidate`) — so an edit shows on the next reload instead of
   from a guessed cache window.
 - **Production:** fingerprint/version the assets (a tagged CDN path like
-  `…/jst@v0.2.2/jst.js`, or your own digest in the URL) and serve them
+  `…/jst@v0.4.1/jst.js`, or your own digest in the URL) and serve them
   immutable, so a deploy is never served stale. If you cannot fingerprint, set an
   explicit short `max-age` rather than leaving caching to the server's heuristic.
 
@@ -244,7 +244,7 @@ its version rather than diffing source:
 
 ```js
 import { version } from '/jst/jst.js';
-console.log(version);            // "0.2.2"
+console.log(version);            // "0.4.1"
 // or, without importing:
 console.log(window.JST.version); // mirrors the export
 ```
@@ -257,33 +257,37 @@ upgrade took effect.
 
 ## Upgrading across breaking releases
 
-JST templates live in several places — standalone `.html` files, inline
-`<script type="jst">` in server views (`.erb`, `.php`, …), and streamed
-fragments. A removed/renamed construct (for example v0.2's `@event` → `onevent`,
-or the removal of `raw()`/`unsafeHTML()`/`document.jst`) is a **render-time**
-compile error: it only throws when that specific component renders in a browser,
-so it is invisible to server-side and unit tests and easy to miss in one
-surface. Two tools turn that into a build-time signal:
+**What changed, and the before → after for each release, lives in the
+[CHANGELOG](../CHANGELOG.md)** — that's the single source. In 0.x there have been
+two breaking releases: **0.2.0** (`@event` → `on<event>`,
+`raw()`/`unsafeHTML()` → `trustedHTML()`, `document.jst` removed) and **0.3.0**
+(`props=` → `attributes=`).
+
+This section is just the *how*. JST templates live in several places — standalone
+`.html`, inline `<script type="jst">` in server views (`.erb`, `.php`, …), and
+streamed fragments — and a removed/renamed construct is a **render-time** error:
+it only throws when that component renders in a browser, so it's invisible to
+server-side and unit tests and easy to miss in one surface. Two tools turn that
+into a build-time signal:
 
 ```sh
-# Rewrite @event="$(fn)" -> onevent="$(fn)" (preserves modifiers and the value),
-# only inside <script type="jst"> blocks — safe to point at views and fragments.
-node tools/lint.mjs   "app/views/**/*.erb" "public/jst/**/*.html"   # find what's left
-node tools/codemod.mjs "app/views/**/*.erb" "public/jst/**/*.html"  # apply @event migration
+node tools/lint.mjs   "app/views/**/*.erb" "public/jst/**/*.html"   # find leftovers (file:line:col)
+node tools/codemod.mjs "app/views/**/*.erb" "public/jst/**/*.html"  # apply the mechanical @event rewrite
 ```
 
-- **`tools/codemod.mjs`** (`npx jst-codemod`) — mechanical `@event` → `onevent`
-  across every `<script type="jst">` block in the files you pass; `--dry-run`
-  previews. It does **not** rewrite `raw()`/`unsafeHTML()` (those need a judgement
-  call to `trustedHTML()`); lint flags them so you do it deliberately.
 - **`tools/lint.mjs`** (`npx jst-lint`) — scans `<script type="jst">` blocks for
-  removed syntax and exits non-zero with `file:line:col`. Pass `--runtime jst.js`
-  to also catch a stale vendored runtime (leftover `jst-ssr`/`document.jst`). Wire
-  it into CI so a leftover binding fails the build instead of a page.
+  removed/renamed syntax (`@event`, `raw()`/`unsafeHTML()`, `document.jst`, and
+  the removed `props=` keyword) and exits non-zero with `file:line:col`. Wire it
+  into CI so a leftover fails the build instead of a page. `--runtime jst.js`
+  also catches a stale vendored runtime (`jst-ssr`/`document.jst`).
+- **`tools/codemod.mjs`** (`npx jst-codemod`) — mechanically rewrites `@event` →
+  `on<event>` (preserves modifiers; `--dry-run` previews). The other migrations
+  (`raw()`/`unsafeHTML()` → `trustedHTML()`, `props=` → `attributes=`) are a
+  rename/judgement call you apply deliberately — lint points at each one, and the
+  CHANGELOG shows the before → after.
 
-Because both scope the template rules to `<script type="jst">` blocks, they
-ignore `@media`, decorators, email addresses, and other-framework `@click`
-(Alpine/Vue) in the surrounding markup.
+Both scope to `<script type="jst">` blocks, so surrounding `@media`, decorators,
+and other-framework `@click` (Alpine/Vue) are untouched.
 
 ## Direct `file://` mode
 
