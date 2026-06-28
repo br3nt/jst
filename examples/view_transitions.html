@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>View Transitions — what they are</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 34rem; margin: 3rem auto; padding: 0 1rem; line-height: 1.5; }
+    .card {
+      /* Giving the element a view-transition-name lets the browser animate IT
+         specifically (not just a whole-page crossfade). */
+      view-transition-name: card;
+      height: 8rem; display: flex; align-items: center; justify-content: center;
+      border-radius: 12px; color: white; font-size: 1.6rem; margin: 1rem 0;
+    }
+    button, label { font-size: 1rem; }
+    button { padding: .5rem 1rem; cursor: pointer; }
+
+    /* This is the WHOLE animation. The browser makes two snapshots — the OLD
+       card and the NEW card — and exposes them as these pseudo-elements. We
+       just say how each should animate. (Default, with no rules, is a crossfade.) */
+    @keyframes slide-in  { from { transform: translateX(60px);  opacity: 0; } }
+    @keyframes slide-out { to   { transform: translateX(-60px); opacity: 0; } }
+    ::view-transition-old(card) { animation: slide-out .35s ease both; }
+    ::view-transition-new(card) { animation: slide-in  .35s ease both; }
+  </style>
+</head>
+<body>
+
+  <h1>View Transitions</h1>
+  <p>A <strong>View Transition</strong> is a browser API that animates the change
+     between the old and new state of the DOM <em>for you</em>. You don't write
+     the animation frame-by-frame — you just:</p>
+  <ol>
+    <li>call <code>document.startViewTransition(callback)</code>,</li>
+    <li>change the DOM inside the callback (here: swap the card's text + colour),</li>
+    <li>the browser snapshots before &amp; after and animates between them.</li>
+  </ol>
+
+  <p><label><input type="checkbox" id="useVT" checked> Use a View Transition</label>
+     &nbsp; — tick it and click <em>Next</em> to see the slide; untick it to see the
+     same change happen <strong>instantly</strong> (no animation).</p>
+
+  <div class="card" id="card" style="background:#3f51b5">Panel one</div>
+  <button id="next">Next panel</button>
+
+  <p style="color:#666; font-size:.9rem">Supported in Chrome/Edge/Safari; where it's
+     not, the change just happens instantly (graceful — see the <code>if</code> below).</p>
+
+  <script>
+    const panels = [
+      { text: 'Panel one',   color: '#3f51b5' },
+      { text: 'Panel two',   color: '#2e7d32' },
+      { text: 'Panel three', color: '#c62828' },
+    ];
+    let i = 0;
+    const card = document.getElementById('card');
+
+    // The actual DOM change — nothing about animation here.
+    function showNext() {
+      i = (i + 1) % panels.length;
+      card.textContent = panels[i].text;
+      card.style.background = panels[i].color;
+    }
+
+    document.getElementById('next').addEventListener('click', () => {
+      const animate = document.getElementById('useVT').checked && document.startViewTransition;
+      if (animate) {
+        // Wrap the SAME change in a view transition → the browser animates it.
+        document.startViewTransition(() => showNext());
+      } else {
+        showNext();                 // identical change, but instant
+      }
+    });
+  </script>
+</body>
+</html>
