@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!--
+  Source: https://angular.dev/guide/templates/control-flow
+  Demonstrates: @if / @else control flow.
+  JST status: ✓ exact — `$ if (…) { … } else { … }`.
+-->
+<html lang="en"><head><meta charset="UTF-8"><title>JST · Angular @if</title>
+<script type="module" src="../../jst.js"></script>
+<style>body{font-family:system-ui,sans-serif;max-width:420px;margin:3rem auto}button{cursor:pointer;padding:6px 14px}</style>
+</head><body>
+<h1>@if control flow</h1>
+<script type="jst" name="ng-if" attributes="loggedIn">
+  <button onclick="$(() => el.loggedIn = !el.loggedIn)">Toggle</button>
+  $ if (loggedIn) {
+    <p data-testid="out">Welcome, user</p>
+  $ } else {
+    <p data-testid="out">Please sign in</p>
+  $ }
+</script>
+<ng-if data-testid="host" loggedIn="false"></ng-if>
+<script>
+window.__exampleReady = true;
+window.__parityTest = async () => { const b=document.querySelector('ng-if button'); b.click(); await new Promise(r=>setTimeout(r,0)); return { ok: document.querySelector('[data-testid=out]').textContent.includes('Welcome'), detail: '@if/@else swaps content' }; };
+</script>
+</body></html>

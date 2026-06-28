@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!--
+  Source: https://www.solidjs.com/tutorial/introduction_effects
+  Demonstrates: createEffect — a side effect that runs after mount.
+  JST status: (i) partial — JST has no per-signal effect; `once()` covers the
+  run-after-mount case. Per-change effects are expressed as render output instead.
+-->
+<html lang="en"><head><meta charset="UTF-8"><title>JST · Solid effect</title>
+<script type="module" src="../../jst.js"></script>
+<style>body{font-family:system-ui,sans-serif;max-width:420px;margin:3rem auto}</style>
+</head><body>
+<h1>Effect</h1>
+<script type="jst" name="so-effect" attributes="message">
+  $ once('init', () => { el.message = 'Effect ran after mount'; });
+  <p data-testid="out">$(message || 'waiting…')</p>
+</script>
+<so-effect data-testid="out-host"></so-effect>
+<script>
+window.__exampleReady = true;
+window.__parityTest = async () => { await new Promise(r=>setTimeout(r,0)); return { ok: document.querySelector('[data-testid=out]').textContent.includes('Effect ran'), detail: 'once() runs the mount effect' }; };
+</script>
+</body></html>

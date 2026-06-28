@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!--
+  Source: https://www.solidjs.com/tutorial/flow_show
+  Demonstrates: <Show> — conditional rendering with a fallback.
+  JST status: ✓ exact — `$ if (…) { … } else { … }` around template lines.
+-->
+<html lang="en"><head><meta charset="UTF-8"><title>JST · Solid Show</title>
+<script type="module" src="../../jst.js"></script>
+<style>body{font-family:system-ui,sans-serif;max-width:420px;margin:3rem auto}button{cursor:pointer;padding:6px 14px}</style>
+</head><body>
+<h1>Show</h1>
+<script type="jst" name="so-login" attributes="loggedIn">
+  <button onclick="$(() => el.loggedIn = !el.loggedIn)">
+    $ if (loggedIn) {
+      Log out
+    $ } else {
+      Log in
+    $ }
+  </button>
+  $ if (loggedIn) {
+    <p data-testid="msg">Welcome back</p>
+  $ } else {
+    <p data-testid="msg">Please log in</p>
+  $ }
+</script>
+<so-login data-testid="out" loggedIn="false"></so-login>
+<script>
+window.__exampleReady = true;
+window.__parityTest = async () => { const b=document.querySelector('so-login button'); b.click(); await new Promise(r=>setTimeout(r,0)); return { ok: document.querySelector('[data-testid=msg]').textContent.includes('Welcome'), detail: 'Show swaps on the condition' }; };
+</script>
+</body></html>

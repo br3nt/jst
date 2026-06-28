@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!--
+  Source: https://angular.dev/guide/templates/event-binding
+  Demonstrates: event binding (click)="handler()".
+  JST status: ✓ exact — `onclick="$(fn)"`.
+-->
+<html lang="en"><head><meta charset="UTF-8"><title>JST · Angular event binding</title>
+<script type="module" src="../../jst.js"></script>
+<style>body{font-family:system-ui,sans-serif;max-width:420px;margin:3rem auto}button{cursor:pointer;padding:8px 16px}</style>
+</head><body>
+<h1>Event binding</h1>
+<script type="jst" name="ng-clicker" attributes="clicks">
+  <button onclick="$(() => el.clicks = (el.clicks || 0) + 1)">Click me</button>
+  <p data-testid="out">Clicked $(clicks || 0) times</p>
+</script>
+<ng-clicker data-testid="host" clicks="0"></ng-clicker>
+<script>
+window.__exampleReady = true;
+window.__parityTest = async () => { const b=document.querySelector('ng-clicker button'); b.click(); await new Promise(r=>setTimeout(r,0)); return { ok: document.querySelector('[data-testid=out]').textContent.includes('Clicked 1'), detail: '(click) handler fires' }; };
+</script>
+</body></html>

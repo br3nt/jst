@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!--
+  Source: https://www.solidjs.com/tutorial/introduction_signals
+  Demonstrates: createSignal — reactive primitive driving the view.
+  JST status: ✓ exact — a declared attribute is the signal; el.count = … updates it.
+-->
+<html lang="en"><head><meta charset="UTF-8"><title>JST · Solid signals</title>
+<script type="module" src="../../jst.js"></script>
+<style>body{font-family:system-ui,sans-serif;max-width:420px;margin:3rem auto}button{cursor:pointer;padding:8px 16px}</style>
+</head><body>
+<h1>Signals</h1>
+<script type="jst" name="so-counter" attributes="count">
+  <button onclick="$(() => el.count = (el.count || 0) + 1)">Count: $(count || 0)</button>
+</script>
+<so-counter data-testid="counter" count="0"></so-counter>
+<script>
+window.__exampleReady = true;
+window.__parityTest = async () => { const b=document.querySelector('so-counter button'); b.click(); await new Promise(r=>setTimeout(r,0)); return { ok: b.textContent.includes('Count: 1'), detail: 'signal update re-renders' }; };
+</script>
+</body></html>

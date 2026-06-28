@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!--
+  Source: https://svelte.dev/tutorial/svelte/each-blocks
+  Demonstrates: rendering a list with {#each}. Keyed by id.
+  JST status: ✓ exact — `forEach` in a `$` block emits list markup; `jst-key`
+  preserves identity like Svelte's keyed each.
+-->
+<html lang="en"><head><meta charset="UTF-8"><title>JST · Svelte each</title>
+<script type="module" src="../../jst.js"></script>
+<style>body{font-family:system-ui,sans-serif;max-width:420px;margin:3rem auto}</style>
+</head><body>
+<h1>Each blocks</h1>
+<script type="jst" name="sv-cats" attributes="cats">
+  <ul>
+    $ (cats || []).forEach(c => {
+      <li jst-key="$(c.id)">$(c.name)</li>
+    $ })
+  </ul>
+</script>
+<sv-cats data-testid="out" id="cats"></sv-cats>
+<script>
+  document.getElementById('cats').cats = [{id:'a',name:'Kezia'},{id:'b',name:'Blue'},{id:'c',name:'Ziggy'}];
+  window.__exampleReady = true;
+</script>
+</body></html>

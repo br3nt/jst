@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!--
+  Source: https://angular.dev/guide/templates/binding
+  Demonstrates: text interpolation {{ expr }}.
+  JST status: ✓ exact — `$(expr)` is escaped interpolation.
+-->
+<html lang="en"><head><meta charset="UTF-8"><title>JST · Angular interpolation</title>
+<script type="module" src="../../jst.js"></script>
+<style>body{font-family:system-ui,sans-serif;max-width:420px;margin:3rem auto}</style>
+</head><body>
+<h1>Interpolation</h1>
+<script type="jst" name="ng-hello" attributes="name count">
+  <p data-testid="out">Hello, $(name)! You have $(count) messages.</p>
+</script>
+<ng-hello data-testid="host" name="Angular" count="3"></ng-hello>
+<script>window.__exampleReady = true;</script>
+</body></html>

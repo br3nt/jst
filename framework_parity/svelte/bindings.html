@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!--
+  Source: https://svelte.dev/tutorial/svelte/text-inputs
+  Demonstrates: two-way text binding (bind:value).
+  JST status: ✓ exact — `jst-model="name"` reads/writes el.name and re-renders.
+-->
+<html lang="en"><head><meta charset="UTF-8"><title>JST · Svelte bindings</title>
+<script type="module" src="../../jst.js"></script>
+<style>body{font-family:system-ui,sans-serif;max-width:420px;margin:3rem auto}input{font-size:1rem;padding:6px}</style>
+</head><body>
+<h1>Two-way binding</h1>
+<script type="jst" name="sv-greet" attributes="name">
+  <input jst-model="name" placeholder="enter your name">
+  <p data-testid="out">Hello $(name || 'stranger')!</p>
+</script>
+<sv-greet name="world"></sv-greet>
+<script>window.__exampleReady = true;</script>
+</body></html>

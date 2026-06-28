@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!--
+  Source: https://angular.dev/guide/templates/two-way-binding
+  Demonstrates: two-way binding [(ngModel)].
+  JST status: ✓ exact — `jst-model="name"`.
+-->
+<html lang="en"><head><meta charset="UTF-8"><title>JST · Angular two-way</title>
+<script type="module" src="../../jst.js"></script>
+<style>body{font-family:system-ui,sans-serif;max-width:420px;margin:3rem auto}input{font-size:1rem;padding:6px}</style>
+</head><body>
+<h1>Two-way binding</h1>
+<script type="jst" name="ng-model" attributes="name">
+  <input jst-model="name" placeholder="name">
+  <p data-testid="out">Hello $(name || '')</p>
+</script>
+<ng-model name="Angular"></ng-model>
+<script>window.__exampleReady = true;</script>
+</body></html>
