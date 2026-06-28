@@ -179,7 +179,7 @@
 }
 @supports (position-area: bottom) {
   .jst-menu[popover] {
-    position-area: bottom span-inline-end;
+    position-area: bottom span-right;   /* both keywords physical (mixing physical + logical = invalid, dropped) */
     margin-block-start: var(--jst-space-2xs);
     position-try-fallbacks: flip-block, flip-inline;
   }
