@@ -67,17 +67,17 @@
     "framework": "HTMX",
     "name": "active-search",
     "source": "https://htmx.org/examples/active-search/",
-    "status": "partial",
+    "status": "exact",
     "file": "htmx/active-search.html",
-    "note": "Results component clean, but debounce is a hand-written `setTimeout` (no `delay:` modifier)."
+    "note": "jst-nav jst-trigger=\"keyup changed delay:300ms\"; triggering input value sent; in-flight requests abort."
   },
   {
     "framework": "HTMX",
     "name": "progress-bar",
     "source": "https://htmx.org/examples/progress-bar/",
-    "status": "partial",
+    "status": "exact",
     "file": "htmx/progress-bar.html",
-    "note": "Bar is prop-driven, but polling is a hand-written `setInterval` (no `every Ns`)."
+    "note": "jst-nav jst-trigger=\"every 200ms\" + jst-swap=\"outerHTML\"; done response drops the poller so it self-stops."
   },
   {
     "framework": "HTMX",
