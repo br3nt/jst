@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>jst-layout — primitives (no runtime)</title>
+  <!-- Opt-in layout CSS. No <script> on this page: the <jst-*> primitives are
+       pure CSS selectors, so this runs with zero JavaScript, even from file://. -->
+  <link rel="stylesheet" href="../jst-layout.css">
+  <style>
+    /* Demo-only: a second region re-themed by overriding ONE token. Structure
+       below is identical to the first region — only --jst-accent changes. */
+    .reskin { --jst-accent: oklch(0.62 0.17 25); }
+    .swatch { inline-size: var(--jst-space-l); aspect-ratio: 1; border-radius: var(--jst-radius); }
+    [data-side] { background: var(--jst-surface); border-radius: var(--jst-radius); padding: var(--jst-space-m); }
+  </style>
+</head>
+<body>
+  <jst-center style="--measure: 70ch; --gutters: var(--jst-space-m)">
+    <jst-stack style="--space: var(--jst-space-xl)">
+
+      <jst-stack>
+        <h1>jst-layout primitives</h1>
+        <p>
+          Every primitive below is a <code>&lt;jst-*&gt;</code> element styled by
+          CSS alone — there is no script on this page. Per-instance values are set
+          with an inline custom property like <code>--space</code>.
+        </p>
+      </jst-stack>
+
+      <!-- Stack: vertical rhythm -->
+      <jst-box>
+        <jst-stack>
+          <h2>Stack</h2>
+          <p>Even vertical space between flow children.</p>
+          <jst-stack style="--space: var(--jst-space-s)">
+            <input placeholder="Name">
+            <input placeholder="Email">
+            <button>Save</button>
+          </jst-stack>
+        </jst-stack>
+      </jst-box>
+
+      <!-- Cluster: wrapping inline group -->
+      <jst-box>
+        <jst-stack>
+          <h2>Cluster</h2>
+          <p>A group of things that wraps; good for tags and button rows.</p>
+          <jst-cluster style="--space: var(--jst-space-xs)">
+            <button>Primary</button>
+            <button>Another</button>
+            <button>Third</button>
+            <button>Fourth action</button>
+            <button>Fifth</button>
+          </jst-cluster>
+        </jst-stack>
+      </jst-box>
+
+      <!-- Grid: intrinsic responsive grid -->
+      <jst-box>
+        <jst-stack>
+          <h2>Grid</h2>
+          <p>As many <code>--min</code>-wide columns as fit. Resize to see it reflow — no media queries.</p>
+          <jst-grid style="--min: 8rem">
+            <jst-box><strong>One</strong></jst-box>
+            <jst-box><strong>Two</strong></jst-box>
+            <jst-box><strong>Three</strong></jst-box>
+            <jst-box><strong>Four</strong></jst-box>
+          </jst-grid>
+        </jst-stack>
+      </jst-box>
+
+      <!-- Sidebar: sidebar + content, no breakpoint -->
+      <jst-box>
+        <jst-stack>
+          <h2>Sidebar</h2>
+          <p>Sidebar beside content; wraps under it when content gets too narrow.</p>
+          <jst-sidebar style="--content-min: 60%; --side-width: 12rem">
+            <div data-side>
+              <jst-stack style="--space: var(--jst-space-xs)">
+                <strong>Aside</strong>
+                <a href="#">Link one</a>
+                <a href="#">Link two</a>
+              </jst-stack>
+            </div>
+            <div>
+              <p>Main content takes the rest of the row and stays at least 60% wide before the sidebar wraps above it.</p>
+            </div>
+          </jst-sidebar>
+        </jst-stack>
+      </jst-box>
+
+      <!-- Theming: identical markup, one token overridden -->
+      <jst-box class="reskin">
+        <jst-stack>
+          <h2>Re-themed by one token</h2>
+          <p>This box only sets <code>--jst-accent</code>. The shade ramp and accessible
+             foreground re-derive automatically.</p>
+          <!-- Shades derived at use-site from --jst-accent, so they re-theme with
+               the subtree override. (The :root --jst-accent-NNN tokens would stay
+               frozen to the root accent — see the gotcha in the design doc.) -->
+          <jst-cluster>
+            <div class="swatch" style="background: oklch(from var(--jst-accent) calc(l + 0.10) c h)"></div>
+            <div class="swatch" style="background: var(--jst-accent)"></div>
+            <div class="swatch" style="background: oklch(from var(--jst-accent) calc(l - 0.08) c h)"></div>
+            <div class="swatch" style="background: oklch(from var(--jst-accent) calc(l - 0.16) c h)"></div>
+            <button>Accent button</button>
+          </jst-cluster>
+        </jst-stack>
+      </jst-box>
+
+    </jst-stack>
+  </jst-center>
+</body>
+</html>

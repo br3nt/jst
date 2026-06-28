@@ -18,7 +18,7 @@
 </head>
 <body>
 
-<script type="jst" name="x-effect-demo" props="count">
+<script type="jst" name="x-effect-demo" attributes="count">
   $ // side effect — re-runs every render (JST's stand-in for x-effect)
   $ document.title = 'count = ' + count;
   $ el.__runs = (el.__runs || 0) + 1;

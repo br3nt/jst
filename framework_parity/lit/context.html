@@ -31,14 +31,14 @@
 
 <!-- Deep consumer: just wants the current user. In Lit it would @consume the
      context; here it receives the value as a forwarded prop. -->
-<script type="jst" name="user-avatar" props="user">
+<script type="jst" name="user-avatar" attributes="user">
   $ const name = (user && user.name) || '?';
   <div class="avatar" data-testid="avatar" title="$(name)">$(name.slice(0,1).toUpperCase())</div>
   <span data-testid="avatar-name">$(name)</span>
 </script>
 
 <!-- Intermediate layer: owns no user state, yet must forward it down. -->
-<script type="jst" name="app-nav" props="user">
+<script type="jst" name="app-nav" attributes="user">
   <div class="nav">
     <strong>MyApp</strong>
     <span style="flex:1"></span>
@@ -47,7 +47,7 @@
 </script>
 
 <!-- Provider at the top of the tree: holds the value. -->
-<script type="jst" name="app-shell" props="user">
+<script type="jst" name="app-shell" attributes="user">
   <app-nav .user="$(user)"></app-nav>
 </script>
 

@@ -139,7 +139,7 @@
       <code>jst.js</code> this page loads. View source: it's all here, nothing built.</p>
 
     <!-- A live JST component, defined inline. -->
-    <script type="jst" name="jst-demo-counter" props="count">
+    <script type="jst" name="jst-demo-counter" attributes="count">
       <button class="demo-btn" onclick="$(() => el.count = (el.count || 0) + 1)">
         Clicked $(count || 0) time$(count === 1 ? '' : 's')
       </button>

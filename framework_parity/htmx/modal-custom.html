@@ -29,7 +29,7 @@
 </head>
 <body>
 
-<script type="jst" name="modal-dialog" props="open title body">
+<script type="jst" name="modal-dialog" attributes="open title body">
   $ if (open) {
     <div class="backdrop" jst-transition="modal-fade" data-testid="backdrop"
          onclick="$(e => { if (e.target === e.currentTarget) el.emit('close'); })">

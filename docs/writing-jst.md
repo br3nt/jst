@@ -24,7 +24,7 @@ A JST component is a `<script type="jst">` block with:
   template.
 
 ```html
-<script type="jst" name="hello-name" props="name count">
+<script type="jst" name="hello-name" attributes="name count">
   <p>Hello, <strong>$(name)</strong>.</p>
   <button onclick="$(() => el.count = (el.count || 0) + 1)">
     Clicked $(count || 0) times
@@ -81,7 +81,7 @@ Multi-word props use kebab-case in HTML attributes:
 The prop is still declared and used as `userName`:
 
 ```html
-<script type="jst" name="user-card" props="userName">
+<script type="jst" name="user-card" attributes="userName">
   <p>$(userName)</p>
 </script>
 ```
@@ -108,7 +108,7 @@ From ordinary page JavaScript:
 Inside another JST template, use `.prop="$(expr)"`:
 
 ```html
-<script type="jst" name="todo-list" props="items">
+<script type="jst" name="todo-list" attributes="items">
   <ul>
     $ (items || []).forEach(item => {
       <todo-item jst-key="$(item.id)" .item="$(item)"></todo-item>
@@ -150,7 +150,7 @@ first paint.** Pick by payload size:
     { "title": "Ship it", "html": "…12KB of rendered markdown…" }
   </script>
 
-  <script type="jst" name="article-view" props="contentId data">
+  <script type="jst" name="article-view" attributes="contentId data">
     $ once('load-content', () => {
     $   const sidecar = document.getElementById(el.contentId);
     $   if (sidecar) el.data = JSON.parse(sidecar.textContent);  // sets prop -> re-renders
@@ -186,7 +186,7 @@ first paint.** Pick by payload size:
 Example with control flow:
 
 ```html
-<script type="jst" name="todo-list" props="items filter">
+<script type="jst" name="todo-list" attributes="items filter">
   $ const visible = (items || []).filter(item => {
   $   if (filter === 'done') return item.done;
   $   if (filter === 'active') return !item.done;
@@ -207,7 +207,7 @@ For reusable controlled components, emit what happened and let the parent/page
 decide what state changes.
 
 ```html
-<script type="jst" name="todo-item" props="item">
+<script type="jst" name="todo-item" attributes="item">
   <li class="$(item.done ? 'done' : '')">
     <input
       type="checkbox"
@@ -256,7 +256,7 @@ from the event rather than from `el`:
   `currentTarget`.
 
 ```html
-<script type="jst" name="kanban-board" props="columns">
+<script type="jst" name="kanban-board" attributes="columns">
   $ columns.forEach(col => {
     <div class="col"
          ondragover.prevent="$(event => event.currentTarget.classList.add('over'))"
@@ -333,7 +333,7 @@ state, canvas state, and transitions.
 Slots project the custom element's original children:
 
 ```html
-<script type="jst" name="app-panel" props="title">
+<script type="jst" name="app-panel" attributes="title">
   <section>
     <h2>$(title)</h2>
     <div class="body">$(slot())</div>
@@ -378,7 +378,7 @@ A fetched HTML fragment can include a component definition and the markup that
 uses it:
 
 ```html
-<script type="jst" name="app-notice" props="message">
+<script type="jst" name="app-notice" attributes="message">
   <aside>$(message)</aside>
 </script>
 
@@ -410,7 +410,7 @@ commits, so the rendered DOM and slots are present. It runs once per connection
 and registers the function `setup` returns as disconnect cleanup:
 
 ```html
-<script type="jst" name="chart-card" props="data">
+<script type="jst" name="chart-card" attributes="data">
   $(slot('canvas'))
   ${ once('chart', () => {
     const chart = window.MyChart.mount(el)
@@ -444,7 +444,7 @@ responsibility.
 already scopes the search to this instance, so you never need a global lookup:
 
 ```html
-<script type="jst" name="search-box" props="value">
+<script type="jst" name="search-box" attributes="value">
   <input class="field" type="search" .value="$(value)"
     oninput="$(e => el.emit('search', e.target.value))">
   <button class="clear" onclick="$(() => el.emit('search', ''))">×</button>
@@ -462,7 +462,7 @@ that derived id — never a hard-coded literal. Derive it from a prop that is un
 per instance:
 
 ```html
-<script type="jst" name="form-field" props="name label">
+<script type="jst" name="form-field" attributes="name label">
   <label for="$('f-' + name)">$(label)</label>
   <input id="$('f-' + name)" name="$(name)">
 </script>
@@ -472,7 +472,7 @@ If no naturally-unique prop exists, stamp a generated token on the element once 
 reuse it across renders:
 
 ```html
-<script type="jst" name="hint-input" props="label hint">
+<script type="jst" name="hint-input" attributes="label hint">
   $ el.uid ??= 'h' + Math.random().toString(36).slice(2, 8);
   <input aria-describedby="$(el.uid)" aria-label="$(label)">
   <p id="$(el.uid)" class="hint">$(hint)</p>
@@ -488,7 +488,7 @@ classes, and derive ids per instance when you must have one. See
 - Custom element names must include a hyphen: `todo-item`, not `todo`.
 - Prefer classes over internal ids; if you must have an id, derive it per instance
   (section 14) so two instances never collide.
-- Declare every prop in `props="..."`.
+- Declare every prop in `attributes="..."`.
 - Use camelCase in `props`, kebab-case in normal HTML attributes.
 - Remember that `.prop` and `on<event>` bindings only compile inside JST templates.
 - Add `jst-key` to real lists.

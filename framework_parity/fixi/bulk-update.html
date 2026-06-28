@@ -25,7 +25,7 @@
 </head>
 <body>
 
-<script type="jst" name="user-table" props="users draft">
+<script type="jst" name="user-table" attributes="users draft">
   $ const d = draft || {};
   $ const effective = u => (d[u.id] !== undefined ? d[u.id] : u.active);
   $ const list = users || [];

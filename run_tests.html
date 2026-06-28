@@ -209,7 +209,7 @@
             const componentName = nextName('x-late');
             const template = createTemplate({
                 name: componentName,
-                attributes: [{ name: 'props', value: 'msg' }],
+                attributes: [{ name: 'attributes', value: 'msg' }],
                 body: `<div>$(msg)</div>`,
             });
 
@@ -229,12 +229,12 @@
             const root = document.createElement('section');
             const insideTemplate = createTemplate({
                 name: insideName,
-                attributes: [{ name: 'props', value: 'msg' }],
+                attributes: [{ name: 'attributes', value: 'msg' }],
                 body: `<span>$(msg)</span>`,
             });
             const outsideTemplate = createTemplate({
                 name: outsideName,
-                attributes: [{ name: 'props', value: 'msg' }],
+                attributes: [{ name: 'attributes', value: 'msg' }],
                 body: `<span>$(msg)</span>`,
             });
 
@@ -257,7 +257,7 @@
 
         await suite.testAsync("JST Runtime: Missing Template Resolver", async () => {
             const componentName = nextName('x-resolved');
-            const fragment = `<script type="jst" name="${componentName}" props="msg"><p class="resolved">$(msg)</p><\/script>`;
+            const fragment = `<script type="jst" name="${componentName}" attributes="msg"><p class="resolved">$(msg)</p><\/script>`;
             const url = `data:text/html;charset=utf-8,${encodeURIComponent(fragment)}`;
 
             configure({
@@ -290,7 +290,7 @@
             // resolver is configured only afterward. configure() must re-scan so
             // the already-present element resolves; otherwise it never upgrades.
             const componentName = nextName('x-initial-load');
-            const fragment = `<script type="jst" name="${componentName}" props="msg"><p class="resolved">$(msg)</p><\/script>`;
+            const fragment = `<script type="jst" name="${componentName}" attributes="msg"><p class="resolved">$(msg)</p><\/script>`;
             const url = `data:text/html;charset=utf-8,${encodeURIComponent(fragment)}`;
 
             // Resolver is null: element present + scanned, nothing resolves it.
@@ -326,10 +326,10 @@
             const resolvedName = nextName('x-resolved-locked');
             const blockedTemplate = createTemplate({
                 name: blockedName,
-                attributes: [{ name: 'props', value: 'msg' }],
+                attributes: [{ name: 'attributes', value: 'msg' }],
                 body: `<p class="blocked">$(msg)</p>`,
             });
-            const fragment = `<script type="jst" name="${resolvedName}" props="msg"><p class="resolved">$(msg)</p><\/script>`;
+            const fragment = `<script type="jst" name="${resolvedName}" attributes="msg"><p class="resolved">$(msg)</p><\/script>`;
             const url = `data:text/html;charset=utf-8,${encodeURIComponent(fragment)}`;
 
             configure({
@@ -366,12 +366,12 @@
             const componentName = nextName('x-duplicate');
             const first = createTemplate({
                 name: componentName,
-                attributes: [{ name: 'props', value: 'value' }],
+                attributes: [{ name: 'attributes', value: 'value' }],
                 body: `<div>First $(value)</div>`,
             });
             const second = createTemplate({
                 name: componentName,
-                attributes: [{ name: 'props', value: 'value' }],
+                attributes: [{ name: 'attributes', value: 'value' }],
                 body: `<div>Second $(value)</div>`,
             });
 
@@ -390,7 +390,7 @@
 
             const template = createTemplate({
                 name: componentName,
-                attributes: [{ name: 'props', value: 'value' }],
+                attributes: [{ name: 'attributes', value: 'value' }],
                 body: `<div>$(value)</div>`,
             });
 
@@ -406,7 +406,7 @@
             const componentName = nextName('x-escape');
             registerCustomElementFromTemplate(createTemplate({
                 name: componentName,
-                attributes: [{ name: 'props', value: 'text' }],
+                attributes: [{ name: 'attributes', value: 'text' }],
                 body: `<div class="out">$(text)</div>`,
             }));
 
@@ -429,7 +429,7 @@
             const componentName = nextName('x-trusted');
             registerCustomElementFromTemplate(createTemplate({
                 name: componentName,
-                attributes: [{ name: 'props', value: 'html' }],
+                attributes: [{ name: 'attributes', value: 'html' }],
                 body: `<div class="out">$(trustedHTML(html))</div>`,
             }));
 
@@ -449,7 +449,7 @@
             const componentName = nextName('x-url-helper');
             registerCustomElementFromTemplate(createTemplate({
                 name: componentName,
-                attributes: [{ name: 'props', value: 'href' }],
+                attributes: [{ name: 'attributes', value: 'href' }],
                 body: `<a class="link" href="$(url(href))">link</a>`,
             }));
 
@@ -473,7 +473,7 @@
             const componentName = nextName('x-json');
             registerCustomElementFromTemplate(createTemplate({
                 name: componentName,
-                attributes: [{ name: 'props', value: 'count active label' }],
+                attributes: [{ name: 'attributes', value: 'count active label' }],
                 body: `<div class="out">$(label): $(count + 1) $(active ? 'on' : 'off')</div>`,
             }));
 
@@ -495,7 +495,7 @@
             const componentName = nextName('x-kebab');
             registerCustomElementFromTemplate(createTemplate({
                 name: componentName,
-                attributes: [{ name: 'props', value: 'userName' }],
+                attributes: [{ name: 'attributes', value: 'userName' }],
                 body: `<div class="out">$(userName)</div>`,
             }));
 
@@ -524,7 +524,7 @@
 
             registerCustomElementFromTemplate(createTemplate({
                 name: componentName,
-                attributes: [{ name: 'props', value: 'items' }],
+                attributes: [{ name: 'attributes', value: 'items' }],
                 body: `<div class="out">$(items[0].label)</div>`,
             }));
 
@@ -544,13 +544,13 @@
 
             registerCustomElementFromTemplate(createTemplate({
                 name: childName,
-                attributes: [{ name: 'props', value: 'data' }],
+                attributes: [{ name: 'attributes', value: 'data' }],
                 body: `<div class="label">$(data ? data.label : 'none')</div>`,
             }));
 
             registerCustomElementFromTemplate(createTemplate({
                 name: parentName,
-                attributes: [{ name: 'props', value: 'value' }],
+                attributes: [{ name: 'attributes', value: 'value' }],
                 body: `<${childName} .data="$(value)"></${childName}>`,
             }));
 
@@ -577,12 +577,12 @@
 
             registerCustomElementFromTemplate(createTemplate({
                 name: childName,
-                attributes: [{ name: 'props', value: 'value' }],
+                attributes: [{ name: 'attributes', value: 'value' }],
                 body: `<div class="child">child:$(value && value.label ? value.label : value)</div>`,
             }));
             registerCustomElementFromTemplate(createTemplate({
                 name: parentName,
-                attributes: [{ name: 'props', value: 'payload' }],
+                attributes: [{ name: 'attributes', value: 'payload' }],
                 body: `<${childName} .value="$(payload)"></${childName}>`,
             }));
 
@@ -616,15 +616,15 @@
             const routerName = nextName('x-i14-router');
 
             registerCustomElementFromTemplate(createTemplate({
-                name: aName, attributes: [{ name: 'props', value: 'item' }],
+                name: aName, attributes: [{ name: 'attributes', value: 'item' }],
                 body: `<div class="a">A:$(item.body)</div>`,
             }));
             registerCustomElementFromTemplate(createTemplate({
-                name: bName, attributes: [{ name: 'props', value: 'item' }],
+                name: bName, attributes: [{ name: 'attributes', value: 'item' }],
                 body: `<div class="b">B:$(item.body)</div>`,
             }));
             registerCustomElementFromTemplate(createTemplate({
-                name: routerName, attributes: [{ name: 'props', value: 'kind item' }],
+                name: routerName, attributes: [{ name: 'attributes', value: 'kind item' }],
                 body: `$ if (kind === 'a') {\n<${aName} .item="$(item)"></${aName}>\n$ } else {\n<${bName} .item="$(item)"></${bName}>\n$ }`,
             }));
 
@@ -650,7 +650,7 @@
             const componentName = nextName('x-emitter');
             registerCustomElementFromTemplate(createTemplate({
                 name: componentName,
-                attributes: [{ name: 'props', value: 'count' }],
+                attributes: [{ name: 'attributes', value: 'count' }],
                 body: `<button class="btn" onclick="$(() => el.emit('poke', { count }))">go</button>`,
             }));
 
@@ -744,7 +744,7 @@
             const componentName = nextName('x-model');
             registerCustomElementFromTemplate(createTemplate({
                 name: componentName,
-                attributes: [{ name: 'props', value: 'title done picked colors shade choices' }],
+                attributes: [{ name: 'attributes', value: 'title done picked colors shade choices' }],
                 body: `<input class="title" jst-model="title">
                        <input class="done" type="checkbox" jst-model="done">
                        <input class="pick-one" type="radio" name="pick" value="one" jst-model="picked">
@@ -820,7 +820,7 @@
             const componentName = nextName('x-once');
             registerCustomElementFromTemplate(createTemplate({
                 name: componentName,
-                attributes: [{ name: 'props', value: 'count' }],
+                attributes: [{ name: 'attributes', value: 'count' }],
                 body: `<div>$(count)<button class="btn" onclick="$(() => el.emit('fired'))">go</button></div>`,
             }));
 
@@ -850,7 +850,7 @@
             const componentName = nextName('x-card');
             registerCustomElementFromTemplate(createTemplate({
                 name: componentName,
-                attributes: [{ name: 'props', value: 'title' }],
+                attributes: [{ name: 'attributes', value: 'title' }],
                 body: `<div class="card"><h2 class="title">$(title)</h2><div class="body">$(slot())</div></div>`,
             }));
 
@@ -930,7 +930,7 @@
             const componentName = nextName('x-preserve');
             registerCustomElementFromTemplate(createTemplate({
                 name: componentName,
-                attributes: [{ name: 'props', value: 'value' }],
+                attributes: [{ name: 'attributes', value: 'value' }],
                 body: `<label>Value <input class="field" value="$(value)"></label>`,
             }));
 
@@ -958,7 +958,7 @@
             const componentName = nextName('x-form-props');
             registerCustomElementFromTemplate(createTemplate({
                 name: componentName,
-                attributes: [{ name: 'props', value: 'value checked disabled' }],
+                attributes: [{ name: 'attributes', value: 'value checked disabled' }],
                 body: `<input class="field" value="$(value)" disabled="$(disabled)">
                        <input type="checkbox" class="box" checked="$(checked)">`,
             }));
@@ -995,7 +995,7 @@
             const componentName = nextName('x-controlled-form');
             registerCustomElementFromTemplate(createTemplate({
                 name: componentName,
-                attributes: [{ name: 'props', value: 'value text checked choice' }],
+                attributes: [{ name: 'attributes', value: 'value text checked choice' }],
                 body: `<div>
                     <input class="field" value="$(value)">
                     <textarea class="area">$(text)</textarea>
@@ -1047,7 +1047,7 @@
             const componentName = nextName('x-caret');
             registerCustomElementFromTemplate(createTemplate({
                 name: componentName,
-                attributes: [{ name: 'props', value: 'value tick' }],
+                attributes: [{ name: 'attributes', value: 'value tick' }],
                 body: `<label>Value <input class="field" value="$(value)"></label><span class="tick">$(tick)</span>`,
             }));
 
@@ -1078,7 +1078,7 @@
             const componentName = nextName('x-uncontrolled-form');
             registerCustomElementFromTemplate(createTemplate({
                 name: componentName,
-                attributes: [{ name: 'props', value: 'tick' }],
+                attributes: [{ name: 'attributes', value: 'tick' }],
                 body: `<div>
                     <input class="text">
                     <textarea class="area"></textarea>
@@ -1123,7 +1123,7 @@
             const componentName = nextName('x-rich-form-props');
             registerCustomElementFromTemplate(createTemplate({
                 name: componentName,
-                attributes: [{ name: 'props', value: 'text choice picked' }],
+                attributes: [{ name: 'attributes', value: 'text choice picked' }],
                 body: `<div>
                     <textarea class="area">$(text)</textarea>
                     <input type="radio" name="picked" class="radio-a" value="a" checked="$(picked === 'a')">
@@ -1169,14 +1169,14 @@
 
             registerCustomElementFromTemplate(createTemplate({
                 name: childName,
-                attributes: [{ name: 'props', value: 'data' }],
+                attributes: [{ name: 'attributes', value: 'data' }],
                 body: `$ el.renderCount = (el.renderCount || 0) + 1;
                        <span class="renders">$(el.renderCount)</span>`,
             }));
 
             registerCustomElementFromTemplate(createTemplate({
                 name: parentName,
-                attributes: [{ name: 'props', value: 'data tick' }],
+                attributes: [{ name: 'attributes', value: 'data tick' }],
                 body: `<${childName} .data="$(data)"></${childName}><span class="tick">$(tick)</span>`,
             }));
 
@@ -1202,7 +1202,7 @@
 
         const makeKeyedListTemplate = (componentName) => createTemplate({
             name: componentName,
-            attributes: [{ name: 'props', value: 'items' }],
+            attributes: [{ name: 'attributes', value: 'items' }],
             body: `<ul>
                 $ (items || []).forEach(item => {
                     $ if (item.tag === 'div') {
@@ -1317,7 +1317,7 @@
             const componentName = nextName('x-keyed-shrink-adjacent');
             registerCustomElementFromTemplate(createTemplate({
                 name: componentName,
-                attributes: [{ name: 'props', value: 'items' }],
+                attributes: [{ name: 'attributes', value: 'items' }],
                 body: `$ items.forEach(item => {<i class="row" jst-key="$(item.id)" data-k="$(item.id)">$(item.label)</i>$ })`,
             }));
 
@@ -1345,7 +1345,7 @@
             const componentName = nextName('x-keyed-list');
             registerCustomElementFromTemplate(createTemplate({
                 name: componentName,
-                attributes: [{ name: 'props', value: 'items' }],
+                attributes: [{ name: 'attributes', value: 'items' }],
                 body: `<div>
                     $ items.forEach(item => {
                         <input class="row" jst-key="$(item.id)" value="$(item.label)">
@@ -1375,7 +1375,7 @@
             const componentName = nextName('x-shrink-adjacent');
             registerCustomElementFromTemplate(createTemplate({
                 name: componentName,
-                attributes: [{ name: 'props', value: 'items' }],
+                attributes: [{ name: 'attributes', value: 'items' }],
                 body: `$ items.forEach(item => {<i class="row">$(item)</i>$ })`,
             }));
 
@@ -1400,7 +1400,7 @@
             const componentName = nextName('x-keyed-uncontrolled');
             registerCustomElementFromTemplate(createTemplate({
                 name: componentName,
-                attributes: [{ name: 'props', value: 'items' }],
+                attributes: [{ name: 'attributes', value: 'items' }],
                 body: `<ol>
                     $ items.forEach(item => {
                         <li jst-key="$(item.id)">
@@ -1444,7 +1444,7 @@
             const componentName = nextName('x-nested-keys');
             registerCustomElementFromTemplate(createTemplate({
                 name: componentName,
-                attributes: [{ name: 'props', value: 'groups' }],
+                attributes: [{ name: 'attributes', value: 'groups' }],
                 body: `<div>
                     $ groups.forEach(group => {
                         <section jst-key="$(group.id)">
@@ -1495,7 +1495,7 @@
             const componentName = nextName('x-table-keys');
             registerCustomElementFromTemplate(createTemplate({
                 name: componentName,
-                attributes: [{ name: 'props', value: 'rows' }],
+                attributes: [{ name: 'attributes', value: 'rows' }],
                 body: `<table>
                     <tbody>
                         $ rows.forEach(row => {
@@ -1535,7 +1535,7 @@
             const componentName = nextName('x-svg-morph');
             registerCustomElementFromTemplate(createTemplate({
                 name: componentName,
-                attributes: [{ name: 'props', value: 'radius color' }],
+                attributes: [{ name: 'attributes', value: 'radius color' }],
                 body: `<svg viewBox="0 0 20 20">
                     <circle class="dot" cx="10" cy="10" r="$(radius)" fill="$(color)"></circle>
                 </svg>`,
@@ -1575,7 +1575,7 @@
             const componentName = nextName('x-transition-list');
             registerCustomElementFromTemplate(createTemplate({
                 name: componentName,
-                attributes: [{ name: 'props', value: 'shown' }],
+                attributes: [{ name: 'attributes', value: 'shown' }],
                 body: `<div>
                     $ if (shown) {
                         <p class="box" jst-transition="fade">visible</p>
@@ -1623,7 +1623,7 @@
             const componentName = nextName('x-transition-move');
             registerCustomElementFromTemplate(createTemplate({
                 name: componentName,
-                attributes: [{ name: 'props', value: 'items' }],
+                attributes: [{ name: 'attributes', value: 'items' }],
                 body: `<ol>
                     $ items.forEach(item => {
                         <li class="row" jst-key="$(item.id)" jst-transition="shift">$(item.label)</li>
@@ -1660,7 +1660,7 @@
             const componentName = nextName('x-transition-end');
             registerCustomElementFromTemplate(createTemplate({
                 name: componentName,
-                attributes: [{ name: 'props', value: 'items' }],
+                attributes: [{ name: 'attributes', value: 'items' }],
                 body: `<ul>
                     $ items.forEach(item => {
                         <li jst-key="$(item)" jst-transition="fade" data-k="$(item)">$(item)</li>
@@ -1697,7 +1697,7 @@
             const componentName = nextName('x-transition-readd');
             registerCustomElementFromTemplate(createTemplate({
                 name: componentName,
-                attributes: [{ name: 'props', value: 'items' }],
+                attributes: [{ name: 'attributes', value: 'items' }],
                 body: `<ul>
                     $ items.forEach(item => {
                         <li jst-key="$(item)" jst-transition="fade" data-k="$(item)">$(item)</li>
@@ -1752,7 +1752,7 @@
             const componentName = nextName('x-slot-rerender');
             registerCustomElementFromTemplate(createTemplate({
                 name: componentName,
-                attributes: [{ name: 'props', value: 'title' }],
+                attributes: [{ name: 'attributes', value: 'title' }],
                 body: `<article><h2>$(title)</h2><div class="body">$(slot())</div></article>`,
             }));
 
@@ -1804,7 +1804,7 @@
             const componentName = nextName('x-once-helper');
             registerCustomElementFromTemplate(createTemplate({
                 name: componentName,
-                attributes: [{ name: 'props', value: 'tick' }],
+                attributes: [{ name: 'attributes', value: 'tick' }],
                 body: `\${ once('subscription', () => {
                          window.__jstOnceSetup = (window.__jstOnceSetup || 0) + 1;
                          return () => { window.__jstOnceCleanup = (window.__jstOnceCleanup || 0) + 1; };
@@ -1836,7 +1836,7 @@
             const componentName = nextName('x-dev-error');
             registerCustomElementFromTemplate(createTemplate({
                 name: componentName,
-                attributes: [{ name: 'props', value: 'items' }],
+                attributes: [{ name: 'attributes', value: 'items' }],
                 body: `<div>$(items.length)</div>`,
             }));
 
@@ -1860,13 +1860,13 @@
 
             registerCustomElementFromTemplate(createTemplate({
                 name: childName,
-                attributes: [{ name: 'props', value: 'text' }],
+                attributes: [{ name: 'attributes', value: 'text' }],
                 body: `<div class="child-text">$(text)</div>`,
             }));
 
             registerCustomElementFromTemplate(createTemplate({
                 name: parentName,
-                attributes: [{ name: 'props', value: 'mode' }],
+                attributes: [{ name: 'attributes', value: 'mode' }],
                 body: `<section><${childName} text="hello"></${childName}><p class="mode">$(mode)</p></section>`,
             }));
 
@@ -1895,13 +1895,13 @@
 
             registerCustomElementFromTemplate(createTemplate({
                 name: childName,
-                attributes: [{ name: 'props', value: 'count' }],
+                attributes: [{ name: 'attributes', value: 'count' }],
                 body: `<button class="inc" onclick="$(() => el.count = (el.count || 0) + 1)">$(count || 0)</button>`,
             }));
 
             registerCustomElementFromTemplate(createTemplate({
                 name: parentName,
-                attributes: [{ name: 'props', value: 'tick' }],
+                attributes: [{ name: 'attributes', value: 'tick' }],
                 body: `<section><${childName} count="0"></${childName}><p class="tick">$(tick)</p></section>`,
             }));
 

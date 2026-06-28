@@ -23,7 +23,7 @@
 <body>
 <h1>Derived value (willUpdate)</h1>
 
-<script type="jst" name="name-tag" props="first last">
+<script type="jst" name="name-tag" attributes="first last">
   $ // willUpdate equivalent: derive before the markup that uses it.
   $ const fullName = [first, last].filter(Boolean).join(' ').trim();
   <label>First <input type="text" data-testid="first" jst-model="first"></label>

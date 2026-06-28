@@ -222,7 +222,7 @@
     </div>
   </section>
 
-  <script type="jst" name="concern-list" props="items">
+  <script type="jst" name="concern-list" attributes="items">
     <div class="list-demo">
       <strong>Rendered item count: $((items || []).length)</strong>
       <ol>
@@ -261,13 +261,13 @@
     </div>
   </section>
 
-  <script type="jst" name="concern-local-form" props="title done">
+  <script type="jst" name="concern-local-form" attributes="title done">
     <label>Title <input jst-model="title"></label>
     <label><input type="checkbox" jst-model="done"> Done</label>
     <p>Local state: <strong>$(title || '')</strong> / $(done ? 'done' : 'open')</p>
   </script>
 
-  <script type="jst" name="concern-parent-field" props="value">
+  <script type="jst" name="concern-parent-field" attributes="value">
     <label>Parent value
       <input .value="$(value || '')" oninput="$(event => el.emit('value-change', event.target.value))">
     </label>
@@ -290,7 +290,7 @@
     </div>
   </section>
 
-  <script type="jst" name="concern-stale-counter" props="count">
+  <script type="jst" name="concern-stale-counter" attributes="count">
     <p>Count: <strong>$(count || 0)</strong></p>
     <button onclick="$(() => { el.count = (count || 0) + 1; el.count = (count || 0) + 1; })">
       Add twice using render value
@@ -320,7 +320,7 @@
     </div>
   </section>
 
-  <script type="jst" name="concern-html-boundary" props="userhtml trustedhtml">
+  <script type="jst" name="concern-html-boundary" attributes="userhtml trustedhtml">
     <div class="split">
       <div>
         <h3>Escaped</h3>
@@ -370,7 +370,7 @@
     </div>
   </section>
 
-  <script type="jst" name="concern-moving-list" props="items">
+  <script type="jst" name="concern-moving-list" attributes="items">
     <ol class="move-list">
       $ (items || []).forEach(item => {
         <li jst-key="$(item.id)" jst-transition="shift">
@@ -400,7 +400,7 @@
     </div>
   </section>
 
-  <script type="jst" name="concern-timer-view" props="tick running">
+  <script type="jst" name="concern-timer-view" attributes="tick running">
     <span class="timer">$(running ? 'Running' : 'Stopped'): $(tick || 0)</span>
   </script>
 </main>
@@ -451,7 +451,7 @@
   });
 
   const remoteFragment = [
-    '<script type="jst" name="app-remote-note" props="message">',
+    '<script type="jst" name="app-remote-note" attributes="message">',
     '  <aside class="remote-note">',
     '    <strong>Fetched template:</strong> $(message)',
     '  </aside>',
@@ -531,8 +531,9 @@
     document.querySelectorAll('pre[data-source]').forEach(pre => {
       const script = scripts.find(candidate => candidate.getAttribute('name') === pre.dataset.source);
       if (!script) return;
-      const props = script.hasAttribute('props') ? ' props="' + script.getAttribute('props') + '"' : '';
-      pre.textContent = '<script type="jst" name="' + script.getAttribute('name') + '"' + props + '>\n'
+      const declared = script.getAttribute('attributes') ?? script.getAttribute('attrs');
+      const attrs = declared != null ? ' attributes="' + declared + '"' : '';
+      pre.textContent = '<script type="jst" name="' + script.getAttribute('name') + '"' + attrs + '>\n'
         + formatTemplateSource(script) + '\n</' + 'script>';
     });
   }

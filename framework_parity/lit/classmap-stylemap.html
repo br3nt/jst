@@ -25,7 +25,7 @@
 <body>
 <h1>classMap &amp; styleMap</h1>
 
-<script type="jst" name="map-demo" props="active big color">
+<script type="jst" name="map-demo" attributes="active big color">
   $ // classMap({box:true, active, big}) -> an expression-built class string
   $ const cls = ['box', active ? 'active' : '', big ? 'big' : ''].filter(Boolean).join(' ');
   $ // styleMap({color, fontWeight: big ? 'bold' : 'normal'}) -> a style string

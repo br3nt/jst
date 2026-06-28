@@ -1,0 +1,190 @@
+/*!
+ * jst-layout — CSS-first base + layout primitives for JST (opt-in, no runtime)
+ * © Brent Jacobs · https://github.com/br3nt/jst · MIT
+ *
+ * PROTOTYPE / first slice. Loads with no JavaScript: the <jst-*> primitives are
+ * styled purely as CSS selectors. See docs/design/component-library.md.
+ *
+ *   <link rel="stylesheet" href="jst-layout.css">
+ *
+ * Theme by overriding the --jst-* tokens at :root. Structure stays put, the look
+ * re-themes (the CSS Zen Garden bet).
+ */
+
+/* ============================================================================
+ * Layer 0 — design tokens (the theming contract)
+ * ==========================================================================*/
+:root {
+  color-scheme: light dark;
+
+  /* One modular space scale: one base + one ratio → derived steps. */
+  --jst-space: 1rem;
+  --jst-ratio: 1.5;
+  --jst-space-3xs: calc(var(--jst-space) / var(--jst-ratio) / var(--jst-ratio) / var(--jst-ratio));
+  --jst-space-2xs: calc(var(--jst-space) / var(--jst-ratio) / var(--jst-ratio));
+  --jst-space-xs:  calc(var(--jst-space) / var(--jst-ratio));
+  --jst-space-s:   calc(var(--jst-space) / 1.2);
+  --jst-space-m:   var(--jst-space);
+  --jst-space-l:   calc(var(--jst-space) * var(--jst-ratio));
+  --jst-space-xl:  calc(var(--jst-space) * var(--jst-ratio) * var(--jst-ratio));
+  --jst-space-2xl: calc(var(--jst-space) * var(--jst-ratio) * var(--jst-ratio) * var(--jst-ratio));
+
+  /* Measure (max line length), radius, border, fonts. */
+  --jst-measure: 60ch;
+  --jst-radius: 0.5rem;
+  --jst-border-width: 1px;
+  --jst-font: system-ui, sans-serif;
+  --jst-font-mono: ui-monospace, monospace;
+  --jst-line: 1.5;
+
+  /* Color roles. light-dark() (Baseline 2024) gives free dark mode; the
+     @media fallback below covers older engines. */
+  --jst-bg:      light-dark(oklch(0.99 0 0), oklch(0.18 0.01 250));
+  --jst-surface: light-dark(oklch(0.96 0 0), oklch(0.23 0.01 250));
+  --jst-fg:      light-dark(oklch(0.22 0.01 250), oklch(0.93 0.01 250));
+  --jst-muted:   light-dark(oklch(0.50 0.01 250), oklch(0.70 0.01 250));
+  --jst-border:  light-dark(oklch(0.87 0.01 250), oklch(0.35 0.01 250));
+
+  /* One accent → a derived shade ramp via relative color syntax (Baseline 2024).
+     Override --jst-accent alone and the ramp follows. */
+  --jst-accent:     oklch(0.55 0.18 255);
+  --jst-accent-400: oklch(from var(--jst-accent) calc(l + 0.10) c h);
+  --jst-accent-600: oklch(from var(--jst-accent) calc(l - 0.08) c h);
+  --jst-accent-700: oklch(from var(--jst-accent) calc(l - 0.16) c h);
+
+  /* Accessible foreground on the accent. Static fallback; upgraded to
+     contrast-color() where supported (not yet Baseline). */
+  --jst-accent-fg: white;
+}
+
+@supports (color: contrast-color(red)) {
+  :root { --jst-accent-fg: contrast-color(var(--jst-accent)); }
+}
+
+/* Fallback for engines without light-dark(): swap the role tokens by scheme. */
+@supports not (color: light-dark(white, black)) {
+  :root {
+    --jst-bg: oklch(0.99 0 0); --jst-surface: oklch(0.96 0 0);
+    --jst-fg: oklch(0.22 0.01 250); --jst-muted: oklch(0.50 0.01 250);
+    --jst-border: oklch(0.87 0.01 250);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --jst-bg: oklch(0.18 0.01 250); --jst-surface: oklch(0.23 0.01 250);
+      --jst-fg: oklch(0.93 0.01 250); --jst-muted: oklch(0.70 0.01 250);
+      --jst-border: oklch(0.35 0.01 250);
+    }
+  }
+}
+
+/* ============================================================================
+ * Layer 0 — classless base (style elements directly, Pico-style)
+ * ==========================================================================*/
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  padding: var(--jst-space-l);
+  background: var(--jst-bg);
+  color: var(--jst-fg);
+  font-family: var(--jst-font);
+  line-height: var(--jst-line);
+  -webkit-text-size-adjust: 100%;
+}
+
+h1, h2, h3, h4, p, ul, ol, figure, blockquote { margin-block: 0; }
+:where(h1, h2, h3, h4) { line-height: 1.15; text-wrap: balance; }
+p { max-inline-size: var(--jst-measure); text-wrap: pretty; }
+
+a { color: var(--jst-accent-600); }
+
+:where(button, .jst-button) {
+  font: inherit;
+  padding: var(--jst-space-xs) var(--jst-space-s);
+  border: var(--jst-border-width) solid transparent;
+  border-radius: var(--jst-radius);
+  background: var(--jst-accent);
+  color: var(--jst-accent-fg);
+  cursor: pointer;
+}
+/* Derive the hover shade at use-site (not from the :root --jst-accent-600 token)
+   so a button inside a re-themed subtree hovers to the right shade. See the
+   relative-color gotcha in docs/design/component-library.md. */
+:where(button, .jst-button):hover { background: oklch(from var(--jst-accent) calc(l - 0.08) c h); }
+
+:where(input, textarea, select) {
+  font: inherit;
+  padding: var(--jst-space-xs) var(--jst-space-s);
+  border: var(--jst-border-width) solid var(--jst-border);
+  border-radius: var(--jst-radius);
+  background: var(--jst-bg);
+  color: var(--jst-fg);
+}
+
+code, pre { font-family: var(--jst-font-mono); }
+
+/* ============================================================================
+ * Layer 1 — layout primitives (Every Layout recipes, CSS-only)
+ * Set per-instance values with an inline custom property, e.g.
+ *   <jst-stack style="--space: var(--jst-space-l)">
+ * ==========================================================================*/
+
+/* Stack: even vertical rhythm between flow children. */
+jst-stack {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: var(--space, var(--jst-space-m));
+}
+
+/* Cluster: a wrapping group of inline-ish things (tags, button rows). */
+jst-cluster {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space, var(--jst-space-s));
+  justify-content: var(--justify, flex-start);
+  align-items: var(--align, center);
+}
+
+/* Grid: intrinsic responsive grid — as many --min-wide columns as fit, no
+   media queries. min() keeps a single column from overflowing on narrow screens. */
+jst-grid {
+  display: grid;
+  gap: var(--space, var(--jst-space-m));
+  grid-template-columns: repeat(auto-fit, minmax(min(var(--min, 16rem), 100%), 1fr));
+}
+
+/* Sidebar: a sidebar next to a content area that wraps under it when the
+   content would get narrower than --content-min. No breakpoint. */
+jst-sidebar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space, var(--jst-space-m));
+}
+jst-sidebar > * {
+  flex-grow: 1;
+  flex-basis: var(--side-width, auto);
+}
+jst-sidebar > :not([data-side]) {
+  flex-basis: 0;
+  flex-grow: 999;
+  min-inline-size: var(--content-min, 50%);
+}
+
+/* Center: a centered column capped at the measure, with optional gutters. */
+jst-center {
+  display: block;
+  box-sizing: content-box;
+  max-inline-size: var(--measure, var(--jst-measure));
+  margin-inline: auto;
+  padding-inline: var(--gutters, 0);
+}
+
+/* Box: a padded surface with a border and matching radius. */
+jst-box {
+  display: block;
+  padding: var(--space, var(--jst-space-m));
+  border: var(--jst-border-width) solid var(--jst-border);
+  border-radius: var(--jst-radius);
+  background: var(--surface, var(--jst-surface));
+}

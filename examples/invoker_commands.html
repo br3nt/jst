@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>JST × Invoker Commands — no synthetic ids</title>
+  <link rel="stylesheet" href="../jst-layout.css">
+  <style>
+    dialog { border: var(--jst-border-width) solid var(--jst-border); border-radius: var(--jst-radius); padding: var(--jst-space-l); }
+    dialog::backdrop { background: oklch(0 0 0 / 0.4); }
+    output { font-variant-numeric: tabular-nums; font-weight: 700; }
+    .panel[hidden] { display: none; }
+    .panel { margin-block-start: var(--jst-space-xs); padding: var(--jst-space-s); border: var(--jst-border-width) solid var(--jst-border); border-radius: var(--jst-radius); background: var(--jst-bg); }
+    .log { font-family: var(--jst-font-mono); font-size: 0.85em; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <script type="module" src="../jst.js"></script>
+
+  <!-- ============================================================
+       Component B: self-contained widget. Internal toggle uses
+       el.querySelector — scoped to THIS instance. NO ids anywhere
+       in the template; it is a template, so it needs none.
+       ============================================================ -->
+  <script type="jst" name="disclosure-card" attributes="label">
+    <jst-box>
+      <jst-cluster>
+        <strong>$(label)</strong>
+        <button onclick="$(() => { const p = el.querySelector('.panel'); p.hidden = !p.hidden; })">Toggle ▾</button>
+      </jst-cluster>
+      <div class="panel" hidden>
+        <jst-stack style="--space: var(--jst-space-2xs)">
+          <span>Panel for <strong>$(label)</strong> — toggled by scoped <code>el.querySelector</code>, no id.</span>
+          <a href="#">Item one</a>
+          <a href="#">Item two</a>
+        </jst-stack>
+      </div>
+    </jst-box>
+  </script>
+
+  <!-- ============================================================
+       Component C: receives a CUSTOM command from usage HTML.
+       The INSTANCE is given an id by the author at the usage site;
+       the component listens on itself. No internal/synthetic ids.
+       ============================================================ -->
+  <script type="jst" name="tally-card" attributes="label count">
+    $ if (!el.__cmdWired) { el.__cmdWired = true; el.addEventListener('command', (e) => {
+    $   if (e.command === '--increment') el.count = (el.count || 0) + 1;
+    $   else if (e.command === '--reset') el.count = 0;
+    $   window.__log && window.__log(`${el.id}: ${e.command} (src=${e.source.textContent.trim()}) → ${el.count || 0}`);
+    $ }); }
+    <jst-box>
+      <jst-cluster>
+        <strong>$(label)</strong>
+        <output>$(count || 0)</output>
+      </jst-cluster>
+    </jst-box>
+  </script>
+
+  <jst-center style="--measure: 70ch; --gutters: var(--jst-space-m)">
+    <jst-stack style="--space: var(--jst-space-xl)">
+
+      <jst-stack>
+        <h1>Invoker Commands without a synthetic id system</h1>
+        <p>Ids come only from the author at the usage site, or not at all.
+           No id is ever minted inside a template.</p>
+      </jst-stack>
+
+      <!-- Pattern A: native command/commandfor in plain usage HTML.
+           Author owns the ids; multiple instances = distinct author ids.
+           Zero JS, zero JST. -->
+      <jst-stack>
+        <h2>A. Plain usage HTML — author-owned ids (no JS, no component)</h2>
+        <jst-cluster>
+          <button command="show-modal" commandfor="signup">Open signup</button>
+          <button command="show-modal" commandfor="settings">Open settings</button>
+        </jst-cluster>
+        <dialog id="signup">
+          <jst-stack><p>Signup dialog (<code>#signup</code>).</p>
+            <button command="close" commandfor="signup">Close</button></jst-stack>
+        </dialog>
+        <dialog id="settings">
+          <jst-stack><p>Settings dialog (<code>#settings</code>).</p>
+            <button command="close" commandfor="settings">Close</button></jst-stack>
+        </dialog>
+      </jst-stack>
+
+      <!-- Pattern B: component internals, scoped querySelector, NO ids. -->
+      <jst-stack>
+        <h2>B. Component internals — scoped <code>el.querySelector</code>, no ids</h2>
+        <disclosure-card label="Alpha"></disclosure-card>
+        <disclosure-card label="Bravo"></disclosure-card>
+        <disclosure-card label="Charlie"></disclosure-card>
+      </jst-stack>
+
+      <!-- Pattern C: custom command to a component instance.
+           The INSTANCE id is author-given at the usage site. -->
+      <jst-stack>
+        <h2>C. Custom <code>--command</code> to a component (author-given instance id)</h2>
+        <jst-cluster>
+          <button command="--increment" commandfor="tally-a">+1 A</button>
+          <button command="--increment" commandfor="tally-b">+1 B</button>
+          <button command="--reset"     commandfor="tally-b">reset B</button>
+        </jst-cluster>
+        <tally-card id="tally-a" label="Tally A"></tally-card>
+        <tally-card id="tally-b" label="Tally B"></tally-card>
+        <jst-box class="log" id="logbox">log:</jst-box>
+      </jst-stack>
+
+    </jst-stack>
+  </jst-center>
+
+  <script type="module">
+    const box = document.getElementById('logbox');
+    window.__log = (line) => { box.textContent += '\n' + line; };
+  </script>
+</body>
+</html>

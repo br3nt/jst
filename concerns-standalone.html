@@ -835,20 +835,20 @@ const reservedPropNames = new Set([
   '__bind',
 ])
 
-function parsePropsAttribute(value) {
+function parseAttributesDeclaration(value) {
   if (!value || !value.trim()) return []
 
   return value
     .split(/[\s,]+/)
     .filter(Boolean)
-    .map(prop => {
-      if (!jsIdentifierPattern.test(prop)) {
-        throw new Error(`Invalid JST prop "${prop}". Props must be valid JavaScript identifiers.`)
+    .map(attr => {
+      if (!jsIdentifierPattern.test(attr)) {
+        throw new Error(`Invalid JST attribute "${attr}". Template attributes must be valid JavaScript identifiers.`)
       }
-      if (reservedPropNames.has(prop)) {
-        throw new Error(`Invalid JST prop "${prop}". Props cannot use JavaScript keywords or JST helper names.`)
+      if (reservedPropNames.has(attr)) {
+        throw new Error(`Invalid JST attribute "${attr}". Template attributes cannot use JavaScript keywords or JST helper names.`)
       }
-      return prop
+      return attr
     })
 }
 
@@ -869,20 +869,31 @@ class TemplateRenderingFunction {
 }
 
 function getTemplateRenderingFunctionParams(templateElement) {
-  // Props are declared in one case-preserving attribute value:
-  //   <script type="jst" name="todo-item" props="item onToggle">
-  // HTML lowercases attribute names, but not quoted attribute values, so this
-  // keeps internal JS identifiers greppable and supports expected names like
-  // `name` without conflicting with the template's own `name` attribute.
-  const paramMap = {}
-  const props = parsePropsAttribute(templateElement.getAttribute('props') || '')
+  // A template's inputs are declared in one case-preserving attribute value:
+  //   <script type="jst" name="todo-item" attributes="item onToggle">
+  // `attrs="…"` is accepted as a shorthand alias. HTML lowercases attribute
+  // names, but not quoted attribute values, so this keeps internal JS
+  // identifiers greppable and supports expected names like `name` without
+  // conflicting with the template's own `name` attribute.
+  // Detect the removed `props="…"` keyword via getAttribute (not hasAttribute):
+  // the precompile tool's lightweight element model implements getAttribute only.
+  if (templateElement.getAttribute('props') != null) {
+    const tag = templateElement.getAttribute('name') || '(unnamed)'
+    throw new Error(`JST: the props="…" declaration was renamed. Use attributes="…" (or the attrs="…" shorthand) on <script type="jst" name="${tag}">.`)
+  }
 
-  props.forEach(prop => {
-    paramMap[camelToKebab(prop)] = prop
+  const paramMap = {}
+  const declared = templateElement.getAttribute('attributes')
+    ?? templateElement.getAttribute('attrs')
+    ?? ''
+  const attributes = parseAttributesDeclaration(declared)
+
+  attributes.forEach(attr => {
+    paramMap[camelToKebab(attr)] = attr
   })
 
   return {
-    functionParams: Array.from(new Set(props)),
+    functionParams: Array.from(new Set(attributes)),
     paramMap,
   }
 }
@@ -902,7 +913,7 @@ function compileTemplateRenderingFunction(templateElement) {
 /**
  * JST Framework Core
  *
- * Templates are declared as <script type="jst" name="tag-name" props="prop otherProp">
+ * Templates are declared as <script type="jst" name="tag-name" attributes="prop otherProp">
  * and registered as real custom elements. Data flows in through attributes
  * (JSON-parsed primitives) or properties (rich values: el.items = [...]).
  * Data flows out through bubbling CustomEvents (el.emit('name', detail)).
@@ -2285,7 +2296,7 @@ initializeTemplates();
     </div>
   </section>
 
-  <script type="jst" name="concern-list" props="items">
+  <script type="jst" name="concern-list" attributes="items">
     <div class="list-demo">
       <strong>Rendered item count: $((items || []).length)</strong>
       <ol>
@@ -2324,13 +2335,13 @@ initializeTemplates();
     </div>
   </section>
 
-  <script type="jst" name="concern-local-form" props="title done">
+  <script type="jst" name="concern-local-form" attributes="title done">
     <label>Title <input jst-model="title"></label>
     <label><input type="checkbox" jst-model="done"> Done</label>
     <p>Local state: <strong>$(title || '')</strong> / $(done ? 'done' : 'open')</p>
   </script>
 
-  <script type="jst" name="concern-parent-field" props="value">
+  <script type="jst" name="concern-parent-field" attributes="value">
     <label>Parent value
       <input .value="$(value || '')" oninput="$(event => el.emit('value-change', event.target.value))">
     </label>
@@ -2353,7 +2364,7 @@ initializeTemplates();
     </div>
   </section>
 
-  <script type="jst" name="concern-stale-counter" props="count">
+  <script type="jst" name="concern-stale-counter" attributes="count">
     <p>Count: <strong>$(count || 0)</strong></p>
     <button onclick="$(() => { el.count = (count || 0) + 1; el.count = (count || 0) + 1; })">
       Add twice using render value
@@ -2383,7 +2394,7 @@ initializeTemplates();
     </div>
   </section>
 
-  <script type="jst" name="concern-html-boundary" props="userhtml trustedhtml">
+  <script type="jst" name="concern-html-boundary" attributes="userhtml trustedhtml">
     <div class="split">
       <div>
         <h3>Escaped</h3>
@@ -2433,7 +2444,7 @@ initializeTemplates();
     </div>
   </section>
 
-  <script type="jst" name="concern-moving-list" props="items">
+  <script type="jst" name="concern-moving-list" attributes="items">
     <ol class="move-list">
       $ (items || []).forEach(item => {
         <li jst-key="$(item.id)" jst-transition="shift">
@@ -2463,7 +2474,7 @@ initializeTemplates();
     </div>
   </section>
 
-  <script type="jst" name="concern-timer-view" props="tick running">
+  <script type="jst" name="concern-timer-view" attributes="tick running">
     <span class="timer">$(running ? 'Running' : 'Stopped'): $(tick || 0)</span>
   </script>
 </main>
@@ -2514,7 +2525,7 @@ initializeTemplates();
   });
 
   const remoteFragment = [
-    '<script type="jst" name="app-remote-note" props="message">',
+    '<script type="jst" name="app-remote-note" attributes="message">',
     '  <aside class="remote-note">',
     '    <strong>Fetched template:</strong> $(message)',
     '  </aside>',
@@ -2594,7 +2605,7 @@ initializeTemplates();
     document.querySelectorAll('pre[data-source]').forEach(pre => {
       const script = scripts.find(candidate => candidate.getAttribute('name') === pre.dataset.source);
       if (!script) return;
-      const props = script.hasAttribute('props') ? ' props="' + script.getAttribute('props') + '"' : '';
+      const props = script.hasAttribute('props') ? ' attributes="' + script.getAttribute('props') + '"' : '';
       pre.textContent = '<script type="jst" name="' + script.getAttribute('name') + '"' + props + '>\n'
         + formatTemplateSource(script) + '\n</' + 'script>';
     });

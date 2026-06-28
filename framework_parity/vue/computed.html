@@ -16,7 +16,7 @@
 </head>
 <body>
 
-<script type="jst" name="computed-demo" props="author">
+<script type="jst" name="computed-demo" attributes="author">
   $ const a = author || { name: '', books: [] };
   $ // "computed": derived from state, recomputed each render.
   $ const publishedBooksMessage = a.books.length > 0 ? 'Yes' : 'No';

@@ -1,7 +1,7 @@
 # JST primer - for building parity examples
 
 JST is a tiny no-build component framework. A
-`<script type="jst" name="tag-name" props="...">` becomes a real custom
+`<script type="jst" name="tag-name" attributes="...">` becomes a real custom
 element. Read this fully before building examples.
 
 **HARD RULE: never modify JST core** (`/jst.js`, `/compiler.js`, `/interpreter.js`,
@@ -11,7 +11,7 @@ done, that's a finding - mark it `(i)` or `x`. Do not "fix" it by editing the fr
 ## Defining a component
 
 ```html
-<script type="jst" name="my-counter" props="count label">
+<script type="jst" name="my-counter" attributes="count label">
   <div>
     <strong>$(label)</strong>: $(count)
     <button onclick="$(() => el.count = (el.count || 0) + 1)">+</button>
@@ -21,7 +21,7 @@ done, that's a finding - mark it `(i)` or `x`. Do not "fix" it by editing the fr
 <my-counter count="0" label="Clicks"></my-counter>
 ```
 
-- `props="count label"` declares case-preserved **props** available as bare
+- `attributes="count label"` declares case-preserved **props** available as bare
   locals inside the template.
 - Each prop is also a **property**: `el.count = 5` updates and re-renders.
 - External multi-word HTML attributes use kebab-case and map to camelCase props:
@@ -54,7 +54,7 @@ Inside a template you can use the props by name plus these globals:
 ### Control flow examples
 
 ```html
-<script type="jst" name="x-list" props="items filter">
+<script type="jst" name="x-list" attributes="items filter">
   $ const shown = (items || []).filter(i => !filter || i.kind === filter);
   <ul>
     $ shown.forEach(item => {

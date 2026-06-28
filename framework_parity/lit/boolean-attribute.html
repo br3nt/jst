@@ -24,7 +24,7 @@
 <h1>Boolean attribute</h1>
 
 <!-- ?hidden=${!show} → JST .hidden="$(!show)": adds/removes the boolean attribute. -->
-<script type="jst" name="toggle-panel" props="show">
+<script type="jst" name="toggle-panel" attributes="show">
   <div>
     <p class="panel" id="panel" data-testid="panel" .hidden="$(!show)">
       You can see me when <code>show</code> is true.

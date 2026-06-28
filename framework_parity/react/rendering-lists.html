@@ -23,7 +23,7 @@
 <h1>Rendering lists</h1>
 
 <!-- Maps an array to keyed <li> nodes. -->
-<script type="jst" name="people-list" props="people">
+<script type="jst" name="people-list" attributes="people">
   <ul data-testid="list">
     $ (people || []).forEach(person => {
       <li jst-key="$(person.id)">

@@ -15,12 +15,12 @@
 <body>
 
 <!-- Child: a dumb renderer taking one prop. -->
-<script type="jst" name="todo-item" props="todo">
+<script type="jst" name="todo-item" attributes="todo">
   <li>$(todo.text)</li>
 </script>
 
 <!-- Parent: owns the list, passes each item down as a property. -->
-<script type="jst" name="todo-grocery" props="groceries">
+<script type="jst" name="todo-grocery" attributes="groceries">
   <ol id="grocery-list">
     $ (groceries || []).forEach(item => {
       <todo-item .todo="$(item)"></todo-item>

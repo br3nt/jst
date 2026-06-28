@@ -185,7 +185,7 @@ test('templates auto-register when the runtime loads', async () => {
   const runtime = await loadRuntime([
     {
       name: 'x-auto',
-      attributes: [{ name: 'props', value: 'count' }],
+      attributes: [{ name: 'attributes', value: 'count' }],
       innerHTML: '<div>$(count)</div>',
     },
   ]);
@@ -202,12 +202,12 @@ test('duplicate template names are warned and ignored', async () => {
   const runtime = await loadRuntime([
     {
       name: 'x-duplicate',
-      attributes: [{ name: 'props', value: 'value' }],
+      attributes: [{ name: 'attributes', value: 'value' }],
       innerHTML: '<div>first $(value)</div>',
     },
     {
       name: 'x-duplicate',
-      attributes: [{ name: 'props', value: 'value' }],
+      attributes: [{ name: 'attributes', value: 'value' }],
       innerHTML: '<div>second $(value)</div>',
     },
   ]);
@@ -227,7 +227,7 @@ test('registering the same template node twice is idempotent', async () => {
   try {
     const template = createTemplate({
       name: 'x-same-node',
-      attributes: [{ name: 'props', value: 'value' }],
+      attributes: [{ name: 'attributes', value: 'value' }],
       innerHTML: '<div>$(value)</div>',
     });
 
@@ -247,7 +247,7 @@ test('registration logs only in dev mode', async () => {
   try {
     runtime.module.registerCustomElementFromTemplate(createTemplate({
       name: 'x-quiet',
-      attributes: [{ name: 'props', value: 'value' }],
+      attributes: [{ name: 'attributes', value: 'value' }],
       innerHTML: '<div>$(value)</div>',
     }));
 
@@ -256,7 +256,7 @@ test('registration logs only in dev mode', async () => {
     runtime.module.configure({ dev: true });
     runtime.module.registerCustomElementFromTemplate(createTemplate({
       name: 'x-loud',
-      attributes: [{ name: 'props', value: 'value' }],
+      attributes: [{ name: 'attributes', value: 'value' }],
       innerHTML: '<div>$(value)</div>',
     }));
 
@@ -275,7 +275,7 @@ test('pre-registered custom element names are warned before registration', async
 
     const template = createTemplate({
       name: 'x-existing',
-      attributes: [{ name: 'props', value: 'value' }],
+      attributes: [{ name: 'attributes', value: 'value' }],
       innerHTML: '<div>$(value)</div>',
     });
     runtime.module.registerCustomElementFromTemplate(template);
@@ -291,7 +291,7 @@ test('JSON-like attribute values are parsed without eval', async () => {
   const runtime = await loadRuntime([
     {
       name: 'x-count',
-      attributes: [{ name: 'props', value: 'count label' }],
+      attributes: [{ name: 'attributes', value: 'count label' }],
       innerHTML: '<div>$(label): $(count + 1)</div>',
     },
   ]);
@@ -314,7 +314,7 @@ test('once() setup runs after the DOM commits, fires once, and auto-registers cl
   const runtime = await loadRuntime([
     {
       name: 'x-once',
-      attributes: [{ name: 'props', value: 'n' }],
+      attributes: [{ name: 'attributes', value: 'n' }],
       innerHTML:
         '<span>n=$(n)</span>' +
         '${ once("mount", () => {' +
@@ -355,7 +355,7 @@ test('once() setup is skipped when the element disconnects before it runs', asyn
   const runtime = await loadRuntime([
     {
       name: 'x-once-early-disconnect',
-      attributes: [{ name: 'props', value: '' }],
+      attributes: [{ name: 'attributes', value: '' }],
       innerHTML: '<span>hi</span>${ once("mount", () => { window.ranSetup = true; }) }',
     },
   ]);
@@ -379,7 +379,7 @@ test('attribute changes re-render the component', async () => {
   const runtime = await loadRuntime([
     {
       name: 'x-attr',
-      attributes: [{ name: 'props', value: 'count' }],
+      attributes: [{ name: 'attributes', value: 'count' }],
       innerHTML: '<div>$(count)</div>',
     },
   ]);
@@ -406,7 +406,7 @@ test('property assignment carries rich data and re-renders', async () => {
   const runtime = await loadRuntime([
     {
       name: 'x-rich',
-      attributes: [{ name: 'props', value: 'items' }],
+      attributes: [{ name: 'attributes', value: 'items' }],
       innerHTML: '<div>$(items.filter(item => item.done).length) of $(items.length)</div>',
     },
   ]);
@@ -434,7 +434,7 @@ test('same-reference property assignment still publishes a render', async () => 
   const runtime = await loadRuntime([
     {
       name: 'x-same-ref',
-      attributes: [{ name: 'props', value: 'items' }],
+      attributes: [{ name: 'attributes', value: 'items' }],
       innerHTML: '$ el.renderCount = (el.renderCount || 0) + 1;\n<div>$(items.length):$(el.renderCount)</div>',
     },
   ]);
@@ -463,7 +463,7 @@ test('same primitive property assignment does not rerender', async () => {
   const runtime = await loadRuntime([
     {
       name: 'x-same-primitive',
-      attributes: [{ name: 'props', value: 'count' }],
+      attributes: [{ name: 'attributes', value: 'count' }],
       innerHTML: '$ el.renderCount = (el.renderCount || 0) + 1;\n<div>$(count):$(el.renderCount)</div>',
     },
   ]);
@@ -490,7 +490,7 @@ test('element property reads derive from the latest prop value', async () => {
   const runtime = await loadRuntime([
     {
       name: 'x-live-property',
-      attributes: [{ name: 'props', value: 'count' }],
+      attributes: [{ name: 'attributes', value: 'count' }],
       innerHTML: '<div>$(count)</div>',
     },
   ]);
@@ -512,11 +512,11 @@ test('element property reads derive from the latest prop value', async () => {
   }
 });
 
-test('props attr preserves camelCase and kebab-case usage maps to camelCase props', async () => {
+test('attributes attr preserves camelCase and kebab-case usage maps to camelCase props', async () => {
   const runtime = await loadRuntime([
     {
       name: 'x-kebab',
-      attributes: [{ name: 'props', value: 'userName' }],
+      attributes: [{ name: 'attributes', value: 'userName' }],
       innerHTML: '<div>$(userName)</div>',
     },
   ]);
@@ -543,7 +543,7 @@ test('interpolated values are HTML-escaped by default', async () => {
   const runtime = await loadRuntime([
     {
       name: 'x-escape',
-      attributes: [{ name: 'props', value: 'text' }],
+      attributes: [{ name: 'attributes', value: 'text' }],
       innerHTML: '<div>$(text)</div>',
     },
   ]);
@@ -566,7 +566,7 @@ test('trustedHTML() opts out of escaping', async () => {
   const runtime = await loadRuntime([
     {
       name: 'x-trusted-html',
-      attributes: [{ name: 'props', value: 'html' }],
+      attributes: [{ name: 'attributes', value: 'html' }],
       innerHTML: '<div>$(trustedHTML(html))</div>',
     },
   ]);
@@ -588,7 +588,7 @@ test('render errors are logged with component context', async () => {
   const runtime = await loadRuntime([
     {
       name: 'x-failure',
-      attributes: [{ name: 'props', value: 'items' }],
+      attributes: [{ name: 'attributes', value: 'items' }],
       innerHTML: '<div>$(items.length)</div>',
     },
   ]);
@@ -606,11 +606,11 @@ test('render errors are logged with component context', async () => {
   }
 });
 
-test('name is an ordinary prop when declared in props', async () => {
+test('name is an ordinary prop when declared in attributes', async () => {
   const runtime = await loadRuntime([
     {
       name: 'x-hello',
-      attributes: [{ name: 'props', value: 'name' }],
+      attributes: [{ name: 'attributes', value: 'name' }],
       innerHTML: '<p>Hello, $(name)!</p><button onclick="$(() => el.name = \'world\')">reset</button>',
     },
   ]);
@@ -670,7 +670,7 @@ test('precompile CLI output registers renderable templates', async () => {
   const runtimeSpecifier = new URL(`./jst.js?precompile-cli=${Date.now()}-${Math.random()}`, import.meta.url).href;
 
   fs.writeFileSync(input, `
-    <script type="jst" name="x-cli-precompiled" props="name count">
+    <script type="jst" name="x-cli-precompiled" attributes="name count">
       <p class="out">Hello, $(name)! Count: $(count)</p>
     </script>
   `);
@@ -787,7 +787,7 @@ test('$ line directives skip JS strings templates regexes and comments', () => {
 test('bindings with more than one interpolation fail at compile time', () => {
   const template = createTemplate({
     name: 'x-parent',
-    attributes: [{ name: 'props', value: 'a b' }],
+    attributes: [{ name: 'attributes', value: 'a b' }],
     innerHTML: '<x-child .items="$(a)$(b)"></x-child>',
   });
 
@@ -797,63 +797,87 @@ test('bindings with more than one interpolation fail at compile time', () => {
   );
 });
 
-test('props declarations reject non-JavaScript identifiers', () => {
+test('attributes declarations reject non-JavaScript identifiers', () => {
   const template = createTemplate({
     name: 'x-bad-props',
-    attributes: [{ name: 'props', value: 'good bad-prop' }],
+    attributes: [{ name: 'attributes', value: 'good bad-prop' }],
     innerHTML: '<div></div>',
   });
 
   assert.throws(
     () => compileTemplateRenderingFunction(template),
-    /Invalid JST prop "bad-prop"/,
+    /Invalid JST attribute "bad-prop"/,
   );
 });
 
-test('props declarations reject helper and JavaScript keyword names', () => {
+test('attributes declarations reject helper and JavaScript keyword names', () => {
   const helperTemplate = createTemplate({
     name: 'x-helper-props',
-    attributes: [{ name: 'props', value: 'item el' }],
+    attributes: [{ name: 'attributes', value: 'item el' }],
     innerHTML: '<div></div>',
   });
 
   assert.throws(
     () => compileTemplateRenderingFunction(helperTemplate),
-    /Invalid JST prop "el"/,
+    /Invalid JST attribute "el"/,
   );
 
   const methodTemplate = createTemplate({
     name: 'x-method-props',
-    attributes: [{ name: 'props', value: 'item emit' }],
+    attributes: [{ name: 'attributes', value: 'item emit' }],
     innerHTML: '<div></div>',
   });
 
   assert.throws(
     () => compileTemplateRenderingFunction(methodTemplate),
-    /Invalid JST prop "emit"/,
+    /Invalid JST attribute "emit"/,
   );
 
   const keywordTemplate = createTemplate({
     name: 'x-keyword-props',
-    attributes: [{ name: 'props', value: 'item class' }],
+    attributes: [{ name: 'attributes', value: 'item class' }],
     innerHTML: '<div></div>',
   });
 
   assert.throws(
     () => compileTemplateRenderingFunction(keywordTemplate),
-    /Invalid JST prop "class"/,
+    /Invalid JST attribute "class"/,
   );
 
   const urlTemplate = createTemplate({
     name: 'x-url-props',
-    attributes: [{ name: 'props', value: 'item url once' }],
+    attributes: [{ name: 'attributes', value: 'item url once' }],
     innerHTML: '<div></div>',
   });
 
   assert.throws(
     () => compileTemplateRenderingFunction(urlTemplate),
-    /Invalid JST prop "url"/,
+    /Invalid JST attribute "url"/,
   );
+});
+
+test('the removed props="…" keyword throws a clear rename error', () => {
+  const template = createTemplate({
+    name: 'x-legacy-props',
+    attributes: [{ name: 'props', value: 'count' }],
+    innerHTML: '<p>$(count)</p>',
+  });
+
+  assert.throws(
+    () => compileTemplateRenderingFunction(template),
+    /props="…" declaration was renamed.*attributes="…".*attrs="…"/s,
+  );
+});
+
+test('attrs="…" is accepted as an alias for attributes="…"', () => {
+  const template = createTemplate({
+    name: 'x-attrs-alias',
+    attributes: [{ name: 'attrs', value: 'count' }],
+    innerHTML: '<p>$(count)</p>',
+  });
+
+  const compiled = compileTemplateRenderingFunction(template);
+  assert.deepEqual(compiled.functionParams, ['count']);
 });
 
 test('jst.js version constant matches package.json (no drift)', () => {

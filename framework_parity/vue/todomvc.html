@@ -35,7 +35,7 @@
 </head>
 <body>
 
-<script type="jst" name="todo-mvc" props="todos filter editingid">
+<script type="jst" name="todo-mvc" attributes="todos filter editingid">
   $ const items = todos || [];
   $ const flt = filter || 'all';
   $ const remaining = items.filter(t => !t.done).length;

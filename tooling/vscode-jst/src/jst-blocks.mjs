@@ -48,7 +48,10 @@ export function findJstBlocks(text) {
     const innerStart = match.index + openTag.length;
     const attributes = parseOpenTagAttributes(openTag);
     const nameAttr = attributes.find(attr => attr.name.toLowerCase() === 'name');
-    const propsAttr = attributes.find(attr => attr.name.toLowerCase() === 'props');
+    // The declared inputs live in `attributes="…"` (canonical) or `attrs="…"`
+    // (alias). The old `props="…"` name was removed.
+    const attrsAttr = attributes.find(attr => attr.name.toLowerCase() === 'attributes')
+      ?? attributes.find(attr => attr.name.toLowerCase() === 'attrs');
 
     blocks.push({
       openTag,
@@ -57,7 +60,7 @@ export function findJstBlocks(text) {
       innerPosition: positionAt(text, innerStart),
       openTagPosition: positionAt(text, match.index),
       nameValue: nameAttr ? nameAttr.value : null,
-      params: parseProps(propsAttr?.value),
+      params: parseProps(attrsAttr?.value),
       attributes,
     });
   }

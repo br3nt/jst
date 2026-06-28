@@ -25,7 +25,7 @@
 </head>
 <body>
 
-<script type="jst" name="delete-list" props="items pendingId">
+<script type="jst" name="delete-list" attributes="items pendingId">
   <ul data-testid="list">
     $ (items || []).forEach(item => {
       <li data-testid="item-$(item.id)" jst-key="$(item.id)">

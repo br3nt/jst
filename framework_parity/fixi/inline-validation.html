@@ -27,7 +27,7 @@
 </head>
 <body>
 
-<script type="jst" name="field-status" props="state message">
+<script type="jst" name="field-status" attributes="state message">
   $ if (state) {
     <div class="msg $(state === 'ok' ? 'ok' : 'error')" data-testid="msg">$(message)</div>
   $ }

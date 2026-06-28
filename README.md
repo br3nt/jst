@@ -12,7 +12,7 @@ inspectable in DevTools, scriptable with plain properties and
 ```html
 <script type="module" src="jst.js"></script>
 
-<script type="jst" name="hello-name" props="name">
+<script type="jst" name="hello-name" attributes="name">
   <p>Hello, <strong>$(name)</strong>!</p>
   <button onclick="$(() => el.name = 'world')">reset</button>
 </script>
@@ -48,7 +48,7 @@ For a practical walkthrough, see [docs/writing-jst.md](docs/writing-jst.md).
 Props are declared in the case-preserving `props` attribute:
 
 ```html
-<script type="jst" name="todo-item" props="item">
+<script type="jst" name="todo-item" attributes="item">
   <li jst-key="$(item.id)">
     <button onclick.stop="$(() => el.emit('toggle', item))">Done</button>
     $(item.text)
@@ -64,7 +64,7 @@ Props are declared in the case-preserving `props` attribute:
 </script>
 ```
 
-- `props="item"` declares the bare locals available in the template.
+- `attributes="item"` declares the bare locals available in the template.
 - Each prop is also a property on the element: `el.item` here, or `el.onToggle`
   when `onToggle` is declared.
 - External HTML attributes use platform casing rules, so multi-word call sites

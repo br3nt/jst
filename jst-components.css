@@ -1,0 +1,262 @@
+/*!
+ * jst-components — component styles on top of jst-layout, CSS-first.
+ * Loads after jst-layout.css. Each component is plain HTML + native platform
+ * primitives (dialog, popover, details, Invoker Commands) styled by tokens, so
+ * the SAME markup re-skins to any framework's look by swapping a theme that
+ * overrides the --jst-* tokens. Demonstrated in examples/components_cross_section.html.
+ */
+
+/* ============================================================================
+ * Theme skins — each overrides only tokens. Same components, different look.
+ * (The CSS Zen Garden bet, applied to component frameworks.)
+ * ==========================================================================*/
+
+/* Bootstrap-like: bright blue, medium radius, soft elevation. */
+[data-theme="bootstrap"] {
+  --jst-accent: oklch(0.55 0.20 262);     /* ~#0d6efd */
+  --jst-radius: 0.375rem;
+  --jst-font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --jst-shadow: 0 0.5rem 1rem oklch(0 0 0 / 0.15);
+  --jst-ring: 0 0 0 0.25rem oklch(0.55 0.20 262 / 0.5);
+}
+
+/* shadcn-like: near-monochrome zinc, larger radius, subtle ring + hairline borders. */
+[data-theme="shadcn"] {
+  --jst-accent: oklch(0.22 0.006 285);    /* zinc-900-ish, near black */
+  --jst-radius: 0.5rem;
+  --jst-font: system-ui, sans-serif;
+  --jst-shadow: 0 0.25rem 0.75rem oklch(0 0 0 / 0.10);
+  --jst-ring: 0 0 0 2px var(--jst-bg), 0 0 0 4px oklch(0.55 0.01 285);
+  --jst-border: light-dark(oklch(0.92 0.004 285), oklch(0.30 0.006 285));
+}
+
+/* Shoelace / Web Awesome-like: sky primary, tight radius, airy. */
+[data-theme="shoelace"] {
+  --jst-accent: oklch(0.68 0.14 233);     /* sky-ish */
+  --jst-radius: 0.25rem;
+  --jst-font: system-ui, sans-serif;
+  --jst-shadow: 0 0.25rem 1rem oklch(0.55 0.05 233 / 0.18);
+  --jst-ring: 0 0 0 3px oklch(0.68 0.14 233 / 0.4);
+}
+
+/* Pico-like: indigo, generous radius, soft and calm. */
+[data-theme="pico"] {
+  --jst-accent: oklch(0.52 0.16 277);     /* pico indigo */
+  --jst-radius: 0.5rem;
+  --jst-font: system-ui, sans-serif;
+  --jst-shadow: 0 0.5rem 1.5rem oklch(0.3 0.05 277 / 0.12);
+  --jst-ring: 0 0 0 3px oklch(0.52 0.16 277 / 0.35);
+}
+
+/* W3.CSS-like (W3Schools): flat, square corners, bold primary, no elevation. */
+[data-theme="w3css"] {
+  --jst-accent: oklch(0.62 0.12 236);     /* w3-blue */
+  --jst-radius: 0;
+  --jst-font: "Segoe UI", Arial, sans-serif;
+  --jst-shadow: 0 2px 5px oklch(0 0 0 / 0.16), 0 2px 10px oklch(0 0 0 / 0.12);
+  --jst-ring: 0 0 0 2px oklch(0.62 0.12 236 / 0.6);
+}
+
+/* Bulma-like: turquoise primary, rounded, crisp borders. */
+[data-theme="bulma"] {
+  --jst-accent: oklch(0.74 0.13 184);     /* bulma turquoise */
+  --jst-radius: 0.375rem;
+  --jst-font: "Helvetica Neue", system-ui, sans-serif;
+  --jst-shadow: 0 0.5em 1em -0.125em oklch(0.3 0.02 184 / 0.1);
+  --jst-ring: 0 0 0 0.125em oklch(0.74 0.13 184 / 0.4);
+}
+
+/* ============================================================================
+ * The "which JST tech?" badge — the headline of the whole comparison.
+ * Greener = less JST (more platform); blue = a real JST component.
+ * ==========================================================================*/
+.jst-tag {
+  display: inline-flex; align-items: center; gap: 0.35em;
+  font-family: var(--jst-font-mono); font-size: 0.7rem; font-weight: 600;
+  padding: 0.15em 0.6em; border-radius: 99px; white-space: nowrap;
+  border: 1px solid transparent;
+}
+.jst-tag::before { content: "●"; font-size: 0.8em; }
+/* No JST at all — the best outcome. */
+.jst-tag[data-tech="none"]     { background: oklch(0.95 0.05 150); color: oklch(0.40 0.12 150); border-color: oklch(0.85 0.08 150); }
+/* A single native platform primitive (dialog / popover / details / progress). */
+.jst-tag[data-tech="platform"] { background: oklch(0.95 0.04 170); color: oklch(0.42 0.10 170); border-color: oklch(0.86 0.06 170); }
+/* Invoker Commands wiring (command / commandfor / oncommand). */
+.jst-tag[data-tech="invoker"]  { background: oklch(0.95 0.04 250); color: oklch(0.45 0.12 250); border-color: oklch(0.86 0.06 250); }
+/* A jst-layout primitive or token. */
+.jst-tag[data-tech="layout"]   { background: oklch(0.95 0.04 300); color: oklch(0.45 0.12 300); border-color: oklch(0.87 0.06 300); }
+/* A genuine JST custom-element component. */
+.jst-tag[data-tech="jst"]      { background: oklch(0.93 0.06 30);  color: oklch(0.48 0.16 30);  border-color: oklch(0.85 0.09 30); }
+@media (prefers-color-scheme: dark) {
+  .jst-tag[data-tech="none"]     { background: oklch(0.30 0.06 150); color: oklch(0.85 0.10 150); border-color: oklch(0.40 0.08 150); }
+  .jst-tag[data-tech="platform"] { background: oklch(0.30 0.05 170); color: oklch(0.85 0.08 170); border-color: oklch(0.40 0.07 170); }
+  .jst-tag[data-tech="invoker"]  { background: oklch(0.30 0.05 250); color: oklch(0.85 0.08 250); border-color: oklch(0.40 0.07 250); }
+  .jst-tag[data-tech="layout"]   { background: oklch(0.30 0.05 300); color: oklch(0.86 0.08 300); border-color: oklch(0.40 0.07 300); }
+  .jst-tag[data-tech="jst"]      { background: oklch(0.32 0.08 30);  color: oklch(0.86 0.10 30);  border-color: oklch(0.42 0.10 30); }
+}
+
+/* Shared fallbacks if a theme omits them. */
+:where([data-theme]) {
+  --jst-shadow: var(--jst-shadow, 0 0.25rem 0.75rem oklch(0 0 0 / 0.12));
+}
+
+/* Focus-visible ring driven by the theme token. */
+:where([data-theme]) :where(button, a, summary, input, [tabindex]):focus-visible {
+  outline: none;
+  box-shadow: var(--jst-ring, 0 0 0 3px oklch(0.6 0.1 262 / 0.5));
+}
+
+/* ============================================================================
+ * Modal — native <dialog> + Invoker Commands (command="show-modal"/"close").
+ * ==========================================================================*/
+.jst-modal {
+  margin: auto;
+  inline-size: min(32rem, calc(100vw - 2rem));
+  padding: 0;
+  border: var(--jst-border-width) solid var(--jst-border);
+  border-radius: var(--jst-radius);
+  background: var(--jst-bg);
+  color: var(--jst-fg);
+  box-shadow: var(--jst-shadow);
+}
+.jst-modal::backdrop { background: oklch(0 0 0 / 0.45); }
+.jst-modal > header,
+.jst-modal > .jst-modal-body,
+.jst-modal > footer { padding: var(--jst-space-m) var(--jst-space-l); }
+.jst-modal > header {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--jst-space-m);
+  border-block-end: var(--jst-border-width) solid var(--jst-border);
+  font-weight: 700;
+}
+.jst-modal > footer {
+  display: flex; justify-content: flex-end; gap: var(--jst-space-xs);
+  border-block-start: var(--jst-border-width) solid var(--jst-border);
+}
+.jst-modal-close {
+  background: none; border: none; color: var(--jst-muted);
+  font-size: 1.25rem; line-height: 1; cursor: pointer; padding: 0.1em 0.3em;
+}
+.jst-modal-close:hover { color: var(--jst-fg); background: none; }
+
+/* Enter/leave animation via @starting-style + allow-discrete (Baseline 2024). */
+@supports (transition-behavior: allow-discrete) {
+  .jst-modal {
+    opacity: 0; transform: translateY(-0.5rem) scale(0.98);
+    transition: opacity 0.18s, transform 0.18s, overlay 0.18s allow-discrete, display 0.18s allow-discrete;
+  }
+  .jst-modal:popover-open, .jst-modal[open] { opacity: 1; transform: none; }
+  @starting-style { .jst-modal[open] { opacity: 0; transform: translateY(-0.5rem) scale(0.98); } }
+}
+
+/* ============================================================================
+ * Accordion — native <details>/<summary>. Exclusive via the shared name attr.
+ * ==========================================================================*/
+.jst-accordion { border: var(--jst-border-width) solid var(--jst-border); border-radius: var(--jst-radius); overflow: clip; }
+.jst-accordion > details + details { border-block-start: var(--jst-border-width) solid var(--jst-border); }
+.jst-accordion summary {
+  cursor: pointer; padding: var(--jst-space-s) var(--jst-space-m);
+  font-weight: 600; list-style: none;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.jst-accordion summary::-webkit-details-marker { display: none; }
+.jst-accordion summary::after { content: "▾"; color: var(--jst-muted); transition: transform 0.15s; }
+.jst-accordion details[open] summary::after { transform: rotate(180deg); }
+.jst-accordion summary:hover { background: var(--jst-surface); }
+.jst-accordion .jst-accordion-body { padding: 0 var(--jst-space-m) var(--jst-space-m); color: var(--jst-muted); }
+
+/* ============================================================================
+ * Dropdown menu — native [popover] + command="toggle-popover". The invoker is
+ * the popover's implicit anchor, so no ids/anchor-names are needed to place it.
+ * ==========================================================================*/
+.jst-menu[popover] {
+  margin: 0; padding: var(--jst-space-2xs);
+  inline-size: max-content; min-inline-size: 10rem;
+  border: var(--jst-border-width) solid var(--jst-border);
+  border-radius: var(--jst-radius);
+  background: var(--jst-bg); color: var(--jst-fg);
+  box-shadow: var(--jst-shadow);
+}
+@supports (position-area: bottom) {
+  .jst-menu[popover] {
+    position-area: bottom span-inline-end;
+    margin-block-start: var(--jst-space-2xs);
+    position-try-fallbacks: flip-block, flip-inline;
+  }
+}
+@supports not (position-area: bottom) {
+  /* Fallback: keep it in flow-ish near the trigger. */
+  .jst-menu[popover] { position: fixed; inset: auto; }
+}
+.jst-menu button, .jst-menu a {
+  display: flex; align-items: center; gap: var(--jst-space-xs);
+  inline-size: 100%; text-align: start;
+  padding: var(--jst-space-2xs) var(--jst-space-s);
+  background: none; border: none; border-radius: calc(var(--jst-radius) - 2px);
+  color: var(--jst-fg); font: inherit; text-decoration: none; cursor: pointer;
+}
+.jst-menu button:hover, .jst-menu a:hover { background: var(--jst-surface); }
+.jst-menu hr { border: none; border-block-start: var(--jst-border-width) solid var(--jst-border); margin: var(--jst-space-2xs) 0; }
+
+/* Popover enter/leave. */
+@supports (transition-behavior: allow-discrete) {
+  .jst-menu[popover] {
+    opacity: 0; transform: translateY(-0.25rem);
+    transition: opacity 0.12s, transform 0.12s, overlay 0.12s allow-discrete, display 0.12s allow-discrete;
+  }
+  .jst-menu[popover]:popover-open { opacity: 1; transform: none; }
+  @starting-style { .jst-menu[popover]:popover-open { opacity: 0; transform: translateY(-0.25rem); } }
+}
+
+/* ============================================================================
+ * Tabs — a JST component (no native equivalent): roving tabindex + ARIA.
+ * ==========================================================================*/
+jst-tabs { display: block; }
+jst-tabs [role="tablist"] { display: flex; gap: var(--jst-space-2xs); border-block-end: var(--jst-border-width) solid var(--jst-border); }
+jst-tabs [role="tab"] {
+  background: none; border: none; border-block-end: 2px solid transparent; border-radius: 0;
+  margin-block-end: -1px; padding: var(--jst-space-xs) var(--jst-space-m);
+  color: var(--jst-muted); cursor: pointer; font: inherit;
+}
+jst-tabs [role="tab"][aria-selected="true"] { color: var(--jst-fg); border-block-end-color: var(--jst-accent); font-weight: 600; }
+jst-tabs [role="tab"]:hover { color: var(--jst-fg); }
+jst-tabs [role="tabpanel"] { padding-block: var(--jst-space-m); color: var(--jst-muted); }
+
+/* ============================================================================
+ * Toaster — a JST component: a fixed stack, pushed via a custom command.
+ * ==========================================================================*/
+jst-toaster {
+  position: fixed; inset-block-end: var(--jst-space-l); inset-inline-end: var(--jst-space-l);
+  display: flex; flex-direction: column; gap: var(--jst-space-xs); z-index: 9999;
+  pointer-events: none;
+}
+jst-toaster .jst-toast {
+  pointer-events: auto;
+  display: flex; align-items: center; gap: var(--jst-space-s);
+  padding: var(--jst-space-s) var(--jst-space-m);
+  border: var(--jst-border-width) solid var(--jst-border); border-radius: var(--jst-radius);
+  background: var(--jst-bg); color: var(--jst-fg); box-shadow: var(--jst-shadow);
+  min-inline-size: 15rem; animation: jst-toast-in 0.18s ease-out;
+}
+jst-toaster .jst-toast[data-variant="success"] { border-inline-start: 4px solid oklch(0.62 0.15 150); }
+jst-toaster .jst-toast[data-variant="error"]   { border-inline-start: 4px solid oklch(0.55 0.20 25); }
+jst-toaster .jst-toast button { margin-inline-start: auto; background: none; border: none; color: var(--jst-muted); cursor: pointer; font-size: 1.1rem; line-height: 1; }
+@keyframes jst-toast-in { from { opacity: 0; transform: translateY(0.5rem); } }
+
+/* ============================================================================
+ * Combobox — a JST component: filter + keyboard + ARIA listbox.
+ * ==========================================================================*/
+jst-combobox { display: block; position: relative; max-inline-size: 22rem; }
+jst-combobox input { inline-size: 100%; }
+jst-combobox [role="listbox"] {
+  position: absolute; inset-inline: 0; z-index: 20; margin-block-start: var(--jst-space-2xs);
+  max-block-size: 14rem; overflow: auto;
+  padding: var(--jst-space-2xs); list-style: none;
+  border: var(--jst-border-width) solid var(--jst-border); border-radius: var(--jst-radius);
+  background: var(--jst-bg); box-shadow: var(--jst-shadow);
+}
+jst-combobox [role="option"] {
+  padding: var(--jst-space-2xs) var(--jst-space-s); border-radius: calc(var(--jst-radius) - 2px); cursor: pointer;
+}
+jst-combobox [role="option"][data-active="true"] { background: var(--jst-accent); color: var(--jst-accent-fg); }
+jst-combobox .jst-empty { padding: var(--jst-space-s); color: var(--jst-muted); }

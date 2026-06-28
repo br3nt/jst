@@ -68,7 +68,7 @@
      inside the fragments that first use them.
      ==================================================================== -->
 
-<script type="jst" name="feed-card" props="persona time">
+<script type="jst" name="feed-card" attributes="persona time">
     $ const kind = persona === 'Brent' ? 'human' : (persona === 'system' ? 'system' : 'agent');
     <article class="feed-card from-$(kind)">
         <header><span class="persona">$(persona)</span><span class="time">$(time)</span></header>
@@ -76,7 +76,7 @@
     </article>
 </script>
 
-<script type="jst" name="message-card" props="text">
+<script type="jst" name="message-card" attributes="text">
     <p class="message-text">$(text)</p>
 </script>
 
@@ -84,7 +84,7 @@
      The server ships field DEFINITIONS as a JSON attribute; this authored
      template owns all markup. Submissions emit a bubbling 'affordance' event
      carrying { docId, action, values } — the page posts it to /interactions. -->
-<script type="jst" name="affordance-form" props="docId action submitLabel fields">
+<script type="jst" name="affordance-form" attributes="docId action submitLabel fields">
     <form class="affordance" onsubmit="$(event => {
         event.preventDefault();
         const values = {};

@@ -11,7 +11,7 @@ Declare props as a space-separated list of plain JS identifiers. Case is
 preserved.
 
 ```html
-<script type="jst" name="todo-item" props="item onToggle">
+<script type="jst" name="todo-item" attributes="item onToggle">
   <li class="$(item.done ? 'done' : '')">
     $(item.text)
     <button onclick.stop="$(() => onToggle(item))">Toggle</button>
@@ -50,7 +50,7 @@ A component reports what happened by emitting a bubbling, composed
 `CustomEvent`:
 
 ```html
-<script type="jst" name="todo-item" props="item">
+<script type="jst" name="todo-item" attributes="item">
   <li>
     $(item.text)
     <button onclick="$(() => el.emit('remove', item))">x</button>
@@ -176,7 +176,7 @@ Pick by whether you need the committed DOM.
   observer, or third-party widget.
 
 ```html
-<script type="jst" name="live-clock" props="label">
+<script type="jst" name="live-clock" attributes="label">
   ${ once('tick', () => {
     const id = setInterval(() => el.emit('tick'), 1000)
     return () => clearInterval(id)

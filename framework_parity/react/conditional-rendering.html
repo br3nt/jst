@@ -22,7 +22,7 @@
 <h1>Conditional rendering</h1>
 
 <!-- Branch per item; the whole component renders nothing when empty. -->
-<script type="jst" name="packing-list" props="items showPacked">
+<script type="jst" name="packing-list" attributes="items showPacked">
   $ const list = (items || []).filter(i => showPacked || !i.packed);
   $ if (list.length === 0) {
     <p data-testid="empty"><em>Nothing to show.</em></p>

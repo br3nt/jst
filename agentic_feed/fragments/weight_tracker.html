@@ -2,7 +2,7 @@
      the FIRST use of this fragment; the server strips it on later uses.
      Data rides in as a JSON attribute; the affordance form is slotted in
      so fragment authors compose cards from the core kit. -->
-<script type="jst" name="weight-card" props="entries unit">
+<script type="jst" name="weight-card" attributes="entries unit">
     $ const list = entries || [];
     $ const latest = list[list.length - 1];
     $ const max = Math.max(...list.map(entry => entry.kg), 1);

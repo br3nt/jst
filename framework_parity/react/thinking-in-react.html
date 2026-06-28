@@ -28,7 +28,7 @@
 <h1>Thinking in React</h1>
 
 <!-- Controlled search bar; state is lifted to the page. -->
-<script type="jst" name="search-bar" props="filterText inStock">
+<script type="jst" name="search-bar" attributes="filterText inStock">
   <div>
     <input type="text" data-testid="search" placeholder="Search…"
            .value="$(filterText || '')"
@@ -43,7 +43,7 @@
 </script>
 
 <!-- Pure renderer: products + filter come down, nothing comes up. -->
-<script type="jst" name="product-table" props="products filterText inStock">
+<script type="jst" name="product-table" attributes="products filterText inStock">
   $ const ft = (filterText || '').toLowerCase();
   $ let lastCat = null;
   <table>

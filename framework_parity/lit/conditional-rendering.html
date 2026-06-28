@@ -24,7 +24,7 @@
 <h1>Conditional rendering</h1>
 
 <!-- when(user, signed-in view, sign-in button) ↔ $ if (user) { … } $ else { … } -->
-<script type="jst" name="auth-status" props="user">
+<script type="jst" name="auth-status" attributes="user">
   <div>
     $ if (user) {
       <p class="user" data-testid="status">User: $(user.name)</p>

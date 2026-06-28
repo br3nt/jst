@@ -58,7 +58,7 @@ route GET "/orders/:id":
       </head>
       <body>
         <!-- inline-once path: ship the definition with the markup that uses it -->
-        <script type="jst" name="order-line" props="line">
+        <script type="jst" name="order-line" attributes="line">
           <li>$(line.title) - $(line.qty)</li>
         </script>
         """ + render_order(order))
@@ -153,7 +153,7 @@ end
 ```erb
 <%# app/views/orders/_line.html.erb %>
 <%# inline-once: the row carries its own definition the first time it lands %>
-<script type="jst" name="order-line" props="line">
+<script type="jst" name="order-line" attributes="line">
   <li data-line-id="$(line.id)">$(line.title) - $(line.qty)</li>
 </script>
 
@@ -214,7 +214,7 @@ app.get('/orders/:id', (req, res) => {
   res.send(`<!doctype html><html><head>
     <script type="module" src="/jst/jst.js"></script>
   </head><body>
-    <script type="jst" name="order-line" props="line">
+    <script type="jst" name="order-line" attributes="line">
       <li>$(line.title) - $(line.qty)</li>
     </script>
     <div id="order-lines">${renderLines(order)}</div>

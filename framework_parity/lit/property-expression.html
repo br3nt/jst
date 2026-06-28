@@ -24,7 +24,7 @@
 <h1>Property expression</h1>
 
 <!-- Leaf: receives an array via the .items property and renders it. -->
-<script type="jst" name="fruit-list" props="items">
+<script type="jst" name="fruit-list" attributes="items">
   <ul data-testid="list">
     $ (items || []).forEach(item => {
       <li>$(item)</li>
@@ -33,7 +33,7 @@
 </script>
 
 <!-- Parent passes its array down with .items="$(fruits)" (Lit .items=${this.fruits}). -->
-<script type="jst" name="fruit-board" props="fruits">
+<script type="jst" name="fruit-board" attributes="fruits">
   <div>
     <fruit-list id="leaf" .items="$(fruits)"></fruit-list>
   </div>

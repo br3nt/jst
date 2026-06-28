@@ -42,7 +42,7 @@ plugin with an `embed` for the `<script type="jst">` regions.
   `.prop`/`on<event>` would remove the last
   highlighting glitches around bindings — at the cost of reimplementing basic
   tag/attribute/string highlighting (the Vue/Svelte approach).
-- Highlight the `props="..."` names on the `<script type="jst" name=…>`
+- Highlight the `attributes="..."` names on the `<script type="jst" name=…>`
   open tag itself.
 - Diagnostics: warn on a `.prop`/attribute usage at a call site that isn't a
   declared prop of the target component (needs the cross-file index, which the

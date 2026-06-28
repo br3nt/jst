@@ -24,12 +24,12 @@
 <h1>Child → parent events</h1>
 
 <!-- Child emits a bubbling 'item-selected' event carrying the chosen item as detail. -->
-<script type="jst" name="menu-item" props="label">
+<script type="jst" name="menu-item" attributes="label">
   <button onclick="$(() => el.emit('item-selected', { label }))">$(label)</button>
 </script>
 
 <!-- Parent listens for 'item-selected' and records detail.label as its own state. -->
-<script type="jst" name="menu-board" props="items selected">
+<script type="jst" name="menu-board" attributes="items selected">
   <div onitem-selected="$(e => el.selected = e.detail.label)">
     $ (items || []).forEach(label => {
       <menu-item label="$(label)"></menu-item>

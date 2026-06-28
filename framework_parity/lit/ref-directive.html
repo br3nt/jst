@@ -23,7 +23,7 @@
 <body>
 <h1>Element reference (focus)</h1>
 
-<script type="jst" name="focus-field" props="focusCount">
+<script type="jst" name="focus-field" attributes="focusCount">
   <input type="text" id="the-input" data-testid="field" placeholder="I get focused">
   <!-- Lit: this.inputRef.value.focus(). JST: query the rendered node, then focus. -->
   <button id="focus-btn" onclick="$(() => {

@@ -25,7 +25,7 @@
 </head>
 <body>
 
-<script type="jst" name="scroll-list" props="rows more">
+<script type="jst" name="scroll-list" attributes="rows more">
   <table><tbody data-testid="rows">
     $ (rows || []).forEach(r => {
       <tr data-testid="row-$(r.id)"><td>$(r.id)</td><td>$(r.name)</td><td>$(r.email)</td></tr>
