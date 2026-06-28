@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>JST · jst-behaviors (intersect / teleport)</title>
+  <link rel="stylesheet" href="../jst-layout.css">
+  <script type="module" src="../jst-behaviors.js"></script>
+  <style>
+    body { max-inline-size: 40rem; margin-inline: auto; padding: var(--jst-space-l); }
+    .lazy { inline-size: 100%; block-size: 8rem; background: var(--jst-surface); border-radius: var(--jst-radius); opacity: 0; transition: opacity .4s; }
+    .lazy.jst-revealed { opacity: 1; }
+    .spacer { block-size: 120vh; }
+  </style>
+</head>
+<body>
+  <h1>jst-behaviors</h1>
+
+  <h2>Teleport</h2>
+  <p>The box below declares <code>jst-teleport="body"</code> — it moves itself to the end of &lt;body&gt; on load.</p>
+  <div id="origin" style="border:1px dashed var(--jst-border);padding:1rem">
+    <div id="ported" jst-teleport="body" style="padding:.5rem;background:var(--jst-surface);border-radius:.5rem">I get teleported to &lt;body&gt;.</div>
+  </div>
+
+  <h2>Lazy reveal (jst-intersect)</h2>
+  <p>Scroll down — the panel fades in when revealed (and would set <code>src</code> from <code>data-src</code> on a real image).</p>
+  <div class="spacer"></div>
+  <div class="lazy" id="lazy" jst-intersect data-src="about:blank">Revealed!</div>
+
+  <script>window.__ready = true;</script>
+</body>
+</html>
