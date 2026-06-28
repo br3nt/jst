@@ -20,8 +20,8 @@ arrive later.
 A JST component is a `<script type="jst">` block with:
 
 - `name`: the custom element tag name. It must contain a hyphen.
-- `props`: a space-separated list of JavaScript identifiers available inside the
-  template.
+- `attributes` (or the `attrs` alias): a space-separated list of JavaScript
+  identifiers available inside the template.
 
 ```html
 <script type="jst" name="hello-name" attributes="name count">
@@ -37,6 +37,34 @@ Inside the template:
 - `name` and `count` are bare locals.
 - `el` is the live custom element instance.
 - Assigning `el.count = ...` publishes a new prop value and schedules a render.
+
+> **Internal state is just a declared attribute.** Re-rendering is triggered by
+> assigning to a **declared** attribute — one named in `attributes="…"`. This is
+> not only for data passed in from the outside: a component's *own* internal
+> state (an open/closed flag, a filter string, a highlighted index) must also be
+> declared, or assigning it will silently fail to re-render.
+>
+> ```html
+> <!-- declare internal state too, even though nobody passes it in -->
+> <script type="jst" name="jst-combobox" attributes="options query open highlighted">
+>   …
+>   <input oninput="$(e => { el.query = e.target.value; el.open = true; })">
+>   …
+> </script>
+> ```
+>
+> Here `options` comes from the outside, but `query`, `open`, and `highlighted`
+> are internal — they are declared purely so that `el.query = …` re-renders.
+>
+> **Declared names become function parameters, so don't shadow them.** Each
+> declared attribute is a bare local (a parameter of the generated render
+> function). A `const open = …` inside the same template redeclares that
+> parameter and is a `SyntaxError`. Read the declared value under its own name and
+> give *derived* values a different name:
+>
+> ```html
+> $ const isOpen = !!open && matches.length > 0;   // NOT `const open = …`
+> ```
 
 ## 3. Use a component in normal HTML
 
@@ -488,8 +516,8 @@ classes, and derive ids per instance when you must have one. See
 - Custom element names must include a hyphen: `todo-item`, not `todo`.
 - Prefer classes over internal ids; if you must have an id, derive it per instance
   (section 14) so two instances never collide.
-- Declare every prop in `attributes="..."`.
-- Use camelCase in `props`, kebab-case in normal HTML attributes.
+- Declare every input — including internal reactive state — in `attributes="..."`.
+- Use camelCase in `attributes="..."`, kebab-case in normal HTML attributes.
 - Remember that `.prop` and `on<event>` bindings only compile inside JST templates.
 - Add `jst-key` to real lists.
 - Use `trustedHTML()` only for trusted HTML.
