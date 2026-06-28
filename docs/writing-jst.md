@@ -36,7 +36,7 @@ Inside the template:
 
 - `name` and `count` are bare locals.
 - `el` is the live custom element instance.
-- Assigning `el.count = ...` publishes a new prop value and schedules a render.
+- Assigning `el.count = ...` publishes a new attribute value and schedules a render.
 
 > **Internal state is just a declared attribute.** Re-rendering is triggered by
 > assigning to a **declared** attribute — one named in `attributes="…"`. This is
@@ -95,18 +95,18 @@ el.code = "0123";   // stays the string "0123"
 
 This trap is also listed in [known-gaps.md](./known-gaps.md#attribute-coercion-is-eager-shipped-know-the-trap).
 
-Avoid prop names that clash with native HTML attributes. A prop named `title`
+Avoid attribute names that clash with native HTML attributes. An attribute named `title`
 also drives the browser's native `title` tooltip, and names like `id`, `class`,
 `style`, and `hidden` carry their platform behavior whatever your component does
-with them. Choose prop names that do not shadow native attributes.
+with them. Choose attribute names that do not shadow native attributes.
 
-Multi-word props use kebab-case in HTML attributes:
+Multi-word attributes use kebab-case in HTML attributes:
 
 ```html
 <user-card user-name="Ada"></user-card>
 ```
 
-The prop is still declared and used as `userName`:
+The attribute is still declared and used as `userName`:
 
 ```html
 <script type="jst" name="user-card" attributes="userName">
@@ -165,7 +165,7 @@ first paint.** Pick by payload size:
 - **Simple values** — plain attributes, coerced as above.
 - **Structured data (small/medium)** — one JSON attribute. JST already tries
   `JSON.parse` on attribute values, so `meta='{"id":7,"tags":["a","b"]}'` arrives
-  as a parsed object in the `meta` prop. No client JS needed.
+  as a parsed object in the `meta` attribute. No client JS needed.
 - **Large or newline-heavy payloads** (a rendered-markdown body, a long
   document) — do **not** stretch it across an attribute, where quote/newline
   escaping gets fragile. Put it in a `<script type="application/json">` sidecar
@@ -181,7 +181,7 @@ first paint.** Pick by payload size:
   <script type="jst" name="article-view" attributes="contentId data">
     $ once('load-content', () => {
     $   const sidecar = document.getElementById(el.contentId);
-    $   if (sidecar) el.data = JSON.parse(sidecar.textContent);  // sets prop -> re-renders
+    $   if (sidecar) el.data = JSON.parse(sidecar.textContent);  // sets attribute -> re-renders
     $ });
     ${ if (data) { }
       <h1>$(data.title)</h1>
@@ -303,7 +303,7 @@ state, as in the `onclick` handler that sets `el.selected`.
 
 ## 7. State updates
 
-Assigning a declared prop property renders:
+Assigning a declared attribute property renders:
 
 ```js
 counter.count = counter.count + 1;
@@ -504,7 +504,7 @@ const input = el.querySelector('.field');
 
 **2. When an id is genuinely required** (associating a `<label for>` or wiring an
 aria relationship), derive a **unique per-instance id** and point `for`/`aria-*` at
-that derived id — never a hard-coded literal. Derive it from a prop that is unique
+that derived id — never a hard-coded literal. Derive it from an attribute that is unique
 per instance:
 
 ```html
@@ -514,7 +514,7 @@ per instance:
 </script>
 ```
 
-If no naturally-unique prop exists, stamp a generated token on the element once and
+If no naturally-unique attribute exists, stamp a generated token on the element once and
 reuse it across renders:
 
 ```html
@@ -539,7 +539,7 @@ classes, and derive ids per instance when you must have one. See
 - Remember that `.prop` and `on<event>` bindings only compile inside JST templates.
 - Add `jst-key` to real lists.
 - Use `trustedHTML()` only for trusted HTML.
-- Avoid prop names that clash with native HTML attributes such as `title`.
+- Avoid attribute names that clash with native HTML attributes such as `title`.
 - Use `once()`, not an inline `${ ... }` block, to touch the rendered DOM.
 - Do not wrap a third-party library in a slot-only component; inline it instead.
 - A static form or markup with a handler needs no component; server-render it and

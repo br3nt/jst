@@ -408,10 +408,10 @@ node tools/precompile.mjs components.html <span class="tok-attr ann" tabindex="0
 
     <section id="first-component">
       <h2>Write Your First Component</h2>
-      <p>A component is a <code>&lt;script type="jst"&gt;</code> block. The <code>name</code> becomes the custom element tag. The <code>props</code> list declares the values available inside the template.</p>
+      <p>A component is a <code>&lt;script type="jst"&gt;</code> block. The <code>name</code> becomes the custom element tag. The <code>attributes</code> list declares the values available inside the template.</p>
 
       <div class="code-example">
-        <pre><code><span class="tok-tag">&lt;script</span> <span class="tok-attr">type</span>=<span class="tok-string">"jst"</span> <span class="tok-attr ann" tabindex="0" data-label="Component name" data-detail="The name becomes the custom element tag. Custom element names must contain a hyphen, so hello-name is valid and hello is not.">name</span>=<span class="tok-string">"hello-name"</span> <span class="tok-attr ann" tabindex="0" data-label="Props" data-detail="Props are case-preserved JavaScript identifiers. Declaring name and count gives the template bare locals named name and count, and element properties el.name and el.count.">props</span>=<span class="tok-string">"name count"</span><span class="tok-tag">&gt;</span>
+        <pre><code><span class="tok-tag">&lt;script</span> <span class="tok-attr">type</span>=<span class="tok-string">"jst"</span> <span class="tok-attr ann" tabindex="0" data-label="Component name" data-detail="The name becomes the custom element tag. Custom element names must contain a hyphen, so hello-name is valid and hello is not.">name</span>=<span class="tok-string">"hello-name"</span> <span class="tok-attr ann" tabindex="0" data-label="Attributes" data-detail="Attributes are case-preserved JavaScript identifiers. Declaring name and count gives the template bare locals named name and count, and element properties el.name and el.count.">attributes</span>=<span class="tok-string">"name count"</span><span class="tok-tag">&gt;</span>
   <span class="tok-tag">&lt;p&gt;</span>Hello, <span class="tok-tag">&lt;strong&gt;</span><span class="tok-jst ann" tabindex="0" data-label="$(name)" data-detail="$(expr) evaluates JavaScript and HTML-escapes the result before inserting it into the output.">$(name)</span><span class="tok-tag">&lt;/strong&gt;</span>.<span class="tok-tag">&lt;/p&gt;</span>
   <span class="tok-tag">&lt;button</span> <span class="tok-event ann" tabindex="0" data-label="onclick" data-detail="on&lt;event&gt; attaches a real addEventListener after render. Modifiers such as .prevent, .stop, .enter, .outside, and .debounce.300 are supported. The value must be exactly one $(...) expression; raw inline JavaScript is rejected.">onclick</span>=<span class="tok-string">"$(() =&gt; el.count = (el.count || 0) + 1)"</span><span class="tok-tag">&gt;</span>
     Clicked <span class="tok-jst ann" tabindex="0" data-label="$(count || 0)" data-detail="This is plain JavaScript. There is no second expression language; use the operators and functions you already know.">$(count || 0)</span> times
@@ -440,7 +440,7 @@ node tools/precompile.mjs components.html <span class="tok-attr ann" tabindex="0
       </table>
 
       <div class="code-example">
-        <pre><code><span class="tok-tag">&lt;script</span> <span class="tok-attr">type</span>=<span class="tok-string">"jst"</span> <span class="tok-attr">name</span>=<span class="tok-string">"todo-list"</span> <span class="tok-attr">props</span>=<span class="tok-string">"items filter"</span><span class="tok-tag">&gt;</span>
+        <pre><code><span class="tok-tag">&lt;script</span> <span class="tok-attr">type</span>=<span class="tok-string">"jst"</span> <span class="tok-attr">name</span>=<span class="tok-string">"todo-list"</span> <span class="tok-attr">attributes</span>=<span class="tok-string">"items filter"</span><span class="tok-tag">&gt;</span>
   <span class="tok-js ann" tabindex="0" data-label="$ statement" data-detail="A line starting with $ runs JavaScript to the end of the line. Consecutive $ lines can form a multi-line statement.">$ const visible = (items || []).filter(item =&gt; {</span>
   <span class="tok-js">$   if (filter === 'done') return item.done;</span>
   <span class="tok-js">$   if (filter === 'active') return !item.done;</span>
@@ -481,7 +481,7 @@ node tools/precompile.mjs components.html <span class="tok-attr ann" tabindex="0
         <div>
           <h3>Inside a JST template</h3>
           <div class="code-example">
-            <pre><code><span class="tok-tag">&lt;script</span> <span class="tok-attr">type</span>=<span class="tok-string">"jst"</span> <span class="tok-attr">name</span>=<span class="tok-string">"todo-list"</span> <span class="tok-attr">props</span>=<span class="tok-string">"items"</span><span class="tok-tag">&gt;</span>
+            <pre><code><span class="tok-tag">&lt;script</span> <span class="tok-attr">type</span>=<span class="tok-string">"jst"</span> <span class="tok-attr">name</span>=<span class="tok-string">"todo-list"</span> <span class="tok-attr">attributes</span>=<span class="tok-string">"items"</span><span class="tok-tag">&gt;</span>
   <span class="tok-js">$ (items || []).forEach(item =&gt; {</span>
     <span class="tok-tag">&lt;todo-item</span>
       <span class="tok-attr">jst-key</span>=<span class="tok-string">"$(item.id)"</span>
@@ -514,7 +514,7 @@ node tools/precompile.mjs components.html <span class="tok-attr ann" tabindex="0
       <h3>Forms</h3>
       <p>For parent/server-owned state, keep the boundary explicit. For local draft state, use <code>jst-model</code>.</p>
       <div class="code-example">
-        <pre><code><span class="tok-comment">&lt;!-- Parent-owned value: explicit props-down, events-up. --&gt;</span>
+        <pre><code><span class="tok-comment">&lt;!-- Parent-owned value: explicit attributes-down, events-up. --&gt;</span>
 <span class="tok-tag">&lt;input</span>
   <span class="tok-prop ann" tabindex="0" data-label=".value" data-detail="JST morphs form controls through properties, so value, checked, selected state, focus, and caret position stay stable across renders.">.value</span>=<span class="tok-string">"$(title)"</span>
   <span class="tok-event">oninput</span>=<span class="tok-string">"$(event =&gt; el.emit('title-change', event.target.value))"</span><span class="tok-tag">&gt;</span>
@@ -529,7 +529,7 @@ node tools/precompile.mjs components.html <span class="tok-attr ann" tabindex="0
       <h2>Slots</h2>
       <p>Slots project the custom element's original light-DOM children. Light DOM means the nodes are ordinary page DOM, not hidden inside a shadow root.</p>
       <div class="code-example">
-        <pre><code><span class="tok-tag">&lt;script</span> <span class="tok-attr">type</span>=<span class="tok-string">"jst"</span> <span class="tok-attr">name</span>=<span class="tok-string">"app-panel"</span> <span class="tok-attr">props</span>=<span class="tok-string">"title"</span><span class="tok-tag">&gt;</span>
+        <pre><code><span class="tok-tag">&lt;script</span> <span class="tok-attr">type</span>=<span class="tok-string">"jst"</span> <span class="tok-attr">name</span>=<span class="tok-string">"app-panel"</span> <span class="tok-attr">attributes</span>=<span class="tok-string">"title"</span><span class="tok-tag">&gt;</span>
   <span class="tok-tag">&lt;section&gt;</span>
     <span class="tok-tag">&lt;h2&gt;</span><span class="tok-jst">$(title)</span><span class="tok-tag">&lt;/h2&gt;</span>
     <span class="tok-tag">&lt;div</span> <span class="tok-attr">class</span>=<span class="tok-string">"body"</span><span class="tok-tag">&gt;</span><span class="tok-jst ann" tabindex="0" data-label="$(slot())" data-detail="slot() projects the component's original children into the rendered output.">$(slot())</span><span class="tok-tag">&lt;/div&gt;</span>
@@ -550,7 +550,7 @@ node tools/precompile.mjs components.html <span class="tok-attr ann" tabindex="0
       <p>JST's unusual feature is that a server response can define and use a component in the same HTML fragment. When inserted into a trusted auto-register root, the template registers and the element upgrades.</p>
       <div class="code-example">
         <pre><code><span class="tok-comment">&lt;!-- Server response body --&gt;</span>
-<span class="tok-tag">&lt;script</span> <span class="tok-attr">type</span>=<span class="tok-string">"jst"</span> <span class="tok-attr ann" tabindex="0" data-label="Fragment-defined component" data-detail="A trusted server response can include a JST template definition and the markup that uses it. The runtime registers the template after insertion.">name</span>=<span class="tok-string">"app-notice"</span> <span class="tok-attr">props</span>=<span class="tok-string">"message level"</span><span class="tok-tag">&gt;</span>
+<span class="tok-tag">&lt;script</span> <span class="tok-attr">type</span>=<span class="tok-string">"jst"</span> <span class="tok-attr ann" tabindex="0" data-label="Fragment-defined component" data-detail="A trusted server response can include a JST template definition and the markup that uses it. The runtime registers the template after insertion.">name</span>=<span class="tok-string">"app-notice"</span> <span class="tok-attr">attributes</span>=<span class="tok-string">"message level"</span><span class="tok-tag">&gt;</span>
   <span class="tok-tag">&lt;aside</span> <span class="tok-attr">class</span>=<span class="tok-string">"notice $(level)"</span><span class="tok-tag">&gt;</span><span class="tok-jst">$(message)</span><span class="tok-tag">&lt;/aside&gt;</span>
 <span class="tok-tag">&lt;/script&gt;</span>
 
@@ -575,7 +575,7 @@ node tools/precompile.mjs components.html <span class="tok-attr ann" tabindex="0
         </div>
         <div class="mini">
           <h3>ASP.NET Razor</h3>
-          <div class="code-example"><pre><code><span class="tok-tag">&lt;script</span> <span class="tok-attr">type</span>=<span class="tok-string">"jst"</span> <span class="tok-attr">name</span>=<span class="tok-string">"task-row"</span> <span class="tok-attr">props</span>=<span class="tok-string">"taskId title done"</span><span class="tok-tag">&gt;</span>
+          <div class="code-example"><pre><code><span class="tok-tag">&lt;script</span> <span class="tok-attr">type</span>=<span class="tok-string">"jst"</span> <span class="tok-attr">name</span>=<span class="tok-string">"task-row"</span> <span class="tok-attr">attributes</span>=<span class="tok-string">"taskId title done"</span><span class="tok-tag">&gt;</span>
   <span class="tok-tag">&lt;button</span> <span class="tok-event ann" tabindex="0" data-label="onclick" data-detail="JST event handlers use native-style on&lt;event&gt; attributes, so no Razor @-escaping is needed.">onclick</span>=<span class="tok-string">"$(() =&gt; el.emit('complete', taskId))"</span><span class="tok-tag">&gt;</span>Complete<span class="tok-tag">&lt;/button&gt;</span>
 <span class="tok-tag">&lt;/script&gt;</span>
 
@@ -668,7 +668,7 @@ configure({
         <li><strong>Formatter / tree-sitter / typed expressions:</strong> planned. VS Code diagnostics and highlighting exist now.</li>
         <li><strong>Keyed reconciliation:</strong> shipped and tested, but still a high-risk area that should keep gaining adversarial tests.</li>
         <li><strong>Transitions:</strong> CSS-driven v1 shipped for keyed enter/leave; richer move/FLIP behavior may grow later.</li>
-        <li><strong>Light DOM:</strong> deliberate. There is no style or id encapsulation, so prefer classes and derive ids from props.</li>
+        <li><strong>Light DOM:</strong> deliberate. There is no style or id encapsulation, so prefer classes and derive ids from attributes.</li>
         <li><strong>HTMX-style triggers/swaps:</strong> worth exploring, especially when kept resourceful and explicit.</li>
       </ul>
     </section>
