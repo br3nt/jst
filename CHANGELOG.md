@@ -5,6 +5,27 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.4.2 - 2026-06-29
+
+Docs and tooling only — the runtime is byte-identical to 0.4.1. (Docs are part of
+the deliverable: a doc fix that isn't tagged leaves the released docs stale.)
+
+### Docs
+
+- Finished the `props`→`attributes` rename in **prose**: the "props down, events
+  up" mantra → "attributes down, events up", the concept references across the
+  docs, and — most visibly — the two landing pages' syntax-highlighted `props=`
+  code examples (the keyword sweep couldn't match the span-broken markup).
+- Slimmed the "Upgrading across breaking releases" section to name the CHANGELOG
+  as the single migration source (de-duplicated README ↔ `install.md`,
+  version-agnostic, covers `props=`→`attributes=`); fixed stale CDN-pin examples.
+
+### Tooling
+
+- **`tools/prerelease_check.mjs`** (`npm run check:release`, also the last step of
+  `npm test`): verifies the version agrees across `package.json` / `jst.js` /
+  `CHANGELOG` and that no doc pins an old release. In the RELEASING.md process.
+
 ## 0.4.1 - 2026-06-28
 
 Additive — **no breaking changes**.

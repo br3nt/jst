@@ -86,10 +86,10 @@ point is:
 
 ```html
 <!-- ES-module runtime (relative imports resolve against the same tag) -->
-<script type="module" src="https://cdn.jsdelivr.net/gh/br3nt/jst@v0.4.1/jst.js"></script>
+<script type="module" src="https://cdn.jsdelivr.net/gh/br3nt/jst@v0.4.2/jst.js"></script>
 
 <!-- or the single-file global build (no modules) -->
-<script src="https://cdn.jsdelivr.net/gh/br3nt/jst@v0.4.1/jst.global.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/br3nt/jst@v0.4.2/jst.global.js"></script>
 <!-- minified: jst.global.min.js -->
 ```
 
@@ -230,7 +230,7 @@ Set an explicit cache policy for the JST module files and your component files:
   `max-age=0, must-revalidate`) — so an edit shows on the next reload instead of
   from a guessed cache window.
 - **Production:** fingerprint/version the assets (a tagged CDN path like
-  `…/jst@v0.4.1/jst.js`, or your own digest in the URL) and serve them
+  `…/jst@v0.4.2/jst.js`, or your own digest in the URL) and serve them
   immutable, so a deploy is never served stale. If you cannot fingerprint, set an
   explicit short `max-age` rather than leaving caching to the server's heuristic.
 
@@ -244,7 +244,7 @@ its version rather than diffing source:
 
 ```js
 import { version } from '/jst/jst.js';
-console.log(version);            // "0.4.1"
+console.log(version);            // "0.4.2"
 // or, without importing:
 console.log(window.JST.version); // mirrors the export
 ```
