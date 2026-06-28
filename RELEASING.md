@@ -58,9 +58,15 @@ Releases are cut from `main` **after** the work has merged. Never tag a PR branc
 2. Update `main` locally and confirm the release state is correct there:
    ```sh
    git checkout main && git pull --ff-only
+   node tools/prerelease_check.mjs   # version consistency + CHANGELOG entry + no stale doc pins
    ```
    - `package.json` `version` is the new `X.Y.Z`.
    - `CHANGELOG.md` has the matching `## X.Y.Z - <date>` entry.
+   - `tools/prerelease_check.mjs` passes. It catches what `npm test` doesn't: the
+     version agreeing across `package.json` / `jst.js` / `CHANGELOG`, **and** that
+     no doc still pins an old release (the jsDelivr `jst@vX.Y.Z` examples in
+     `docs/install.md` etc. that silently go stale every bump). It also runs as
+     the last step of `npm test`. **Bump those doc pins in the release PR.**
 3. Tag the `main` commit and push the tag:
    ```sh
    git tag -a vX.Y.Z -m "vX.Y.Z" && git push origin vX.Y.Z
@@ -79,7 +85,8 @@ gh release delete vX.Y.Z --yes --cleanup-tag   # removes the GitHub release + ta
 
 - [ ] Branch off latest `main`; PR targets `main` with `Closes #NN`.
 - [ ] `package.json` + `jst.js` `version` + `CHANGELOG.md` bumped in the PR (minor for breaking in 0.x, else patch).
-- [ ] CI green (`npm test`).
+- [ ] Doc version pins bumped (jsDelivr `jst@vX.Y.Z` examples); `node tools/prerelease_check.mjs` passes.
+- [ ] CI green (`npm test`) — includes `check:release`.
 - [ ] Branch rebased onto `main` (no merge-from-main commits); merged.
 - [ ] On `main`: `vX.Y.Z` tag pushed, GitHub release created from the tag.
 - [ ] No release branch created; no tag on a non-`main` commit.
