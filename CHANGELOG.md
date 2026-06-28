@@ -5,19 +5,53 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.3.0 - 2026-06-28
+
+A breaking release: the template input keyword is renamed `props=` → `attributes=`.
+Also lands first-class Invoker Commands support, an opt-in component-library
+**preview** (`jst-layout` + `jst-components`), and three more frameworks in the
+parity study (Svelte, Solid, Angular).
 
 ### Changed (breaking)
 
-- **The template input declaration `props="…"` was renamed to `attributes="…"`**,
-  with `attrs="…"` accepted as a shorthand alias. This reinforces that a
-  template's inputs *are* HTML attributes (and sheds the React-flavoured "props"
-  term). The old `props="…"` keyword is **removed with no alias** — a template
-  that still uses it throws a clear error pointing at the new name:
-  `the props="…" declaration was renamed. Use attributes="…" (or the attrs="…"
-  shorthand)`. Update every `<script type="jst" name="…" props="…">` to
-  `attributes="…"`. Invalid-identifier and reserved-name errors now say
+- **The template input declaration `props="…"` is renamed to `attributes="…"`**,
+  with `attrs="…"` accepted as a shorthand alias. A template's inputs *are* HTML
+  attributes; the new name says so (and sheds the React-flavoured "props"). The
+  old `props="…"` is **removed with no alias** — a template still using it throws
+  a clear, actionable error. Invalid-identifier and reserved-name errors now say
   "attribute" instead of "prop".
+
+  **Migration** — rename the one keyword on every template *definition*:
+
+  | 0.2.x | 0.3.0 |
+  | --- | --- |
+  | `<script type="jst" name="todo-item" props="item onToggle">` | `<script type="jst" name="todo-item" attributes="item onToggle">` |
+
+  Nothing else changes: usage sites (`<todo-item item="…">`), `.prop="$(…)"`
+  property bindings, and `on<event>` handlers are unaffected. `npm run lint` flags
+  any leftover `props=` on a `<script type="jst">` open tag with `file:line:col`.
+
+### Added
+
+- **Invoker Commands API support (#29).** `command`/`commandfor` and custom
+  `--commands` work across the JST boundary with **no new core code**: `oncommand`
+  rides the existing `on*` → `addEventListener` binding. Custom-command events
+  fire on the `commandfor` target (`bubbles: false`); for events up to a parent,
+  the target re-emits via `el.emit()`. Verified across multiple instances with no
+  synthetic id system. See `examples/invoker_commands.html`.
+- **Component-library preview (opt-in, CSS-first).** `jst-layout.css` (design
+  tokens + classless base + layout primitives) and `jst-components.css`
+  (Modal/Accordion/Dropdown/Tabs/Toast/Combobox/Table + theme skins), with a
+  "which JST tech?" badge and a 10-framework re-skin demo
+  (`examples/components_cross_section.html`). **Preview** — not yet packaged for
+  distribution.
+- **Framework-parity expansion.** Svelte, Solid, and Angular added to the study
+  (18 JST reimplementations) — now **9 frameworks / 126 examples**.
+
+### Tooling
+
+- `tools/lint.mjs` gains an open-tag rule that statically flags the removed
+  `props=` keyword on a `<script type="jst">` tag.
 
 ## 0.2.3 - 2026-06-24
 
