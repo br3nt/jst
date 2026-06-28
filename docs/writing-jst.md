@@ -356,6 +356,24 @@ $ })
 Keys preserve the matching DOM node, which protects focus, typed input, media
 state, canvas state, and transitions.
 
+### Animating re-renders — the `view-transition` attribute
+
+Put `view-transition` on a component **instance** (at the usage site, not in the
+template) to wrap *that instance's* re-renders in the browser's
+[View Transition API](https://developer.mozilla.org/en-US/docs/Web/API/View_Transitions_API):
+
+```html
+<sortable-list items="…" view-transition></sortable-list>  <!-- animates -->
+<sortable-list items="…"></sortable-list>                  <!-- snaps -->
+```
+
+The template is unchanged — whether an instance animates is the consumer's
+presentation choice. You describe the look in CSS (`::view-transition-old/new`,
+and a `view-transition-name` on the elements you want animated independently);
+the browser computes the transition. The first paint is never animated (nothing
+to animate from), and it degrades to an instant render where the API is
+unsupported. See `examples/view_transition_component.html`.
+
 ## 10. Slots
 
 Slots project the custom element's original children:
