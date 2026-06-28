@@ -1,6 +1,6 @@
 # Avoid JST when
 
-JST has a narrow philosophy: no build, props down and events up, controlled
+JST has a narrow philosophy: no build, attributes down and events up, controlled
 components, state lives in the page or on the server, no store or proxies or
 signals. That philosophy is a feature for some apps and a tax on others. Here is
 where JST is the wrong tool.

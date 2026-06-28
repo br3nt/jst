@@ -6,7 +6,7 @@ model and why it is the way it is.
 
 ## The model: assign a property, get a render
 
-You change what a component shows by assigning one of its props:
+You change what a component shows by assigning one of its attributes:
 
 ```js
 el.count = el.count + 1   // re-renders
@@ -59,7 +59,7 @@ get the deps wrong on, because there are no deps.
 ### No client store
 
 State lives in the page or on the server, not in a framework-owned client
-container. Components are controlled: props down, events up. In a small static
+container. Components are controlled: attributes down, events up. In a small static
 app, the page may own state directly. In a HATEOAS app, the server is usually the
 canonical owner because it already owns persistence, validation, permissions, and
 resource URLs (see [hateoas-fragments.md](./hateoas-fragments.md)).

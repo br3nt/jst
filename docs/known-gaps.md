@@ -42,7 +42,7 @@ worked examples):
 - **When an id is genuinely required** (a `label for`, or an aria relationship
   like `aria-controls`/`aria-describedby`), derive a unique *per-instance* id and
   wire `for`/`aria-*` to that derived id — never a hard-coded literal. Derive it
-  from a prop that is unique per instance, or from a generated token stamped on
+  from an attribute that is unique per instance, or from a generated token stamped on
   the element once (a module counter, or a value set in `once()`).
 - Scope styles by a component-specific class or a wrapper class rather than
   relying on the element name.

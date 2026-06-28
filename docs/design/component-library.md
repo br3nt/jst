@@ -174,7 +174,7 @@ compiler path**. The handler gets `event.command` (`"--foo"`) and `event.source`
 > target — a parent component cannot catch a child's custom command by bubbling.
 > For "events up to a parent," the target handles `oncommand` and then re-emits
 > via JST's own `el.emit(name, detail)` (which *is* `bubbles: true, composed:
-> true`). This keeps the existing props-down / events-up mental model intact.
+> true`). This keeps the existing attributes-down / events-up mental model intact.
 
 The only code worth adding is a command **router** (so a target handling several
 `--commands` doesn't need a hand-written `switch`):
@@ -222,7 +222,7 @@ resolution is **not** a parallel/auto id system. It is:
 
 A template is a template, not an instance, so it can't invent an id. When a
 template legitimately needs one, **the id arrives as a template attribute** (what
-we currently call a prop) and is interpolated. Three shapes, strongest first:
+we currently call an attribute) and is interpolated. Three shapes, strongest first:
 
 **1. A reusable trigger pointing at an external target (best — no internal id).**
 The id is a *reference* to something the author owns elsewhere; the template holds

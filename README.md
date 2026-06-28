@@ -36,7 +36,7 @@ be interactive once it lands in the browser. A fetched fragment can include both
 1. **No build step by default** - components live in `<script type="jst">` in plain HTML.
 2. **JavaScript is the templating language** - `$(expr)`, `$ if`, `$ forEach`; no second expression DSL.
 3. **Hypertext as the API** - responses can be HTML carrying their own UI and next actions, not JSON that must be reshaped into client models.
-4. **Props down, events up** - components are controlled renderers; state lives in the page, parent, or server.
+4. **Attributes down, events up** - components are controlled renderers; state lives in the page, parent, or server.
 5. **No store, no proxies, no hidden graph** - use plain JavaScript objects, properties, and events.
 6. **Safe interpolation by default** - `$(expr)` escapes HTML; `url()` guards URL attributes; `trustedHTML()` is the explicit trusted-HTML escape.
 7. **Fail loud** - invalid prop declarations, malformed bindings, and render errors should be visible during development.

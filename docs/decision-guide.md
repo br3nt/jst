@@ -30,7 +30,7 @@ component. Choose per surface.
 - A static surface with no lifecycle need, a form with a submit handler, a bit of
   markup wired by a click listener, does not need a component. Server-render the
   HTML and attach behaviour from a module that finds it by selector.
-- Reach for a component when the surface has reactive view state (a prop change
+- Reach for a component when the surface has reactive view state (an attribute change
   that should re-render) or a connect/disconnect lifecycle (mount and tear down a
   resource or a streamed-in widget). When you need a custom element, author it as
   a JST component rather than a hand-rolled one, so it shares the same lifecycle,

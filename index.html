@@ -153,7 +153,7 @@
       </div>
       <div class="panel code-example">
         <h3>Source</h3>
-<pre class="code"><span class="t">&lt;script</span> <span class="k ann" tabindex="0" data-label="type=&quot;jst&quot;" data-detail="This marks the block as a JST template. The runtime compiles it into a real custom element.">type</span>=<span class="s">"jst"</span> <span class="k ann" tabindex="0" data-label="Component name" data-detail="The name becomes the custom element tag. Custom element names must contain a hyphen.">name</span>=<span class="s">"jst-demo-counter"</span> <span class="k ann" tabindex="0" data-label="Props" data-detail="props declares the template locals and host properties. Here count is available as count and el.count.">props</span>=<span class="s">"count"</span><span class="t">&gt;</span>
+<pre class="code"><span class="t">&lt;script</span> <span class="k ann" tabindex="0" data-label="type=&quot;jst&quot;" data-detail="This marks the block as a JST template. The runtime compiles it into a real custom element.">type</span>=<span class="s">"jst"</span> <span class="k ann" tabindex="0" data-label="Component name" data-detail="The name becomes the custom element tag. Custom element names must contain a hyphen.">name</span>=<span class="s">"jst-demo-counter"</span> <span class="k ann" tabindex="0" data-label="Attributes" data-detail="attributes declares the template locals and host properties. Here count is available as count and el.count.">attributes</span>=<span class="s">"count"</span><span class="t">&gt;</span>
   <span class="t">&lt;button</span> <span class="e ann" tabindex="0" data-label="onclick" data-detail="An on&lt;event&gt; attribute attaches a real addEventListener after render. The value must be a single $(…) expression — raw inline JavaScript is rejected. This handler updates the host property.">onclick</span>=<span class="s">"$(() =&gt; el.count = (el.count || 0) + 1)"</span><span class="t">&gt;</span>
     Clicked <span class="j ann" tabindex="0" data-label="$(count)" data-detail="$(expr) evaluates JavaScript and HTML-escapes the result before insertion.">$(count)</span> times
   <span class="t">&lt;/button&gt;</span>
@@ -247,7 +247,7 @@
       <li><b>Hypertext as the API.</b> Responses are HTML carrying their own UI and next actions — not JSON a client must re-render. Like HTMX, but the response brings its own front-end interactivity.</li>
       <li><b>No backend required.</b> A JST app is just static files; the same components run on the client, stream down from a server, or ship as a folder of files. No JSON contract, no parallel client app.</li>
       <li><b>Built on Web Components.</b> JST's runtime/compiler registers every <code>&lt;jst-*&gt;</code> as a real custom element via <code>customElements.define</code>. Data in as <em>properties</em>, actions out as bubbling <em>CustomEvents</em>, DOM patched by morphing — no virtual DOM, no signals, no shadow-DOM lock-in.</li>
-      <li><b>Props down, events up.</b> Components are dumb renderers; state lives in the page or a parent, recursively.</li>
+      <li><b>Attributes down, events up.</b> Components are dumb renderers; state lives in the page or a parent, recursively.</li>
       <li><b>Safe by default.</b> Interpolation is HTML-escaped unless you opt out with <code>trustedHTML()</code>.</li>
     </ul>
   </div>
@@ -284,7 +284,7 @@
           <a class="open-standalone" href="examples/todo_app.html" target="_blank" rel="noopener" aria-label="Open the Todo app example as its own page">Open standalone ↗</a>
         </div>
       </div>
-      <p class="blurb">Props down, events up: the page owns the list, components are dumb renderers,
+      <p class="blurb">Attributes down, events up: the page owns the list, components are dumb renderers,
         and interpolation is escaped by default.</p>
       <div class="embed breakout">
         <iframe class="demo-frame" data-autosize src="examples/todo_app.html" loading="lazy" title="Todo app (live preview)" aria-describedby="example-todo"></iframe>
@@ -322,7 +322,7 @@
     </div>
     <div class="code-example">
 <pre class="code"><span class="c">&lt;!-- the grammar highlights these as embedded JS --&gt;</span>
-<span class="t">&lt;script</span> <span class="k">type</span>=<span class="s">"jst"</span> <span class="k">name</span>=<span class="s">"todo-item"</span> <span class="k">props</span>=<span class="s">"item"</span><span class="t">&gt;</span>
+<span class="t">&lt;script</span> <span class="k">type</span>=<span class="s">"jst"</span> <span class="k">name</span>=<span class="s">"todo-item"</span> <span class="k">attributes</span>=<span class="s">"item"</span><span class="t">&gt;</span>
   <span class="t">&lt;li</span> <span class="e ann" tabindex="0" data-label="onclick" data-detail="The VS Code extension highlights JST event bindings and validates them using the real compiler.">onclick</span>=<span class="s">"$(() =&gt; el.emit('toggle', item))"</span><span class="t">&gt;</span><span class="j ann" tabindex="0" data-label="$(item.title)" data-detail="Embedded JavaScript is delegated to the editor's JavaScript grammar.">$(item.title)</span><span class="t">&lt;/li&gt;</span>
 <span class="t">&lt;/script&gt;</span></pre>
       <div class="snippet-detail" aria-live="polite"><strong>Hover over the code</strong><span>Hover over parts of the code snippet to get a detailed explanation.</span></div>

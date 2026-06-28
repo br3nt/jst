@@ -5,9 +5,9 @@ events, and the state lives outside the component. A component is a renderer of
 the inputs it is given, not an owner of state. This is the same discipline as
 controlled form inputs in React, applied to every component.
 
-## Props down
+## Attributes down
 
-Declare props as a space-separated list of plain JS identifiers. Case is
+Declare attributes as a space-separated list of plain JS identifiers. Case is
 preserved.
 
 ```html
@@ -19,7 +19,7 @@ preserved.
 </script>
 ```
 
-Inside the template you reference props as bare locals (`$(item)`) or off the
+Inside the template you reference attributes as bare locals (`$(item)`) or off the
 element (`el.item`). From outside, pass data in two ways:
 
 - Attributes for simple values, kebab-case maps to camelCase:
@@ -82,7 +82,7 @@ name: `.prevent .stop .self .once .capture .passive`, key guards like
 There is no separate `events="..."` declaration today. DOM events are open by
 design: emit them with `el.emit(...)`, listen with `on<event>`, and let tooling
 learn common names from templates. Function callbacks such as `onToggle` are just
-props; use them when a direct callback is clearer than bubbling an event.
+attributes; use them when a direct callback is clearer than bubbling an event.
 
 ## State lives outside
 
@@ -109,7 +109,7 @@ reads `el.text` into the field and writes `el.text` back on input - local,
 component-owned UI state (a draft value), not hidden parent state. When a parent
 or the server owns the value, stay explicit: bind `.value="$(text)"` and report
 changes with `oninput="$(e => el.emit('text-change', e.target.value))"`, so the
-boundary stays props-down / events-up. For checkboxes and selects, `jst-model`
+boundary stays attributes-down / events-up. For checkboxes and selects, `jst-model`
 reads and writes `el[prop]` via `.checked` / `.value` accordingly.
 
 ## Why this scales: push state to the server

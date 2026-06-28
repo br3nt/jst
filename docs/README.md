@@ -10,7 +10,7 @@ JavaScript Templates - no-build reactive web components in plain HTML.
 - [Browser support](./browser-support.md).
 
 ## Core model
-- [Controlled components](./controlled-components.md) - props down, events up, and the `jst-model` local form sugar.
+- [Controlled components](./controlled-components.md) - attributes down, events up, and the `jst-model` local form sugar.
 - [No store, no proxy](./no-store-no-proxy.md) - why state stays explicit.
 - [HATEOAS fragments](./hateoas-fragments.md) - server-driven HTML that carries its own components.
 

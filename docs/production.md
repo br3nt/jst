@@ -166,7 +166,7 @@ For local controlled shorthand:
 <input jst-model="title">
 ```
 
-`jst-model` reads from the declared prop and updates `el[prop]` when the user
+`jst-model` reads from the declared attribute and updates `el[prop]` when the user
 changes it. For parent-owned state, keep the explicit `.value` plus `oninput`
 event pattern.
 
