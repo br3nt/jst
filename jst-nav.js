@@ -83,6 +83,25 @@ function selectFrom(html, selector) {
   return node ? node.outerHTML : '';
 }
 
+// Out-of-band swaps: pull every [jst-swap-oob] element out of the response and
+// swap it into the element with the matching id, then return the remaining HTML
+// for the normal swap. jst-swap-oob="true|outerHTML"(default) | innerHTML | beforeend.
+function applyOob(html) {
+  if (!html || html.indexOf('jst-swap-oob') === -1) return html;
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  doc.querySelectorAll('[jst-swap-oob]').forEach((node) => {
+    const mode = node.getAttribute('jst-swap-oob');
+    const dest = node.id ? document.getElementById(node.id) : null;
+    node.removeAttribute('jst-swap-oob');
+    node.remove();   // detach from the parsed doc FIRST (so it's out of the main html)
+    if (!dest) return;
+    if (mode === 'innerHTML') dest.innerHTML = node.innerHTML;
+    else if (mode === 'beforeend') dest.insertAdjacentHTML('beforeend', node.outerHTML);
+    else dest.replaceWith(node);   // node is detached; this inserts it live
+  });
+  return doc.body.innerHTML;
+}
+
 /* ----------------------------------------------------------------- requests */
 
 function emit(el, name, detail) {
@@ -155,19 +174,19 @@ async function performRequest(el, sourceEvent) {
   const select = el.getAttribute('jst-select');
   if (select) html = selectFrom(html, select);
 
-  const target = resolveTarget(el, el.getAttribute('jst-target'));
+  // Out-of-band swaps: elements in the response marked jst-swap-oob are swapped
+  // into their id-matched targets elsewhere, then dropped from the main content.
+  html = applyOob(html);
+
   const how = el.getAttribute('jst-swap') || 'innerHTML';
-
-  // Preserve scroll position when prepending above the viewport (reverse scroll).
-  const scroller = how === 'afterbegin' ? scrollParent(target) : null;
-  const prevHeight = scroller ? scroller.scrollHeight : 0;
-  const prevTop = scroller ? scroller.scrollTop : 0;
-
-  swapContent(target, html, how);
-
-  if (scroller) {
-    // Keep the viewport anchored to the same content after prepending.
-    scroller.scrollTop = prevTop + (scroller.scrollHeight - prevHeight);
+  const target = how === 'none' ? null : resolveTarget(el, el.getAttribute('jst-target'));
+  if (target) {
+    // Preserve scroll position when prepending above the viewport (reverse scroll).
+    const scroller = how === 'afterbegin' ? scrollParent(target) : null;
+    const prevHeight = scroller ? scroller.scrollHeight : 0;
+    const prevTop = scroller ? scroller.scrollTop : 0;
+    swapContent(target, html, how);
+    if (scroller) scroller.scrollTop = prevTop + (scroller.scrollHeight - prevHeight);
   }
 
   // Push URL if requested (GET navigations).
@@ -201,7 +220,15 @@ function parseTrigger(spec, el) {
     return { event: 'click' };
   }
   const tokens = spec.trim().split(/\s+/);
-  const t = { event: tokens[0] };
+  const t = {};
+  // event token may carry a key filter: keydown[/]  keyup[Enter]
+  const km = /^([^[]+)(?:\[(.+)\])?$/.exec(tokens[0]);
+  t.event = km[1];
+  if (km[2]) {
+    const parts = km[2].split('+');   // e.g. Shift+D  Ctrl+K  /
+    t.key = parts.pop();
+    if (parts.length) t.mods = parts.map((p) => p.toLowerCase());
+  }
   for (const tok of tokens.slice(1)) {
     if (tok === 'changed') t.changed = true;
     else if (tok.startsWith('delay:')) t.delay = ms(tok.slice(6));
@@ -252,6 +279,12 @@ function setupTrigger(el) {
   if (!target) return;
 
   const handler = (ev) => {
+    if (t.key) {
+      if ((ev.key || '').toLowerCase() !== t.key.toLowerCase()) return;
+      if (t.mods && t.mods.some((m) =>
+        !((m === 'shift' && ev.shiftKey) || (m === 'ctrl' && ev.ctrlKey) ||
+          (m === 'alt' && ev.altKey) || (m === 'meta' && ev.metaKey)))) return;
+    }
     if (t.event === 'submit' || el.matches('a')) ev.preventDefault();
     if (t.changed) {
       const v = el.value;

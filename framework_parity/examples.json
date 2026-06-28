@@ -115,17 +115,17 @@
     "framework": "HTMX",
     "name": "keyboard-shortcuts",
     "source": "https://htmx.org/examples/keyboard-shortcuts/",
-    "status": "partial",
+    "status": "exact",
     "file": "htmx/keyboard-shortcuts.html",
-    "note": "Result panel clean, but global shortcut is a hand-written `document.addEventListener` (`on<event>` only binds template elements)."
+    "note": "jst-nav jst-trigger=\"keydown[Shift+D] from:body\"; body-level key-filtered triggers."
   },
   {
     "framework": "HTMX",
     "name": "polling / update-other-content",
     "source": "https://htmx.org/examples/update-other-content/",
-    "status": "partial",
+    "status": "exact",
     "file": "htmx/polling.html",
-    "note": "One response updating two regions is idiomatic; polling itself is a hand-written `setInterval`."
+    "note": "jst-nav jst-trigger=\"every 500ms\" + jst-swap=\"none\"; one response updates two regions via jst-swap-oob."
   },
   {
     "framework": "Alpine.js",
