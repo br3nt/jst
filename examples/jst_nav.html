@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>JST · jst-nav (fetch / swap / triggers + reverse scroll)</title>
+  <link rel="stylesheet" href="../jst-layout.css">
+  <style>
+    .log { block-size: 18rem; overflow-y: auto; border: var(--jst-border-width) solid var(--jst-border); border-radius: var(--jst-radius); padding: var(--jst-space-s); display: flex; flex-direction: column; gap: var(--jst-space-2xs); }
+    .msg { padding: var(--jst-space-2xs) var(--jst-space-s); background: var(--jst-surface); border-radius: var(--jst-radius); }
+    .sentinel { color: var(--jst-muted); font-size: 0.8em; text-align: center; }
+    #results .msg { background: var(--jst-bg); border: var(--jst-border-width) solid var(--jst-border); }
+  </style>
+
+  <!-- Mock backend: intercept fetch and return HTML fragments. Stands in for a
+       server that renders message batches + search results. -->
+  <script>
+    const PAGE = 12;
+    const origFetch = window.fetch.bind(window);
+    window.fetch = async (url, opts) => {
+      const u = new URL(url, location.origin);
+      if (u.pathname === '/older') {
+        const before = parseInt(u.searchParams.get('before'), 10);
+        const top = Math.max(1, before - PAGE);
+        let html = '';
+        for (let id = top; id < before; id++) {
+          const isOldest = id === top && top > 1;
+          const trig = isOldest
+            ? ` jst-get="/older?before=${top}" jst-trigger="revealed" jst-target="#log" jst-swap="afterbegin"`
+            : '';
+          html += `<div class="msg" id="m-${id}"${trig}>Message #${id}</div>`;
+        }
+        return new Response(html, { headers: { 'Content-Type': 'text/html' } });
+      }
+      if (u.pathname === '/search') {
+        const q = (u.searchParams.get('q') || '').trim();
+        const all = ['Ada Lovelace','Alan Turing','Grace Hopper','Linus Torvalds','Margaret Hamilton','Ken Thompson','Barbara Liskov'];
+        const hits = q ? all.filter(n => n.toLowerCase().includes(q.toLowerCase())) : [];
+        return new Response(hits.map(n => `<div class="msg">${n}</div>`).join('') || '<div class="sentinel">no matches</div>', { headers: { 'Content-Type': 'text/html' } });
+      }
+      if (u.pathname === '/more-items') {
+        let html = '';
+        for (let i = 0; i < 5; i++) html += `<div class="msg">Loaded item ${Math.random().toString(36).slice(2,6)}</div>`;
+        return new Response(html, { headers: { 'Content-Type': 'text/html' } });
+      }
+      return origFetch(url, opts);
+    };
+  </script>
+
+  <script type="module" src="../jst-nav.js"></script>
+  <style>body { max-inline-size: 44rem; margin-inline: auto; padding: var(--jst-space-l); }</style>
+</head>
+<body>
+
+  <h1>jst-nav</h1>
+
+  <h2>Reverse infinite scroll</h2>
+  <p style="color:var(--jst-muted)">Newest at the bottom. Scroll <strong>up</strong> — older messages fetch and prepend, and the scroll position stays put.</p>
+  <div class="log" id="log">
+    <!-- Top sentinel carries the reveal trigger for the first older batch. -->
+    <div class="msg" id="m-89" jst-get="/older?before=89" jst-trigger="revealed" jst-target="#log" jst-swap="afterbegin">Message #89</div>
+    <div class="msg" id="m-90">Message #90</div>
+    <div class="msg" id="m-91">Message #91</div>
+    <div class="msg" id="m-92">Message #92</div>
+    <div class="msg" id="m-93">Message #93</div>
+    <div class="msg" id="m-94">Message #94</div>
+    <div class="msg" id="m-95">Message #95</div>
+    <div class="msg" id="m-96">Message #96</div>
+    <div class="msg" id="m-97">Message #97</div>
+    <div class="msg" id="m-98">Message #98</div>
+    <div class="msg" id="m-99">Message #99</div>
+    <div class="msg" id="m-100">Message #100 (newest)</div>
+  </div>
+
+  <h2 style="margin-top:2rem">Active search (keyup changed delay:300ms)</h2>
+  <input type="search" placeholder="Search people…" jst-get="/search" jst-trigger="keyup changed delay:300ms" jst-target="#results" jst-swap="innerHTML" name="q">
+  <div id="results" style="margin-top:.5rem; display:flex; flex-direction:column; gap:.25rem"></div>
+
+  <h2 style="margin-top:2rem">Click to load (append)</h2>
+  <div id="items" style="display:flex; flex-direction:column; gap:.25rem"></div>
+  <button jst-get="/more-items" jst-target="#items" jst-swap="beforeend" style="margin-top:.5rem">Load more</button>
+
+  <script>
+    // Start the reverse-scroll view pinned to the bottom (newest).
+    addEventListener('DOMContentLoaded', () => { const l = document.getElementById('log'); l.scrollTop = l.scrollHeight; });
+  </script>
+</body>
+</html>
