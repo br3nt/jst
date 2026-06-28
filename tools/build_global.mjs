@@ -46,6 +46,11 @@ const GLOBAL_MIN_JS = path.join(repoRoot, 'jst.global.min.js');
 const RUNTIME_GLOBAL_JS = path.join(repoRoot, 'jst.runtime.global.js');
 const RUNTIME_GLOBAL_MIN_JS = path.join(repoRoot, 'jst.runtime.global.min.js');
 const RUNTIME_ESM_JS = path.join(repoRoot, 'jst.runtime.js');
+// Opt-in directive add-ons (ESM source committed; .min derived like the others).
+const DIRECTIVE_LIBS = [
+  [path.join(repoRoot, 'jst-nav.js'), path.join(repoRoot, 'jst-nav.min.js')],
+  [path.join(repoRoot, 'jst-behaviors.js'), path.join(repoRoot, 'jst-behaviors.min.js')],
+];
 
 // jst.js imports the compiler in exactly one place (used only by
 // registerCustomElementFromTemplate, which compiles inline <script type="jst">).
@@ -230,11 +235,20 @@ async function main() {
   fs.writeFileSync(GLOBAL_MIN_JS, fullMin);
   fs.writeFileSync(RUNTIME_GLOBAL_MIN_JS, runtimeMin);
 
+  // Minify the opt-in directive add-ons.
+  let directiveNote = '';
+  for (const [src, out] of DIRECTIVE_LIBS) {
+    if (!fs.existsSync(src)) continue;
+    const min = await minify(fs.readFileSync(src, 'utf8'));
+    fs.writeFileSync(out, min);
+    directiveNote += `, ${path.basename(out)} (${(min.length / 1024).toFixed(1)}kb)`;
+  }
+
   const kb = n => `${(n / 1024).toFixed(1)}kb`;
   console.log(
     `build_global: wrote jst.global.js (${kb(full.length)} / min ${kb(fullMin.length)}), `
     + `jst.runtime.global.js (${kb(runtimeGlobal.length)} / min ${kb(runtimeMin.length)}), `
-    + `jst.runtime.js (${kb(runtimeEsm.length)}); regenerated concerns-standalone.html`,
+    + `jst.runtime.js (${kb(runtimeEsm.length)})${directiveNote}; regenerated concerns-standalone.html`,
   );
 }
 
