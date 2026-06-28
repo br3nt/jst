@@ -156,7 +156,7 @@
           <span class="jst-tag" data-tech="invoker">command + &lt;dialog&gt;</span>
         </header>
         <button command="show-modal" commandfor="demo-modal">Open modal</button>
-        <dialog class="jst-modal" id="demo-modal">
+        <dialog class="jst-modal" id="demo-modal" closedby="any">
           <header>Confirm action <button class="jst-modal-close" command="close" commandfor="demo-modal" aria-label="Close">×</button></header>
           <div class="jst-modal-body"><p style="margin:0">Native <code>&lt;dialog&gt;</code> with focus trap, <kbd>Esc</kbd>, and backdrop — opened and closed entirely by <code>command</code>/<code>commandfor</code>. Zero JavaScript.</p></div>
           <footer>
@@ -194,8 +194,8 @@
           <h3>Dropdown menu</h3>
           <span class="jst-tag" data-tech="invoker">Popover + command</span>
         </header>
-        <button command="toggle-popover" commandfor="demo-menu">Actions ▾</button>
-        <div class="jst-menu" popover id="demo-menu">
+        <button command="toggle-popover" commandfor="demo-menu" style="anchor-name: --actions-btn">Actions ▾</button>
+        <div class="jst-menu" popover id="demo-menu" style="position-anchor: --actions-btn">
           <button>Edit</button>
           <button>Duplicate</button>
           <button>Move to…</button>
@@ -308,6 +308,10 @@
   <script type="module">
     document.getElementById('theme').addEventListener('change', (e) => {
       document.body.dataset.theme = e.target.value;
+    });
+    // Backdrop click closes the modal (fallback for engines without closedby="any").
+    document.querySelectorAll('dialog.jst-modal').forEach((d) => {
+      d.addEventListener('click', (e) => { if (e.target === d) d.close(); });
     });
   </script>
 </body>
