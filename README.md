@@ -148,17 +148,11 @@ The loaded runtime version is available as `import { version }` and on
 
 ## Upgrading across breaking releases
 
-Removed/renamed template syntax (e.g. `@event` → `on<event>`) only errors when a
-component actually renders in the browser. Two tools turn that into a build
-signal:
-
-```sh
-node tools/lint.mjs   "app/views/**/*.erb" "public/jst/**/*.html"   # find leftovers (file:line:col)
-node tools/codemod.mjs "app/views/**/*.erb" "public/jst/**/*.html"  # apply @event -> on<event>
-```
-
-Both scope to `<script type="jst">` blocks, so surrounding `@media`/Alpine/Vue
-markup is untouched. See
+Per-version migrations (with before → after tables) live in the
+[CHANGELOG](CHANGELOG.md). To apply them safely — removed/renamed template syntax
+only errors when a component renders in the browser — run `node tools/lint.mjs`
+to find leftovers (wire it into CI) and `node tools/codemod.mjs` for the
+mechanical `@event` → `on<event>` rewrite. Full guidance:
 [docs/install.md](docs/install.md#upgrading-across-breaking-releases).
 
 ## Try it
