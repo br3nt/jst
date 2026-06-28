@@ -699,9 +699,9 @@
     "framework": "fixi",
     "name": "fx-ignore",
     "source": "https://github.com/bigskysoftware/fixi",
-    "status": "partial",
+    "status": "exact",
     "file": "fixi/fx-ignore.html",
-    "note": "No `jst-ignore` directive yet (open proposal); an uncontrolled third-party widget survives re-renders by living in a projected slot, not the morphed subtree."
+    "note": "Encapsulate the widget in a component + project its DOM via a slot (moved, not re-rendered). No jst-ignore needed (#6 closed)."
   },
   {
     "framework": "Lit",
