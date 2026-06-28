@@ -59,9 +59,9 @@
     "framework": "HTMX",
     "name": "infinite-scroll",
     "source": "https://htmx.org/examples/infinite-scroll/",
-    "status": "partial",
+    "status": "exact",
     "file": "htmx/infinite-scroll.html",
-    "note": "Data/append idiomatic, but the trigger is a hand-wired IntersectionObserver re-attached after each render (no `revealed` trigger)."
+    "note": "jst-nav jst-trigger=\"revealed\" + a sentinel carrying the next trigger. No hand-rolled IntersectionObserver."
   },
   {
     "framework": "HTMX",

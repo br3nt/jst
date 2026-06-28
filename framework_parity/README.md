@@ -14,7 +14,7 @@ idiomatically, it is recorded as a gap rather than hidden in an example.
 
 | | ✓ exact | (i) partial | ✗ none | total |
 |---|---:|---:|---:|---:|
-| HTMX | 11 | 5 | 0 | 16 |
+| HTMX | 12 | 4 | 0 | 16 |
 | Alpine.js | 15 | 5 | 0 | 20 |
 | Vue | 10 | 10 | 0 | 20 |
 | React | 11 | 3 | 0 | 14 |
@@ -23,7 +23,7 @@ idiomatically, it is recorded as a gap rather than hidden in an example.
 | Svelte | 6 | 0 | 0 | 6 |
 | Solid | 5 | 1 | 0 | 6 |
 | Angular | 6 | 0 | 0 | 6 |
-| **Total** | **89** | **37** | **0** | **126** |
+| **Total** | **90** | **36** | **0** | **126** |
 
 **Every example was reproduced** — 89 as exact, idiomatic matches and 37 needing
 a documented workaround. **Zero were impossible.** But "no ✗" is not "no gaps":
