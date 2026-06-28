@@ -1,20 +1,17 @@
 <!DOCTYPE html>
 <!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
 <!--
-  Source: https://github.com/bigskysoftware/fixi (README, commit d31fc1d) — relative selectors EXTENSION
-  Demonstrates: placing a response into a RELATIVE target (fixi's next/closest/find selectors)
-  instead of a global id. fixi-core only takes a CSS selector for fx-target; next/closest/find
-  are an opt-in extension.
-  JST status: (i) workaround. JST has no relative-selector directive. Here each trigger finds its
-  neighbouring <output> via the standard DOM (event target → el.closest('.row').querySelector),
-  so no global ids are needed. fixi-core lacks the extended selectors; this is parity.
+  Source: https://github.com/bigskysoftware/fixi (relative selectors extension)
+  Demonstrates: placing a response into a RELATIVE target instead of a global id.
+  JST status: ✓ exact — jst-nav's `jst-target="closest .row find output"` resolves
+  the trigger-relative target with 100% standard CSS selectors (closest + find).
+  No global ids; fixi-core needs its extension for next/closest/find.
 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <title>JST · fixi relative-target</title>
-<script type="module" src="../../jst.js"></script>
-<script src="../../framework_parity/lib/mock-fetch.js"></script>
+<script type="module" src="../../jst-nav.js"></script>
 <style>
   body { font-family: system-ui, sans-serif; max-width: 30rem; margin: 3rem auto; }
   .row { display: flex; align-items: center; gap: .8rem; padding: .4rem 0; border-bottom: 1px solid #eee; }
@@ -24,44 +21,29 @@
 </head>
 <body>
 
-<script type="jst" name="lookup-list" attributes="terms">
-  <div data-testid="rows">
-    $ (terms || []).forEach(t => {
-      <div class="row" data-testid="row-$(t)">
-        <button class="lookup" data-testid="lookup-$(t)" data-term="$(t)">Resolve "$(t)"</button>
-        <output data-testid="out-$(t)">—</output>
-      </div>
-    $ })
-  </div>
-</script>
-
 <h1>Relative target (no global ids)</h1>
-<lookup-list id="list"></lookup-list>
+<div data-testid="rows">
+  <div class="row" data-testid="row-alpha"><button class="lookup" data-testid="lookup-alpha" jst-get="/api/lookup/alpha" jst-target="closest .row find output" jst-swap="innerHTML">Resolve "alpha"</button><output data-testid="out-alpha">—</output></div>
+  <div class="row" data-testid="row-bravo"><button class="lookup" data-testid="lookup-bravo" jst-get="/api/lookup/bravo" jst-target="closest .row find output" jst-swap="innerHTML">Resolve "bravo"</button><output data-testid="out-bravo">—</output></div>
+  <div class="row" data-testid="row-charlie"><button class="lookup" data-testid="lookup-charlie" jst-get="/api/lookup/charlie" jst-target="closest .row find output" jst-swap="innerHTML">Resolve "charlie"</button><output data-testid="out-charlie">—</output></div>
+</div>
 
 <script>
-  JSTMock.route('GET /api/lookup/:term', req => ({ json: { answer: req.params.term.toUpperCase() + ' ✓' } }), { delay: 60 });
-
-  const list = document.getElementById('list');
-  list.terms = ['alpha', 'bravo', 'charlie'];
-
-  // Delegated handler: resolve the target RELATIVE to the clicked trigger. No id lookup.
-  list.addEventListener('click', async e => {
-    const btn = e.target.closest('button.lookup');
-    if (!btn) return;
-    const out = btn.closest('.row').querySelector('output');   // fixi "next <output>" / "closest"
-    out.textContent = '…';
-    const r = await (await fetch('/api/lookup/' + btn.dataset.term)).json();
-    out.textContent = r.answer;
-  });
-
+  const origFetch = window.fetch.bind(window);
+  window.fetch = async (url, opts) => {
+    const u = new URL(url, location.origin);
+    const m = u.pathname.match(/^\/api\/lookup\/(.+)$/);
+    if (m) return new Response(decodeURIComponent(m[1]).toUpperCase() + ' ✓', { headers: { 'Content-Type': 'text/html' } });
+    return origFetch(url, opts);
+  };
+  window.__exampleReady = true;
   window.__parityTest = async () => {
-    const until = async (cond, ms = 3000) => { const t0 = Date.now(); while (Date.now() - t0 < ms) { if (cond()) return true; await new Promise(r => setTimeout(r, 50)); } return cond(); };
     document.querySelector('[data-testid="lookup-bravo"]').click();
-    const hit = await until(() => document.querySelector('[data-testid="out-bravo"]').textContent === 'BRAVO ✓');
+    await new Promise(r => setTimeout(r, 150));
+    const hit = document.querySelector('[data-testid="out-bravo"]').textContent === 'BRAVO ✓';
     const otherUntouched = document.querySelector('[data-testid="out-alpha"]').textContent === '—';
     return { ok: hit && otherUntouched, detail: 'response placed into the trigger-relative <output> only' };
   };
-  window.__exampleReady = true;
 </script>
 </body>
 </html>

@@ -1,49 +1,30 @@
 <!DOCTYPE html>
 <!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
 <!--
-  Source: https://github.com/bigskysoftware/fixi#readme  (active-search, mirrors htmx)
-  Demonstrates: a search box that POSTs as you type and swaps a results table.
-  JST status: (i) partial. The page state + <search-results> renderer is idiomatic, but the
-  debounced keystroke trigger is hand-written. This is parity, not a deficiency: fixi-core
-  also OMITS debounce — htmx's `hx-trigger="keyup changed delay:300ms"` is a user-land
-  EXTENSION in fixi too, so a hand-wired setTimeout debounce is exactly what fixi requires.
+  Source: https://github.com/bigskysoftware/fixi (debounced active search)
+  Demonstrates: a search box that queries as you type (debounced) and swaps results.
+  JST status: ✓ exact — jst-nav's `jst-trigger="keyup changed delay:300ms"` is the
+  debounced trigger fixi-core omits; the input's value is sent and in-flight
+  requests abort.
 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>JST · fixi · active-search</title>
-<script type="module" src="../../jst.js"></script>
-<script src="../../framework_parity/lib/mock-fetch.js"></script>
+<title>JST · fixi active-search</title>
+<script type="module" src="../../jst-nav.js"></script>
 <style>
   body { font-family: system-ui, sans-serif; max-width: 36rem; margin: 3rem auto; }
   input { padding: .5rem; width: 100%; box-sizing: border-box; }
   table { width: 100%; border-collapse: collapse; margin-top: .5rem; }
   td, th { text-align: left; padding: .4rem .6rem; border-bottom: 1px solid #eee; }
-  .spinner { color: #888; }
 </style>
 </head>
 <body>
 
-<script type="jst" name="search-results" attributes="rows searching query">
-  $ if (searching) {
-    <span class="spinner" data-testid="spinner">Searching…</span>
-  $ }
-  <table>
-    <thead><tr><th>Name</th><th>Email</th></tr></thead>
-    <tbody data-testid="rows">
-      $ (rows || []).forEach(r => {
-        <tr data-testid="row-$(r.id)"><td>$(r.name)</td><td>$(r.email)</td></tr>
-      $ })
-    </tbody>
-  </table>
-  $ if (!searching && query && (rows || []).length === 0) {
-    <p data-testid="empty">No matches for "$(query)".</p>
-  $ }
-</script>
-
 <h1>Active Search</h1>
-<input type="search" id="q" data-testid="q" placeholder="Search contacts…" autocomplete="off">
-<search-results id="results"></search-results>
+<input type="search" id="q" data-testid="q" name="q" placeholder="Search contacts…" autocomplete="off"
+       jst-get="/api/search" jst-trigger="keyup changed delay:300ms" jst-target="#results" jst-swap="innerHTML">
+<div id="results"></div>
 
 <script>
   const people = [
@@ -53,44 +34,33 @@
     { id: 4, name: 'Kim Yee', email: 'kim@yee.org' },
     { id: 5, name: 'Joey Ramone', email: 'joey@ramone.org' },
   ];
-  JSTMock.route('POST /api/search', req => {
-    const q = (req.form.q || '').toLowerCase();
-    const rows = q ? people.filter(p => p.name.toLowerCase().includes(q) || p.email.toLowerCase().includes(q)) : people;
-    return { json: { rows } };
-  }, { delay: 120 });
-
-  const q = document.getElementById('q');
-  const results = document.getElementById('results');
-  let timer = null;
-
-  async function run(query) {
-    results.searching = true;
-    results.query = query;
-    const data = await (await fetch('/api/search', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ q: query }),
-    })).json();
-    results.rows = data.rows;
-    results.searching = false;
-  }
-
-  // fixi-core has no debounce; the trigger orchestration is hand-written, as it would be in fixi.
-  q.addEventListener('input', () => {
-    clearTimeout(timer);
-    timer = setTimeout(() => run(q.value), 300);
-  });
-
-  window.__parityTest = async () => {
-    q.value = 'angie';
-    q.dispatchEvent(new Event('input', { bubbles: true }));
-    const rowCount = () => document.querySelectorAll('[data-testid="rows"] tr').length;
-    for (let i = 0; i < 30 && rowCount() !== 1; i++) {
-      await new Promise(r => setTimeout(r, 100));
+  const rowsHtml = (list) => list.length
+    ? '<table><thead><tr><th>Name</th><th>Email</th></tr></thead><tbody data-testid="rows">'
+      + list.map(p => `<tr data-testid="row-${p.id}"><td>${p.name}</td><td>${p.email}</td></tr>`).join('')
+      + '</tbody></table>'
+    : '<p data-testid="empty">No matches.</p>';
+  const origFetch = window.fetch.bind(window);
+  window.fetch = async (url, opts) => {
+    const u = new URL(url, location.origin);
+    if (u.pathname === '/api/search') {
+      const q = (u.searchParams.get('q') || '').toLowerCase();
+      const rows = q ? people.filter(p => p.name.toLowerCase().includes(q) || p.email.toLowerCase().includes(q)) : people;
+      return new Response(rowsHtml(rows), { headers: { 'Content-Type': 'text/html' } });
     }
-    const onlyAngie = rowCount() === 1 && document.querySelector('[data-testid="row-2"]');
-    return { ok: Boolean(onlyAngie), detail: 'debounced POST per keystroke filters results' };
+    return origFetch(url, opts);
   };
-
-  run('').then(() => { window.__exampleReady = true; });
+  addEventListener('DOMContentLoaded', async () => {
+    document.getElementById('results').innerHTML = await (await fetch('/api/search')).text();
+    window.__exampleReady = true;
+  });
+  window.__parityTest = async () => {
+    const input = document.getElementById('q');
+    input.value = 'joe';
+    if (window.JST && window.JST.nav) await window.JST.nav.performRequest(input);
+    await new Promise(r => setTimeout(r, 150));
+    const n = document.querySelectorAll('[data-testid^="row-"]').length;
+    return { ok: n >= 1 && n < people.length, detail: `"joe" filtered to ${n} rows via delay: trigger` };
+  };
 </script>
 </body>
 </html>

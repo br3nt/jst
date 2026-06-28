@@ -18,12 +18,12 @@ idiomatically, it is recorded as a gap rather than hidden in an example.
 | Alpine.js | 15 | 5 | 0 | 20 |
 | Vue | 10 | 10 | 0 | 20 |
 | React | 11 | 3 | 0 | 14 |
-| fixi | 10 | 8 | 0 | 18 |
+| fixi | 17 | 1 | 0 | 18 |
 | Lit | 15 | 5 | 0 | 20 |
 | Svelte | 6 | 0 | 0 | 6 |
 | Solid | 5 | 1 | 0 | 6 |
 | Angular | 6 | 0 | 0 | 6 |
-| **Total** | **94** | **32** | **0** | **126** |
+| **Total** | **101** | **25** | **0** | **126** |
 
 **Every example was reproduced** — 89 as exact, idiomatic matches and 37 needing
 a documented workaround. **Zero were impossible.** But "no ✗" is not "no gaps":

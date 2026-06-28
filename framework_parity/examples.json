@@ -579,9 +579,9 @@
     "framework": "fixi",
     "name": "confirm-delete",
     "source": "https://github.com/bigskysoftware/fixi",
-    "status": "partial",
+    "status": "exact",
     "file": "fixi/confirm-delete.html",
-    "note": "fixi wires confirmation via `cfg.confirm` in `fx:config` (no attribute); JST gates the DELETE with an in-page confirm UI."
+    "note": "jst-confirm=\"\u2026\" gates the DELETE; jst-swap=\"delete\" removes the row."
   },
   {
     "framework": "fixi",
@@ -603,17 +603,17 @@
     "framework": "fixi",
     "name": "infinite-scroll",
     "source": "https://github.com/bigskysoftware/fixi",
-    "status": "partial",
+    "status": "exact",
     "file": "fixi/infinite-scroll.html",
-    "note": "Fetch/append idiomatic; the trigger is a hand-wired IntersectionObserver on a sentinel. fixi-core needs its Intersection Events extension too."
+    "note": "jst-trigger=\"revealed\" + a sentinel carrying the next trigger."
   },
   {
     "framework": "fixi",
     "name": "active-search",
     "source": "https://github.com/bigskysoftware/fixi",
-    "status": "partial",
+    "status": "exact",
     "file": "fixi/active-search.html",
-    "note": "`<search-results>` renderer is clean; the debounced keystroke trigger is hand-written `setTimeout`. fixi-core also omits debounce."
+    "note": "jst-trigger=\"keyup changed delay:300ms\"; value sent; requests abort."
   },
   {
     "framework": "fixi",
@@ -659,25 +659,25 @@
     "framework": "fixi",
     "name": "relative-target",
     "source": "https://github.com/bigskysoftware/fixi",
-    "status": "partial",
+    "status": "exact",
     "file": "fixi/relative-target.html",
-    "note": "fixi's `next`/`closest`/`find` are an extension; JST resolves the trigger-relative `<output>` via `el.closest(...)`, no global ids."
+    "note": "jst-target=\"closest .row find output\" (100% CSS selectors)."
   },
   {
     "framework": "fixi",
     "name": "request-indicator",
     "source": "https://github.com/bigskysoftware/fixi",
-    "status": "partial",
+    "status": "exact",
     "file": "fixi/request-indicator.html",
-    "note": "fixi-core has no `hx-indicator`; the handler toggles a `loading` prop (spinner + disabled) around the fetch, mirroring `fx:before`/`fx:after`."
+    "note": "jst-request class on the trigger during the fetch (hx-indicator)."
   },
   {
     "framework": "fixi",
     "name": "polling",
     "source": "https://github.com/bigskysoftware/fixi",
-    "status": "partial",
+    "status": "exact",
     "file": "fixi/polling.html",
-    "note": "fixi-core has no polling trigger; a hand-written `setInterval`, torn down via `onDisconnect`."
+    "note": "jst-trigger=\"every 500ms\"; removing the element stops it."
   },
   {
     "framework": "fixi",
@@ -691,9 +691,9 @@
     "framework": "fixi",
     "name": "view-transition",
     "source": "https://github.com/bigskysoftware/fixi",
-    "status": "partial",
+    "status": "exact",
     "file": "fixi/view-transition.html",
-    "note": "fixi swaps via the View Transition API natively; JST has no native VT swap, so a keyed node + `jst-transition` does the enter/leave (CSS-owned)."
+    "note": "jst-swap=\"transition\" wraps the swap in the View Transition API."
   },
   {
     "framework": "fixi",

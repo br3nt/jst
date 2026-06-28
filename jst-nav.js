@@ -38,7 +38,15 @@ const REQUESTABLE = '[jst-get],[jst-action],[jst-trigger]';
 function resolveTarget(el, raw) {
   if (!raw || raw === 'this') return el;
   const value = raw.trim();
-  if (value.startsWith('closest ')) return el.closest(value.slice(8).trim());
+  if (value.startsWith('closest ')) {
+    const rest = value.slice(8).trim();
+    const at = rest.indexOf(' find ');
+    if (at !== -1) {
+      const anc = el.closest(rest.slice(0, at).trim());
+      return anc ? anc.querySelector(rest.slice(at + 6).trim()) : null;
+    }
+    return el.closest(rest);
+  }
   if (value.startsWith('find ')) return el.querySelector(value.slice(5).trim());
   if (value.includes(':scope')) return el.querySelector(value);
   return document.querySelector(value);
@@ -121,6 +129,9 @@ async function performRequest(el, sourceEvent) {
   let { url, method } = requestParts(el);
   if (!url) return;
 
+  const confirmMsg = el.getAttribute('jst-confirm');
+  if (confirmMsg && typeof window.confirm === 'function' && !window.confirm(confirmMsg)) return;
+
   const form = el.matches('form') ? el : el.closest('form');
   let body = null;
   // Collect params from the form, or — for a standalone named control (e.g. a
@@ -146,10 +157,12 @@ async function performRequest(el, sourceEvent) {
   const ac = typeof AbortController !== 'undefined' ? new AbortController() : null;
   el.__jstAbort = ac;
 
+  el.classList.add('jst-request');   // loading indicator hook (hx-indicator)
   let res;
   try {
     res = await fetch(url, { method, body, signal: ac ? ac.signal : undefined, headers: { 'JST-Request': 'true' } });
   } catch (err) {
+    el.classList.remove('jst-request');
     if (err && err.name === 'AbortError') return;
     emit(el, 'send-error', { el, error: err });
     return;
@@ -157,6 +170,7 @@ async function performRequest(el, sourceEvent) {
 
   let html = '';
   try { html = await res.text(); } catch {}
+  el.classList.remove('jst-request');
 
   emit(el, 'after-request', { el, response: res, status: res.status });
 
