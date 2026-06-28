@@ -267,9 +267,9 @@
     "framework": "Alpine.js",
     "name": "x-teleport",
     "source": "https://alpinejs.dev/directives/teleport",
-    "status": "partial",
+    "status": "exact",
     "file": "alpine/teleport.html",
-    "note": "No teleport; hoisted modal to a body-level component driven by events."
+    "note": "jst-behaviors jst-teleport=\"body\" hoists the modal to <body>; a native <dialog> does the modal."
   },
   {
     "framework": "Alpine.js",

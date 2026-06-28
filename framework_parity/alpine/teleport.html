@@ -4,60 +4,47 @@
   Source: https://alpinejs.dev/directives/teleport
   Demonstrates: Alpine x-teleport — author a modal next to its trigger but have it
   RENDER at the end of <body> (escaping clipping/stacking ancestors).
-  JST status: (i) partial — JST has no teleport. A component only renders into its
-  own light DOM, so you cannot co-locate the modal markup with its trigger and
-  have it pop out. Workaround: keep the trigger in the component but hoist the
-  modal to a body-level mount yourself, driven by events (props-down/events-up).
-  Same end result; you lose the co-location ergonomics teleport exists for.
+  JST status: ✓ exact — jst-behaviors' `jst-teleport="body"` hoists the modal to
+  <body> on connect, so it can be co-located with its trigger inside a clipped box
+  yet still escape it. (A native <dialog> handles the top-layer modal itself.)
 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <title>x-teleport</title>
-<script type="module" src="../../jst.js"></script>
+<script type="module" src="../../jst-behaviors.js"></script>
 <style>
   body { font-family: system-ui, sans-serif; margin: 3rem; }
-  /* a clipping ancestor that would trap a non-teleported modal */
   .clipped { overflow: hidden; height: 80px; border: 2px dashed #c00; padding: 1rem; }
-  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); display: flex; align-items: center; justify-content: center; }
-  .modal { background: white; padding: 2rem; border-radius: 10px; }
+  dialog.modal { padding: 2rem; border-radius: 10px; border: none; }
+  dialog.modal::backdrop { background: rgba(0,0,0,.5); }
 </style>
 </head>
 <body>
 
-<!-- trigger lives inside a clipped box; modal must escape it -->
-<script type="jst" name="teleport-trigger">
-  <div>
-    <button data-testid="open" onclick="$(() => el.emit('open'))">Open modal (teleported to body)</button>
-  </div>
-</script>
-
-<!-- the modal is its OWN component, mounted at body level (the manual "teleport target") -->
-<script type="jst" name="teleport-modal" attributes="open">
-  $ if (open) {
-    <div class="overlay" data-testid="overlay" onclick="$(e => { if (e.target === e.currentTarget) el.emit('close'); })">
-      <div class="modal">
-        <p>I rendered at the end of &lt;body&gt;, not inside the clipped box.</p>
-        <button data-testid="close" onclick="$(() => el.emit('close'))">Close</button>
-      </div>
-    </div>
-  $ }
-</script>
-
 <h1>x-teleport</h1>
-<div class="clipped">
+<div class="clipped" id="clip">
   Clipped region (overflow:hidden).
-  <teleport-trigger id="trigger"></teleport-trigger>
+  <button data-testid="open">Open modal (teleported to body)</button>
+  <!-- authored here, but jst-teleport hoists it to <body> so it escapes the clip -->
+  <dialog class="modal" id="m" data-testid="overlay" jst-teleport="body">
+    <p>I render at the end of &lt;body&gt;, not inside the clipped box.</p>
+    <button data-testid="close">Close</button>
+  </dialog>
 </div>
 
-<!-- manual teleport destination -->
-<teleport-modal id="modal" open="false"></teleport-modal>
-
 <script>
-  const modal = document.getElementById('modal');
-  document.getElementById('trigger').addEventListener('open', () => { modal.open = true; });
-  modal.addEventListener('close', () => { modal.open = false; });
+  document.querySelector('[data-testid="open"]').addEventListener('click', () => document.getElementById('m').showModal());
+  document.querySelector('[data-testid="close"]').addEventListener('click', () => document.getElementById('m').close());
   window.__exampleReady = true;
+  window.__parityTest = async () => {
+    const dialog = document.getElementById('m');
+    const teleported = dialog.parentElement === document.body && !document.getElementById('clip').contains(dialog);
+    document.querySelector('[data-testid="open"]').click();
+    await new Promise(r => setTimeout(r, 50));
+    const open = dialog.open === true;
+    return { ok: teleported && open, detail: 'modal authored in the clipped box, teleported to <body>, opens clear of the clip' };
+  };
 </script>
 </body>
 </html>
