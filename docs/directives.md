@@ -35,6 +35,11 @@ Fetch → swap → history, declaratively.
 | `jst-trigger="<spec>"` | **when** it fires (below) |
 | `jst-target-4xx` / `-5xx` / `-error` | route non-2xx responses elsewhere |
 
+> **New to View Transitions?** `jst-swap="transition"` wraps the swap in the
+> browser's View Transition API — it animates the change from the old to the new
+> DOM *for you* (a crossfade by default; customise with `::view-transition-*` CSS).
+> See `examples/view_transitions.html` for a from-scratch, toggle-it-on/off demo.
+
 Lifecycle events bubble: `jst:before-request` (cancelable), `jst:after-request`,
 `jst:swapped`, `jst:response-error`, `jst:send-error`. The triggering element
 gets a `jst-request` class while in flight (a CSS hook for loading indicators).
