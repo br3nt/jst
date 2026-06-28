@@ -5,6 +5,42 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.4.0 - 2026-06-28
+
+The directive release: two opt-in libraries of declarative, string-valued
+attributes for *usage* HTML — `jst-nav` (server-driven nav) and `jst-behaviors`
+(client behaviors) — plus a reverse-infinite-scroll pattern. **Additive; no
+breaking changes** (new opt-in files; nothing to migrate).
+
+### Added
+
+- **`jst-nav`** — HTMX/fixi-shaped server-driven navigation: `jst-get` /
+  `jst-action` + the native `method` attribute (verbs), `jst-target` (100% CSS
+  selectors: bare / `this` / `closest` / `find` / `closest…find`), `jst-swap`
+  (innerHTML / outerHTML / insert-adjacent / delete / none / morph / transition,
+  + out-of-band via `jst-swap-oob`), `jst-select`, `jst-push-url` + history,
+  `jst-boost`, `jst-confirm`, error routing (`jst-target-4xx`/`-5xx`), and
+  `jst-trigger` (`load` / `revealed` / `every Ns` / `keyup changed delay:Nms` /
+  key-filtered `keydown[Shift+D] from:body`). In-flight requests abort on
+  re-trigger; a `jst-request` class marks the trigger during the fetch.
+- **`jst-behaviors`** — Alpine-shaped client behaviors for what the platform
+  doesn't give free: `jst-intersect` (reveal / lazy media) and `jst-teleport`
+  (portal). (Toggle / dismiss / outside-click are native — Invoker Commands +
+  Popover + `<dialog>`.)
+- **Reverse infinite scroll** — `jst-swap="afterbegin"` prepends older content
+  and preserves scroll position (`examples/jst_nav.html`).
+- **Builds** — minified `jst-nav.min.js` (~7.5 KB) + `jst-behaviors.min.js`
+  (~2.2 KB) as opt-in add-ons that work with any core build.
+- **`docs/directives.md`** — the directive reference.
+
+### Changed
+
+- **Framework parity: every directive-addressable partial is now an exact ✓** —
+  HTMX 16/0, fixi 17/1 (only `fx-ignore`, proposal #6), alpine `x-teleport`. The
+  corpus moves to **102 exact / 24 partial / 126**. The remaining `(i)`s
+  (alpine ref/effect/store/watch, most Vue, some React/Lit) are inherent
+  fine-grained-reactivity / framework-feature differences, not directive gaps.
+
 ## 0.3.0 - 2026-06-28
 
 A breaking release: the template input keyword is renamed `props=` → `attributes=`.
