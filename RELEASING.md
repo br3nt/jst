@@ -36,8 +36,15 @@ We are in `0.x`. Major stays `0`:
 
 - **Breaking change** → bump the **minor** (`0.1.x` → `0.2.0`).
 - **Feature or fix (backwards-compatible)** → bump the **patch** (`0.2.0` → `0.2.1`).
+- **Docs / examples / tooling only** → also bump the **patch**. **Docs are part
+  of the deliverable.** A docs change that isn't tagged leaves the docs *at the
+  released tag* stale (the exact rot `prerelease_check` guards against), and the
+  CHANGELOG — our migration source — should record it. The runtime can be
+  byte-identical to the previous release; that's fine. Default to cutting a
+  release for any meaningful merged change, not just code.
 
-The version lives in **three** places that must stay in lockstep:
+The version lives in **three** places that must stay in lockstep (plus the
+version-pinned examples in the docs, which `tools/prerelease_check.mjs` enforces):
 
 - `package.json` `version`,
 - the `export const version` constant in `jst.js` (the runtime's in-page

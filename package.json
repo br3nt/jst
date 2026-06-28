@@ -1,6 +1,6 @@
 {
   "name": "@br3nt/jst",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "JavaScript Templates: no-build reactive web components in plain HTML.",
   "type": "module",
   "private": false,
