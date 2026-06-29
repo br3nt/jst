@@ -350,6 +350,7 @@ function setupTrigger(el) {
 
   let last = el.matches('input,select,textarea') ? el.value : null;
   let timer = null;
+  let lastFire = 0;   // throttle: timestamp of the last leading-edge fire
   const target = t.from ? document.querySelector(t.from) : el;
   if (!target) return;
 
@@ -369,6 +370,11 @@ function setupTrigger(el) {
     if (t.delay) {
       clearTimeout(timer);
       timer = setTimeout(() => performRequest(el, ev), t.delay);
+    } else if (t.throttle) {
+      const now = Date.now();
+      if (now - lastFire < t.throttle) return;   // inside the window — drop
+      lastFire = now;
+      performRequest(el, ev);
     } else {
       performRequest(el, ev);
     }

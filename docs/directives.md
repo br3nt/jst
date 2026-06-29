@@ -106,14 +106,31 @@ when the trigger is genuinely imperative. There's nothing in between to learn.
 
 ### `jst-trigger` specs
 
+The value is an **event** optionally followed by space-separated **modifiers** —
+the same value-spec grammar `jst-swap` uses. The event comes first:
+
 ```
 click | submit | change           (defaults: form→submit, input→change, else click)
 load                              fire once on wire
 revealed                          fire when scrolled into view (IntersectionObserver)
 every 2s                          poll on an interval (stops when the element is removed)
-keyup changed delay:300ms         debounced, only when the value changed
-keydown[Shift+D] from:body        key-filtered (with modifiers), bound to another element
+keyup[Enter]                      key filter: only this key fires it
+keydown[Shift+D]                  key filter with modifiers (Shift+ Ctrl+ Alt+ Meta+)
 ```
+
+**Modifiers** (append, space-separated — e.g. `keyup changed delay:300ms`):
+
+| Modifier | Effect |
+| --- | --- |
+| `changed` | only fire when the element's `value` actually changed since last time (active search) |
+| `delay:300ms` | **debounce** — reset the timer on each event, fire once it goes quiet (`ms`/`s` units) |
+| `throttle:1s` | **rate-limit** — fire at most once per interval, ignoring events in between |
+| `from:<css>` | listen on another element (e.g. `from:body` for a global keyboard shortcut) instead of this one |
+| `once` | unbind after the first fire |
+
+`delay:` and `throttle:` are opposites: `delay:` waits for a pause (typeahead),
+`throttle:` caps the rate (scroll/resize). Combine freely:
+`keyup changed delay:300ms` is the canonical active-search trigger.
 
 ### Reverse infinite scroll (newest at the bottom, scroll up for older)
 

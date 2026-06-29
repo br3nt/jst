@@ -25,8 +25,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   supersession (drop a stale or wrong-target response) at the framework level.
   Detail: `{ el, html, response }`.
 
+### Fixed
+
+- **`jst-trigger="… throttle:Ns"` was a no-op.** The modifier parsed but the
+  handler never applied it (only `delay:` was wired). It now rate-limits on the
+  leading edge — fires immediately, then drops events for the interval. `delay:`
+  (debounce) and `throttle:` (rate-limit) are now both real and complementary.
+
 ### Docs
 
+- **Documented the `jst-trigger` modifiers.** `throttle:` and `once` were
+  supported (well, `once` was; `throttle:` is now) but missing from the docs.
+  The `jst-trigger` section now has an explicit modifier table
+  (`changed` / `delay:` / `throttle:` / `from:` / `once`) and names the
+  event-plus-modifiers value-spec grammar.
 - **No imperative ajax API, by design (#50.3).** Documented in `directives.md`
   ("Coming from `htmx.ajax()`? You don't need an imperative API") why JST has no
   `JST.nav.navigate()`: htmx needs `htmx.process()` to wire inserted nodes, but
