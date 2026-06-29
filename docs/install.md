@@ -76,10 +76,19 @@ modules:
 | `input_reader.js` | helper |
 
 Because they are ES modules, the browser fetches them on demand. Serve them from
-the same origin as your pages. After a Git tag exists, you can also pin that tag
-through a CDN; do not depend on a moving branch URL. See
-[production.md](./production.md) for production specifics including CDN
-pinning and CSP.
+the same origin as your pages.
+
+> **Vendor the whole set, not just `jst.js`.** These files are one import graph
+> (`jst.js` → `compiler.js` → `parser/interpreter/lexer/tokens/input_reader`).
+> Vendoring `jst.js` alone gives a 404 on its first `import` and **all rendering
+> silently breaks**. Either serve every file in the table above from the same
+> directory, **or vendor the single-file build `jst.global.js`** (everything
+> concatenated — one file, nothing to keep in sync). The runtime-only equivalents
+> are `jst.runtime.js` (its own graph) and `jst.runtime.global.js` (single file).
+
+After a Git tag exists, you can also pin that tag through a CDN; do not depend on
+a moving branch URL. See [production.md](./production.md) for production specifics
+including CDN pinning and CSP.
 
 Pin a released tag. For the current release the version-pinned jsDelivr entry
 point is:

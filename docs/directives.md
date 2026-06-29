@@ -40,10 +40,31 @@ Fetch → swap → history, declaratively.
 > DOM *for you* (a crossfade by default; customise with `::view-transition-*` CSS).
 > See `examples/view_transitions.html` for a from-scratch, toggle-it-on/off demo.
 
-Lifecycle events bubble: `jst:before-request` (cancelable), `jst:after-request`,
-`jst:swapped`, `jst:response-error`, `jst:send-error`. The triggering element
-gets a `jst-request` class while in flight (a CSS hook for loading indicators).
-In-flight requests **abort** when re-triggered (active-search correctness).
+### Request → swap lifecycle (and what's cancelable)
+
+A request runs through this order; the bubbling events let you hook each stage:
+
+```
+jst:before-request   (cancelable — preventDefault() aborts before the fetch)
+  → fetch (sends the `JST-Request: true` header; element gets the `jst-request` class)
+  → jst:after-request
+  → if !res.ok:  jst:response-error   (and routes to jst-target-4xx/5xx/error if set)
+  → else:        jst-select → out-of-band swaps → swap → push-url → jst:swapped → re-scan
+```
+
+Only **`jst:before-request`** is cancelable. `jst:swapped` fires *after* the DOM is
+updated (it waits for a View-Transition's update callback), and it's dispatched on
+a **connected** node so a delegated `document`-level listener still receives it when
+an `outerHTML` swap detached the trigger. In-flight requests **abort** when the same
+element is re-triggered (active-search correctness). Event details: `before-request`
+→ `{ el, url, method }`; `after-request` → `{ el, response, status }`; `swapped` →
+`{ el, target }`; the error events → `{ el, response, status }`.
+
+**The `JST-Request: true` header** is on every `jst-nav` request — branch on it
+server-side to render a *fragment* (the swap target's new HTML) instead of the full
+page shell. (`jst-nav` is for **fragments**; for full-page navigation just use normal
+browser links — see [hateoas-fragments.md](./hateoas-fragments.md). `jst-boost`
+boosts links/forms whose responses are *fragments*, not whole documents.)
 
 ### `jst-trigger` specs
 
