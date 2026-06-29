@@ -18,13 +18,18 @@
  *                             beforebegin afterend delete none morph transition
  *   jst-select="<css>"        pick a subtree out of the response
  *   jst-push-url[="/url"]     push history (back/forward + restore)
+ *   jst-replace-url[="/url"]  replace the current history entry (filters/in-place)
  *   jst-trigger="<spec>"      when: click submit load revealed | every 2s |
  *                             keyup changed delay:300ms | <event> [from:<css>]
  *   jst-boost                 on a container: boost descendant <a>/<form>
  *   jst-target-4xx/5xx/error  route error responses elsewhere
  *
- * Events (bubbling): jst:before-request, jst:after-request, jst:swapped,
- * jst:response-error, jst:send-error.
+ * Unsafe (non-GET) same-origin requests carry the server's CSRF token from
+ * <meta name="csrf-token"> as X-CSRF-Token (configurable via JST.nav.csrf).
+ *
+ * Events (bubbling): jst:before-request, jst:after-request, jst:before-swap,
+ * jst:swapped, jst:response-error, jst:send-error. before-request and
+ * before-swap are cancelable (preventDefault()).
  */
 
 const WIRED = Symbol('jstNavWired');
@@ -134,6 +139,28 @@ function emit(el, name, detail) {
   return el.dispatchEvent(new CustomEvent('jst:' + name, { detail, bubbles: true, cancelable: true }));
 }
 
+// CSRF: mirror the server's <meta name="csrf-token"> as a header on unsafe
+// (non-GET) same-origin requests — the Rails/Laravel/Turbo convention, so the
+// non-form directive paths (a link doing a POST, a boosted click) stop hitting
+// InvalidAuthenticityToken. Tweak for other frameworks (Django:
+// `JST.nav.csrf.headerName = 'X-CSRFToken'`) or disable (`JST.nav.csrf.metaName = ''`).
+const csrf = { metaName: 'csrf-token', headerName: 'X-CSRF-Token' };
+
+function sameOrigin(url) {
+  try { return new URL(url, location.href).origin === location.origin; }
+  catch { return true; }   // relative/opaque — treat as same-origin
+}
+
+function buildHeaders(method, url) {
+  const headers = { 'JST-Request': 'true' };
+  if (method !== 'GET' && method !== 'HEAD' && csrf.metaName && csrf.headerName && sameOrigin(url)) {
+    const meta = document.querySelector(`meta[name="${csrf.metaName}"]`);
+    const token = meta && meta.getAttribute('content');
+    if (token) headers[csrf.headerName] = token;
+  }
+  return headers;
+}
+
 function requestParts(el) {
   const url = el.getAttribute('jst-get') || el.getAttribute('jst-action') ||
               el.getAttribute('href') || el.getAttribute('action') || '';
@@ -178,7 +205,7 @@ async function performRequest(el, sourceEvent) {
   el.classList.add('jst-request');   // loading indicator hook (hx-indicator)
   let res;
   try {
-    res = await fetch(url, { method, body, signal: ac ? ac.signal : undefined, headers: { 'JST-Request': 'true' } });
+    res = await fetch(url, { method, body, signal: ac ? ac.signal : undefined, headers: buildHeaders(method, url) });
   } catch (err) {
     el.classList.remove('jst-request');
     if (err && err.name === 'AbortError') return;
@@ -206,6 +233,12 @@ async function performRequest(el, sourceEvent) {
   const select = el.getAttribute('jst-select');
   if (select) html = selectFrom(html, select);
 
+  // Cancelable hand-off between "response read" and "swap applied" (#47): a
+  // listener can preventDefault() to DROP a response that's been superseded or is
+  // for the wrong target (race correctness — two fast navigations, slow first
+  // response). Cancelling skips OOB, the swap, the history push, and jst:swapped.
+  if (!emit(el, 'before-swap', { el, html, response: res })) return;
+
   // Out-of-band swaps: elements in the response marked jst-swap-oob are swapped
   // into their id-matched targets elsewhere, then dropped from the main content.
   html = applyOob(html);
@@ -224,10 +257,14 @@ async function performRequest(el, sourceEvent) {
     if (scroller) scroller.scrollTop = prevTop + (scroller.scrollHeight - prevHeight);
   }
 
-  // Push URL if requested (GET navigations).
-  const push = el.getAttribute('jst-push-url');
-  if (push !== null && method === 'GET') {
-    history.pushState({ jstNav: true }, '', push || url);
+  // History (GET navigations). jst-replace-url replaces the current entry
+  // (filters / in-place changes), jst-push-url adds one (back/forward); if both
+  // are present, replace wins. Value optional — defaults to the request URL.
+  if (method === 'GET') {
+    const replace = el.getAttribute('jst-replace-url');
+    const push = el.getAttribute('jst-push-url');
+    if (replace !== null) history.replaceState({ jstNav: true }, '', replace || url);
+    else if (push !== null) history.pushState({ jstNav: true }, '', push || url);
   }
 
   // Emit on a connected node: an outerHTML swap on an ancestor detaches `el`, and
@@ -411,5 +448,5 @@ if (typeof document !== 'undefined') {
   } else {
     configure(document);
   }
-  (window.JST = window.JST || {}).nav = { configure, performRequest };
+  (window.JST = window.JST || {}).nav = { configure, performRequest, csrf };
 }

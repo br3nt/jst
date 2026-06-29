@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- **`jst-nav` sends the CSRF token (#45).** Unsafe (non-`GET`) **same-origin**
+  requests now carry the server's token from `<meta name="csrf-token">` as the
+  `X-CSRF-Token` header (the Rails/Laravel/Turbo convention), so the non-form
+  directive paths (a link doing a `POST`, a boosted click) stop tripping
+  `InvalidAuthenticityToken`. Same-origin-only, on by default; remap via
+  `JST.nav.csrf.headerName` / disable via `JST.nav.csrf.metaName = ''`.
+- **`jst-replace-url` (#50.1).** Replaces the current history entry
+  (`history.replaceState`) instead of pushing — for filters / in-place changes
+  that shouldn't add a back-button step. Mirrors `jst-push-url`; replace wins if
+  both are present.
+- **Cancelable `jst:before-swap` (#47).** Fires after the response is read (and
+  `jst-select` applied) but before OOB/swap/history/`jst:swapped`;
+  `preventDefault()` drops the response entirely. Enables request-racing /
+  supersession (drop a stale or wrong-target response) at the framework level.
+  Detail: `{ el, html, response }`.
+
 ### Docs
 
 - **No imperative ajax API, by design (#50.3).** Documented in `directives.md`
