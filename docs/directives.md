@@ -66,6 +66,25 @@ page shell. (`jst-nav` is for **fragments**; for full-page navigation just use n
 browser links — see [hateoas-fragments.md](./hateoas-fragments.md). `jst-boost`
 boosts links/forms whose responses are *fragments*, not whole documents.)
 
+### Coming from `htmx.ajax()`? You don't need an imperative API
+
+There's no `JST.nav.navigate(url, …)`, and that's deliberate. `htmx.ajax()` exists
+because htmx can't *see* nodes you insert yourself — you'd have to call
+`htmx.process(el)` to wire them up. JST runs a `MutationObserver`, so anything you
+insert into a trusted root upgrades automatically. That means a programmatic
+fetch-and-swap is already one line of plain platform code — no library wrapper:
+
+```js
+const html = await (await fetch('/orders/42/items', { method: 'POST', body }))
+  .text()
+document.getElementById('order-lines').insertAdjacentHTML('beforeend', html)
+// done — new <order-line> components and any jst-* directives are already live
+```
+
+`fetch` does the request; the observer does the wiring. Reach for `jst-get` /
+`jst-action` when you want the behaviour *declared on the HTML*; reach for `fetch`
+when the trigger is genuinely imperative. There's nothing in between to learn.
+
 ### `jst-trigger` specs
 
 ```

@@ -5,6 +5,16 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Docs
+
+- **No imperative ajax API, by design (#50.3).** Documented in `directives.md`
+  ("Coming from `htmx.ajax()`? You don't need an imperative API") why JST has no
+  `JST.nav.navigate()`: htmx needs `htmx.process()` to wire inserted nodes, but
+  JST's `MutationObserver` upgrades them automatically — so a programmatic
+  fetch-and-swap is one line of plain `fetch` + `insertAdjacentHTML`.
+
 ## 0.4.3 - 2026-06-29
 
 Bug fixes and docs from real-app integration (downstream OKF / agent_app reports).
