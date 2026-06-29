@@ -107,7 +107,6 @@ public/
     lexer.js
     parser.js
     tokens.js
-    utils.js
     input_reader.js
 ```
 

@@ -73,7 +73,7 @@ modules:
 | `jst.js` | runtime: custom-element registration, morphing, bindings, lifecycle |
 | `compiler.js` | turns a `<script type="jst">` into a render function |
 | `interpreter.js` / `lexer.js` / `parser.js` / `tokens.js` | the template language |
-| `utils.js` / `input_reader.js` | helpers |
+| `input_reader.js` | helper |
 
 Because they are ES modules, the browser fetches them on demand. Serve them from
 the same origin as your pages. After a Git tag exists, you can also pin that tag

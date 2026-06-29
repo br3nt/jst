@@ -54,9 +54,17 @@ function resolveTarget(el, raw) {
 
 /* -------------------------------------------------------------------- swaps */
 
+function reducedMotion() {
+  return typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+// Returns a promise that resolves once the DOM is updated (NOT once the animation
+// finishes), so the caller can emit `swapped` / re-scan against the fresh DOM.
 function swapContent(target, html, how) {
-  if (!target) return;
+  if (!target) return Promise.resolve();
   how = (how || 'innerHTML').trim();
+  let transition = false;
+  if (how === 'transition') { transition = true; how = 'innerHTML'; }   // legacy alias
 
   const run = () => {
     switch (how) {
@@ -75,13 +83,23 @@ function swapContent(target, html, how) {
     }
   };
 
-  if (how === 'transition' && typeof document.startViewTransition === 'function') {
-    document.startViewTransition(() => { target.innerHTML = html; });
-  } else if (how === 'transition') {
-    target.innerHTML = html;
-  } else {
-    run();
+  // Animate with a View Transition when asked AND possible. A hidden document,
+  // reduced-motion, no API, or an abort all degrade quietly to an instant swap —
+  // no unhandled rejection (#43). The returned promise resolves when the DOM is
+  // updated, not when the animation ends (#48A).
+  if (transition && typeof document.startViewTransition === 'function'
+      && document.visibilityState !== 'hidden' && !reducedMotion()) {
+    let ran = false;
+    const update = () => { if (!ran) { ran = true; run(); } };
+    let t;
+    try { t = document.startViewTransition(update); }
+    catch { update(); return Promise.resolve(); }
+    t.ready?.catch(() => {});
+    t.finished?.catch(() => {});
+    return (t.updateCallbackDone || Promise.resolve()).catch(() => {});
   }
+  run();
+  return Promise.resolve();
 }
 
 // Pull a subtree out of a full-page (or fragment) response.
@@ -194,12 +212,15 @@ async function performRequest(el, sourceEvent) {
 
   const how = el.getAttribute('jst-swap') || 'innerHTML';
   const target = how === 'none' ? null : resolveTarget(el, el.getAttribute('jst-target'));
+  // Capture the parent now: an outerHTML/delete swap detaches `target`, but the
+  // new content lands in this parent — we still need to re-scan it afterwards.
+  const targetParent = target ? target.parentNode : null;
   if (target) {
     // Preserve scroll position when prepending above the viewport (reverse scroll).
     const scroller = how === 'afterbegin' ? scrollParent(target) : null;
     const prevHeight = scroller ? scroller.scrollHeight : 0;
     const prevTop = scroller ? scroller.scrollTop : 0;
-    swapContent(target, html, how);
+    await swapContent(target, html, how);   // resolves after the DOM updates (#48A)
     if (scroller) scroller.scrollTop = prevTop + (scroller.scrollHeight - prevHeight);
   }
 
@@ -209,9 +230,12 @@ async function performRequest(el, sourceEvent) {
     history.pushState({ jstNav: true }, '', push || url);
   }
 
-  emit(el, 'swapped', { el, target });
-  // Newly-swapped content may itself contain directives / jst templates.
-  scan(target && target.parentNode ? target.parentNode : document);
+  // Emit on a connected node: an outerHTML swap on an ancestor detaches `el`, and
+  // a `swapped` dispatched on a detached node never bubbles to a delegated
+  // document-level listener (#48B). `detail.el` still identifies the source.
+  emit(el.isConnected ? el : document, 'swapped', { el, target });
+  // Re-scan the region that changed (the captured parent survives a detach).
+  scan((target && target.parentNode) || targetParent || document);
 }
 
 function scrollParent(node) {
