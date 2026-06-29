@@ -1,6 +1,6 @@
 {
   "name": "@br3nt/jst",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "description": "JavaScript Templates: no-build reactive web components in plain HTML.",
   "type": "module",
   "private": false,
@@ -26,7 +26,6 @@
     "parser.js",
     "input_reader.js",
     "tokens.js",
-    "utils.js",
     "tools/precompile.mjs",
     "tools/codemod.mjs",
     "tools/lint.mjs",

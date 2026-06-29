@@ -36,7 +36,30 @@ Inside the template:
 
 - `name` and `count` are bare locals.
 - `el` is the live custom element instance.
-- Assigning `el.count = ...` publishes a new attribute value and schedules a render.
+
+> ## A property write re-renders the component — that's the data-binding model
+>
+> **Assigning a declared attribute as a property — `el.count = 5`, `el.records = [...]`
+> — schedules a re-render.** That is the *entire* binding mechanism: there is no
+> `setState`, no `render()` call, no observable. You change state by writing a
+> property whose name is in `attributes="…"`, and the component re-renders.
+>
+> ```html
+> <script type="jst" name="user-list" attributes="users">
+>   <ul>$ (users || []).forEach(u => { <li jst-key="$(u.id)">$(u.name)</li> $ })</ul>
+> </script>
+>
+> <user-list id="list"></user-list>
+> <script>
+>   document.getElementById('list').users = await (await fetch('/users')).json();
+>   //   ^ a property write → re-renders with the new data. No other API.
+> </script>
+> ```
+>
+> **Rendering is asynchronous.** The write *schedules* a render (on a microtask);
+> the DOM is **not** updated synchronously. Don't read the rendered DOM in the same
+> tick you wrote the property — let the microtask flush first (e.g. `await
+> Promise.resolve()`), or react to the change rather than polling for it.
 
 > **Internal state is just a declared attribute.** Re-rendering is triggered by
 > assigning to a **declared** attribute — one named in `attributes="…"`. This is
@@ -476,6 +499,16 @@ template cannot `import`; keep it to one named object (see
 [known-gaps.md](./known-gaps.md)). Before wrapping a library this way, check that
 the surface needs a component at all
 ([decision-guide.md](./decision-guide.md#component-granularity)).
+
+> **Load-order gotcha.** `once()` runs in a microtask right after the first render.
+> If its setup calls a global that *another module* defines (`window.MyChart`), that
+> module must have evaluated **before** the runtime upgrades the element — otherwise
+> `once()` fires while the global is still `undefined` and silently no-ops (it runs
+> once and doesn't retry). The robust fix is to make the component self-sufficient:
+> `await import('./my-chart.js')` *inside* the `once()` setup, then mount — the
+> dynamic import resolves regardless of `<script>` order, and you still return the
+> teardown. (If you instead rely on script order, load the widget module before
+> `jst.js`.)
 
 ## 14. Avoiding id collisions in the light DOM
 

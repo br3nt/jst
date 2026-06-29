@@ -87,6 +87,14 @@ strict policy: a precompiled bundle and `resolveTemplate` cannot both run when
 `script-src 'self'` forbids `unsafe-eval`. See
 [production.md](./production.md#choosing-between-the-two-no-inline-paths).
 
+> **`configure()` runs after auto-init.** `jst.js` initializes itself when the
+> module evaluates — *before* your own `<script type="module">` can call
+> `configure({ resolveTemplate })`. So components already in the server-rendered
+> HTML are scanned with no resolver yet and skipped. `configure()` re-scans when
+> you set a resolver, so they resolve on that second pass — but if you compute the
+> resolver asynchronously, set it as early as possible (a top-of-`<head>` module),
+> and know that a component needing resolution won't render until the resolver exists.
+
 ## Rails
 
 The most detailed walk-through, because Propshaft's digesting is the common
@@ -107,7 +115,6 @@ public/
     lexer.js
     parser.js
     tokens.js
-    utils.js
     input_reader.js
 ```
 

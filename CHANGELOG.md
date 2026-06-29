@@ -5,6 +5,36 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.4.3 - 2026-06-29
+
+Bug fixes and docs from real-app integration (downstream OKF / agent_app reports).
+No breaking changes.
+
+### Fixed
+
+- **View Transitions degrade quietly (#43).** `view-transition` (the `jst.js`
+  attribute) and `jst-swap="transition"` (jst-nav) now skip the transition on a
+  hidden document or under `prefers-reduced-motion`, and catch its abort, instead
+  of surfacing an unhandled `InvalidStateError`. The DOM still updates.
+- **`jst:swapped` correctness (#48).** It now fires *after* the DOM update (awaits
+  the View-Transition update callback) and is dispatched on a **connected** node,
+  so a delegated `document`-level listener still receives it when an `outerHTML`
+  swap detached the trigger (`detail.el` still identifies the source).
+- **Vendoring (#41).** Dropped `utils.js` — a dev/test scratch file with a dangling
+  `test_suite.js` import, imported by nothing at runtime — from the published
+  `files` and the vendor docs.
+
+### Docs
+
+- **"A property write re-renders the component"** is now the headline of the binding
+  model, with the **async-render** behaviour stated loudly (#51).
+- jst-nav **request → swap lifecycle order** + what's cancelable + the
+  **`JST-Request: true`** header contract + fragment-scope (#51, #46).
+- **Vendor the whole import graph** (or the single-file `jst.global.js`) — vendoring
+  `jst.js` alone breaks rendering (#51).
+- `once()` **load-order** gotcha for the host-a-widget pattern, with the
+  dynamic-import fix (#42); `configure()`-vs-auto-init ordering.
+
 ## 0.4.2 - 2026-06-29
 
 Docs and tooling only — the runtime is byte-identical to 0.4.1. (Docs are part of

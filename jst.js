@@ -36,7 +36,7 @@ import { compileTemplateRenderingFunction } from './compiler.js'
  * v0.1 cache renders identically to v0.2, so `JST.version` is the one-liner that
  * tells you which runtime is actually live.
  */
-export const version = '0.4.2'
+export const version = '0.4.3'
 
 const templates = new Map()
 const config = {
@@ -881,11 +881,19 @@ function defineCustomElementFromRender({
 
         // Opt-in per instance: `<my-el view-transition>` animates this instance's
         // re-renders via the View Transition API. Skipped on the first paint
-        // (nothing to animate from) and where the API is unsupported.
-        if (this.#hasRendered
-            && this.getAttribute('view-transition') != null
-            && typeof document.startViewTransition === 'function') {
-          document.startViewTransition(applyDom);
+        // (nothing to animate from), where the API is unsupported, and on a hidden
+        // document — and an abort degrades quietly to an instant render rather than
+        // surfacing the transition's rejection as an unhandled error (#43).
+        const canViewTransition = this.#hasRendered
+          && this.getAttribute('view-transition') != null
+          && typeof document.startViewTransition === 'function'
+          && document.visibilityState !== 'hidden';
+        if (canViewTransition) {
+          let transition;
+          try { transition = document.startViewTransition(applyDom); }
+          catch { applyDom(); }
+          transition?.ready?.catch(() => {});
+          transition?.finished?.catch(() => {});
         } else {
           applyDom();
         }

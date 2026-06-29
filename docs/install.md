@@ -73,23 +73,32 @@ modules:
 | `jst.js` | runtime: custom-element registration, morphing, bindings, lifecycle |
 | `compiler.js` | turns a `<script type="jst">` into a render function |
 | `interpreter.js` / `lexer.js` / `parser.js` / `tokens.js` | the template language |
-| `utils.js` / `input_reader.js` | helpers |
+| `input_reader.js` | helper |
 
 Because they are ES modules, the browser fetches them on demand. Serve them from
-the same origin as your pages. After a Git tag exists, you can also pin that tag
-through a CDN; do not depend on a moving branch URL. See
-[production.md](./production.md) for production specifics including CDN
-pinning and CSP.
+the same origin as your pages.
+
+> **Vendor the whole set, not just `jst.js`.** These files are one import graph
+> (`jst.js` → `compiler.js` → `parser/interpreter/lexer/tokens/input_reader`).
+> Vendoring `jst.js` alone gives a 404 on its first `import` and **all rendering
+> silently breaks**. Either serve every file in the table above from the same
+> directory, **or vendor the single-file build `jst.global.js`** (everything
+> concatenated — one file, nothing to keep in sync). The runtime-only equivalents
+> are `jst.runtime.js` (its own graph) and `jst.runtime.global.js` (single file).
+
+After a Git tag exists, you can also pin that tag through a CDN; do not depend on
+a moving branch URL. See [production.md](./production.md) for production specifics
+including CDN pinning and CSP.
 
 Pin a released tag. For the current release the version-pinned jsDelivr entry
 point is:
 
 ```html
 <!-- ES-module runtime (relative imports resolve against the same tag) -->
-<script type="module" src="https://cdn.jsdelivr.net/gh/br3nt/jst@v0.4.2/jst.js"></script>
+<script type="module" src="https://cdn.jsdelivr.net/gh/br3nt/jst@v0.4.3/jst.js"></script>
 
 <!-- or the single-file global build (no modules) -->
-<script src="https://cdn.jsdelivr.net/gh/br3nt/jst@v0.4.2/jst.global.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/br3nt/jst@v0.4.3/jst.global.js"></script>
 <!-- minified: jst.global.min.js -->
 ```
 
@@ -230,7 +239,7 @@ Set an explicit cache policy for the JST module files and your component files:
   `max-age=0, must-revalidate`) — so an edit shows on the next reload instead of
   from a guessed cache window.
 - **Production:** fingerprint/version the assets (a tagged CDN path like
-  `…/jst@v0.4.2/jst.js`, or your own digest in the URL) and serve them
+  `…/jst@v0.4.3/jst.js`, or your own digest in the URL) and serve them
   immutable, so a deploy is never served stale. If you cannot fingerprint, set an
   explicit short `max-age` rather than leaving caching to the server's heuristic.
 
@@ -244,7 +253,7 @@ its version rather than diffing source:
 
 ```js
 import { version } from '/jst/jst.js';
-console.log(version);            // "0.4.2"
+console.log(version);            // "0.4.3"
 // or, without importing:
 console.log(window.JST.version); // mirrors the export
 ```
