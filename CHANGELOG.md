@@ -5,7 +5,11 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.4.4 - 2026-07-02
+
+Fail-loud compile errors, TypeScript declarations, and jst-nav CSRF/URL/timing
+fixes from the audit round. No breaking runtime changes (the `attrs=` shorthand
+removal is a compile-time migration, covered by codemod + lint).
 
 ### Added
 
@@ -60,6 +64,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `JST.nav.navigate()`: htmx needs `htmx.process()` to wire inserted nodes, but
   JST's `MutationObserver` upgrades them automatically — so a programmatic
   fetch-and-swap is one line of plain `fetch` + `insertAdjacentHTML`.
+- **Corrected the README size claim.** "Roughly 15 KB runtime/compiler" →
+  measured numbers: 10 KB gzipped (33 KB minified) for the full build, or 6 KB
+  gzipped runtime-only with precompiled templates.
 
 ## 0.4.3 - 2026-06-29
 
