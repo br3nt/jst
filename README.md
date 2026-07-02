@@ -3,7 +3,8 @@
 **JavaScript Templates (JST)** - reactive web components in plain HTML, with
 **JavaScript itself as the templating language**. **No build step.**
 
-**JST builds on Web Components.** Its roughly 15 KB runtime/compiler turns a
+**JST builds on Web Components.** Its runtime/compiler — 10 KB gzipped
+(33 KB minified), or 6 KB gzipped runtime-only with precompiled templates — turns a
 `<script type="jst">` tag into a class and registers it with
 `customElements.define()`, so every JST component is a genuine custom element:
 inspectable in DevTools, scriptable with plain properties and
