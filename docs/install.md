@@ -268,9 +268,10 @@ upgrade took effect.
 
 **What changed, and the before → after for each release, lives in the
 [CHANGELOG](../CHANGELOG.md)** — that's the single source. In 0.x there have been
-two breaking releases: **0.2.0** (`@event` → `on<event>`,
-`raw()`/`unsafeHTML()` → `trustedHTML()`, `document.jst` removed) and **0.3.0**
-(`props=` → `attributes=`).
+breaking releases: **0.2.0** (`@event` → `on<event>`,
+`raw()`/`unsafeHTML()` → `trustedHTML()`, `document.jst` removed), **0.3.0**
+(`props=` → `attributes=`), and the removal of the `attrs=` shorthand
+(`attrs=` → `attributes=`).
 
 This section is just the *how*. JST templates live in several places — standalone
 `.html`, inline `<script type="jst">` in server views (`.erb`, `.php`, …), and
@@ -286,11 +287,12 @@ node tools/codemod.mjs "app/views/**/*.erb" "public/jst/**/*.html"  # apply the 
 
 - **`tools/lint.mjs`** (`npx jst-lint`) — scans `<script type="jst">` blocks for
   removed/renamed syntax (`@event`, `raw()`/`unsafeHTML()`, `document.jst`, and
-  the removed `props=` keyword) and exits non-zero with `file:line:col`. Wire it
+  the removed `props=` and `attrs=` declaration spellings) and exits non-zero with `file:line:col`. Wire it
   into CI so a leftover fails the build instead of a page. `--runtime jst.js`
   also catches a stale vendored runtime (`jst-ssr`/`document.jst`).
 - **`tools/codemod.mjs`** (`npx jst-codemod`) — mechanically rewrites `@event` →
-  `on<event>` (preserves modifiers; `--dry-run` previews). The other migrations
+  `on<event>` and `attrs=` → `attributes=` (preserves modifiers; `--dry-run`
+  previews). The other migrations
   (`raw()`/`unsafeHTML()` → `trustedHTML()`, `props=` → `attributes=`) are a
   rename/judgement call you apply deliberately — lint points at each one, and the
   CHANGELOG shows the before → after.

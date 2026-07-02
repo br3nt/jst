@@ -15,11 +15,18 @@
   },
   "files": [
     "jst.js",
+    "index.d.ts",
     "jst.global.js",
     "jst.global.min.js",
     "jst.runtime.js",
     "jst.runtime.global.js",
     "jst.runtime.global.min.js",
+    "jst-nav.js",
+    "jst-nav.d.ts",
+    "jst-nav.min.js",
+    "jst-behaviors.js",
+    "jst-behaviors.d.ts",
+    "jst-behaviors.min.js",
     "compiler.js",
     "interpreter.js",
     "lexer.js",
@@ -33,10 +40,25 @@
     "SECURITY.md",
     "docs"
   ],
+  "types": "./index.d.ts",
   "exports": {
-    ".": "./jst.js",
+    ".": {
+      "types": "./index.d.ts",
+      "import": "./jst.js",
+      "default": "./jst.js"
+    },
     "./compiler": "./compiler.js",
-    "./precompile": "./tools/precompile.mjs"
+    "./precompile": "./tools/precompile.mjs",
+    "./nav": {
+      "types": "./jst-nav.d.ts",
+      "import": "./jst-nav.js",
+      "default": "./jst-nav.js"
+    },
+    "./behaviors": {
+      "types": "./jst-behaviors.d.ts",
+      "import": "./jst-behaviors.js",
+      "default": "./jst-behaviors.js"
+    }
   },
   "bin": {
     "jst-precompile": "./tools/precompile.mjs",

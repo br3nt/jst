@@ -3,7 +3,8 @@
 **JavaScript Templates (JST)** - reactive web components in plain HTML, with
 **JavaScript itself as the templating language**. **No build step.**
 
-**JST builds on Web Components.** Its roughly 15 KB runtime/compiler turns a
+**JST builds on Web Components.** Its runtime/compiler — 10 KB gzipped
+(33 KB minified), or 6 KB gzipped runtime-only with precompiled templates — turns a
 `<script type="jst">` tag into a class and registers it with
 `customElements.define()`, so every JST component is a genuine custom element:
 inspectable in DevTools, scriptable with plain properties and
@@ -45,7 +46,7 @@ be interactive once it lands in the browser. A fetched fragment can include both
 
 For a practical walkthrough, see [docs/writing-jst.md](docs/writing-jst.md).
 
-Props are declared in the case-preserving `props` attribute:
+Inputs are declared in the case-preserving `attributes` attribute:
 
 ```html
 <script type="jst" name="todo-item" attributes="item">
@@ -152,7 +153,7 @@ Per-version migrations (with before → after tables) live in the
 [CHANGELOG](CHANGELOG.md). To apply them safely — removed/renamed template syntax
 only errors when a component renders in the browser — run `node tools/lint.mjs`
 to find leftovers (wire it into CI) and `node tools/codemod.mjs` for the
-mechanical `@event` → `on<event>` rewrite. Full guidance:
+mechanical `@event` → `on<event>` and `attrs` → `attributes` rewrites. Full guidance:
 [docs/install.md](docs/install.md#upgrading-across-breaking-releases).
 
 ## Try it

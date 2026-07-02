@@ -606,6 +606,33 @@ test('render errors are logged with component context', async () => {
   }
 });
 
+test('compile errors render a visible error placeholder even when dev is false', async () => {
+  const runtime = await loadRuntime([
+    {
+      name: 'x-compile-failure',
+      attributes: [{ name: 'attributes', value: 'ok' }],
+      innerHTML: '${ if (ok) { }\n<p>Yes</p>\n${ } }',
+    },
+  ]);
+
+  try {
+    const FailureClass = runtime.customElements.get('x-compile-failure');
+    assert.ok(FailureClass, 'compile-failed templates should still define a visible custom element');
+
+    const element = new FailureClass();
+    element.setAttribute('ok', 'true');
+    runtime.connect(element);
+    await flushRenders();
+
+    assert.match(element.innerHTML, /JST Compile Error in &lt;x-compile-failure&gt;/);
+    assert.match(element.innerHTML, /control flow wrapping HTML must use/);
+    assert.equal(runtime.consoleCalls.error.length, 1);
+    assert.match(String(runtime.consoleCalls.error[0][0]), /JST Compile Error in <x-compile-failure>/);
+  } finally {
+    runtime.cleanup();
+  }
+});
+
 test('name is an ordinary prop when declared in attributes', async () => {
   const runtime = await loadRuntime([
     {
@@ -865,19 +892,21 @@ test('the removed props="…" keyword throws a clear rename error', () => {
 
   assert.throws(
     () => compileTemplateRenderingFunction(template),
-    /props="…" declaration was renamed.*attributes="…".*attrs="…"/s,
+    /props="…" declaration was renamed.*attributes="…"/s,
   );
 });
 
-test('attrs="…" is accepted as an alias for attributes="…"', () => {
+test('attrs="…" throws a clear migration error', () => {
   const template = createTemplate({
     name: 'x-attrs-alias',
     attributes: [{ name: 'attrs', value: 'count' }],
     innerHTML: '<p>$(count)</p>',
   });
 
-  const compiled = compileTemplateRenderingFunction(template);
-  assert.deepEqual(compiled.functionParams, ['count']);
+  assert.throws(
+    () => compileTemplateRenderingFunction(template),
+    /attrs="…" shorthand was removed.*attributes="…"/s,
+  );
 });
 
 test('jst.js version constant matches package.json (no drift)', () => {

@@ -8,6 +8,8 @@ JavaScript Templates - no-build reactive web components in plain HTML.
 - [Use JST when...](./use-jst-when.md) and [Avoid JST when...](./avoid-jst-when.md) - the longer form.
 - [Install](./install.md) - script tag, CDN, npm.
 - [Browser support](./browser-support.md).
+- [TypeScript](./typescript.md) - shipped declarations, checked JavaScript, and the current type boundary.
+- [Testing](./testing.md) - jsdom/custom-elements and Playwright patterns for consumer tests.
 
 ## Core model
 - [Controlled components](./controlled-components.md) - attributes down, events up, and the `jst-model` local form sugar.

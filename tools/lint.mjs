@@ -60,8 +60,14 @@ const openTagRules = [
   {
     id: 'props-keyword',
     find: () => /(^|\s)props\s*=/g,
-    message: () => 'renamed props="…" declaration — use attributes="…" (or the attrs="…" shorthand)',
+    message: () => 'renamed props="…" declaration — use attributes="…"',
     at: m => m.index + m[0].indexOf('props'),
+  },
+  {
+    id: 'attrs-alias',
+    find: () => /(^|\s)attrs\s*=/g,
+    message: () => 'removed attrs="…" shorthand — use attributes="…"',
+    at: m => m.index + m[0].indexOf('attrs'),
   },
 ];
 

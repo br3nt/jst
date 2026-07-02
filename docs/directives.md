@@ -30,6 +30,7 @@ Fetch → swap → history, declaratively.
 | `jst-select="<css>"` | pull a subtree out of a full-page response |
 | `jst-swap-oob` (in the response) | out-of-band: update other regions by `id`, separately from the main target |
 | `jst-push-url[="/url"]` | push history (back/forward + restore on popstate) |
+| `jst-replace-url[="/url"]` | **replace** the current history entry instead of pushing — filters / in-place changes that shouldn't add a back-button step (if both are set, replace wins) |
 | `jst-boost` | on a container: boost descendant `<a>`/`<form>` into fetch+swap+push |
 | `jst-confirm="msg"` | gate the request behind a confirm |
 | `jst-trigger="<spec>"` | **when** it fires (below) |
@@ -46,19 +47,37 @@ A request runs through this order; the bubbling events let you hook each stage:
 
 ```
 jst:before-request   (cancelable — preventDefault() aborts before the fetch)
-  → fetch (sends the `JST-Request: true` header; element gets the `jst-request` class)
+  → fetch (sends `JST-Request: true` + CSRF token; element gets the `jst-request` class)
   → jst:after-request
   → if !res.ok:  jst:response-error   (and routes to jst-target-4xx/5xx/error if set)
-  → else:        jst-select → out-of-band swaps → swap → push-url → jst:swapped → re-scan
+  → else:        jst-select → jst:before-swap (cancelable — drop a stale/wrong response)
+                 → out-of-band swaps → swap → push/replace-url → jst:swapped → re-scan
 ```
 
-Only **`jst:before-request`** is cancelable. `jst:swapped` fires *after* the DOM is
-updated (it waits for a View-Transition's update callback), and it's dispatched on
-a **connected** node so a delegated `document`-level listener still receives it when
-an `outerHTML` swap detached the trigger. In-flight requests **abort** when the same
-element is re-triggered (active-search correctness). Event details: `before-request`
-→ `{ el, url, method }`; `after-request` → `{ el, response, status }`; `swapped` →
+**`jst:before-request`** and **`jst:before-swap`** are cancelable; the rest are
+notifications. `jst:before-swap` fires once the response is read (after `jst-select`)
+but *before* anything lands — `preventDefault()` drops the whole response (no swap, no
+history, no `jst:swapped`). That's the hook for **request racing**: when two fast
+navigations overlap and the slower-but-earlier response arrives last, a `before-swap`
+listener can compare a nav token / target id and drop the stale one. `jst:swapped`
+fires *after* the DOM is updated (it waits for a View-Transition's update callback),
+and it's dispatched on a **connected** node so a delegated `document`-level listener
+still receives it when an `outerHTML` swap detached the trigger. In-flight requests
+**abort** when the same element is re-triggered (active-search correctness). Event
+details: `before-request` → `{ el, url, method }`; `after-request` →
+`{ el, response, status }`; `before-swap` → `{ el, html, response }`; `swapped` →
 `{ el, target }`; the error events → `{ el, response, status }`.
+
+**CSRF.** Unsafe (non-`GET`) **same-origin** requests automatically carry the server's
+CSRF token, read from `<meta name="csrf-token">` and sent as the `X-CSRF-Token` header
+— the Rails / Laravel / Turbo convention, so a link doing a `POST` or a boosted click
+stops tripping `InvalidAuthenticityToken`. It's same-origin-only (never leaked
+cross-origin) and on by default. Remap it for another framework, or disable it:
+
+```js
+JST.nav.csrf.headerName = 'X-CSRFToken'   // e.g. Django
+JST.nav.csrf.metaName   = ''              // disable entirely
+```
 
 **The `JST-Request: true` header** is on every `jst-nav` request — branch on it
 server-side to render a *fragment* (the swap target's new HTML) instead of the full
@@ -66,16 +85,52 @@ page shell. (`jst-nav` is for **fragments**; for full-page navigation just use n
 browser links — see [hateoas-fragments.md](./hateoas-fragments.md). `jst-boost`
 boosts links/forms whose responses are *fragments*, not whole documents.)
 
+### Coming from `htmx.ajax()`? You don't need an imperative API
+
+There's no `JST.nav.navigate(url, …)`, and that's deliberate. `htmx.ajax()` exists
+because htmx can't *see* nodes you insert yourself — you'd have to call
+`htmx.process(el)` to wire them up. JST runs a `MutationObserver`, so anything you
+insert into a trusted root upgrades automatically. That means a programmatic
+fetch-and-swap is already one line of plain platform code — no library wrapper:
+
+```js
+const html = await (await fetch('/orders/42/items', { method: 'POST', body }))
+  .text()
+document.getElementById('order-lines').insertAdjacentHTML('beforeend', html)
+// done — new <order-line> components and any jst-* directives are already live
+```
+
+`fetch` does the request; the observer does the wiring. Reach for `jst-get` /
+`jst-action` when you want the behaviour *declared on the HTML*; reach for `fetch`
+when the trigger is genuinely imperative. There's nothing in between to learn.
+
 ### `jst-trigger` specs
+
+The value is an **event** optionally followed by space-separated **modifiers** —
+the same value-spec grammar `jst-swap` uses. The event comes first:
 
 ```
 click | submit | change           (defaults: form→submit, input→change, else click)
 load                              fire once on wire
 revealed                          fire when scrolled into view (IntersectionObserver)
 every 2s                          poll on an interval (stops when the element is removed)
-keyup changed delay:300ms         debounced, only when the value changed
-keydown[Shift+D] from:body        key-filtered (with modifiers), bound to another element
+keyup[Enter]                      key filter: only this key fires it
+keydown[Shift+D]                  key filter with modifiers (Shift+ Ctrl+ Alt+ Meta+)
 ```
+
+**Modifiers** (append, space-separated — e.g. `keyup changed delay:300ms`):
+
+| Modifier | Effect |
+| --- | --- |
+| `changed` | only fire when the element's `value` actually changed since last time (active search) |
+| `delay:300ms` | **debounce** — reset the timer on each event, fire once it goes quiet (`ms`/`s` units) |
+| `throttle:1s` | **rate-limit** — fire at most once per interval, ignoring events in between |
+| `from:<css>` | listen on another element (e.g. `from:body` for a global keyboard shortcut) instead of this one |
+| `once` | unbind after the first fire |
+
+`delay:` and `throttle:` are opposites: `delay:` waits for a pause (typeahead),
+`throttle:` caps the rate (scroll/resize). Combine freely:
+`keyup changed delay:300ms` is the canonical active-search trigger.
 
 ### Reverse infinite scroll (newest at the bottom, scroll up for older)
 

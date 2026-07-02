@@ -717,15 +717,11 @@ function registerCustomElementFromTemplate(templateElement) {
     return customElements.get(customElementName);
   }
 
-  const renderFunction = compileTemplateRenderingFunction(templateElement);
-
-  const elementClass = defineCustomElementFromRender({
-    customElementName,
-    paramNames: renderFunction.functionParams,
-    attributeToParam: renderFunction.paramMap,
-    renderFunctionBody: renderFunction.functionBody,
-    source,
-    createRenderFunction: () => new Function(
+  let renderFunction;
+  let compiledRender;
+  try {
+    renderFunction = compileTemplateRenderingFunction(templateElement);
+    compiledRender = new Function(
       ...renderFunction.functionParams,
       'el',
       'slot',
@@ -736,11 +732,59 @@ function registerCustomElementFromTemplate(templateElement) {
       'once',
       'trustedHTML',
       renderFunction.functionBody,
-    ),
+    );
+  } catch (error) {
+    if (/runtime-only build/.test(String(error?.message ?? error))) throw error;
+    const elementClass = defineCompileErrorElement(customElementName, error, source);
+    if (elementClass) templateElement.__jstRegisteredName = customElementName;
+    return elementClass;
+  }
+
+  const elementClass = defineCustomElementFromRender({
+    customElementName,
+    paramNames: renderFunction.functionParams,
+    attributeToParam: renderFunction.paramMap,
+    renderFunctionBody: renderFunction.functionBody,
+    source,
+    createRenderFunction: () => compiledRender,
   });
 
   if (elementClass) templateElement.__jstRegisteredName = customElementName;
   return elementClass;
+}
+
+function compileErrorHtml(customElementName, error) {
+  return `<pre class="jst-error" role="alert">JST Compile Error in &lt;${escapeHtml(customElementName)}&gt;\n${escapeHtml(error?.stack || error?.message || error)}</pre>`;
+}
+
+function defineCompileErrorElement(customElementName, error, source) {
+  if (templates.has(customElementName)) {
+    console.warn(`JST: Duplicate template name "${customElementName}" ignored.`, source);
+    return customElements.get(customElementName);
+  }
+
+  templates.set(customElementName, {
+    functionParams: [],
+    paramMap: {},
+    source,
+    error,
+  });
+
+  console.error(`JST Compile Error in <${customElementName}>:`, error);
+
+  if (customElements.get(customElementName)) {
+    console.warn(`JST: Custom element <${customElementName}> is already registered.`, source);
+    return customElements.get(customElementName);
+  }
+
+  const CustomElementClass = class extends HTMLElement {
+    connectedCallback() {
+      this.innerHTML = compileErrorHtml(customElementName, error);
+    }
+  };
+
+  customElements.define(customElementName, CustomElementClass);
+  return CustomElementClass;
 }
 
 function registerPrecompiledTemplate(customElementName, paramNames, attributeToParam, renderFunction, source = 'precompiled') {
