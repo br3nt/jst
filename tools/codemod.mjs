@@ -4,15 +4,15 @@
  * © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst
  */
 /**
- * Codemod: migrate the removed v0.1 `@event="$(fn)"` binding syntax to the v0.2
- * `onevent="$(fn)"` form, preserving modifiers (`@click.stop` -> `onclick.stop`)
- * and the `$(...)` value verbatim.
+ * Codemod: migrate removed JST syntax inside <script type="jst"> blocks:
+ *   - `@event="$(fn)"` -> `onevent="$(fn)"`, preserving modifiers
+ *   - open-tag `attrs="..."` -> `attributes="..."`
  *
  * It rewrites bindings ONLY inside `<script type="jst">` blocks, so it is safe to
  * point at any file — `.html`, `.erb`, a server view, a fragment — without
  * touching `@media`, `@import`, decorators, or email addresses in the
  * surrounding markup/CSS. This is the deliberate advantage over a blind
- * `sed 's/@/on/'` glob.
+ * string replacement glob.
  *
  * Usage:
  *   node tools/codemod.mjs <files...>            # rewrite in place
@@ -28,6 +28,9 @@ const scriptPattern = /(<script\b[^>]*\btype\s*=\s*(['"])jst\2[^>]*>)([\s\S]*?)(
 // The leading (^|\s) keeps it in attribute position so `foo@bar` (an email) and
 // `$(a @ b)` never match.
 const legacyEventPattern = /(^|\s)@([a-zA-Z][\w$-]*(?:\.[\w$-]+)*)(\s*=\s*["'])/g;
+const attrsAliasNamePattern = /(^|\s)attrs(\s*=)/i;
+const attrsAliasAttributePattern = /\s+attrs\s*=\s*(?:"[^"]*"|'[^']*'|\S+)/gi;
+const attributesNamePattern = /(^|\s)attributes\s*=/i;
 
 function parseArgs(argv) {
   const files = [];
@@ -47,7 +50,7 @@ function parseArgs(argv) {
 function usage(code) {
   const out = code === 0 ? console.log : console.error;
   out('Usage: node tools/codemod.mjs <files...> [--dry-run]');
-  out('  Rewrites @event="$(fn)" -> onevent="$(fn)" inside <script type="jst"> blocks.');
+  out('  Rewrites @event="$(fn)" -> onevent="$(fn)" and attrs="…" -> attributes="…" inside <script type="jst"> blocks.');
   process.exit(code);
 }
 
@@ -61,13 +64,27 @@ function migrateBody(body) {
   return { migrated, count };
 }
 
+function migrateOpenTag(open) {
+  if (!attrsAliasNamePattern.test(open)) return { migrated: open, count: 0 };
+
+  if (attributesNamePattern.test(open)) {
+    return { migrated: open.replace(attrsAliasAttributePattern, ''), count: 1 };
+  }
+
+  return {
+    migrated: open.replace(attrsAliasNamePattern, '$1attributes$2'),
+    count: 1,
+  };
+}
+
 /** Rewrite every jst block in a file's source. Non-jst text is untouched. */
 function migrateSource(source) {
   let total = 0;
   const out = source.replace(scriptPattern, (whole, open, _quote, body, close) => {
-    const { migrated, count } = migrateBody(body);
-    total += count;
-    return `${open}${migrated}${close}`;
+    const openResult = migrateOpenTag(open);
+    const bodyResult = migrateBody(body);
+    total += openResult.count + bodyResult.count;
+    return `${openResult.migrated}${bodyResult.migrated}${close}`;
   });
   return { out, total };
 }
@@ -93,14 +110,14 @@ function main() {
     changedFiles++;
     changedBindings += total;
     if (!dryRun) fs.writeFileSync(file, out);
-    console.log(`${dryRun ? 'would migrate' : 'migrated'} ${file}: ${total} binding${total === 1 ? '' : 's'}`);
+    console.log(`${dryRun ? 'would migrate' : 'migrated'} ${file}: ${total} change${total === 1 ? '' : 's'}`);
   }
 
   if (changedFiles === 0) {
-    console.log('codemod: no @event bindings found in any <script type="jst"> block.');
+    console.log('codemod: no @event bindings or attrs= declarations found in any <script type="jst"> block.');
   } else {
     const verb = dryRun ? 'would update' : 'updated';
-    console.log(`codemod: ${verb} ${changedBindings} binding${changedBindings === 1 ? '' : 's'} across ${changedFiles} file${changedFiles === 1 ? '' : 's'}.`);
+    console.log(`codemod: ${verb} ${changedBindings} change${changedBindings === 1 ? '' : 's'} across ${changedFiles} file${changedFiles === 1 ? '' : 's'}.`);
     if (dryRun) console.log('codemod: dry run — re-run without --dry-run to apply.');
   }
 }

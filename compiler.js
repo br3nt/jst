@@ -107,21 +107,21 @@ export class TemplateRenderingFunction {
 export function getTemplateRenderingFunctionParams(templateElement) {
   // A template's inputs are declared in one case-preserving attribute value:
   //   <script type="jst" name="todo-item" attributes="item onToggle">
-  // `attrs="…"` is accepted as a shorthand alias. HTML lowercases attribute
-  // names, but not quoted attribute values, so this keeps internal JS
-  // identifiers greppable and supports expected names like `name` without
-  // conflicting with the template's own `name` attribute.
+  // HTML lowercases attribute names, but not quoted attribute values, so this
+  // keeps internal JS identifiers greppable and supports expected names like
+  // `name` without conflicting with the template's own `name` attribute.
   // Detect the removed `props="…"` keyword via getAttribute (not hasAttribute):
   // the precompile tool's lightweight element model implements getAttribute only.
+  const tag = templateElement.getAttribute('name') || '(unnamed)'
   if (templateElement.getAttribute('props') != null) {
-    const tag = templateElement.getAttribute('name') || '(unnamed)'
-    throw new Error(`JST: the props="…" declaration was renamed. Use attributes="…" (or the attrs="…" shorthand) on <script type="jst" name="${tag}">.`)
+    throw new Error(`JST: the props="…" declaration was renamed. Use attributes="…" on <script type="jst" name="${tag}">.`)
+  }
+  if (templateElement.getAttribute('attrs') != null) {
+    throw new Error(`JST: the attrs="…" shorthand was removed. Use attributes="…" on <script type="jst" name="${tag}">.`)
   }
 
   const paramMap = {}
-  const declared = templateElement.getAttribute('attributes')
-    ?? templateElement.getAttribute('attrs')
-    ?? ''
+  const declared = templateElement.getAttribute('attributes') ?? ''
   const attributes = parseAttributesDeclaration(declared)
 
   attributes.forEach(attr => {

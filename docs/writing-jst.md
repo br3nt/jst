@@ -20,8 +20,8 @@ arrive later.
 A JST component is a `<script type="jst">` block with:
 
 - `name`: the custom element tag name. It must contain a hyphen.
-- `attributes` (or the `attrs` alias): a space-separated list of JavaScript
-  identifiers available inside the template.
+- `attributes`: a space-separated list of JavaScript identifiers available
+  inside the template.
 
 ```html
 <script type="jst" name="hello-name" attributes="name count">
@@ -206,10 +206,10 @@ first paint.** Pick by payload size:
     $   const sidecar = document.getElementById(el.contentId);
     $   if (sidecar) el.data = JSON.parse(sidecar.textContent);  // sets attribute -> re-renders
     $ });
-    ${ if (data) { }
+    $ if (data) {
       <h1>$(data.title)</h1>
       <div>$(trustedHTML(data.html))</div>
-    ${ } }
+    $ }
   </script>
   ```
 
@@ -226,8 +226,8 @@ first paint.** Pick by payload size:
 | `$(expr)` | Evaluate JavaScript and HTML-escape the result. |
 | `$identifier` | Shorthand for `$(identifier)`. |
 | `$$` | Literal dollar sign. |
-| `$ statement` | A JavaScript statement line. |
-| `${ ... }` | A JavaScript block. |
+| `$ statement` | A JavaScript statement line. Use this form for control flow that wraps template HTML, such as `$ if (...) {` / `$ }` and `$ items.forEach(...)`. |
+| `${ ... }` | A JavaScript-only block. It must not wrap template HTML. |
 | `.prop="$(expr)"` | Set a JavaScript property on the rendered element. |
 | `on<event>="$(fn)"` | Add an event listener to the rendered element. Optional modifiers: `onclick.stop`, `onkeydown.enter.prevent`, `onsubmit.prevent`, `oninput.debounce.300`, `onclick.outside`, `onclick.once`. |
 | `jst-key="$(id)"` | Preserve DOM identity across list changes. |
@@ -251,6 +251,25 @@ Example with control flow:
   </ul>
 </script>
 ```
+
+Use line directives when JavaScript control flow contains HTML:
+
+```html
+$ if (open) {
+  <section>$(message)</section>
+$ }
+```
+
+The `${ ... }` block form is for JavaScript that does not contain template HTML,
+for example a compact setup call:
+
+```html
+${ once('mounted', () => console.log(el.tagName)) }
+```
+
+Do not write `${ if (open) { } <section>...</section> ${ } }`; the compiler
+rejects that form with a control-flow error. The line form keeps JavaScript and
+HTML boundaries unambiguous without adding a second template syntax.
 
 ## 6. Events
 

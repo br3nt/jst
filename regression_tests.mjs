@@ -15,6 +15,7 @@ import assert from 'node:assert/strict'
 import { parseTemplateScript } from './parser.js'
 import { interpretTemplateTokens } from './interpreter.js'
 import {
+  JsCodeToken,
   JsIdentifierToken,
   JsExpressionToken,
 } from './tokens.js'
@@ -56,7 +57,7 @@ for (const [label, inner] of balancerCases) {
 }
 
 // --- `$ line` directive scanner: same token-awareness as the balancer ---
-const codeOf = src => tokensOf(src).filter(t => t.constructor.name === 'JsCodeToken').map(t => t.code)
+const codeOf = src => tokensOf(src).filter(t => t instanceof JsCodeToken).map(t => t.code)
 
 test('$ line: a regex containing < and $ does not terminate the directive early', () => {
   assert.match(codeOf('$ const r = /<div>/.test(s)\n')[0], /\/<div>\/\.test\(s\)/)
@@ -69,7 +70,7 @@ test('$ line: a<b is a comparison, not an HTML tag', () => {
 
 test('$ line: inline HTML after { still starts HTML (feature preserved)', () => {
   const tokens = tokensOf('$ items.forEach(i => { <li>$(i)</li> $ })\n')
-  const code = tokens.filter(t => t.constructor.name === 'JsCodeToken').map(t => t.code)
+  const code = tokens.filter(t => t instanceof JsCodeToken).map(t => t.code)
   const html = tokens.filter(t => t.constructor.name === 'HtmlToken').map(t => t.html).join('')
   assert.match(code[0], /forEach\(i => \{/) // code stops at the brace
   assert.match(html, /<li>/)                // <li> is lexed as HTML, not code
@@ -78,10 +79,17 @@ test('$ line: inline HTML after { still starts HTML (feature preserved)', () => 
 test('${ } block scanner handles the same hazards', () => {
   // a ${...} code block whose body contains a regex with a brace and a template
   const code = tokensOf('<p>${ const r = /[}]/.test(`a ${x}`) }after</p>')
-    .filter(t => t.constructor.name === 'JsCodeToken')
+    .filter(t => t instanceof JsCodeToken)
   assert.equal(code.length, 1)
   assert.match(code[0].code, /\.test/)
   assert.match(tokensOf('<p>${ const r = /[}]/.test(`a ${x}`) }after</p>').map(t => t.html ?? '').join(''), /after<\/p>/)
+})
+
+test('${ } wrapping HTML throws a clear compile-time control-flow error', () => {
+  assert.throws(
+    () => interpretTemplateTokens(tokensOf('${ if (ok) { }\n  <p>Yes</p>\n${ } }')),
+    /control flow wrapping HTML must use the `\$ if \(\.\.\.\) \{` \/ `\$ \}` line form, not `\$\{ \.\.\. \}`/,
+  )
 })
 
 test('a regex literal with ) inside does not truncate a $(...) expression', () => {

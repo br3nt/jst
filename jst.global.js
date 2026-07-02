@@ -57,6 +57,10 @@ class JsCodeToken extends Token {
   toString() { return `${JsCodeToken.name} { code=${this.code} }` }
 }
 
+class JsBlockToken extends JsCodeToken {
+  toString() { return `${JsBlockToken.name} { code=${this.code} }` }
+}
+
 class HtmlToken extends Token {
   html
 
@@ -75,7 +79,7 @@ class EndOfInputToken extends Token {
 
 }
 /* namespace shim for `import * as Tokens from './tokens.js'` */
-const Tokens = { Token, Escaped$Token, WhitespaceToken, JsIdentifierToken, JsExpressionToken, JsCodeToken, HtmlToken, EndOfInputToken };
+const Tokens = { Token, Escaped$Token, WhitespaceToken, JsIdentifierToken, JsExpressionToken, JsCodeToken, JsBlockToken, HtmlToken, EndOfInputToken };
 /* ===== input_reader.js ===== */
 /*!
  * JST — JavaScript Templates · no-build web components in plain HTML
@@ -461,7 +465,7 @@ class Lexer {
 
   readJsBlockToken() {
     const str = this.#input.readBalancedInner('{', '}');
-    return new Tokens.JsCodeToken(str);
+    return new Tokens.JsBlockToken(str);
   }
 
   readEscaped$Token() {
@@ -554,7 +558,8 @@ function mergeJsTokens(templateTokens) {
     const token = templateTokens[i]
     const last = processedTokens[processedTokens.length - 1]
 
-    if (token instanceof JsCodeToken && last instanceof JsCodeToken) {
+    if (token instanceof JsCodeToken && last instanceof JsCodeToken
+      && !(token instanceof JsBlockToken) && !(last instanceof JsBlockToken)) {
       last.code += ' ' + token.code
       continue
     }
@@ -566,7 +571,8 @@ function mergeJsTokens(templateTokens) {
       const next = templateTokens[i + 1]
       const ws = token.whitespace ?? token.html
 
-      if (last instanceof JsCodeToken && next instanceof JsCodeToken) {
+      if (last instanceof JsCodeToken && next instanceof JsCodeToken
+        && !(last instanceof JsBlockToken) && !(next instanceof JsBlockToken)) {
         last.code += ws
         continue
       }
@@ -602,6 +608,212 @@ const bindingOpenerPattern = new RegExp(`(^|\\s)${bindingNamePattern}\\s*=\\s*([
 const validEventName = /^on[a-zA-Z][\w$-]*(?:\.[\w$-]+)*$/
 // Legacy `@event="$(fn)"` syntax (removed): detect and point at the replacement.
 const legacyEventTailPattern = /(^|\s)@([a-zA-Z][\w$-]*(?:\.[\w$-]+)*)\s*=\s*["']$/
+const htmlTagInCodePattern = /<\/?[A-Za-z][\w:-]*(?:\s|>|\/)/g
+const regexKeywords = new Set([
+  'return',
+  'typeof',
+  'instanceof',
+  'in',
+  'of',
+  'new',
+  'delete',
+  'void',
+  'do',
+  'else',
+  'yield',
+  'await',
+  'case',
+  'throw',
+])
+
+function skipQuoted(source, index, quote) {
+  index++
+  while (index < source.length) {
+    const ch = source[index]
+    if (ch === '\\') {
+      index += 2
+      continue
+    }
+    if (ch === quote) return index + 1
+    if (ch === '\n' || ch === '\r') return index
+    index++
+  }
+  return index
+}
+
+function skipLineComment(source, index) {
+  while (index < source.length && source[index] !== '\n' && source[index] !== '\r') index++
+  return index
+}
+
+function skipBlockComment(source, index) {
+  index += 2
+  while (index < source.length) {
+    if (source[index] === '*' && source[index + 1] === '/') return index + 2
+    index++
+  }
+  return index
+}
+
+function skipRegexLiteral(source, index) {
+  index++
+  let inCharClass = false
+
+  while (index < source.length) {
+    const ch = source[index]
+    if (ch === '\\') {
+      index += 2
+      continue
+    }
+    if (ch === '\n' || ch === '\r') return index
+    if (ch === '[') inCharClass = true
+    else if (ch === ']') inCharClass = false
+    else if (ch === '/' && !inCharClass) {
+      index++
+      break
+    }
+    index++
+  }
+
+  while (/[a-z]/i.test(source[index] || '')) index++
+  return index
+}
+
+function skipTemplateInterpolation(source, index) {
+  let depth = 1
+  const prev = { char: '', word: '' }
+
+  while (index < source.length && depth > 0) {
+    const ch = source[index]
+    const next = source[index + 1]
+
+    if (ch === '/' && next === '/') {
+      index = skipLineComment(source, index)
+      prev.char = ''
+      prev.word = ''
+      continue
+    }
+    if (ch === '/' && next === '*') {
+      index = skipBlockComment(source, index)
+      prev.char = ''
+      prev.word = ''
+      continue
+    }
+    if (ch === '/' && regexAllowedAfter(prev)) {
+      index = skipRegexLiteral(source, index)
+      prev.char = ')'
+      prev.word = ''
+      continue
+    }
+    if (ch === "'" || ch === '"') {
+      index = skipQuoted(source, index, ch)
+      prev.char = ')'
+      prev.word = ''
+      continue
+    }
+    if (ch === '`') {
+      index = skipTemplateLiteral(source, index)
+      prev.char = ')'
+      prev.word = ''
+      continue
+    }
+
+    if (ch === '{') depth++
+    else if (ch === '}') depth--
+
+    index++
+    advancePrev(prev, ch)
+  }
+
+  return index
+}
+
+function skipTemplateLiteral(source, index) {
+  index++
+  while (index < source.length) {
+    const ch = source[index]
+    if (ch === '\\') {
+      index += 2
+      continue
+    }
+    if (ch === '`') return index + 1
+    if (ch === '$' && source[index + 1] === '{') {
+      index += 2
+      index = skipTemplateInterpolation(source, index)
+      continue
+    }
+    index++
+  }
+  return index
+}
+
+function regexAllowedAfter(prev) {
+  if (prev.char === '') return true
+  if (/[)\]'"`]/.test(prev.char)) return false
+  if (/[\w$.]/.test(prev.char)) return regexKeywords.has(prev.word)
+  return true
+}
+
+function advancePrev(prev, ch) {
+  if (/\s/.test(ch)) return
+  prev.char = ch
+  prev.word = /[\w$]/.test(ch) ? prev.word + ch : ''
+}
+
+function htmlTagInCode(code) {
+  const prev = { char: '', word: '' }
+  for (let i = 0; i < code.length;) {
+    const ch = code[i]
+    const next = code[i + 1]
+
+    if (ch === '/' && next === '/') {
+      i = skipLineComment(code, i)
+      prev.char = ''
+      prev.word = ''
+      continue
+    }
+    if (ch === '/' && next === '*') {
+      i = skipBlockComment(code, i)
+      prev.char = ''
+      prev.word = ''
+      continue
+    }
+    if (ch === '/' && regexAllowedAfter(prev)) {
+      i = skipRegexLiteral(code, i)
+      prev.char = ')'
+      prev.word = ''
+      continue
+    }
+    if (ch === "'" || ch === '"') {
+      i = skipQuoted(code, i, ch)
+      prev.char = ')'
+      prev.word = ''
+      continue
+    }
+    if (ch === '`') {
+      i = skipTemplateLiteral(code, i)
+      prev.char = ')'
+      prev.word = ''
+      continue
+    }
+
+    htmlTagInCodePattern.lastIndex = i
+    const match = htmlTagInCodePattern.exec(code)
+    if (match && match.index === i) return match[0]
+
+    i++
+    advancePrev(prev, ch)
+  }
+
+  return null
+}
+
+function assertNoHtmlWrappedByJsBlock(token) {
+  if (!(token instanceof JsBlockToken)) return
+  const tag = htmlTagInCode(token.code)
+  if (!tag) return
+  throw new Error(`JST: control flow wrapping HTML must use the \`$ if (...) {\` / \`$ }\` line form, not \`\${ ... }\`. The \`\${ ... }\` block form is only for JavaScript with no template HTML (found "${tag.trim()}").`)
+}
 
 function classifyBindingName(rawName) {
   if (rawName[0] === '.') return { kind: 'prop', name: rawName.slice(1) }
@@ -751,7 +963,10 @@ function interpretTemplateTokens(templateTokens) {
 // starts with '(' or '[' cannot be swallowed by automatic semicolon insertion.
 function interpretTemplateToken(token) {
   if (token instanceof HtmlToken) return `lines.push(${JSON.stringify(token.html)});`
-  if (token instanceof JsCodeToken) return token.code
+  if (token instanceof JsCodeToken) {
+    assertNoHtmlWrappedByJsBlock(token)
+    return token.code
+  }
   if (token instanceof Escaped$Token) return `lines.push('$');`
   if (token instanceof JsExpressionToken) return `lines.push(__esc(${token.expression}));`
   if (token instanceof JsIdentifierToken) return `lines.push(__esc(${token.identifier}));`
@@ -864,21 +1079,21 @@ class TemplateRenderingFunction {
 function getTemplateRenderingFunctionParams(templateElement) {
   // A template's inputs are declared in one case-preserving attribute value:
   //   <script type="jst" name="todo-item" attributes="item onToggle">
-  // `attrs="…"` is accepted as a shorthand alias. HTML lowercases attribute
-  // names, but not quoted attribute values, so this keeps internal JS
-  // identifiers greppable and supports expected names like `name` without
-  // conflicting with the template's own `name` attribute.
+  // HTML lowercases attribute names, but not quoted attribute values, so this
+  // keeps internal JS identifiers greppable and supports expected names like
+  // `name` without conflicting with the template's own `name` attribute.
   // Detect the removed `props="…"` keyword via getAttribute (not hasAttribute):
   // the precompile tool's lightweight element model implements getAttribute only.
+  const tag = templateElement.getAttribute('name') || '(unnamed)'
   if (templateElement.getAttribute('props') != null) {
-    const tag = templateElement.getAttribute('name') || '(unnamed)'
-    throw new Error(`JST: the props="…" declaration was renamed. Use attributes="…" (or the attrs="…" shorthand) on <script type="jst" name="${tag}">.`)
+    throw new Error(`JST: the props="…" declaration was renamed. Use attributes="…" on <script type="jst" name="${tag}">.`)
+  }
+  if (templateElement.getAttribute('attrs') != null) {
+    throw new Error(`JST: the attrs="…" shorthand was removed. Use attributes="…" on <script type="jst" name="${tag}">.`)
   }
 
   const paramMap = {}
-  const declared = templateElement.getAttribute('attributes')
-    ?? templateElement.getAttribute('attrs')
-    ?? ''
+  const declared = templateElement.getAttribute('attributes') ?? ''
   const attributes = parseAttributesDeclaration(declared)
 
   attributes.forEach(attr => {
@@ -1609,15 +1824,11 @@ function registerCustomElementFromTemplate(templateElement) {
     return customElements.get(customElementName);
   }
 
-  const renderFunction = compileTemplateRenderingFunction(templateElement);
-
-  const elementClass = defineCustomElementFromRender({
-    customElementName,
-    paramNames: renderFunction.functionParams,
-    attributeToParam: renderFunction.paramMap,
-    renderFunctionBody: renderFunction.functionBody,
-    source,
-    createRenderFunction: () => new Function(
+  let renderFunction;
+  let compiledRender;
+  try {
+    renderFunction = compileTemplateRenderingFunction(templateElement);
+    compiledRender = new Function(
       ...renderFunction.functionParams,
       'el',
       'slot',
@@ -1628,11 +1839,59 @@ function registerCustomElementFromTemplate(templateElement) {
       'once',
       'trustedHTML',
       renderFunction.functionBody,
-    ),
+    );
+  } catch (error) {
+    if (/runtime-only build/.test(String(error?.message ?? error))) throw error;
+    const elementClass = defineCompileErrorElement(customElementName, error, source);
+    if (elementClass) templateElement.__jstRegisteredName = customElementName;
+    return elementClass;
+  }
+
+  const elementClass = defineCustomElementFromRender({
+    customElementName,
+    paramNames: renderFunction.functionParams,
+    attributeToParam: renderFunction.paramMap,
+    renderFunctionBody: renderFunction.functionBody,
+    source,
+    createRenderFunction: () => compiledRender,
   });
 
   if (elementClass) templateElement.__jstRegisteredName = customElementName;
   return elementClass;
+}
+
+function compileErrorHtml(customElementName, error) {
+  return `<pre class="jst-error" role="alert">JST Compile Error in &lt;${escapeHtml(customElementName)}&gt;\n${escapeHtml(error?.stack || error?.message || error)}</pre>`;
+}
+
+function defineCompileErrorElement(customElementName, error, source) {
+  if (templates.has(customElementName)) {
+    console.warn(`JST: Duplicate template name "${customElementName}" ignored.`, source);
+    return customElements.get(customElementName);
+  }
+
+  templates.set(customElementName, {
+    functionParams: [],
+    paramMap: {},
+    source,
+    error,
+  });
+
+  console.error(`JST Compile Error in <${customElementName}>:`, error);
+
+  if (customElements.get(customElementName)) {
+    console.warn(`JST: Custom element <${customElementName}> is already registered.`, source);
+    return customElements.get(customElementName);
+  }
+
+  const CustomElementClass = class extends HTMLElement {
+    connectedCallback() {
+      this.innerHTML = compileErrorHtml(customElementName, error);
+    }
+  };
+
+  customElements.define(customElementName, CustomElementClass);
+  return CustomElementClass;
 }
 
 function registerPrecompiledTemplate(customElementName, paramNames, attributeToParam, renderFunction, source = 'precompiled') {

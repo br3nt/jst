@@ -102,7 +102,7 @@ export class Lexer {
 
   readJsBlockToken() {
     const str = this.#input.readBalancedInner('{', '}');
-    return new Tokens.JsCodeToken(str);
+    return new Tokens.JsBlockToken(str);
   }
 
   readEscaped$Token() {

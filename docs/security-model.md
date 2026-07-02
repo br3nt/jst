@@ -87,6 +87,14 @@ The browser compiler builds render functions with `new Function`, which CSP
 treats as eval. A strict policy needs `'unsafe-eval'` unless you use the
 precompile mode. See [production.md](./production.md).
 
+JST's `on<event>` handlers do not change that CSP story. They live inside
+`<script type="jst">`, which the browser treats as inert text, and JST compiles
+them into `addEventListener` calls. They are not literal DOM `onclick`
+attributes, so they do not require `'unsafe-inline'`, a nonce, or a hash. The
+only CSP lever JST needs in runtime-compilation mode is `'unsafe-eval'` for
+`new Function`; `tools/precompile.mjs` removes that requirement by compiling the
+templates before they reach the browser.
+
 ## Reporting
 
 Found a security issue? See the reporting line in the root

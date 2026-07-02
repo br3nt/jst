@@ -48,7 +48,7 @@ test('codemod migrates @event inside jst blocks, preserving modifiers and value'
   await withTempFile('view.erb', SAMPLE, async (file) => {
     const { code, stdout } = await run('node', [codemod, file]);
     assert.equal(code, 0);
-    assert.match(stdout, /2 bindings/);
+    assert.match(stdout, /2 changes/);
 
     const out = fs.readFileSync(file, 'utf8');
     assert.match(out, /<button onclick="\$\(open\)">/);
@@ -76,7 +76,21 @@ test('codemod is idempotent — a migrated file has no remaining bindings', asyn
   await withTempFile('view.erb', SAMPLE, async (file) => {
     await run('node', [codemod, file]);
     const { stdout } = await run('node', [codemod, file]);
-    assert.match(stdout, /no @event bindings/);
+    assert.match(stdout, /no @event bindings or attrs= declarations/);
+  });
+});
+
+test('codemod migrates attrs= on jst open tags only', async () => {
+  const sample = `<div attrs="decoy"></div>\n<script type="jst" name="x-old" attrs="count"><p>$(count)</p></script>`;
+  await withTempFile('attrs.html', sample, async (file) => {
+    const { code, stdout } = await run('node', [codemod, file]);
+    assert.equal(code, 0);
+    assert.match(stdout, /1 change/);
+
+    const out = fs.readFileSync(file, 'utf8');
+    assert.match(out, /<div attrs="decoy"><\/div>/);
+    assert.match(out, /<script type="jst" name="x-old" attributes="count">/);
+    assert.doesNotMatch(out, /<script[^>]+attrs=/);
   });
 });
 
@@ -104,6 +118,17 @@ test('lint flags the removed props= keyword on a jst open tag', async () => {
     assert.match(stderr, /renamed props="…" declaration — use attributes="…"/);
     assert.match(stderr, /:2:/); // the jst block is on line 2
     assert.doesNotMatch(stderr, /:1:/); // the decoy props= outside a jst tag is ignored
+  });
+});
+
+test('lint flags the removed attrs= shorthand on a jst open tag', async () => {
+  const stale = `<p attrs="decoy">not a jst block</p>\n<script type="jst" name="x-old" attrs="a b"><p>$(a)</p></script>`;
+  await withTempFile('stale-attrs.html', stale, async (file) => {
+    const { code, stderr } = await run('node', [lint, file]);
+    assert.equal(code, 1, 'lint should exit non-zero for attrs=');
+    assert.match(stderr, /removed attrs="…" shorthand — use attributes="…"/);
+    assert.match(stderr, /:2:/);
+    assert.doesNotMatch(stderr, /:1:/);
   });
 });
 

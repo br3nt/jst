@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **TypeScript declarations.** The npm package now ships hand-written `.d.ts`
+  files for the runtime API, template helper boundary, `window.JST`, `JST.nav`,
+  and `JST.behaviors`, with package `types` / `exports` entries and no build
+  step.
+- **Consumer testing docs.** Added jsdom/custom-elements and Playwright testing
+  patterns for real custom elements rendered into light DOM.
 - **`jst-nav` sends the CSRF token (#45).** Unsafe (non-`GET`) **same-origin**
   requests now carry the server's token from `<meta name="csrf-token">` as the
   `X-CSRF-Token` header (the Rails/Laravel/Turbo convention), so the non-form
@@ -27,10 +33,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`${ ... }` wrapping HTML now fails at compile time (#53).** The compiler
+  rejects control flow that wraps template HTML in the block form and points at
+  the `$ if (...) {` / `$ }` line form. Compile failures now define a visible
+  error element in runtime mode instead of rendering empty when `dev:false`.
 - **`jst-trigger="… throttle:Ns"` was a no-op.** The modifier parsed but the
   handler never applied it (only `delay:` was wired). It now rate-limits on the
   leading edge — fires immediately, then drops events for the interval. `delay:`
   (debounce) and `throttle:` (rate-limit) are now both real and complementary.
+
+### Changed
+
+- **Removed the `attrs="…"` declaration shorthand.** Template inputs now have one
+  spelling: `attributes="…"`. `attrs="…"` is a compile-time migration error;
+  `tools/lint.mjs` flags it and `tools/codemod.mjs` rewrites it.
 
 ### Docs
 

@@ -14,7 +14,8 @@ tags and attribute-value strings too (`onclick="$(…)"`), not only in text. The
 embedded JavaScript is delegated to the editor's own `source.js` grammar:
 
 - `$(expr)` and `$identifier` — interpolation
-- `${ ... }` and `$ …` line directives — embedded code
+- `$ …` line directives — embedded code, including control flow that wraps HTML
+- `${ ... }` — JavaScript-only embedded code blocks
 - `$$` — escaped literal `$`
 - `.prop=` / `on<event>=` — binding attributes (e.g. `onclick.stop`)
 

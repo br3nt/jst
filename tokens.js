@@ -52,6 +52,10 @@ export class JsCodeToken extends Token {
   toString() { return `${JsCodeToken.name} { code=${this.code} }` }
 }
 
+export class JsBlockToken extends JsCodeToken {
+  toString() { return `${JsBlockToken.name} { code=${this.code} }` }
+}
+
 export class HtmlToken extends Token {
   html
 
