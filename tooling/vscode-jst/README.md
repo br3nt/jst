@@ -17,7 +17,7 @@ embedded JavaScript is delegated to the editor's own `source.js` grammar:
 - `$ …` line directives — embedded code, including control flow that wraps HTML
 - `${ ... }` — JavaScript-only embedded code blocks
 - `$$` — escaped literal `$`
-- `.prop=` / `on<event>=` — binding attributes (e.g. `onclick.stop`)
+- `.prop=` / `on<event>=` — binding attributes (e.g. `onclick.outside`)
 
 **Tier 2 — diagnostics** (`src/diagnostics.mjs`)
 Runs the **real JST compiler** (`../../compiler.js`) over each template, so
@@ -85,7 +85,7 @@ the actual `examples/kanban.html`).
   TS documents, see `TODO.md`) closes. So an expression may look slightly less
   colorful than the same code in a standalone script — by design, for now.
 - **`.prop` / `on<event>` attribute names** can be non-standard HTML (the
-  leading-`.` property bindings and dotted modifier tails like `onclick.stop`),
+  leading-`.` property bindings and dotted modifier tails like `onclick.outside`),
   so VS Code's HTML tag parser can still get mildly confused around them in some
   tags. The islands
   grammar now colors the binding names and their `$(…)` values, which masks most

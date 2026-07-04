@@ -83,7 +83,7 @@
     $   else if (e.key === 'Enter') { e.preventDefault(); if (isOpen && matches[hi] != null) choose(matches[hi]); }
     $   else if (e.key === 'Escape') { el.open = false; }
     $ };
-    <input type="text" role="combobox" aria-expanded="$(isOpen)" placeholder="Search fruit…" .value="$(query || '')" oninput="$(e => { el.query = e.target.value; el.open = true; el.highlighted = 0; })" onkeydown="$(onKey)" onfocus="$(() => el.open = true)" onblur.debounce.150="$(() => el.open = false)">
+    <input type="text" role="combobox" aria-expanded="$(isOpen)" placeholder="Search fruit…" .value="$(query || '')" oninput="$(e => { el.query = e.target.value; el.open = true; el.highlighted = 0; })" onkeydown="$(onKey)" onfocus="$(() => el.open = true)" onblur="$(debounce(150, () => el.open = false))">
     $ if (isOpen) {
       <ul role="listbox">
         $ matches.forEach((o, i) => {

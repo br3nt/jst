@@ -51,7 +51,7 @@ Inputs are declared in the case-preserving `attributes` attribute:
 ```html
 <script type="jst" name="todo-item" attributes="item">
   <li jst-key="$(item.id)">
-    <button onclick.stop="$(() => el.emit('toggle', item))">Done</button>
+    <button onclick="$(stop(() => el.emit('toggle', item)))">Done</button>
     $(item.text)
   </li>
 </script>
@@ -79,9 +79,12 @@ Inputs are declared in the case-preserving `attributes` attribute:
 - In ordinary HTML, use normal JavaScript property assignment and
   `addEventListener`. Inside a JST template, `.prop="$(expr)"` passes rich
   JavaScript values without stringifying.
-- Inside a JST template, `on<event>="$(fn)"` attaches listeners; modifiers are supported:
-  `.prevent`, `.stop`, `.self`, `.outside`, `.once`, `.capture`, `.passive`,
-  key filters like `.enter`, and `.debounce.300`.
+- Inside a JST template, `on<event>="$(fn)"` attaches listeners. Shape *when*
+  the handler runs with plain-function combinators — `prevent`, `stop`, `self`,
+  `changed`, `debounce`, `throttle`, `keys` — in scope in every template
+  expression: `onsubmit="$(prevent(fn))"`, `oninput="$(debounce(300, fn))"`,
+  `onkeydown="$(keys({ Enter: fn }))"`. Dotted modifiers configure registration
+  only: `.once`, `.capture`, `.passive`, `.outside`.
 - `jst-model="title"` is local form shorthand: read from `title` and update
   `el.title` when the user changes it.
 - `jst-key="$(id)"` preserves DOM identity during list inserts and reorders.

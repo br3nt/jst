@@ -138,6 +138,13 @@ allTemplates.forEach((template, index) => {
     'url',
     'once',
     'trustedHTML',
+    'prevent',
+    'stop',
+    'self',
+    'changed',
+    'debounce',
+    'throttle',
+    'keys',
   ];
 
   lines.push(`function ${fn}(${args.join(', ')}) {`);

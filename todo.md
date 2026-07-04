@@ -19,8 +19,9 @@
 * [x] `jst-key` preserves node identity across inserts and reorders.
 * [x] Dynamic light-DOM children are observed and projected into slots.
 * [x] `onDisconnect(fn)` provides teardown without a full hook system.
-* [x] Event modifiers: `.prevent`, `.stop`, `.self`, `.outside`, key filters,
-      and `.debounce.N`.
+* [x] Handler combinators (`prevent`, `stop`, `self`, `changed`, `debounce`,
+      `throttle`, `keys`) + registration-only modifiers (`.once .capture
+      .passive .outside`) — the behaviour-modifier microsyntax was removed in v0.5.0.
 * [x] `jst-transition` adds CSS-owned enter, leave, and move classes.
 * [x] Runtime configuration: `autoRegister`, `autoRegisterRoot`,
       `resolveTemplate`, and duplicate/source logging.

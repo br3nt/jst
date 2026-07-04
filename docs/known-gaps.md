@@ -74,7 +74,7 @@ Load that module alongside `jst.runtime.js` (the runtime-only build, no compiler
 and the elements register under a strict `script-src 'self'` policy. Unlike a
 string-replacement shim, precompiled templates register through the **normal
 runtime** (`registerPrecompiledTemplate`), so morphing, keyed reconciliation,
-focus/form-state preservation, and event modifiers all still apply - precompiling
+focus/form-state preservation, the handler combinators, and registration modifiers all still apply - precompiling
 only moves template compilation out of the browser, it does not downgrade
 rendering. The full `jst.js` also works here; the runtime-only build just drops
 the now-unused compiler (~40% smaller). For a no-build/`file://` precompiled drop-in,

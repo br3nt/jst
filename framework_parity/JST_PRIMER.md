@@ -38,7 +38,7 @@ done, that's a finding - mark it `(i)` or `x`. Do not "fix" it by editing the fr
 | `${ ... }` | A block of JS |
 | `$$` | A literal `$` |
 | `.prop="$(expr)"` | Set a **JS property** on the child element to expr's value (pass rich data/objects) |
-| `on<event>.mod="$(fn)"` | `addEventListener('event', fn)` with modifiers like `.prevent`, `.stop`, `.enter`, `.outside`, `.debounce.300`. The value must be exactly one `$(...)` expression |
+| `on<event>="$(fn)"` | `addEventListener("event", fn)`. Shape the handler with combinators — `prevent(fn)`, `stop(fn)`, `debounce(300, fn)`, `keys({ Enter: fn })` — in scope in expressions. Registration-only dotted modifiers: `.once .capture .passive .outside`. The value must be exactly one `$(...)` expression |
 | `jst-model="prop"` | Local form shorthand: read from `prop`, update `el[prop]` on user input |
 | `jst-key="$(id)"` | Preserve DOM identity during list inserts/reorders |
 | `$(slot())` | Project the component's original child nodes (default slot) |

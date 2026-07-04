@@ -4,8 +4,10 @@
   Source: https://alpinejs.dev/directives/on
   Demonstrates: Alpine x-on / @ — event listeners, plus key modifiers
   (@keydown.enter) and event modifiers (.prevent).
-  JST status: ✓ exact — `on<event>.mod="$(fn)"` covers listeners, key filters,
-  `.prevent`, `.stop`, and friends directly.
+  JST status: ✓ exact — handlers are plain functions shaped with the handler
+  combinators: @keydown.enter.prevent → onkeydown="$(keys({ Enter: prevent(fn) }))",
+  @submit.prevent → onsubmit="$(prevent(fn))". No modifier grammar to learn —
+  composition order is visible in the JS.
 -->
 <html lang="en">
 <head>
@@ -18,13 +20,13 @@
 
 <script type="jst" name="x-on-demo" attributes="items draft">
   $ const list = items || [];
-  <form onsubmit.prevent="$(() => {})">
+  <form onsubmit="$(prevent())">
     <input data-testid="field" placeholder="Add item, press Enter"
            jst-model="draft"
-           onkeydown.enter.prevent="$(e => {
+           onkeydown="$(keys({ Enter: prevent(e => {
              const v = (el.draft || '').trim();
              if (v) { el.items = [...list, v]; el.draft = ''; }
-           })">
+           }) }))">
     <button type="button" data-testid="clear" onclick="$(() => el.items = [])">Clear</button>
   </form>
   <ul data-testid="list">

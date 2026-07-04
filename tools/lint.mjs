@@ -52,6 +52,50 @@ const templateRules = [
     message: () => 'removed document.jst API — import { configure } from jst.js, or use window.JST',
     at: m => m.index,
   },
+  {
+    id: 'behaviour-modifier',
+    // on<event> with a dotted tail containing anything beyond the four
+    // registration modifiers (v0.5.0: behaviour moved to the combinators).
+    find: () => /(^|\s)(on[a-zA-Z][\w$-]*?((?:\.[\w$]+)+))\s*=\s*["']/g,
+    message: m => {
+      const removed = m[3].split('.').filter(Boolean)
+        .filter(mod => !['capture', 'passive', 'once', 'outside'].includes(mod) && !/^\d+$/.test(mod));
+      const hints = {
+        prevent: 'prevent(fn)', stop: 'stop(fn)', self: 'self(fn)', changed: 'changed(fn)',
+        debounce: 'debounce(300, fn)', enter: 'keys({ Enter: fn })', escape: 'keys({ Escape: fn })',
+        esc: 'keys({ Escape: fn })', tab: 'keys({ Tab: fn })', space: "keys({ ' ': fn })",
+        up: 'keys({ ArrowUp: fn })', down: 'keys({ ArrowDown: fn })',
+        left: 'keys({ ArrowLeft: fn })', right: 'keys({ ArrowRight: fn })',
+      };
+      const rewrites = removed.map(mod => hints[mod] || `a combinator`).join(', ');
+      return `removed .${removed.join('/.')} event modifier(s) — shape the handler in JS: ${rewrites} (registration-only modifiers: .capture .passive .once .outside)`;
+    },
+    at: m => m.index + m[1].length,
+    when: m => m[3].split('.').filter(Boolean)
+      .some(mod => !['capture', 'passive', 'once', 'outside'].includes(mod) && !/^\d+$/.test(mod)),
+  },
+];
+
+// Rules that apply to the WHOLE file (usage HTML outside jst blocks included).
+const usageRules = [
+  {
+    id: 'jst-trigger',
+    find: () => /\bjst-trigger\s*=/g,
+    message: () => 'removed jst-trigger (v0.5.0) — declare the cause with jst-on<event>[="shaper"], jst-load[="lazy"], or jst-poll="2s" (see CHANGELOG migration table)',
+    at: m => m.index,
+  },
+];
+
+// Opt-in --csp rule: native inline handlers in usage HTML (outside jst blocks)
+// are evaluated by the browser and blocked under a strict CSP. jst templates
+// compile on<event> to addEventListener, so they're exempt.
+const cspRules = [
+  {
+    id: 'native-inline-handler',
+    find: () => /(^|\s)(on[a-zA-Z][\w$-]*)\s*=\s*["']/g,
+    message: m => `native inline ${m[2]}= handler — blocked under strict CSP. Use jst-on<event>="name" + JST.nav.shape(...) for jst-nav causes, or addEventListener in a script`,
+    at: m => m.index + m[1].length,
+  },
 ];
 
 // Rules that apply inside a <script type="jst"> OPEN TAG (the attributes on the
@@ -80,23 +124,27 @@ const runtimeRules = [
 function parseArgs(argv) {
   const files = [];
   const runtimes = [];
+  let csp = false;
 
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     if (arg === '--runtime') runtimes.push(argv[++i]);
+    else if (arg === '--csp') csp = true;
     else if (arg === '--help' || arg === '-h') usage(0);
     else if (arg.startsWith('--')) usage(1);
     else files.push(arg);
   }
 
   if (!files.length && !runtimes.length) usage(1);
-  return { files, runtimes };
+  return { files, runtimes, csp };
 }
 
 function usage(code) {
   const out = code === 0 ? console.log : console.error;
-  out('Usage: node tools/lint.mjs <files...> [--runtime <jst.js>]');
-  out('  Scans <script type="jst"> blocks for removed v0.1 syntax.');
+  out('Usage: node tools/lint.mjs <files...> [--runtime <jst.js>] [--csp]');
+  out('  Scans <script type="jst"> blocks and usage HTML for removed JST syntax.');
+  out('  --csp additionally flags native inline on<event>= handlers in usage HTML');
+  out('        (evaluated by the browser; blocked under a strict CSP).');
   process.exit(code);
 }
 
@@ -138,7 +186,7 @@ function inRanges(index, ranges) {
   return ranges.some(([start, end]) => index >= start && index < end);
 }
 
-function scanFile(file, findings) {
+function scanFile(file, findings, csp) {
   let source;
   try {
     source = fs.readFileSync(file, 'utf8');
@@ -149,12 +197,38 @@ function scanFile(file, findings) {
   }
 
   const ranges = jstBlockRanges(source);
+
+  // Whole-file rules (usage HTML) run even when the file has no jst blocks.
+  for (const rule of usageRules) {
+    const re = rule.find();
+    let match;
+    while ((match = re.exec(source))) {
+      const at = rule.at(match);
+      const { line, col } = locate(source, at);
+      findings.push({ file, line, col, message: rule.message(match) });
+    }
+  }
+
+  if (csp) {
+    for (const rule of cspRules) {
+      const re = rule.find();
+      let match;
+      while ((match = re.exec(source))) {
+        const at = rule.at(match);
+        if (inRanges(at, ranges)) continue;   // template handlers compile to addEventListener — exempt
+        const { line, col } = locate(source, at);
+        findings.push({ file, line, col, message: rule.message(match) });
+      }
+    }
+  }
+
   if (ranges.length === 0) return;
 
   for (const rule of templateRules) {
     const re = rule.find();
     let match;
     while ((match = re.exec(source))) {
+      if (rule.when && !rule.when(match)) continue;
       const at = rule.at(match);
       if (!inRanges(at, ranges)) continue;
       const { line, col } = locate(source, at);
@@ -196,10 +270,10 @@ function scanRuntime(file, findings) {
 }
 
 function main() {
-  const { files, runtimes } = parseArgs(process.argv.slice(2));
+  const { files, runtimes, csp } = parseArgs(process.argv.slice(2));
   const findings = [];
 
-  for (const file of files) scanFile(file, findings);
+  for (const file of files) scanFile(file, findings, csp);
   for (const runtime of runtimes) scanRuntime(runtime, findings);
 
   if (findings.length === 0) {

@@ -2,14 +2,34 @@
  * jst-nav — declarative server-driven navigation for JST (opt-in, no build).
  * © Brent Jacobs · https://github.com/br3nt/jst · MIT
  *
- * HTMX/fixi-shaped directives that live on USAGE HTML (not inside
- * <script type="jst"> templates). Values are plain strings — URLs, CSS
- * selectors, and trigger specs — never $(…) expressions, so they stay inside
- * JST's safe-by-default model.
+ * Directives that live on USAGE HTML (not inside <script type="jst">
+ * templates). Values are plain, inert strings — URLs, CSS selectors, names —
+ * never executable expressions, so server-rendered HTML stays inside JST's
+ * safe-by-default model (and jst-nav can never become a CSP-bypass gadget).
  *
  *   <script type="module" src="jst-nav.js"></script>
  *
- * Directives:
+ * Every element is a cause → request → effect sentence:
+ *
+ *   WHEN  (cause)   jst-on<event>[="shaper"] | jst-load[="lazy"] | jst-poll="2s"
+ *                   default: form→submit, input/select/textarea→change, else click
+ *   DO    (request) jst-get="/url" | jst-action="/url" + method="post|put|…"
+ *   PUT   (effect)  jst-target="<css>" jst-swap="<how>" jst-select="<css>"
+ *
+ * Causes:
+ *   jst-on<event>             fire the request on this DOM event instead of the default
+ *   jst-on<event>="name"      …gated/paced by the SHAPER registered under that name:
+ *                             JST.nav.shape('name', fire => handler). A shaper decides
+ *                             WHEN to call fire (debounce, key filter, …); it can never
+ *                             change what firing does. Unknown names fail loud.
+ *   jst-load                  fire as soon as the element is wired
+ *   jst-load="lazy"           fire when scrolled into view (like loading="lazy")
+ *   jst-poll="2s"             fire on an interval (stops when the element is removed)
+ *   Exotic causes (global shortcuts, listeners on other elements): wire them
+ *   yourself — addEventListener + JST.nav.request(el). In templates skip all of
+ *   this and use a normal handler: oninput="$(debounce(300, e => JST.nav.request(…)))".
+ *
+ * Request + effect:
  *   jst-get="/url"            GET + swap (shorthand)
  *   jst-action="/url"         request URL (pair with method= for the verb)
  *   method="post|put|…"       native attribute, reused as the verb (GET default)
@@ -19,8 +39,6 @@
  *   jst-select="<css>"        pick a subtree out of the response
  *   jst-push-url[="/url"]     push history (back/forward + restore)
  *   jst-replace-url[="/url"]  replace the current history entry (filters/in-place)
- *   jst-trigger="<spec>"      when: click submit load revealed | every 2s |
- *                             keyup changed delay:300ms | <event> [from:<css>]
  *   jst-boost                 on a container: boost descendant <a>/<form>
  *   jst-target-4xx/5xx/error  route error responses elsewhere
  *
@@ -33,6 +51,7 @@
  */
 
 const WIRED = Symbol('jstNavWired');
+// [jst-trigger] is retained ONLY so leftover 0.4.x markup fails loud (see setupCauses).
 const REQUESTABLE = '[jst-get],[jst-action],[jst-trigger]';
 
 /* ------------------------------------------------------------------ targets */
@@ -170,7 +189,7 @@ function requestParts(el) {
   return { url, method };
 }
 
-async function performRequest(el, sourceEvent) {
+export async function performRequest(el, sourceEvent) {
   let { url, method } = requestParts(el);
   if (!url) return;
 
@@ -285,34 +304,25 @@ function scrollParent(node) {
   return document.scrollingElement || document.documentElement;
 }
 
-/* ----------------------------------------------------------------- triggers */
+/* ------------------------------------------------------------------- causes */
 
-// Parse "keyup changed delay:300ms" / "every 2s" / "revealed" / "click from:#x".
-function parseTrigger(spec, el) {
-  if (!spec) {
-    if (el.matches('form')) return { event: 'submit' };
-    if (el.matches('input,select,textarea')) return { event: 'change' };
-    return { event: 'click' };
+// Shapers: named JS functions referenced (inertly) from jst-on<event>="name".
+// A shaper receives `fire` — "do this element's declared request now" — and
+// returns the event handler to install. It gates or paces fire; it has no way
+// to change what firing does (the request + effect stay declared on the HTML).
+const shapers = {};
+// Elements whose named shaper wasn't registered yet at wire time: healed by
+// shape() when the registration arrives (script-order forgiveness), and the
+// console.error below stays visible if it never does.
+const pendingShapes = [];
+
+export function shape(name, shaper) {
+  shapers[name] = shaper;
+  for (let i = pendingShapes.length - 1; i >= 0; i--) {
+    if (pendingShapes[i].name !== name) continue;
+    const { el, event } = pendingShapes.splice(i, 1)[0];
+    if (el.isConnected) attachCause(el, event, shaper);
   }
-  const tokens = spec.trim().split(/\s+/);
-  const t = {};
-  // event token may carry a key filter: keydown[/]  keyup[Enter]
-  const km = /^([^[]+)(?:\[(.+)\])?$/.exec(tokens[0]);
-  t.event = km[1];
-  if (km[2]) {
-    const parts = km[2].split('+');   // e.g. Shift+D  Ctrl+K  /
-    t.key = parts.pop();
-    if (parts.length) t.mods = parts.map((p) => p.toLowerCase());
-  }
-  for (const tok of tokens.slice(1)) {
-    if (tok === 'changed') t.changed = true;
-    else if (tok.startsWith('delay:')) t.delay = ms(tok.slice(6));
-    else if (tok.startsWith('throttle:')) t.throttle = ms(tok.slice(9));
-    else if (tok.startsWith('from:')) t.from = tok.slice(5);
-    else if (tok === 'once') t.once = true;
-  }
-  if (t.event === 'every') t.interval = ms(tokens[1]);
-  return t;
 }
 
 function ms(s) {
@@ -338,49 +348,72 @@ function observeReveal(el) {
   revealObserver.observe(el);
 }
 
-function setupTrigger(el) {
-  const t = parseTrigger(el.getAttribute('jst-trigger'), el);
+function attachCause(el, event, shaper) {
+  const fire = (ev) => performRequest(el, ev);
+  let handler = fire;
+  if (shaper) {
+    handler = shaper(fire);
+    if (typeof handler !== 'function') {
+      console.error(`JST nav: shaper for jst-on${event} on <${el.tagName.toLowerCase()}> did not return a handler function. A shaper is fire => handler, e.g. JST.nav.shape('typeahead', fire => changed(debounce(300, fire))).`);
+      return;
+    }
+  }
+  el.addEventListener(event, (ev) => {
+    // Keep the browser's default navigation/submit out of the way synchronously,
+    // even when the shaper defers the actual firing (debounce et al.).
+    if (event === 'submit' || el.matches('a')) ev.preventDefault();
+    handler(ev);
+  });
+}
 
-  if (t.event === 'load') { performRequest(el); return; }
-  if (t.event === 'revealed') { observeReveal(el); return; }
-  if (t.event === 'every') {
-    const id = setInterval(() => { if (el.isConnected) performRequest(el); else clearInterval(id); }, t.interval || 1000);
+function wireCause(el, event, shaperName) {
+  if (!shaperName) { attachCause(el, event, null); return; }
+  const shaper = shapers[shaperName];
+  if (!shaper) {
+    const pending = { el, event, name: shaperName };
+    pendingShapes.push(pending);
+    // jst-nav usually evaluates before the app module that registers the shaper
+    // (it scans immediately, while import graphs are still fetching), so give
+    // same-page-load registrations until window load before failing loud.
+    const report = () => {
+      if (!pendingShapes.includes(pending)) return;   // healed by shape()
+      console.error(`JST nav: unknown shaper "${shaperName}" in jst-on${event} on <${el.tagName.toLowerCase()}>. Register it — JST.nav.shape('${shaperName}', fire => handler) — the element stays unwired until then.`);
+    };
+    if (document.readyState === 'complete') setTimeout(report, 0);
+    else window.addEventListener('load', () => setTimeout(report, 0), { once: true });
     return;
   }
+  attachCause(el, event, shaper);
+}
 
-  let last = el.matches('input,select,textarea') ? el.value : null;
-  let timer = null;
-  let lastFire = 0;   // throttle: timestamp of the last leading-edge fire
-  const target = t.from ? document.querySelector(t.from) : el;
-  if (!target) return;
+function defaultCause(el) {
+  if (el.matches('form')) return 'submit';
+  if (el.matches('input,select,textarea')) return 'change';
+  return 'click';
+}
 
-  const handler = (ev) => {
-    if (t.key) {
-      if ((ev.key || '').toLowerCase() !== t.key.toLowerCase()) return;
-      if (t.mods && t.mods.some((m) =>
-        !((m === 'shift' && ev.shiftKey) || (m === 'ctrl' && ev.ctrlKey) ||
-          (m === 'alt' && ev.altKey) || (m === 'meta' && ev.metaKey)))) return;
-    }
-    if (t.event === 'submit' || el.matches('a')) ev.preventDefault();
-    if (t.changed) {
-      const v = el.value;
-      if (v === last) return;
-      last = v;
-    }
-    if (t.delay) {
-      clearTimeout(timer);
-      timer = setTimeout(() => performRequest(el, ev), t.delay);
-    } else if (t.throttle) {
-      const now = Date.now();
-      if (now - lastFire < t.throttle) return;   // inside the window — drop
-      lastFire = now;
-      performRequest(el, ev);
-    } else {
-      performRequest(el, ev);
-    }
-    if (t.once) target.removeEventListener(t.event, handler);
-  };
-  target.addEventListener(t.event, handler);
+function setupCauses(el) {
+  if (el.hasAttribute('jst-trigger')) {
+    console.error(`JST nav: jst-trigger was removed in v0.5.0 (value ${JSON.stringify(el.getAttribute('jst-trigger'))}). Declare the cause with jst-on<event>[="shaper"], jst-load[="lazy"], or jst-poll="2s" — see the CHANGELOG migration table. Falling back to the default cause.`);
+  }
+
+  let wired = false;
+  for (const name of el.getAttributeNames()) {
+    if (!name.startsWith('jst-on') || name.length <= 'jst-on'.length) continue;
+    wireCause(el, name.slice('jst-on'.length), el.getAttribute(name) || null);
+    wired = true;
+  }
+  if (el.hasAttribute('jst-load')) {
+    if (el.getAttribute('jst-load') === 'lazy') observeReveal(el);
+    else performRequest(el);
+    wired = true;
+  }
+  const poll = el.getAttribute('jst-poll');
+  if (poll !== null) {
+    const id = setInterval(() => { if (el.isConnected) performRequest(el); else clearInterval(id); }, ms(poll) || 1000);
+    wired = true;
+  }
+  if (!wired) attachCause(el, defaultCause(el), null);
 }
 
 /* -------------------------------------------------------------------- boost */
@@ -408,7 +441,7 @@ function wireBoost(container) {
 function wire(el) {
   if (el[WIRED]) return;
   el[WIRED] = true;
-  setupTrigger(el);
+  setupCauses(el);
 }
 
 function scan(root) {
@@ -442,6 +475,8 @@ function onPopState() {
 
 /* --------------------------------------------------------------------- init */
 
+export { performRequest as request };
+
 export function configure(root = document) {
   scan(root.documentElement || root);
   observe(root.documentElement || root);
@@ -454,5 +489,11 @@ if (typeof document !== 'undefined') {
   } else {
     configure(document);
   }
-  (window.JST = window.JST || {}).nav = { configure, performRequest, csrf };
+  (window.JST = window.JST || {}).nav = {
+    configure,
+    request: performRequest,   // blessed name: fire an element's declared request now
+    performRequest,            // 0.4.x alias
+    shape,
+    csrf,
+  };
 }

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>JST · jst-nav (fetch / swap / triggers + reverse scroll)</title>
+  <title>JST · jst-nav (fetch / swap / causes + reverse scroll)</title>
   <link rel="stylesheet" href="../jst-layout.css">
   <style>
     .log { block-size: 18rem; overflow-y: auto; border: var(--jst-border-width) solid var(--jst-border); border-radius: var(--jst-radius); padding: var(--jst-space-s); display: flex; flex-direction: column; gap: var(--jst-space-2xs); }
@@ -26,7 +26,7 @@
         for (let id = top; id < before; id++) {
           const isOldest = id === top && top > 1;
           const trig = isOldest
-            ? ` jst-get="/older?before=${top}" jst-trigger="revealed" jst-target="#log" jst-swap="afterbegin"`
+            ? ` jst-get="/older?before=${top}" jst-load="lazy" jst-target="#log" jst-swap="afterbegin"`
             : '';
           html += `<div class="msg" id="m-${id}"${trig}>Message #${id}</div>`;
         }
@@ -57,8 +57,8 @@
   <h2>Reverse infinite scroll</h2>
   <p style="color:var(--jst-muted)">Newest at the bottom. Scroll <strong>up</strong> — older messages fetch and prepend, and the scroll position stays put.</p>
   <div class="log" id="log">
-    <!-- Top sentinel carries the reveal trigger for the first older batch. -->
-    <div class="msg" id="m-89" jst-get="/older?before=89" jst-trigger="revealed" jst-target="#log" jst-swap="afterbegin">Message #89</div>
+    <!-- Top sentinel lazy-loads the first older batch when scrolled into view. -->
+    <div class="msg" id="m-89" jst-get="/older?before=89" jst-load="lazy" jst-target="#log" jst-swap="afterbegin">Message #89</div>
     <div class="msg" id="m-90">Message #90</div>
     <div class="msg" id="m-91">Message #91</div>
     <div class="msg" id="m-92">Message #92</div>
@@ -72,9 +72,20 @@
     <div class="msg" id="m-100">Message #100 (newest)</div>
   </div>
 
-  <h2 style="margin-top:2rem">Active search (keyup changed delay:300ms)</h2>
-  <input type="search" placeholder="Search people…" jst-get="/search" jst-trigger="keyup changed delay:300ms" jst-target="#results" jst-swap="innerHTML" name="q">
+  <h2 style="margin-top:2rem">Active search (a named shaper paces the firing)</h2>
+  <!-- The CAUSE is the input event (jst-oninput), shaped by "typeahead" — a
+       named function registered below with JST combinators. The attribute value
+       is an inert name, never code. -->
+  <input type="search" placeholder="Search people…" jst-get="/search" jst-oninput="typeahead" jst-target="#results" jst-swap="innerHTML" name="q">
   <div id="results" style="margin-top:.5rem; display:flex; flex-direction:column; gap:.25rem"></div>
+
+  <script type="module">
+    // Shapers are written once per app: they gate/pace `fire` (the element's
+    // declared request) using the same combinators templates use.
+    import { changed, debounce } from '../jst.js';
+    import { shape } from '../jst-nav.js';
+    shape('typeahead', fire => changed(debounce(300, fire)));
+  </script>
 
   <h2 style="margin-top:2rem">Click to load (append)</h2>
   <div id="items" style="display:flex; flex-direction:column; gap:.25rem"></div>

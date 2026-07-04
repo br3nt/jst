@@ -57,8 +57,9 @@ function mergeJsTokens(templateTokens) {
 //   `.prop="$(expr)"`     assigns the value as a JS property after morphing
 //   `onevent="$(fn)"`     attaches the value with addEventListener after morphing
 // Event handlers use the native `on<event>` attribute name with an optional
-// dotted modifier tail (`onclick.stop`, `onkeydown.enter.prevent`); the `on`
-// prefix is stripped to recover the event descriptor. `on*` is reserved for
+// dotted REGISTRATION-modifier tail (`onclick.outside`, `onscroll.passive`);
+// behaviour is shaped in JS with the handler combinators (prevent/debounce/…),
+// not modifiers. The `on` prefix is stripped to recover the event descriptor. `on*` is reserved for
 // handlers: the opener matches any `on…` name (not just valid ones) so an invalid
 // handler — an event name that does not start with a letter, e.g. `on3d-ready` —
 // fails loud instead of silently degrading to a literal attribute.
@@ -72,6 +73,38 @@ const bindingOpenerPattern = new RegExp(`(^|\\s)${bindingNamePattern}\\s*=\\s*([
 // A well-formed event handler name: `on` + a letter, then word/$/- chars, then an
 // optional dotted modifier tail.
 const validEventName = /^on[a-zA-Z][\w$-]*(?:\.[\w$-]+)*$/
+// The only surviving modifiers — they configure listener registration
+// (addEventListener options / attach point). Behaviour modifiers were removed
+// in v0.5.0 in favour of the handler combinators; fail loud with the rewrite.
+const allowedModifierTail = new Set(['capture', 'passive', 'once', 'outside'])
+const removedModifierRewrites = {
+  prevent: 'onclick="$(prevent(fn))"',
+  stop: 'onclick="$(stop(fn))"',
+  self: 'onclick="$(self(fn))"',
+  debounce: 'oninput="$(debounce(300, fn))"',
+  changed: 'oninput="$(changed(fn))"',
+  enter: 'onkeydown="$(keys({ Enter: fn }))"',
+  escape: 'onkeydown="$(keys({ Escape: fn }))"',
+  esc: 'onkeydown="$(keys({ Escape: fn }))"',
+  tab: 'onkeydown="$(keys({ Tab: fn }))"',
+  space: `onkeydown="$(keys({ ' ': fn }))"`,
+  up: 'onkeydown="$(keys({ ArrowUp: fn }))"',
+  down: 'onkeydown="$(keys({ ArrowDown: fn }))"',
+  left: 'onkeydown="$(keys({ ArrowLeft: fn }))"',
+  right: 'onkeydown="$(keys({ ArrowRight: fn }))"',
+}
+
+function assertModifierTail(rawName) {
+  const [, ...modifiers] = rawName.split('.')
+  for (const modifier of modifiers) {
+    if (allowedModifierTail.has(modifier)) continue
+    if (/^\d+$/.test(modifier)) continue   // numeric tail of a removed .debounce.N
+    const hint = removedModifierRewrites[modifier]
+    throw new Error(hint
+      ? `JST: ${rawName}="…" — the .${modifier} event modifier was removed in v0.5.0. Shape the handler in JS instead: ${hint}. Modifiers now only configure listener registration (.capture .passive .once .outside).`
+      : `JST: ${rawName}="…" — ".${modifier}" is not an event modifier. Modifiers configure listener registration only (.capture .passive .once .outside); shape the handler itself in JS (prevent/stop/self/changed/debounce/throttle/keys).`)
+  }
+}
 // Legacy `@event="$(fn)"` syntax (removed): detect and point at the replacement.
 const legacyEventTailPattern = /(^|\s)@([a-zA-Z][\w$-]*(?:\.[\w$-]+)*)\s*=\s*["']$/
 const htmlTagInCodePattern = /<\/?[A-Za-z][\w:-]*(?:\s|>|\/)/g
@@ -334,6 +367,7 @@ function assertNoInvalidBinding(html, state) {
     if (isEvent && !validEventName.test(rawName)) {
       throw new Error(`JST: ${rawName}="…" is not a valid JST event handler — an on<event> name must start with a letter (got event "${rawName.slice(2)}").`)
     }
+    if (isEvent) assertModifierTail(rawName)
 
     const remainder = html.slice(bindingOpenerPattern.lastIndex)
     if (remainder.length === 0) continue

@@ -95,6 +95,23 @@ only CSP lever JST needs in runtime-compilation mode is `'unsafe-eval'` for
 `new Function`; `tools/precompile.mjs` removes that requirement by compiling the
 templates before they reach the browser.
 
+## Directive values are names, never code (no script gadgets)
+
+jst-nav and jst-behaviors read attribute values from the *live* DOM — including
+server-rendered and swapped-in HTML — so their values are only ever inert
+strings: URLs, CSS selectors, names. `jst-oninput="typeahead"` references a
+function registered in JS (`JST.nav.shape(...)`); it is never evaluated as an
+expression. This is a hard line, not a style choice: a framework that evaluates
+DOM attribute strings becomes a **script gadget** — on a site that deployed
+strict CSP precisely to neutralise injected `onclick=` handlers, an attacker who
+achieves HTML injection could write `jst-onerror="steal()"` and ride the
+framework around the policy. JST refuses to be that gadget.
+
+If your CSP *does* allow inline handlers, native `oninput="typeahead(event)"` is
+the same pattern evaluated by the browser — plain platform code, no JST feature
+involved. `jst-lint --csp` lists every native inline handler in your HTML when
+you want to move to the strict-CSP spelling.
+
 ## Reporting
 
 Found a security issue? See the reporting line in the root

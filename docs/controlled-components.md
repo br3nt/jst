@@ -14,7 +14,7 @@ preserved.
 <script type="jst" name="todo-item" attributes="item onToggle">
   <li class="$(item.done ? 'done' : '')">
     $(item.text)
-    <button onclick.stop="$(() => onToggle(item))">Toggle</button>
+    <button onclick="$(stop(() => onToggle(item)))">Toggle</button>
   </li>
 </script>
 ```
@@ -75,9 +75,10 @@ composed, a single listener up the tree can handle them:
 </ul>
 ```
 
-`on<event>` bindings attach a real `addEventListener`, and support modifiers in the
-name: `.prevent .stop .self .once .capture .passive`, key guards like
-`.enter`/`.escape`, `.debounce` / `.debounce.300`, and `.outside`.
+`on<event>` bindings attach a real `addEventListener`. Shape when the handler
+runs with the combinators (`prevent`, `stop`, `self`, `changed`, `debounce`,
+`throttle`, `keys` — in scope in template expressions); dotted name modifiers
+configure registration only: `.once .capture .passive .outside`.
 
 There is no separate `events="..."` declaration today. DOM events are open by
 design: emit them with `el.emit(...)`, listen with `on<event>`, and let tooling

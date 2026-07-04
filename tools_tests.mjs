@@ -44,21 +44,44 @@ const SAMPLE = `<style>@media (max-width: 600px){ .x{color:red} }</style>
 </script>
 `;
 
-test('codemod migrates @event inside jst blocks, preserving modifiers and value', async () => {
+test('codemod migrates @event inside jst blocks, converting modifiers to combinators', async () => {
   await withTempFile('view.erb', SAMPLE, async (file) => {
     const { code, stdout } = await run('node', [codemod, file]);
     assert.equal(code, 0);
-    assert.match(stdout, /2 changes/);
+    assert.match(stdout, /3 changes/);
 
     const out = fs.readFileSync(file, 'utf8');
     assert.match(out, /<button onclick="\$\(open\)">/);
-    assert.match(out, /<button onitem-selected\.stop="\$\(pick\)">/);
+    assert.match(out, /<button onitem-selected="\$\(stop\(pick\)\)">/);
     // Untouched outside jst blocks:
     assert.match(out, /@media \(max-width/);
     assert.match(out, /mailto:foo@bar\.com/);
     assert.match(out, /<button @click="open=true">alpine/);
     // Helpers are not mechanically rewritten (they need trustedHTML by hand):
     assert.match(out, /\$\(raw\(html\)\)/);
+  });
+});
+
+test('codemod migrates behaviour modifiers to combinators, keeping registration mods', async () => {
+  const sample = [
+    '<script type="jst" name="x-mods">',
+    '  <form onsubmit.prevent="$(() => el.emit(\'save\'))"></form>',
+    '  <input oninput.debounce.300="$(e => search(e.target.value))">',
+    '  <input onkeydown.enter.prevent="$(go)">',
+    '  <button onclick.outside.once="$(close)">x</button>',
+    '</script>',
+  ].join('\n');
+  await withTempFile('mods.html', sample, async (file) => {
+    const { code, stdout } = await run('node', [codemod, file]);
+    assert.equal(code, 0);
+    assert.match(stdout, /3 changes/);
+
+    const out = fs.readFileSync(file, 'utf8');
+    assert.match(out, /<form onsubmit="\$\(prevent\(\(\) => el\.emit\('save'\)\)\)">/);
+    assert.match(out, /<input oninput="\$\(debounce\(300, e => search\(e\.target\.value\)\)\)">/);
+    assert.match(out, /<input onkeydown="\$\(keys\(\{ Enter: prevent\(go\) \}\)\)">/);
+    // Registration-only tail is valid v0.5.0 syntax — untouched:
+    assert.match(out, /<button onclick\.outside\.once="\$\(close\)">/);
   });
 });
 
@@ -129,6 +152,52 @@ test('lint flags the removed attrs= shorthand on a jst open tag', async () => {
     assert.match(stderr, /removed attrs="…" shorthand — use attributes="…"/);
     assert.match(stderr, /:2:/);
     assert.doesNotMatch(stderr, /:1:/);
+  });
+});
+
+test('lint flags removed behaviour modifiers but not registration modifiers', async () => {
+  const stale = [
+    '<script type="jst" name="x-mods">',
+    '  <form onsubmit.prevent="$(save)"></form>',
+    '  <input oninput.debounce.300="$(search)">',
+    '  <button onclick.outside.once="$(close)">x</button>',
+    '</script>',
+  ].join('\n');
+  await withTempFile('stale-mods.html', stale, async (file) => {
+    const { code, stderr } = await run('node', [lint, file]);
+    assert.equal(code, 1);
+    assert.match(stderr, /removed \.prevent event modifier.*prevent\(fn\)/);
+    assert.match(stderr, /removed \.debounce event modifier.*debounce\(300, fn\)/);
+    assert.doesNotMatch(stderr, /:4:/); // .outside.once is registration-only — clean
+    assert.match(stderr, /2 issues found/);
+  });
+});
+
+test('lint flags removed jst-trigger in usage HTML (no jst block required)', async () => {
+  const stale = `<div jst-get="/x" ${'jst-trig' + 'ger'}="keyup changed delay:300ms"></div>`;
+  await withTempFile('stale-trigger.html', stale, async (file) => {
+    const { code, stderr } = await run('node', [lint, file]);
+    assert.equal(code, 1);
+    assert.match(stderr, /removed jst-trigger \(v0\.5\.0\).*jst-on<event>/);
+  });
+});
+
+test('lint --csp flags native inline handlers in usage HTML but not template handlers', async () => {
+  const page = [
+    '<script type="jst" name="x-ok">',
+    '  <button onclick="$(fn)">in-template — exempt</button>',
+    '</script>',
+    '<button onclick="doThing(event)">native</button>',
+  ].join('\n');
+  await withTempFile('csp-page.html', page, async (file) => {
+    const clean = await run('node', [lint, file]);
+    assert.equal(clean.code, 0, 'without --csp the page is clean');
+
+    const { code, stderr } = await run('node', [lint, '--csp', file]);
+    assert.equal(code, 1);
+    assert.match(stderr, /:4:.*native inline onclick= handler.*strict CSP/);
+    assert.doesNotMatch(stderr, /:2:/);
+    assert.match(stderr, /1 issue found/);
   });
 });
 
