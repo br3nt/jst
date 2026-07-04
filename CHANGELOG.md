@@ -5,6 +5,94 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.5.0 - 2026-07-04
+
+**Breaking.** The behaviour microsyntaxes are gone, replaced by one rule that
+now holds across the whole library:
+
+> **HTML says where behaviour attaches; JS says what the behaviour is.**
+> Dotted modifiers and directive values configure *registration/wiring* only —
+> everything about *when a handler fires* is plain JavaScript.
+
+Two grammars were removed: the template behaviour modifiers
+(`onclick.prevent`, `.debounce.300`, key filters) and jst-nav's htmx-style
+`jst-trigger` spec (`keyup changed delay:300ms`). Both fail loud with the exact
+rewrite; `tools/codemod.mjs` migrates template bindings automatically and
+`tools/lint.mjs` flags everything (including leftover `jst-trigger`).
+
+### Migration table
+
+Every removed form has exactly one rewrite:
+
+| Old (0.4.x) | New (0.5.0) |
+| --- | --- |
+| `onclick.prevent="$(fn)"` | `onclick="$(prevent(fn))"` |
+| `onclick.stop="$(fn)"` | `onclick="$(stop(fn))"` |
+| `onclick.self="$(fn)"` | `onclick="$(self(fn))"` |
+| `oninput.debounce.300="$(fn)"` | `oninput="$(debounce(300, fn))"` |
+| `onkeydown.enter="$(fn)"` | `onkeydown="$(keys({ Enter: fn }))"` |
+| `onkeydown.enter.prevent="$(fn)"` | `onkeydown="$(keys({ Enter: prevent(fn) }))"` |
+| `.capture` `.passive` `.once` `.outside` | **unchanged** (registration-only modifiers) |
+| `jst-trigger="click"` (bare event) | `jst-onclick` (any event: `jst-on<event>`) |
+| `jst-trigger="keyup changed delay:300ms"` | `jst-oninput="typeahead"` + `JST.nav.shape('typeahead', fire => changed(debounce(300, fire)))` |
+| `jst-trigger="… throttle:1s"` | a shaper using `throttle(1000, fire)` |
+| `jst-trigger="revealed"` | `jst-load="lazy"` |
+| `jst-trigger="load"` | `jst-load` |
+| `jst-trigger="every 2s"` | `jst-poll="2s"` |
+| `jst-trigger="keydown[Shift+D] from:body"` | `addEventListener` on `body` + `keys({ 'Shift+D': … })` + `JST.nav.request(el)` |
+| `jst-trigger="click once"` | a once-gating shaper, or hand-wired `{ once: true }` |
+
+Composition order note: the old modifier chain secretly ordered operations for
+you; combinators make it visible. `prevent(debounce(300, fn))` cancels the
+default synchronously and debounces the work — `debounce(300, prevent(fn))`
+would call `preventDefault()` 300ms too late. The codemod emits the correct
+nesting.
+
+### Added
+
+- **Handler combinators in core.** `prevent`, `stop`, `self`, `changed`,
+  `debounce`, `throttle`, `keys` — plain functions that wrap a handler to shape
+  when it runs. In scope bare inside every template expression, published as
+  `JST.fn.*`, and exported from `jst.js`. They compose (`changed(debounce(300,
+  fn))`) and, unlike the removed grammar, support user abstraction: name your
+  app's behaviours (`const typeahead = fn => changed(debounce(300, fn))`) and
+  reuse them.
+- **jst-nav causes.** Every element is a *cause → request → effect* sentence.
+  The cause is spelled the way HTML spells causes — in the attribute name:
+  `jst-on<event>` overrides the default event; `jst-on<event>="name"` gates it
+  through a **shaper** registered with `JST.nav.shape(name, fire => handler)` —
+  an inert name in the markup, JS behaviour in your app, built from the same
+  combinators. `jst-load` fires on wire, `jst-load="lazy"` on reveal (like
+  native `loading="lazy"`), `jst-poll="2s"` on an interval. Unknown shaper
+  names fail loud after page load; a late registration heals the element.
+  `JST.nav.request(el)` is the public escape hatch for exotic causes (global
+  shortcuts, `from:`-style delegation) — `performRequest` remains as an alias.
+- **`jst-lint --csp`.** Flags native inline `on<event>=` handlers in usage HTML
+  (evaluated by the browser; blocked under a strict CSP) and points at the
+  inert `jst-on<event>="name"` spelling. Template handlers are exempt — they
+  compile to `addEventListener`.
+- **Lint + codemod migration coverage.** `tools/lint.mjs` flags removed
+  behaviour modifiers (with the exact combinator rewrite) and leftover
+  `jst-trigger` in usage HTML; `tools/codemod.mjs` rewrites template modifier
+  bindings to combinators automatically, keeping registration modifiers.
+
+### Security
+
+- **Directive values are names, never code — documented as a hard line.**
+  jst-nav reads attribute values from the live DOM, so evaluating them would
+  make the library a script gadget (a CSP bypass for injected HTML). Shaper
+  references are inert strings; there is no expression evaluation in any
+  directive. See `docs/security-model.md`.
+
+### Docs
+
+- `docs/directives.md` rewritten around the **cause → request → effect** model
+  (the word "trigger" is gone); documents shapers, the two-spellings CSP
+  toggle, and the escape hatch.
+- `docs/writing-jst.md` documents the combinators, composition-order semantics,
+  and the registration-only modifier rule.
+- `docs/security-model.md` adds the script-gadget section.
+
 ## 0.4.4 - 2026-07-02
 
 Fail-loud compile errors, TypeScript declarations, and jst-nav CSRF/URL/timing

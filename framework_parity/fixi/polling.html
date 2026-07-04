@@ -3,7 +3,7 @@
 <!--
   Source: https://github.com/bigskysoftware/fixi (polling is an extension)
   Demonstrates: a region that refreshes itself on an interval.
-  JST status: ✓ exact — jst-nav's `jst-trigger="every 500ms"` polls the region
+  JST status: ✓ exact — jst-nav's `jst-poll="500ms"` polls the region
   declaratively (fixi-core has no polling trigger); removing the element stops it.
 -->
 <html lang="en">
@@ -20,7 +20,7 @@
 <body>
 
 <h1>Live region (polling)</h1>
-<div id="clock" data-testid="clock" jst-get="/api/tick" jst-trigger="every 500ms" jst-target="#clock" jst-swap="innerHTML">—</div>
+<div id="clock" data-testid="clock" jst-get="/api/tick" jst-poll="500ms" jst-target="#clock" jst-swap="innerHTML">—</div>
 <button id="stop" data-testid="stop">Stop</button>
 
 <script>

@@ -229,7 +229,7 @@ first paint.** Pick by payload size:
 | `$ statement` | A JavaScript statement line. Use this form for control flow that wraps template HTML, such as `$ if (...) {` / `$ }` and `$ items.forEach(...)`. |
 | `${ ... }` | A JavaScript-only block. It must not wrap template HTML. |
 | `.prop="$(expr)"` | Set a JavaScript property on the rendered element. |
-| `on<event>="$(fn)"` | Add an event listener to the rendered element. Optional modifiers: `onclick.stop`, `onkeydown.enter.prevent`, `onsubmit.prevent`, `oninput.debounce.300`, `onclick.outside`, `onclick.once`. |
+| `on<event>="$(fn)"` | Add an event listener to the rendered element. Shape *when* the handler runs with the combinators (`onsubmit="$(prevent(fn))"`, `oninput="$(debounce(300, fn))"`); optional dotted modifiers configure *registration only*: `.once`, `.capture`, `.passive`, `.outside`. |
 | `jst-key="$(id)"` | Preserve DOM identity across list changes. |
 | `jst-model="prop"` | Local form shorthand: read/write `el[prop]`. |
 | `$(slot())` | Project original child nodes. |
@@ -305,13 +305,46 @@ Or a parent JST component can listen with `on<event>`:
 </todo-item>
 ```
 
-Supported modifiers include:
+### Shaping when a handler runs — combinators
 
-- `.prevent`, `.stop`, `.self`
-- `.once`, `.capture`, `.passive`
-- key filters such as `.enter`, `.escape`
-- `.debounce` / `.debounce.300`
-- `.outside`
+Handlers are plain functions, so *when* they run is expressed in JS, with plain
+functions that wrap them. These are in scope inside every template expression
+(and available as `JST.fn.*` outside templates):
+
+| Combinator | Effect |
+|---|---|
+| `prevent(fn?)` | `preventDefault()` synchronously, then run `fn` (bare `prevent()` just cancels the default) |
+| `stop(fn?)` | `stopPropagation()` synchronously, then run `fn` |
+| `self(fn)` | only when the event's target IS the element the listener is on |
+| `changed(fn)` | only when the control's `value` differs from the last value seen |
+| `debounce(ms, fn)` | reset a timer each event; run once events go quiet for `ms` |
+| `throttle(ms, fn)` | run on the leading edge, then at most once per `ms` |
+| `keys({ Enter: fn, 'Shift+Enter': fn2 })` | dispatch on `event.key`, with held modifiers prefixed in `Ctrl+Alt+Meta+Shift` order |
+
+```html
+<form onsubmit="$(prevent(e => save()))">
+<input oninput="$(changed(debounce(300, e => search(e.target.value))))">
+<div onkeydown="$(keys({ Enter: prevent(e => open(item)), Escape: e => close() }))">
+```
+
+Composition order is the semantics — `prevent(debounce(300, fn))` cancels the
+default synchronously on every event and debounces the work;
+`debounce(300, prevent(fn))` would call `preventDefault()` 300ms too late.
+
+They're just functions, so name your app's common behaviours and reuse them:
+
+```js
+const typeahead     = fn => changed(debounce(300, fn));
+const submitOnEnter = fn => keys({ Enter: prevent(fn) });
+```
+
+### Registration modifiers
+
+Four dotted modifiers remain on the attribute name. They configure how the
+listener is *registered* — things a handler can't express from inside itself:
+
+- `.once`, `.capture`, `.passive` — `addEventListener` options
+- `.outside` — attach to `document`; fire only for events outside the element
 
 ### `el` versus the event target
 
@@ -329,7 +362,7 @@ from the event rather than from `el`:
 <script type="jst" name="kanban-board" attributes="columns">
   $ columns.forEach(col => {
     <div class="col"
-         ondragover.prevent="$(event => event.currentTarget.classList.add('over'))"
+         ondragover="$(prevent(event => event.currentTarget.classList.add('over')))"
          ondragleave="$(event => event.currentTarget.classList.remove('over'))"
          onclick="$(() => el.selected = col.id)">
       $(col.name)

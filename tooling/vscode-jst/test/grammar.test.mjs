@@ -148,10 +148,10 @@ test('.prop and on<event> binding attributes are scoped distinctly', async () =>
 
 test('a dotted on<event> modifier tail is part of the event attribute name', async () => {
   const grammar = await makeGrammar();
-  const tokens = tokenize(grammar, '<script type="jst" name="x-mod">\n  <form onsubmit.prevent="$(() => el.emit(\'go\'))"></form>\n</script>');
+  const tokens = tokenize(grammar, '<script type="jst" name="x-mod">\n  <form onsubmit.once="$(() => el.emit(\'go\'))"></form>\n</script>');
 
   const attrNames = tokens.filter(token => hasScope(token, 'entity.other.attribute-name.jst')).map(token => token.text);
-  assert.ok(attrNames.includes('onsubmit.prevent'), 'modifier tail scoped with the event name');
+  assert.ok(attrNames.includes('onsubmit.once'), 'modifier tail scoped with the event name');
 
   const embedded = findContaining(tokens, 'meta.embedded.jst.expression');
   assert.ok(embedded, 'expression inside the modified handler is marked embedded JST');

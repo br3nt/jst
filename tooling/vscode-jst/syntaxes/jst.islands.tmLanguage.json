@@ -70,7 +70,7 @@
     },
 
     "jst-binding-attribute": {
-      "comment": "Owns the whole .prop=\"...\" / on<event>=\"...\" binding, including the quoted value, so the embedded JS is highlighted by source.js directly instead of inheriting HTML's attribute-string scope (which made it render as a flat string). Event handlers use the native on<event> attribute name with an optional dotted modifier tail (onclick.stop, onkeydown.enter.prevent).",
+      "comment": "Owns the whole .prop=\"...\" / on<event>=\"...\" binding, including the quoted value, so the embedded JS is highlighted by source.js directly instead of inheriting HTML's attribute-string scope (which made it render as a flat string). Event handlers use the native on<event> attribute name with an optional dotted modifier tail (onclick.outside, onscroll.passive).",
       "begin": "(?:(\\.)([A-Za-z_$][\\w$-]*)|(on[a-zA-Z][\\w$-]*(?:\\.[\\w$-]+)*))\\s*(=)\\s*([\"'])",
       "beginCaptures": {
         "1": { "name": "punctuation.definition.jst.binding" },

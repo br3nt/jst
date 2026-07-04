@@ -36,6 +36,7 @@
             resetJstForTests,
             version,
         } from './jst.js';
+        import './jst-nav.js';
 
         const resultsContainer = document.getElementById('test-results');
         const summaryElement = document.getElementById('browser-test-summary');
@@ -671,13 +672,13 @@
             }
         });
 
-        await suite.testAsync("JST Runtime: Event Modifiers", async () => {
+        await suite.testAsync("JST Runtime: Combinators + Registration Modifiers", async () => {
             const componentName = nextName('x-modifiers');
             registerCustomElementFromTemplate(createTemplate({
                 name: componentName,
                 attributes: [],
-                body: `<form class="form" onsubmit.prevent="$(() => el.emit('saved'))">
-                         <input class="key" onkeydown.enter="$(event => el.emit('commit', event.key))">
+                body: `<form class="form" onsubmit="$(prevent(() => el.emit('saved')))">
+                         <input class="key" onkeydown="$(keys({ Enter: event => el.emit('commit', event.key) }))">
                          <button class="inside" type="button" onclick.outside="$(() => el.emit('outside'))">inside</button>
                          <button class="once" type="button" onclick.once="$(() => el.emit('once-fired'))">once</button>
                        </form>`,
@@ -699,12 +700,12 @@
             try {
                 const submit = new Event('submit', { bubbles: true, cancelable: true });
                 element.querySelector('.form').dispatchEvent(submit);
-                isEqual(true, submit.defaultPrevented, 'Expected .prevent to prevent submit default');
+                isEqual(true, submit.defaultPrevented, 'Expected prevent() to prevent submit default');
                 isEqual(1, saved, 'Expected submit handler to run');
 
                 element.querySelector('.key').dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
                 element.querySelector('.key').dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
-                isEqual(1, committed, 'Expected .enter to filter key events');
+                isEqual(1, committed, 'Expected keys({ Enter }) to filter key events');
 
                 element.querySelector('.inside').click();
                 document.body.click();
@@ -1925,6 +1926,142 @@
             } finally {
                 element.remove();
             }
+        });
+
+        const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+        await suite.testAsync("JST Combinators: debounce / throttle / changed / self / bare prevent", async () => {
+            const { debounce, throttle, changed, self, prevent } = window.JST.fn;
+
+            let debounced = 0;
+            const burst = debounce(30, () => debounced++);
+            burst({}); burst({}); burst({});
+            await sleep(70);
+            isEqual(1, debounced, 'Expected debounce to collapse a burst into one call');
+
+            let throttled = 0;
+            const capped = throttle(50, () => throttled++);
+            capped({}); capped({}); capped({});
+            isEqual(1, throttled, 'Expected throttle to fire on the leading edge only');
+            await sleep(70);
+            capped({});
+            isEqual(2, throttled, 'Expected throttle to fire again after the window');
+
+            let changes = 0;
+            const input = document.createElement('input');
+            const onChange = changed(() => changes++);
+            onChange({ target: input });                       // '' matches the default value — no fire
+            input.value = 'a'; onChange({ target: input });    // differs — fire
+            onChange({ target: input });                       // unchanged — no fire
+            isEqual(1, changes, 'Expected changed() to fire only when the value differs');
+
+            let selfCount = 0;
+            const onSelf = self(() => selfCount++);
+            onSelf({ target: input, currentTarget: document.body });
+            onSelf({ target: input, currentTarget: input });
+            isEqual(1, selfCount, 'Expected self() to require target === currentTarget');
+
+            const submitEvent = new Event('submit', { cancelable: true });
+            prevent()(submitEvent);
+            isEqual(true, submitEvent.defaultPrevented, 'Expected bare prevent() to preventDefault');
+        });
+
+        const withNavZone = async (innerHTML, testFn) => {
+            const originalFetch = window.fetch;
+            const requests = [];
+            window.fetch = async (url, opts = {}) => {
+                requests.push({ url: String(url), method: (opts.method || 'GET') });
+                return new Response('<p class="hit">hit</p>', { status: 200, headers: { 'Content-Type': 'text/html' } });
+            };
+            const zone = document.createElement('div');
+            zone.innerHTML = innerHTML;
+            document.body.appendChild(zone);
+            await sleep(30);   // jst-nav wiring rides the MutationObserver — yield first
+            try {
+                await testFn(zone, requests);
+            } finally {
+                window.fetch = originalFetch;
+                zone.remove();
+            }
+        };
+
+        await suite.testAsync("JST Nav: default cause fires the declared request", async () => {
+            await withNavZone(`
+                <div id="nav-out-1"></div>
+                <button jst-get="/default-cause" jst-target="#nav-out-1">go</button>
+            `, async (zone, requests) => {
+                zone.querySelector('button').click();
+                await sleep(30);
+                isEqual(1, requests.length, 'Expected the default click cause to fire the request');
+                isEqual('hit', zone.querySelector('#nav-out-1 .hit')?.textContent, 'Expected the response to swap into the target');
+            });
+        });
+
+        await suite.testAsync("JST Nav: jst-on<event>=\"shaper\" gates the firing", async () => {
+            window.JST.nav.shape('test-typeahead', fire => window.JST.fn.changed(window.JST.fn.debounce(30, fire)));
+            await withNavZone(`
+                <div id="nav-out-2"></div>
+                <input name="q" jst-get="/search" jst-target="#nav-out-2" jst-oninput="test-typeahead">
+            `, async (zone, requests) => {
+                const input = zone.querySelector('input');
+                input.value = 'a'; input.dispatchEvent(new Event('input', { bubbles: true }));
+                input.value = 'ab'; input.dispatchEvent(new Event('input', { bubbles: true }));
+                await sleep(80);
+                isEqual(1, requests.length, 'Expected the debounced burst to collapse into one request');
+                isEqual(true, requests[0].url.includes('q=ab'), 'Expected the request to carry the settled value');
+            });
+        });
+
+        await suite.testAsync("JST Nav: a late shape() registration heals unwired elements", async () => {
+            await withConsoleSpy('error', async (calls) => {
+                await withNavZone(`
+                    <div id="nav-out-3"></div>
+                    <button jst-get="/late" jst-target="#nav-out-3" jst-onclick="late-shaper">go</button>
+                `, async (zone, requests) => {
+                    const button = zone.querySelector('button');
+                    button.click();
+                    await sleep(30);
+                    isEqual(0, requests.length, 'Expected the element to stay unwired while the shaper is unknown');
+                    isEqual(true, calls.some(args => /unknown shaper "late-shaper"/.test(String(args[0]))), 'Expected a loud unknown-shaper error');
+
+                    window.JST.nav.shape('late-shaper', fire => fire);
+                    button.click();
+                    await sleep(30);
+                    isEqual(1, requests.length, 'Expected shape() to heal the pending element');
+                });
+            });
+        });
+
+        await suite.testAsync("JST Nav: jst-load and jst-poll causes", async () => {
+            await withNavZone(`
+                <div id="nav-out-4"></div>
+                <div jst-get="/immediate" jst-target="#nav-out-4" jst-load></div>
+                <div jst-get="/poll" jst-swap="none" jst-poll="40ms"></div>
+            `, async (zone, requests) => {
+                await sleep(130);
+                isEqual(1, requests.filter(r => r.url === '/immediate').length, 'Expected jst-load to fire once on wire');
+                isEqual(true, requests.filter(r => r.url === '/poll').length >= 2, 'Expected jst-poll to fire repeatedly');
+                zone.remove();
+                const pollsAtRemoval = requests.filter(r => r.url === '/poll').length;
+                await sleep(100);
+                isEqual(pollsAtRemoval, requests.filter(r => r.url === '/poll').length, 'Expected polling to stop when the element is removed');
+            });
+        });
+
+        await suite.testAsync("JST Nav: leftover jst-trigger fails loud and falls back to the default cause", async () => {
+            await withConsoleSpy('error', async (calls) => {
+                // The attribute name is split so tools/lint.mjs (which scans this
+                // file) doesn't flag the deliberately-legacy markup.
+                await withNavZone(`
+                    <div id="nav-out-5"></div>
+                    <button jst-get="/legacy" jst-target="#nav-out-5" ${'jst-trig' + 'ger'}="keyup changed delay:300ms">go</button>
+                `, async (zone, requests) => {
+                    isEqual(true, calls.some(args => /jst-trigger was removed in v0\.5\.0/.test(String(args[0]))), 'Expected a loud jst-trigger migration error');
+                    zone.querySelector('button').click();
+                    await sleep(30);
+                    isEqual(1, requests.length, 'Expected the element to fall back to the default cause');
+                });
+            });
         });
         };
 

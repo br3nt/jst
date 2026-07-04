@@ -73,9 +73,9 @@ animations.
 | edit-row | [link](https://htmx.org/examples/edit-row/) | ✓ | [htmx/edit-row.html](htmx/edit-row.html) | Page owns rows + one `editingId`; other Edit buttons disabled while editing. |
 | lazy-load | [link](https://htmx.org/examples/lazy-load/) | ✓ | [htmx/lazy-load.html](htmx/lazy-load.html) | Fetched fragment ships a `<script type="jst">` def + markup; auto-upgraded on insert. |
 | inline-validation | [link](https://htmx.org/examples/inline-validation/) | ✓ | [htmx/inline-validation.html](htmx/inline-validation.html) | Plain input (keeps focus) POSTs per keystroke; `<field-status>` renders verdict. |
-| infinite-scroll | [link](https://htmx.org/examples/infinite-scroll/) | (i) | [htmx/infinite-scroll.html](htmx/infinite-scroll.html) | Data/append idiomatic, but the trigger is a hand-wired IntersectionObserver re-attached after each render (no `revealed` trigger). |
-| active-search | [link](https://htmx.org/examples/active-search/) | (i) | [htmx/active-search.html](htmx/active-search.html) | Results component clean, but debounce is a hand-written `setTimeout` (no `delay:` modifier). |
-| progress-bar | [link](https://htmx.org/examples/progress-bar/) | (i) | [htmx/progress-bar.html](htmx/progress-bar.html) | Bar is prop-driven, but polling is a hand-written `setInterval` (no `every Ns`). |
+| infinite-scroll | [link](https://htmx.org/examples/infinite-scroll/) | (i) | [htmx/infinite-scroll.html](htmx/infinite-scroll.html) | Sentinel row declares `jst-get` + `jst-load="lazy"`; jst-nav re-wires it after each swap. |
+| active-search | [link](https://htmx.org/examples/active-search/) | (i) | [htmx/active-search.html](htmx/active-search.html) | Cause is `jst-oninput="typeahead"` — a named shaper built from the JST combinators (changed + debounce). |
+| progress-bar | [link](https://htmx.org/examples/progress-bar/) | (i) | [htmx/progress-bar.html](htmx/progress-bar.html) | Bar is prop-driven; polling is declarative via `jst-poll="200ms"`. |
 | value-select (cascading) | [link](https://htmx.org/examples/value-select/) | ✓ | [htmx/value-select.html](htmx/value-select.html) | `change` fetches models, sets a prop on `<model-select>`. |
 | tabs-hateoas | [link](https://htmx.org/examples/tabs-hateoas/) | ✓ | [htmx/tabs-hateoas.html](htmx/tabs-hateoas.html) | Each tab fetch returns a fresh component def + markup; auto-upgraded. Pure HATEOAS — JST's core strength. |
 | dialogs (custom modal) | [link](https://htmx.org/examples/modal-custom/) | ✓ | [htmx/modal-custom.html](htmx/modal-custom.html) | Server-fed modal content with `jst-transition` for fade/zoom enter and leave. |
@@ -95,7 +95,7 @@ still need workarounds. `x-cloak` is actually *better* in JST.
 | x-text | [link](https://alpinejs.dev/directives/text) | ✓ | [alpine/text.html](alpine/text.html) | `$(expr)` escaped text interpolation. |
 | x-html | [link](https://alpinejs.dev/directives/html) | ✓ | [alpine/html.html](alpine/html.html) | `$(trustedHTML(expr))` opts out of escaping. |
 | x-bind (class & attrs) | [link](https://alpinejs.dev/directives/bind) | ✓ | [alpine/bind.html](alpine/bind.html) | Interpolation in attribute value and name position. |
-| x-on (events + key modifiers) | [link](https://alpinejs.dev/directives/on) | ✓ | [alpine/on.html](alpine/on.html) | `on<event>` covers listeners plus `.enter`, `.prevent`, `.stop`, `.outside`, and debounce modifiers. |
+| x-on (events + key modifiers) | [link](https://alpinejs.dev/directives/on) | ✓ | [alpine/on.html](alpine/on.html) | `on<event>` covers listeners; behaviour is shaped with the combinators (`keys`, `prevent`, `stop`, `debounce`) and `.outside` handles click-away. |
 | x-model (text/checkbox/select) | [link](https://alpinejs.dev/directives/model) | ✓ | [alpine/model.html](alpine/model.html) | `jst-model` binds local text, checkbox, and select state. |
 | x-show | [link](https://alpinejs.dev/directives/show) | ✓ | [alpine/show.html](alpine/show.html) | `style="$(open?'':'display:none')"` keeps node mounted. |
 | x-if | [link](https://alpinejs.dev/directives/if) | ✓ | [alpine/if.html](alpine/if.html) | `$ if (cond) { … }` includes/excludes from render. |
@@ -241,11 +241,12 @@ workaround is an acceptable tradeoff. **You decide.**
    intermediates must forward; reads via `el.closest()` aren't auto-reactive.
    *Verdict: acceptable and explicit for shallow trees; a boilerplate tax that
    grows with depth.*
-3. **No full declarative server-trigger layer** (the HTMX premise). Component
-   events now have modifiers and debounce, but page-level polling, reveal, and
-   request orchestration are still hand-written `fetch`, `setInterval`, and
-   `IntersectionObserver`. *Verdict: this is JST's model by design; helpers may
-   be worthwhile, but they should not become a second HTMX DSL in core.*
+3. **Declarative server causes live in jst-nav, not core.** Page-level polling
+   (`jst-poll`), reveal (`jst-load="lazy"`), and request orchestration are
+   declarative in the opt-in jst-nav layer; behaviour shaping stays in JS via
+   named shapers built from the same combinators templates use. *Verdict:
+   covered without a second HTMX DSL — the trigger microsyntax was removed in
+   v0.5.0.*
 4. **No full transition-group engine.** `jst-transition` provides enter, leave,
    and move classes, but does not calculate FLIP transforms the way Vue's
    `<transition-group>` can. *Verdict: CSS covers common cases; complex move

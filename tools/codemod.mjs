@@ -5,7 +5,15 @@
  */
 /**
  * Codemod: migrate removed JST syntax inside <script type="jst"> blocks:
- *   - `@event="$(fn)"` -> `onevent="$(fn)"`, preserving modifiers
+ *   - `@event="$(fn)"` -> `onevent="$(fn)"`
+ *   - behaviour modifiers -> handler combinators (v0.5.0):
+ *       onsubmit.prevent="$(fn)"      -> onsubmit="$(prevent(fn))"
+ *       oninput.debounce.300="$(fn)"  -> oninput="$(debounce(300, fn))"
+ *       onkeydown.enter="$(fn)"       -> onkeydown="$(keys({ Enter: fn }))"
+ *     Registration modifiers (.capture .passive .once .outside) are kept on
+ *     the attribute name. The rewrite nests checks-first, work-debounced
+ *     (`prevent(debounce(...))`), which is the correct composition even where
+ *     the old modifier chain secretly reordered for you.
  *   - open-tag `attrs="..."` -> `attributes="..."`
  *
  * It rewrites bindings ONLY inside `<script type="jst">` blocks, so it is safe to
@@ -50,18 +58,86 @@ function parseArgs(argv) {
 function usage(code) {
   const out = code === 0 ? console.log : console.error;
   out('Usage: node tools/codemod.mjs <files...> [--dry-run]');
-  out('  Rewrites @event="$(fn)" -> onevent="$(fn)" and attrs="…" -> attributes="…" inside <script type="jst"> blocks.');
+  out('  Inside <script type="jst"> blocks, rewrites @event="$(fn)" -> onevent="$(fn)",');
+  out('  behaviour modifiers -> combinators (onclick.prevent -> onclick="$(prevent(fn))"),');
+  out('  and attrs="…" -> attributes="…".');
   process.exit(code);
+}
+
+// v0.5.0: behaviour modifiers became handler combinators; only these stay.
+const registrationMods = new Set(['capture', 'passive', 'once', 'outside']);
+const keyModMap = {
+  enter: 'Enter', escape: 'Escape', esc: 'Escape', tab: 'Tab', space: "' '",
+  up: 'ArrowUp', down: 'ArrowDown', left: 'ArrowLeft', right: 'ArrowRight',
+};
+
+/** Wrap a handler expression in the combinators equivalent to `mods`. */
+function wrapExpression(mods, expr) {
+  let out = expr.trim();
+  const debounceIdx = mods.indexOf('debounce');
+  if (debounceIdx !== -1) {
+    const n = /^\d+$/.test(mods[debounceIdx + 1] || '') ? mods[debounceIdx + 1] : '250';
+    out = `debounce(${n}, ${out})`;
+  }
+  if (mods.includes('stop')) out = `stop(${out})`;
+  if (mods.includes('prevent')) out = `prevent(${out})`;
+  if (mods.includes('self')) out = `self(${out})`;
+  const key = mods.find(mod => keyModMap[mod]);
+  if (key) out = `keys({ ${keyModMap[key]}: ${out} })`;
+  return out;
+}
+
+/**
+ * Rewrite `on<event>.<mods>="$(expr)"` bindings whose tail contains removed
+ * behaviour modifiers. The expression is extracted with a balanced-paren scan
+ * (good enough for handler expressions; a paren imbalanced inside a string
+ * literal is left untouched rather than mangled).
+ */
+function migrateModifierBindings(body) {
+  const bindingPattern = /(^|\s)(on[a-zA-Z][\w$-]*)((?:\.[\w$]+)+)(\s*=\s*)(["'])\$\(/g;
+  let count = 0;
+  let result = '';
+  let last = 0;
+  let match;
+  while ((match = bindingPattern.exec(body))) {
+    const mods = match[3].split('.').filter(Boolean);
+    const removed = mods.filter(mod => !registrationMods.has(mod) && !/^\d+$/.test(mod));
+    if (!removed.length) continue;   // registration-only tail — valid, leave alone
+
+    const exprStart = bindingPattern.lastIndex;   // just after `$(`
+    let i = exprStart;
+    let depth = 1;
+    while (i < body.length && depth > 0) {
+      if (body[i] === '(') depth++;
+      else if (body[i] === ')') depth--;
+      i++;
+    }
+    const quote = match[5];
+    if (depth !== 0 || body[i] !== quote) continue;   // can't rewrite safely — lint will flag it
+
+    const expr = body.slice(exprStart, i - 1);
+    const kept = mods.filter(mod => registrationMods.has(mod));
+    const name = match[2] + (kept.length ? '.' + kept.join('.') : '');
+    result += body.slice(last, match.index)
+      + match[1] + name + match[4] + quote + '$(' + wrapExpression(mods, expr) + ')' + quote;
+    last = i + 1;
+    bindingPattern.lastIndex = last;
+    count++;
+  }
+  result += body.slice(last);
+  return { migrated: result, count };
 }
 
 /** Rewrite legacy bindings in a single jst-template body; returns count too. */
 function migrateBody(body) {
   let count = 0;
-  const migrated = body.replace(legacyEventPattern, (match, lead, eventAndMods, tail) => {
+  const legacyMigrated = body.replace(legacyEventPattern, (match, lead, eventAndMods, tail) => {
     count++;
     return `${lead}on${eventAndMods}${tail}`;
   });
-  return { migrated, count };
+  // Then migrate behaviour-modifier tails (including ones the @event pass just produced).
+  const modifierResult = migrateModifierBindings(legacyMigrated);
+  return { migrated: modifierResult.migrated, count: count + modifierResult.count };
 }
 
 function migrateOpenTag(open) {

@@ -90,11 +90,11 @@ const FEED_ITEM_DEF = `
 const LIKE_BADGE_DEF = `
 <script type="jst" name="like-badge" attributes="count itemId">
   <span class="badge">&#9829; Liked &middot; <strong>$(count)</strong></span>
-  <button class="act link" onclick.prevent="$(async () => {
+  <button class="act link" onclick="$(prevent(async () => {
     const list = el.querySelector('.likers');
     list.textContent = 'loading…';
     list.innerHTML = await (await fetch('api/item/' + itemId + '/likers')).text();
-  })">see who</button>
+  }))">see who</button>
   <div class="likers"></div>
 </script>`;
 

@@ -4,7 +4,7 @@
   Source: https://htmx.org/examples/update-other-content/ (load-polling / value-added polling)
   Demonstrates: content that refreshes on an interval, and a single response that
   updates MORE than one region of the page ("update other content").
-  JST status: ✓ exact — jst-nav polls with `jst-trigger="every 500ms"` and the
+  JST status: ✓ exact — jst-nav polls with `jst-poll="500ms"` and the
   one response updates two separate regions via out-of-band swaps
   (`jst-swap-oob`), with `jst-swap="none"` on the poller itself.
 -->
@@ -29,7 +29,7 @@
 
 <!-- A poller with jst-swap="none": the response carries OOB spans that update the
      two regions above. Removing this element stops the poll (interval self-clears). -->
-<div id="poller" hidden jst-get="/api/metrics" jst-trigger="every 500ms" jst-swap="none"></div>
+<div id="poller" hidden jst-get="/api/metrics" jst-poll="500ms" jst-swap="none"></div>
 
 <script>
   let tick = 0;

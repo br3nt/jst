@@ -19,7 +19,12 @@ import { compileTemplateRenderingFunction } from './compiler.js'
  *   $(slot())               project the component's original child nodes
  *   $(slot('name', 'fb'))   project nodes marked slot="name", with a fallback
  *   .prop="$(expr)"         assign expr as a JS property on the element
- *   onevent.mod="$(fn)"     addEventListener('event', fn) with optional modifiers
+ *   onevent="$(fn)"         addEventListener('event', fn); dotted modifiers configure
+ *                           registration only (.capture .passive .once .outside) —
+ *                           shape the handler itself with the combinators below
+ *   combinators             prevent/stop/self/changed/debounce/throttle/keys are in
+ *                           scope in template expressions (and on JST.fn) to shape
+ *                           handlers: oninput="$(changed(debounce(300, e => …)))"
  *   jst-model="prop"        local form shorthand: read prop, update el[prop]
  *   once('key', setup)      run setup once per connection, after the DOM commits;
  *                           a returned function is registered as disconnect cleanup
@@ -36,7 +41,7 @@ import { compileTemplateRenderingFunction } from './compiler.js'
  * v0.1 cache renders identically to v0.2, so `JST.version` is the one-liner that
  * tells you which runtime is actually live.
  */
-export const version = '0.4.4'
+export const version = '0.5.0'
 
 const templates = new Map()
 const config = {
@@ -540,17 +545,82 @@ const bindingAttributePattern = /^jst-bind-(\d+)$/
 const boundListeners = new WeakMap()
 const modelListeners = new WeakMap()
 
-const keyModifiers = {
-  enter: 'Enter',
-  escape: 'Escape',
-  esc: 'Escape',
-  tab: 'Tab',
-  space: ' ',
-  up: 'ArrowUp',
-  down: 'ArrowDown',
-  left: 'ArrowLeft',
-  right: 'ArrowRight',
+/* ---------------------------------------------------------------------------
+ * Handler combinators — plain functions that wrap an event handler to shape
+ * WHEN it runs. In template expressions they're in scope bare:
+ *
+ *   oninput="$(changed(debounce(300, e => search(e.target.value))))"
+ *   onkeydown="$(keys({ Enter: prevent(e => submit()), Escape: e => close() }))"
+ *
+ * Outside templates they're `JST.fn.*` / module exports. Composition order is
+ * the semantics: prevent(debounce(300, fn)) preventDefaults synchronously on
+ * every event and debounces the work; debounce(300, prevent(fn)) would call
+ * preventDefault 300ms too late. Dotted event modifiers configure listener
+ * REGISTRATION only (.capture .passive .once .outside); everything about the
+ * firing is expressed in JS with these (or your own) functions.
+ */
+
+/** Call event.preventDefault() synchronously, then the handler (if given). */
+export const prevent = fn => event => { event.preventDefault(); return fn && fn(event) }
+
+/** Call event.stopPropagation() synchronously, then the handler (if given). */
+export const stop = fn => event => { event.stopPropagation(); return fn && fn(event) }
+
+/** Only fire when the event's target IS the element the listener is on. */
+export const self = fn => event => {
+  if (event.target === event.currentTarget) return fn(event)
 }
+
+/** Debounce: reset a timer each event; fire once events go quiet for `ms`. */
+export const debounce = (ms, fn) => {
+  let timeout = null
+  return event => {
+    clearTimeout(timeout)
+    timeout = setTimeout(() => fn(event), ms)
+  }
+}
+
+/** Throttle: fire on the leading edge, then at most once per `ms`. */
+export const throttle = (ms, fn) => {
+  let last = 0
+  return event => {
+    const now = Date.now()
+    if (now - last < ms) return
+    last = now
+    return fn(event)
+  }
+}
+
+/**
+ * Only fire when the control's `value` differs from the last value seen. The
+ * first comparison uses the control's initial (default) value, so a keyup that
+ * edited nothing (Shift, arrow keys) doesn't fire.
+ */
+export const changed = fn => {
+  let last
+  return event => {
+    const control = event.target
+    if (last === undefined) last = control.defaultValue ?? ''
+    if (control.value === last) return
+    last = control.value
+    return fn(event)
+  }
+}
+
+/**
+ * Dispatch on event.key: keys({ Enter: fn, Escape: fn, 'Shift+Enter': fn }).
+ * Held modifier keys prefix the key name in Ctrl+Alt+Meta+Shift order; a bare
+ * key name matches regardless of held modifiers unless a prefixed entry wins.
+ */
+export const keys = map => event => {
+  const combo = (event.ctrlKey ? 'Ctrl+' : '') + (event.altKey ? 'Alt+' : '')
+    + (event.metaKey ? 'Meta+' : '') + (event.shiftKey ? 'Shift+' : '') + event.key
+  const handler = map[combo] || map[event.key]
+  return handler && handler(event)
+}
+
+/** The combinator namespace published as JST.fn (and handed to templates). */
+const combinators = { prevent, stop, self, changed, debounce, throttle, keys }
 
 function parseEventDescriptor(descriptor) {
   const [eventName, ...modifiers] = descriptor.split('.');
@@ -606,36 +676,48 @@ function syncModelControl(element, value) {
   }
 }
 
+// The only modifiers left: they configure listener REGISTRATION (addEventListener
+// options / attach point), which a handler can't express from inside itself.
+const registrationModifiers = new Set(['capture', 'passive', 'once', 'outside']);
+
+// Removed-in-v0.5.0 behaviour modifiers → the combinator that replaces each.
+const removedModifierHints = {
+  prevent: 'onclick="$(prevent(fn))"',
+  stop: 'onclick="$(stop(fn))"',
+  self: 'onclick="$(self(fn))"',
+  debounce: 'oninput="$(debounce(300, fn))"',
+  changed: 'oninput="$(changed(fn))"',
+  enter: 'onkeydown="$(keys({ Enter: fn }))"',
+  escape: 'onkeydown="$(keys({ Escape: fn }))"',
+  esc: 'onkeydown="$(keys({ Escape: fn }))"',
+  tab: 'onkeydown="$(keys({ Tab: fn }))"',
+  space: 'onkeydown="$(keys({ \' \': fn }))"',
+  up: 'onkeydown="$(keys({ ArrowUp: fn }))"',
+  down: 'onkeydown="$(keys({ ArrowDown: fn }))"',
+  left: 'onkeydown="$(keys({ ArrowLeft: fn }))"',
+  right: 'onkeydown="$(keys({ ArrowRight: fn }))"',
+};
+
+function assertRegistrationModifiers(eventName, modifiers) {
+  for (const modifier of modifiers) {
+    if (registrationModifiers.has(modifier)) continue;
+    if (/^\d+$/.test(modifier)) continue;   // numeric tail of a removed .debounce.N — that error already points at debounce
+    const hint = removedModifierHints[modifier];
+    throw new Error(hint
+      ? `JST: the .${modifier} event modifier was removed in v0.5.0 — shape the handler in JS instead: ${hint}. Modifiers now only configure listener registration (.capture .passive .once .outside).`
+      : `JST: on${eventName}.${modifier} — ".${modifier}" is not an event modifier. Modifiers configure listener registration only (.capture .passive .once .outside); shape the handler itself in JS (prevent/stop/self/changed/debounce/throttle/keys).`);
+  }
+}
+
 function buildEventListener(element, descriptor, handler) {
   const { eventName, modifiers } = parseEventDescriptor(descriptor);
+  assertRegistrationModifiers(eventName, modifiers);
   const modifierSet = new Set(modifiers);
   const options = {
     capture: modifierSet.has('capture'),
     passive: modifierSet.has('passive'),
     once: modifierSet.has('once'),
   };
-  const keyChecks = modifiers
-    .filter(modifier => keyModifiers[modifier])
-    .map(modifier => keyModifiers[modifier]);
-
-  let listener = event => {
-    if (keyChecks.length && !keyChecks.includes(event.key)) return;
-    if (modifierSet.has('self') && event.target !== element) return;
-    if (modifierSet.has('prevent')) event.preventDefault();
-    if (modifierSet.has('stop')) event.stopPropagation();
-    return handler(event);
-  };
-
-  const debounceIndex = modifiers.indexOf('debounce');
-  if (debounceIndex !== -1) {
-    const delay = Number(modifiers[debounceIndex + 1]) || 250;
-    const original = listener;
-    let timeout = null;
-    listener = event => {
-      clearTimeout(timeout);
-      timeout = setTimeout(() => original(event), delay);
-    };
-  }
 
   return {
     eventName,
@@ -643,9 +725,9 @@ function buildEventListener(element, descriptor, handler) {
     options,
     listener: modifierSet.has('outside')
       ? event => {
-          if (!element.contains(event.target)) listener(event);
+          if (!element.contains(event.target)) handler(event);
         }
-      : listener,
+      : event => handler(event),
   };
 }
 
@@ -724,6 +806,14 @@ export function registerCustomElementFromTemplate(templateElement) {
       'url',
       'once',
       'trustedHTML',
+      // Handler combinators, in scope bare inside template expressions.
+      'prevent',
+      'stop',
+      'self',
+      'changed',
+      'debounce',
+      'throttle',
+      'keys',
       renderFunction.functionBody,
     );
   } catch (error) {
@@ -904,6 +994,13 @@ function defineCustomElementFromRender({
           url,
           (key, setupFn) => this.#runOnce(key, setupFn),
           trustedHTML,
+          prevent,
+          stop,
+          self,
+          changed,
+          debounce,
+          throttle,
+          keys,
         );
 
         this.#slotObserver?.disconnect();
@@ -1233,6 +1330,7 @@ function publishJstApi() {
     registerPrecompiledTemplate,
     initializeTemplates,
     config,
+    fn: combinators,
   };
 }
 

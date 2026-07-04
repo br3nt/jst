@@ -413,7 +413,7 @@ node tools/precompile.mjs components.html <span class="tok-attr ann" tabindex="0
       <div class="code-example">
         <pre><code><span class="tok-tag">&lt;script</span> <span class="tok-attr">type</span>=<span class="tok-string">"jst"</span> <span class="tok-attr ann" tabindex="0" data-label="Component name" data-detail="The name becomes the custom element tag. Custom element names must contain a hyphen, so hello-name is valid and hello is not.">name</span>=<span class="tok-string">"hello-name"</span> <span class="tok-attr ann" tabindex="0" data-label="Attributes" data-detail="Attributes are case-preserved JavaScript identifiers. Declaring name and count gives the template bare locals named name and count, and element properties el.name and el.count.">attributes</span>=<span class="tok-string">"name count"</span><span class="tok-tag">&gt;</span>
   <span class="tok-tag">&lt;p&gt;</span>Hello, <span class="tok-tag">&lt;strong&gt;</span><span class="tok-jst ann" tabindex="0" data-label="$(name)" data-detail="$(expr) evaluates JavaScript and HTML-escapes the result before inserting it into the output.">$(name)</span><span class="tok-tag">&lt;/strong&gt;</span>.<span class="tok-tag">&lt;/p&gt;</span>
-  <span class="tok-tag">&lt;button</span> <span class="tok-event ann" tabindex="0" data-label="onclick" data-detail="on&lt;event&gt; attaches a real addEventListener after render. Modifiers such as .prevent, .stop, .enter, .outside, and .debounce.300 are supported. The value must be exactly one $(...) expression; raw inline JavaScript is rejected.">onclick</span>=<span class="tok-string">"$(() =&gt; el.count = (el.count || 0) + 1)"</span><span class="tok-tag">&gt;</span>
+  <span class="tok-tag">&lt;button</span> <span class="tok-event ann" tabindex="0" data-label="onclick" data-detail="on&lt;event&gt; attaches a real addEventListener after render. Shape the handler with combinators — prevent(fn), stop(fn), debounce(300, fn), keys({ Enter: fn }) — in scope in expressions; dotted modifiers configure registration only (.once .capture .passive .outside). The value must be exactly one $(...) expression; raw inline JavaScript is rejected.">onclick</span>=<span class="tok-string">"$(() =&gt; el.count = (el.count || 0) + 1)"</span><span class="tok-tag">&gt;</span>
     Clicked <span class="tok-jst ann" tabindex="0" data-label="$(count || 0)" data-detail="This is plain JavaScript. There is no second expression language; use the operators and functions you already know.">$(count || 0)</span> times
   <span class="tok-tag">&lt;/button&gt;</span>
 <span class="tok-tag">&lt;/script&gt;</span>
@@ -669,7 +669,7 @@ configure({
         <li><strong>Keyed reconciliation:</strong> shipped and tested, but still a high-risk area that should keep gaining adversarial tests.</li>
         <li><strong>Transitions:</strong> CSS-driven v1 shipped for keyed enter/leave; richer move/FLIP behavior may grow later.</li>
         <li><strong>Light DOM:</strong> deliberate. There is no style or id encapsulation, so prefer classes and derive ids from attributes.</li>
-        <li><strong>HTMX-style triggers/swaps:</strong> worth exploring, especially when kept resourceful and explicit.</li>
+        <li><strong>Server-driven fetch+swap (jst-nav):</strong> cause → request → effect as inert strings; behaviour shaping stays in JS via named shapers.</li>
       </ul>
     </section>
 

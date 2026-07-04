@@ -147,9 +147,31 @@ test('on<event> compiles to an event binding with the on prefix stripped', () =>
   assert.match(body, /__bind\("event", "click", \(handler\)\)/)
 })
 
-test('on<event> modifiers are preserved on the event descriptor', () => {
-  const body = interpretTemplateTokens(tokensOf('<form onsubmit.prevent="$(save)"></form>'))
-  assert.match(body, /__bind\("event", "submit\.prevent", \(save\)\)/)
+test('registration modifiers are preserved on the event descriptor', () => {
+  const body = interpretTemplateTokens(tokensOf('<button onclick.outside.once="$(close)">x</button>'))
+  assert.match(body, /__bind\("event", "click\.outside\.once", \(close\)\)/)
+})
+
+test('removed behaviour modifiers throw a migration error naming the combinator', () => {
+  assert.throws(
+    () => interpretTemplateTokens(tokensOf('<form onsubmit.prevent="$(save)"></form>')),
+    /\.prevent event modifier was removed.*\$\(prevent\(fn\)\)/s,
+  )
+  assert.throws(
+    () => interpretTemplateTokens(tokensOf('<input oninput.debounce.300="$(search)">')),
+    /\.debounce event modifier was removed.*debounce\(300, fn\)/s,
+  )
+  assert.throws(
+    () => interpretTemplateTokens(tokensOf('<input onkeydown.enter="$(go)">')),
+    /\.enter event modifier was removed.*keys\(\{ Enter: fn \}\)/s,
+  )
+})
+
+test('an unknown modifier is rejected with the registration-only rule', () => {
+  assert.throws(
+    () => interpretTemplateTokens(tokensOf('<button onclick.bogus="$(fn)">x</button>')),
+    /"\.bogus" is not an event modifier.*registration only/s,
+  )
 })
 
 test('a well-formed .prop binding still compiles cleanly', () => {

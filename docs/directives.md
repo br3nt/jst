@@ -2,7 +2,7 @@
 
 Two **opt-in** libraries of declarative attributes that live on your *usage* HTML
 (not inside `<script type="jst">` templates). They're string-valued — URLs, CSS
-selectors, trigger specs — never `$(…)` expressions, so they stay inside JST's
+selectors, names — never `$(…)` expressions, so they stay inside JST's
 safe-by-default model. Each mirrors the core's scan + `MutationObserver` wiring,
 so directives on server-rendered or swapped-in markup are wired automatically.
 
@@ -17,9 +17,91 @@ precompiled `jst.runtime.js`). Minified `jst-nav.min.js` (~7.5 KB) and
 
 ---
 
-## `jst-nav` — server-driven navigation (HTMX/fixi-shaped)
+## `jst-nav` — server-driven navigation
 
-Fetch → swap → history, declaratively.
+Every jst-nav element is a **cause → request → effect** sentence:
+
+```
+WHEN  <something happens>   →   DO  <a request>          →   PUT  <the response somewhere>
+      the CAUSE                     jst-get / jst-action         jst-target / jst-swap
+```
+
+```html
+<a jst-get="/page/2" jst-target="#list">next</a>
+<!-- WHEN clicked (default cause) → GET /page/2 → put it in #list -->
+```
+
+All three parts are inert strings — URLs, CSS selectors, names — **never
+executable expressions**. That's the injection barrier: server-rendered HTML can
+declare requests but can never smuggle code, so jst-nav can't become a
+CSP-bypass gadget.
+
+### The cause — when the request fires
+
+Most elements never declare one: the default is the element's natural event
+(**form → submit, input/select/textarea → change, everything else → click**).
+To override it, the cause is spelled the way HTML has always spelled causes —
+in the attribute *name*:
+
+| Cause | When the request fires |
+| --- | --- |
+| *(nothing)* | the default event above |
+| `jst-on<event>` | on this DOM event instead (`jst-onmouseover`, `jst-onkeyup`, …) |
+| `jst-on<event>="name"` | on this event, **gated/paced by the shaper** registered under that name (below) |
+| `jst-load` | as soon as the element is wired |
+| `jst-load="lazy"` | when scrolled into view (like the native `loading="lazy"`) |
+| `jst-poll="2s"` | on an interval (`ms`/`s` units; stops when the element is removed) |
+
+Multiple `jst-on<event>` attributes each wire their own cause; the presence of
+any suppresses the default.
+
+**Shapers** decide *whether/when* a given occurrence actually fires. A shaper is
+a named JS function registered once per app — it receives `fire` ("do this
+element's declared request now") and returns the event handler to install,
+usually built from the same [handler combinators](writing-jst.md#shaping-when-a-handler-runs--combinators)
+templates use:
+
+```html
+<input jst-get="/search" jst-target="#results" jst-oninput="typeahead" name="q">
+```
+```js
+JST.nav.shape('typeahead', fire => changed(debounce(300, fire)))
+```
+
+The attribute value is an inert *name*, never code — the strict-CSP-safe
+spelling of `oninput="typeahead(event)"`. A shaper can only gate or pace `fire`;
+it has no way to change what firing does (the request and effect stay declared
+on the HTML). An unknown name fails loud in the console, and a registration that
+arrives later in page load heals it (script order is forgiven).
+
+**Exotic causes** — global keyboard shortcuts, listening on another element —
+don't need a feature. The element declares the request + effect; wire the cause
+yourself with the platform:
+
+```html
+<span hidden id="palette" jst-get="/palette" jst-target="#cmd"></span>
+<script type="module">
+  import { keys } from './jst.js';
+  import { request } from './jst-nav.js';
+  document.body.addEventListener('keydown',
+    keys({ 'Meta+k': () => request(document.getElementById('palette')) }));
+</script>
+```
+
+**In templates, skip all of this.** A jst-nav element rendered by a template has
+real JS available — wire the cause with a normal handler:
+`oninput="$(changed(debounce(300, e => JST.nav.request(e.currentTarget))))"`.
+`jst-on*` + shapers exist only for scriptless server-rendered HTML.
+
+> **Migrating from `jst-trigger` (removed in v0.5.0)?** Every spec has one
+> rewrite — see the [CHANGELOG migration table](../CHANGELOG.md). Quick guide:
+> `keyup changed delay:300ms` → `jst-oninput="typeahead"` + a shaper;
+> `revealed` → `jst-load="lazy"`; `load` → `jst-load`; `every 2s` →
+> `jst-poll="2s"`; `[Key]` filters → `keys({...})` inside a shaper;
+> `from:<css>` → `addEventListener` + `JST.nav.request(el)`; `once` →
+> a once-gating shaper or `{ once: true }` in hand-wired listeners.
+
+### The request + effect
 
 | Directive | What it does |
 | --- | --- |
@@ -33,7 +115,6 @@ Fetch → swap → history, declaratively.
 | `jst-replace-url[="/url"]` | **replace** the current history entry instead of pushing — filters / in-place changes that shouldn't add a back-button step (if both are set, replace wins) |
 | `jst-boost` | on a container: boost descendant `<a>`/`<form>` into fetch+swap+push |
 | `jst-confirm="msg"` | gate the request behind a confirm |
-| `jst-trigger="<spec>"` | **when** it fires (below) |
 | `jst-target-4xx` / `-5xx` / `-error` | route non-2xx responses elsewhere |
 
 > **New to View Transitions?** `jst-swap="transition"` wraps the swap in the
@@ -62,7 +143,7 @@ navigations overlap and the slower-but-earlier response arrives last, a `before-
 listener can compare a nav token / target id and drop the stale one. `jst:swapped`
 fires *after* the DOM is updated (it waits for a View-Transition's update callback),
 and it's dispatched on a **connected** node so a delegated `document`-level listener
-still receives it when an `outerHTML` swap detached the trigger. In-flight requests
+still receives it when an `outerHTML` swap detached the source element. In-flight requests
 **abort** when the same element is re-triggered (active-search correctness). Event
 details: `before-request` → `{ el, url, method }`; `after-request` →
 `{ el, response, status }`; `before-swap` → `{ el, html, response }`; `swapped` →
@@ -102,49 +183,38 @@ document.getElementById('order-lines').insertAdjacentHTML('beforeend', html)
 
 `fetch` does the request; the observer does the wiring. Reach for `jst-get` /
 `jst-action` when you want the behaviour *declared on the HTML*; reach for `fetch`
-when the trigger is genuinely imperative. There's nothing in between to learn.
+when the cause is genuinely imperative. There's nothing in between to learn.
 
-### `jst-trigger` specs
+### Two spellings, one pattern (and the CSP toggle)
 
-The value is an **event** optionally followed by space-separated **modifiers** —
-the same value-spec grammar `jst-swap` uses. The event comes first:
+A named shaper is the same thing as a named handler — the difference is only
+who evaluates the reference:
 
-```
-click | submit | change           (defaults: form→submit, input→change, else click)
-load                              fire once on wire
-revealed                          fire when scrolled into view (IntersectionObserver)
-every 2s                          poll on an interval (stops when the element is removed)
-keyup[Enter]                      key filter: only this key fires it
-keydown[Shift+D]                  key filter with modifiers (Shift+ Ctrl+ Alt+ Meta+)
+```html
+oninput="typeahead(event)"     <!-- native inline handler: the BROWSER evaluates it; needs relaxed CSP -->
+jst-oninput="typeahead"        <!-- inert name: jst-nav wires it; works under strict CSP -->
 ```
 
-**Modifiers** (append, space-separated — e.g. `keyup changed delay:300ms`):
-
-| Modifier | Effect |
-| --- | --- |
-| `changed` | only fire when the element's `value` actually changed since last time (active search) |
-| `delay:300ms` | **debounce** — reset the timer on each event, fire once it goes quiet (`ms`/`s` units) |
-| `throttle:1s` | **rate-limit** — fire at most once per interval, ignoring events in between |
-| `from:<css>` | listen on another element (e.g. `from:body` for a global keyboard shortcut) instead of this one |
-| `once` | unbind after the first fire |
-
-`delay:` and `throttle:` are opposites: `delay:` waits for a pause (typeahead),
-`throttle:` caps the rate (scroll/resize). Combine freely:
-`keyup changed delay:300ms` is the canonical active-search trigger.
+If your CSP allows inline handlers, the left column is plain platform code and
+JST needs no feature at all. The right column is the same locality with nothing
+executable in the markup. `jst-lint --csp` flags every native inline handler in
+your HTML when you're ready to move to the strict column. What jst-nav will
+never do is *evaluate* attribute values itself — that would re-open, via JST, the
+exact hole a strict CSP closes.
 
 ### Reverse infinite scroll (newest at the bottom, scroll up for older)
 
 ```html
 <div id="log" style="overflow:auto; height:20rem">
-  <div jst-get="/older?before=89" jst-trigger="revealed"
+  <div jst-get="/older?before=89" jst-load="lazy"
        jst-target="#log" jst-swap="afterbegin">… oldest loaded message …</div>
   … newer messages … (scrolled to the bottom)
 </div>
 ```
 
 `jst-swap="afterbegin"` prepends, and the scroll position is **preserved** so the
-view doesn't jump. Each fetched batch carries the next `revealed` sentinel, which
-`jst-nav` re-wires after the swap. (Forward infinite scroll is the same with
+view doesn't jump. Each fetched batch carries the next `jst-load="lazy"` sentinel,
+which `jst-nav` re-wires after the swap. (Forward infinite scroll is the same with
 `jst-swap="beforeend"` and a bottom sentinel.) See `examples/jst_nav.html`.
 
 ---

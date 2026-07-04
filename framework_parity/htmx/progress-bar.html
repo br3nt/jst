@@ -5,7 +5,7 @@
   Demonstrates: start a job, poll for progress, update a bar until complete, then
   show a restart state.
   JST status: ✓ exact — jst-nav polls declaratively with
-  `jst-trigger="every 200ms"` + `jst-swap="outerHTML"`. The running response keeps
+  `jst-poll="200ms"` + `jst-swap="outerHTML"`. The running response keeps
   the polling element; the done response drops it, so the poll stops itself.
 -->
 <html lang="en">
@@ -30,7 +30,7 @@
 <script>
   let serverProgress = 0;
   const track = (p) => `<div role="progressbar" aria-valuenow="${p}" class="track"><div class="bar" data-testid="bar" style="width:${p}%"></div></div>`;
-  const running = (p) => `<div class="poller" jst-get="/api/job" jst-trigger="every 200ms" jst-target="this" jst-swap="outerHTML">${track(p)}<p data-testid="running">Running… ${p}%</p></div>`;
+  const running = (p) => `<div class="poller" jst-get="/api/job" jst-poll="200ms" jst-target="this" jst-swap="outerHTML">${track(p)}<p data-testid="running">Running… ${p}%</p></div>`;
   const done = () => `<div>${track(100)}<p data-testid="done">Complete!</p><button data-testid="restart" jst-action="/api/job" method="post" jst-target="#job" jst-swap="innerHTML">Restart Job</button></div>`;
 
   const origFetch = window.fetch.bind(window);

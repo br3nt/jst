@@ -3,9 +3,9 @@
 <!--
   Source: https://htmx.org/examples/infinite-scroll/
   Demonstrates: as the last row scrolls into view, the next page is fetched and appended.
-  JST status: ✓ exact — jst-nav's `jst-trigger="revealed"` is htmx's reveal
+  JST status: ✓ exact — jst-nav's `jst-load="lazy"` is htmx's reveal
   trigger. The server returns rows plus a sentinel row carrying the next
-  `jst-get` + `jst-trigger="revealed"`; jst-nav re-wires it after each swap. No
+  `jst-get` + `jst-load="lazy"`; jst-nav re-wires it after each swap. No
   hand-rolled IntersectionObserver.
 -->
 <html lang="en">
@@ -40,7 +40,7 @@
         html += `<tr data-testid="row-${i + 1}"><td>${i + 1}</td><td>Agent ${i + 1}</td></tr>`;
       }
       if (start + PER < TOTAL) {
-        html += `<tr class="sentinel" data-testid="sentinel" jst-get="/feed?page=${page + 1}" jst-trigger="revealed" jst-target="#rows" jst-swap="beforeend"><td colspan="2" class="loading">Loading more…</td></tr>`;
+        html += `<tr class="sentinel" data-testid="sentinel" jst-get="/feed?page=${page + 1}" jst-load="lazy" jst-target="#rows" jst-swap="beforeend"><td colspan="2" class="loading">Loading more…</td></tr>`;
       }
       return new Response(html, { headers: { 'Content-Type': 'text/html' } });
     }

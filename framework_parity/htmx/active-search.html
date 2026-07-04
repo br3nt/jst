@@ -4,9 +4,11 @@
   Source: https://htmx.org/examples/active-search/
   Demonstrates: a search box that queries the server as you type (debounced) and swaps the
   results table.
-  JST status: ✓ exact — jst-nav's `jst-trigger="keyup changed delay:300ms"` is
-  htmx's active-search trigger verbatim; the triggering input's value is sent,
-  and in-flight requests abort so a slow earlier response can't clobber a newer one.
+  JST status: ✓ exact — the cause is jst-oninput="typeahead", a named shaper
+  registered with the JST combinators (changed + debounce 300ms) — htmx's
+  active-search behaviour with the pacing visible as JS; the input's value is
+  sent, and in-flight requests abort so a slow earlier response can't clobber a
+  newer one.
 -->
 <html lang="en">
 <head>
@@ -24,8 +26,16 @@
 
 <h1>Active Search</h1>
 <input type="search" id="q" data-testid="q" name="q" placeholder="Search contacts…" autocomplete="off"
-       jst-get="/api/search" jst-trigger="keyup changed delay:300ms" jst-target="#results" jst-swap="innerHTML">
+       jst-get="/api/search" jst-oninput="typeahead" jst-target="#results" jst-swap="innerHTML">
 <div id="results"></div>
+
+<script type="module">
+  // The cause is the input event, paced by a named shaper — same combinators
+  // templates use; the attribute value is an inert name, never code.
+  import { changed, debounce } from "../../jst.js";
+  import { shape } from "../../jst-nav.js";
+  shape("typeahead", fire => changed(debounce(300, fire)));
+</script>
 
 <script>
   const people = [
@@ -63,7 +73,7 @@
     if (window.JST && window.JST.nav) await window.JST.nav.performRequest(input);
     await new Promise(r => setTimeout(r, 150));
     const n = document.querySelectorAll('[data-testid^="row-"]').length;
-    return { ok: n >= 1 && n < people.length, detail: `"joe" filtered to ${n} rows via delay: trigger` };
+    return { ok: n >= 1 && n < people.length, detail: `"joe" filtered to ${n} rows via the typeahead shaper` };
   };
 </script>
 </body>
