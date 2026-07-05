@@ -4,7 +4,7 @@
 > hydration" feature ported during this session (see Turn 7 below) was **removed**
 > in a later release. It was never requested and it contradicts JST's rendering
 > model: the server ships a component fragment + data, and the client's `jst.js`
-> is the sole renderer — nothing pre-rendered is ever inserted into the DOM. The
+> is the sole renderer - nothing pre-rendered is ever inserted into the DOM. The
 > `#hydrating` field, the `jst-ssr` attribute handling, the SSR hydration test,
 > and the SSR docs were all deleted. This log is kept as a historical record;
 > read every `jst-ssr` / SSR reference below as describing work that has since
@@ -17,7 +17,7 @@ Append-only collaboration log between **claude** (`jst-hardening`) and **codex**
 
 Protocol: see the agreed v2 ruleset. Turn baton is `agent_turn.json`. One commit
 per turn. Wake condition: `turn == you` AND `git status --short` is empty. The
-previous agent's handoff commit is always `HEAD` — review it with `git show HEAD`.
+previous agent's handoff commit is always `HEAD` - review it with `git show HEAD`.
 
 Branches (single repo `/Users/brent/Development/jst`):
 - merge-base / integration root: `553ecb4` (= `main`)
@@ -26,7 +26,7 @@ Branches (single repo `/Users/brent/Development/jst`):
 
 ---
 
-## Turn 1 — claude — planning
+## Turn 1 - claude - planning
 
 ### 1. Protocol
 Agreed to v2 plus Codex's correction: `last_commit` dropped (a commit can't carry
@@ -41,11 +41,11 @@ get reviewed and fixed against the union test suite.
 | Subsystem | Source | Why |
 |---|---|---|
 | Scanner: `input_reader.js`, `lexer.js`, `$ line` | **hardening** | token-aware (strings/templates/regex/comments; regex-vs-division and `<`-tag-vs-less-than via previous-token rule). Codex's lexer was unchanged from original. |
-| Morph engine (`morphChildren`, keyed, `syncFormProperties`) | **codex base + hardening fixes** | Codex has more coverage (forms, transitions, SVG, nested keyed). But Codex had the straggler-removal bug (I found it); hardening had the mixed-keyed / uncontrolled-form / `.outside`-leak bugs (Codex found them). **Neither morph engine is fully correct** — assemble carefully, single owner per turn, union tests gate. |
+| Morph engine (`morphChildren`, keyed, `syncFormProperties`) | **codex base + hardening fixes** | Codex has more coverage (forms, transitions, SVG, nested keyed). But Codex had the straggler-removal bug (I found it); hardening had the mixed-keyed / uncontrolled-form / `.outside`-leak bugs (Codex found them). **Neither morph engine is fully correct** - assemble carefully, single owner per turn, union tests gate. |
 | Dynamic slots (late projection) | **codex** | Codex projects late-added slot content (MutationObserver); hardening captured once on connect. |
 | Precompile (in-core) | **codex** | Codex's `registerPrecompiledTemplate` + shared factory is architecturally better than hardening's innerHTML shim. Fix hardening's npm-pack/export gap on top. |
 | Dev-mode error overlay | **codex** | Codex built an on-page overlay; hardening was console-only. |
-| props model + reserved-name validation | either (≈identical); **fix** | Both use `props="..."`. Must reject reserved/helper names (`class`, `el`, `raw`) — hardening currently accepts them (fail-late). |
+| props model + reserved-name validation | either (≈identical); **fix** | Both use `props="..."`. Must reject reserved/helper names (`class`, `el`, `raw`) - hardening currently accepts them (fail-late). |
 | event modifiers + `.outside` cleanup | **hardening base + fix** | `.prevent .stop .self .once .capture .passive`, key guards, `.debounce`, `.outside`. Fix the `.outside` document-listener leak after element removal (Codex found it). |
 | SSR / hydration (`jst-ssr`) | **hardening** | Codex didn't add it. |
 | Lifecycle: `onDisconnect`, `once(key, setup)` | **hardening** | |
@@ -62,7 +62,7 @@ well-isolated pieces (scanner, SSR, lifecycle, CI, demo, docs) and apply the
 agreed morph fixes. Rationale: the scanner is two isolated files and easy to port
 in; the runtime is deeply intertwined and painful to reconstruct piecemeal, so
 keep the stronger runtime as the base and fix its known bugs. **Open to a
-counter** — if you'd rather start from hardening and port Codex's runtime in,
+counter** - if you'd rather start from hardening and port Codex's runtime in,
 say why.
 
 ### 4. Proposed integration order (one subsystem per turn, union-gated)
@@ -70,7 +70,7 @@ say why.
 2. codex: agree / tighten this plan.
 3. seed union test suite (both adversarial matrices + each side's regression
    probes, incl. my keyed-straggler probe and Codex's mixed-keyed / `.outside` /
-   uncontrolled-form probes) — so everything after is gated.
+   uncontrolled-form probes) - so everything after is gated.
 4. import chosen runtime substrate as the starting commit.
 5. port scanner (`input_reader.js`/`lexer.js`/`$ line`) → verify scanner tests.
 6. assemble morph engine: straggler-removal fix + mixed-keyed/unkeyed-sibling fix
@@ -96,14 +96,14 @@ morph/forms turns), so they don't block implementation.
   codex = local two-way host-property update. My recommendation: **events-up**,
   because local two-way reintroduces hidden local state that JST's philosophy
   explicitly rejects. BUT hardening's *implementation* is broken regardless (it
-  regex-rewrites raw template source, including inside `<pre>` — the exact
+  regex-rewrites raw template source, including inside `<pre>` - the exact
   anti-pattern the new scanner exists to avoid), so whichever semantics wins,
   the implementation must be reimplemented at the binding level, not by regex
   over source. This is the most likely human-escalation.
 - **Equality / republish policy.** codex = assigning the same mutable reference
   republishes (`el.items.push(x); el.items = el.items`); hardening = primitive-only
   equality. I think this is **lower-stakes and likely reconcilable** without
-  human input — propose we adopt Codex's same-ref-republish rule (more useful for
+  human input - propose we adopt Codex's same-ref-republish rule (more useful for
   the mutate-in-place pattern) while keeping `.prop` bindings skipping unchanged
   values to avoid fan-out. Tell me if you see a conflict.
 
@@ -113,7 +113,7 @@ and give your read on the two forks.
 
 ---
 
-## Turn 2 — codex — planning
+## Turn 2 - codex - planning
 
 ### 1. Protocol
 Agreed. The wake condition is `agent_turn.json.turn == <agent>` AND a clean
@@ -196,30 +196,30 @@ to implementation, or escalate `jst-model` to human if still disputed.
 
 ---
 
-## Turn 3 — claude — planning complete + first implementation step
+## Turn 3 - claude - planning complete + first implementation step
 
-### 1. `jst-model` — accepted, no escalation
+### 1. `jst-model` - accepted, no escalation
 I accept Codex's local-host-property semantics. The reframing resolves my original
 objection: `el.title` is an explicit, declared host property, not hidden state, and
 parent/server-owned state still uses the explicit `.value` + emit pattern, so the
 parent boundary stays props-down/events-up. My events-up `jst-model` only traded a
-property-name string for an event-name string — not actually better. Confirmed
+property-name string for an event-name string - not actually better. Confirmed
 shared constraint: implement at the directive/binding level, **never** by
 regex-rewriting raw template source. (Equality/republish policy: also accepted as
 written in Turn 2 §4.)
 
-**Planning is complete — both agents agree on protocol, base, ownership, order,
+**Planning is complete - both agents agree on protocol, base, ownership, order,
 and both design forks.** Phase → implementation.
 
-### 2. Ordering adjustment (step 4 before step 3) — with reasoning
+### 2. Ordering adjustment (step 4 before step 3) - with reasoning
 I took the runtime-substrate import this turn *before* seeding the union tests,
 reversing steps 3↔4. Reason: both branches' test files are written against a
 specific runtime API (`jst-key`, precompile module, transitions, etc.). Seeded
 against the bare-main runtime they produce import/reference *errors*, not clean red
-assertions — noise, not a gate. Importing Codex's runtime **verbatim** first gives
+assertions - noise, not a gate. Importing Codex's runtime **verbatim** first gives
 a coherent target to test against. Crucially this does **not** undermine Codex's
 "prevent bugs disappearing during porting" goal: this is a faithful snapshot (no
-porting/rewriting yet), and the very next turn seeds the union tests — which pins
+porting/rewriting yet), and the very next turn seeds the union tests - which pins
 Codex's known bugs (e.g. keyed straggler) as RED *before* any subsystem porting
 begins. If you'd rather seed tests against bare-main first, revert this and say so.
 
@@ -233,7 +233,7 @@ concerns lab), Codex's scanner (to be replaced by Hardening's in step 5), Codex'
 `jst-model` (agreed semantics) and equality policy (agreed).
 
 ### Validation
-None executed this turn — verbatim snapshot of a branch that already passed its own
+None executed this turn - verbatim snapshot of a branch that already passed its own
 suite (`npm test`: 23 node / 41 browser / parity / tooling, per Codex's PR desc).
 The next turn's union-test seed is what will actually exercise it.
 
@@ -244,14 +244,14 @@ strongest about). Suggested inventory is your Turn 2 §5 list. Both branches'
 (codex 67k, hardening 43k) are the source material; the hardening files are at
 `/Users/brent/Development/jst-hardening/`. Expectation: Codex's own probes pass,
 Hardening's morph/keyed/`.outside`/uncontrolled-form probes go RED against this
-substrate — that red set is exactly our merge gate for steps 5–7.
+substrate - that red set is exactly our merge gate for steps 5–7.
 
 ### Handoff
 Over to **codex** for the union-test seed (phase: implementation).
 
 ---
 
-## Turn 4 — codex — seed union browser test gate
+## Turn 4 - codex - seed union browser test gate
 
 ### 1. Previous commit review
 Reviewed Claude's Turn 3 commit. The imported runtime substrate is a faithful
@@ -303,7 +303,7 @@ Over to **claude** for the first red-gate fix.
 
 ---
 
-## Turn 5 — claude — fix `.outside` listener cleanup (red → green)
+## Turn 5 - claude - fix `.outside` listener cleanup (red → green)
 
 ### 1. Previous commit review
 Reviewed Codex's Turn 4 (`ec71662`). The union browser gate is seeded well: 4 red
@@ -313,7 +313,7 @@ cases), node 25/25. I accept it. One gate-completeness gap noted below.
 ### 2. What changed (jst.js)
 Fixed the `@event.outside` document-listener leak. `.outside` handlers attach to
 `document` (so they can detect outside-clicks), but were only ever *replaced* on
-re-render, never removed on disconnect — so after the host left the DOM the
+re-render, never removed on disconnect - so after the host left the DOM the
 listener stayed live and fired (the bug Codex's probe pins). Element-targeted
 listeners die with their element; only the `document`-targeted ones leak.
 Fix: `applyBinding` now returns the binding it attached; `#applyBindings`
@@ -331,7 +331,7 @@ accumulation and no stale-listener capture.
 
 ### 4. Gate-completeness flag (for steps 5–6, not this turn)
 Codex's Turn 4 reasonably skipped scanner/keyed probes as "already in the
-substrate" — but the substrate's probes are Codex's own, which pass on Codex's
+substrate" - but the substrate's probes are Codex's own, which pass on Codex's
 weaker scanner and on the morph engine that still has the keyed-straggler bug I
 found earlier (`[a,b,c] → [a]`, multi-trailing keyed removal). The seeded keyed
 probes (remove-middle, full-reverse, key-tag-change, duplicate-key) pass, but I
@@ -339,15 +339,15 @@ don't believe the **multi-node trailing removal** case is pinned. So:
 - **Step 5 (scanner port)** should first add Hardening's adversarial scanner
   probes (regex-vs-division, `<`-tag-vs-less-than, template-literal `${}` nesting,
   comments, `$item1` digit tokenization, `$ line` edges) so the port has a real
-  red gate — the substrate scanner will likely fail some.
+  red gate - the substrate scanner will likely fail some.
 - **Step 6 (morph)** should first add the explicit multi-removal straggler probe;
   verify whether the substrate is actually red there before/after the fix.
 - Minor: substrate node tests already include `props ... reject helper and JS
-  keyword names`, so **step 9 may already be satisfied** — verify Codex's
+  keyword names`, so **step 9 may already be satisfied** - verify Codex's
   validator rejects `class`/`el`/`raw` and treat step 9 as a confirm-or-tighten.
 
 ### 5. Next recommended turn (codex)
-Take the two transition reds — they live in Codex's own transition code
+Take the two transition reds - they live in Codex's own transition code
 (`transitionend` removal + remove-then-re-add same-key dedup), so you have the
 context, and it's a narrowly-scoped morph/transition unit that greens the gate
 further. That leaves SSR hydration (a Hardening feature port, its own turn) and
@@ -358,7 +358,7 @@ Over to **codex** for the transition cleanup fixes.
 
 ---
 
-## Turn 6 — codex — fix transition cleanup and re-add behavior
+## Turn 6 - codex - fix transition cleanup and re-add behavior
 
 ### 1. Previous commit review
 Reviewed Claude's Turn 5 (`6605371`). The `.outside` cleanup fix is scoped and
@@ -402,7 +402,7 @@ Over to **claude** for SSR hydration.
 
 ---
 
-## Turn 7 — claude — port SSR hydration (gate fully green)
+## Turn 7 - claude - port SSR hydration (gate fully green)
 
 ### 1. Previous commit review
 Reviewed Codex's Turn 6 (transition fixes). The leaving-node `data-jst-leaving`
@@ -414,7 +414,7 @@ how the gate probes exercise it. Browser 51/52, node 25/25. Accepted.
 Ported `jst-ssr` hydration from Hardening into the substrate:
 - New `#hydrating` field, set in `connectedCallback` from `hasAttribute('jst-ssr')`.
 - When hydrating, skip `#captureSlotContent()` and `#observeSlotMutations()` on
-  connect — the existing children are rendered *output*, not slot content.
+  connect - the existing children are rendered *output*, not slot content.
 - On the first `render()`, when hydrating: remove the `jst-ssr` marker, clear the
   flag, and **skip `#detachSlotContent()`** so `applyRenderedHtml` (which already
   morphs via `morphChildren`) diffs the rendered output onto the existing server
@@ -424,7 +424,7 @@ Ported `jst-ssr` hydration from Hardening into the substrate:
   for docs.
 
 ### 3. Validation
-- `node run_browser_tests.mjs`: **52/52** — the union browser gate is now FULLY
+- `node run_browser_tests.mjs`: **52/52** - the union browser gate is now FULLY
   GREEN. SSR probe adopts the server `.out` node (identity preserved), drops the
   marker, stays reactive.
 - `node --test runtime_tests.mjs`: **25/25**.
@@ -435,7 +435,7 @@ Ported `jst-ssr` hydration from Hardening into the substrate:
 ### 4. Tooling-deps issue surfaced (NOT this turn's unit; for the CI/tooling turn)
 This was the first full `npm test` to reach the tooling suite (the browser gate
 was red turns 4–6). It surfaced `tooling/vscode-jst/test/grammar.test.mjs`
-failing — but the cause is environmental, not a code defect and unrelated to SSR:
+failing - but the cause is environmental, not a code defect and unrelated to SSR:
 this fresh worktree has **no `tooling/vscode-jst/node_modules`**, and
 `grammar.test.mjs` `require`s `vscode-oniguruma` (declared at
 `tooling/vscode-jst/package.json:41-42` alongside `vscode-textmate`), so it errors
@@ -451,7 +451,7 @@ straggler. Recommend Codex take the **gate extension** next (keep "probes before
 fix" discipline): add the adversarial scanner probes (regex-vs-division,
 `<`-tag-vs-less-than, template-literal `${}` nesting, comments, `$item1` digits,
 `$ line` edges) and the multi-removal straggler probe. Those will likely go RED
-against the substrate's weaker scanner / morph — which then gives the scanner port
+against the substrate's weaker scanner / morph - which then gives the scanner port
 (step 5, Hardening-owned, mine to follow) and the straggler fix (step 6) a real
 red gate.
 
@@ -460,7 +460,7 @@ Over to **codex** to extend the gate with adversarial scanner + straggler probes
 
 ---
 
-## Turn 8 — codex — extend scanner and keyed-straggler gate
+## Turn 8 - codex - extend scanner and keyed-straggler gate
 
 ### 1. Previous commit review
 Reviewed Claude's Turn 7 (`c1c7e99`). The SSR hydration port is scoped and fits
@@ -508,7 +508,7 @@ already converged.
 
 ---
 
-## Turn 9 — claude — scanner parity review (step 5): converged + fail-loud port
+## Turn 9 - claude - scanner parity review (step 5): converged + fail-loud port
 
 ### 1. Previous commit review
 Reviewed Codex's Turn 8 (`adversarial scanner + straggler probes`). Probes are
@@ -518,17 +518,17 @@ green on the substrate; I accept the reframing of step 5 as a parity review.
 Ran Hardening's **own** 21-case adversarial scanner suite (`regression_tests.mjs`)
 against the **integration** scanner (export surfaces are compatible). Result
 before any change: **19/21 pass**. So the scanner *code* (`input_reader.js`,
-`lexer.js`) is at parity — every scanner-level case (regex-vs-division,
+`lexer.js`) is at parity - every scanner-level case (regex-vs-division,
 `<`-tag-vs-less-than, template-literal `${}` nesting, comments, `$item1` digits,
 `$ line` edges) already passes. **No scanner-file port needed.** (Confirms Codex's
 Turn 8 signal, and shows the substrate scanner is stronger than my pre-merge
 review assumed.) Note: I deliberately did **not** port Hardening's `compiler.js`
-— it still contains the broken `expandModelSugar` (regex-over-source jst-model);
+ - it still contains the broken `expandModelSugar` (regex-over-source jst-model);
 the substrate correctly omits it.
 
 The 2 failures were **interpreter-level binding fail-loud gaps**, not scanner:
 - **Real gap:** `@click="run $(fn)"` (literal text before the expression) silently
-  degraded to plain HTML — the substrate's tail pattern is end-anchored and never
+  degraded to plain HTML - the substrate's tail pattern is end-anchored and never
   saw it. Ported Hardening's `assertNoLeadingTextBinding` (+ `bindingOpenerPattern`)
   into `interpreter.js`.
 - **Message gap:** the multi-interpolation case (`.items="$(a)$(b)"`) already
@@ -540,7 +540,7 @@ The 2 failures were **interpreter-level binding fail-loud gaps**, not scanner:
 - `interpreter.js`: added `assertNoLeadingTextBinding`; aligned the malformed-binding error message.
 - `regression_tests.mjs`: added Hardening's full 21-case adversarial suite to the gate (purely additive new file).
 - `package.json`: `test` / `test:runtime` now run `runtime_tests.mjs regression_tests.mjs`.
-- `runtime_tests.mjs`: reconciled one duplicate assertion — Codex's "more than one
+- `runtime_tests.mjs`: reconciled one duplicate assertion - Codex's "more than one
   interpolation" test asserted the old message; relaxed it to `/\.items=.*must
   contain exactly one/` so both suites agree on the canonical message.
 
@@ -556,7 +556,7 @@ The 2 failures were **interpreter-level binding fail-loud gaps**, not scanner:
   step 8 is "verify precompile build/tests," not "fix the npm-pack gap" (that was
   a Hardening-branch problem the Codex substrate doesn't have).
 - **Step 9 (props reserved names) appears already satisfied:** the substrate's
-  `props ... reject helper and JS keyword names` test passes — confirm it rejects
+  `props ... reject helper and JS keyword names` test passes - confirm it rejects
   `class`/`el`/`raw` and treat as done.
 - **Pattern:** the Codex substrate is more complete than my pre-merge review
   assumed; several "Hardening contributions" are already present/converged. The
@@ -564,7 +564,7 @@ The 2 failures were **interpreter-level binding fail-loud gaps**, not scanner:
   + tooling-dep install (step 15), and docs reconcile (step 16).
 
 ### 6. Next recommended turn (codex)
-Take **forms-morphing parity (step 7)** — your morph/forms substrate, your best
+Take **forms-morphing parity (step 7)** - your morph/forms substrate, your best
 context. Mirror my method: run/add Hardening's uncontrolled-form probes
 (checkbox/radio/select/textarea preserved across rerender; controlled =
 template-declared) against the substrate; if all green, mark step 7 converged; if
@@ -576,7 +576,7 @@ Over to **codex** for forms-morphing parity.
 
 ---
 
-## Turn 10 — codex — forms/morphing parity (step 7): converged + controlled-prop probe
+## Turn 10 - codex - forms/morphing parity (step 7): converged + controlled-prop probe
 
 ### 1. Previous commit review
 Reviewed Claude's Turn 9 (`scanner parity + fail-loud binding port`). I accept
@@ -634,7 +634,7 @@ Over to **claude** for CI/tooling setup or HATEOAS demo.
 
 ---
 
-## Turn 11 — claude — CI + CI-portable browser runners (step 15)
+## Turn 11 - claude - CI + CI-portable browser runners (step 15)
 
 ### 1. Previous commit review
 Reviewed Codex's Turn 10 (forms/morphing parity + controlled-focused-draft probe).
@@ -645,13 +645,13 @@ distinction, and Codex correctly did NOT port Hardening's event-emitting `jst-mo
 ### 2. Problem found
 The substrate had **no CI** (Codex's branch shipped none), and all four
 browser-backed runners **hardcoded the macOS Chrome path** with no `CHROME_PATH`
-override — so they could never run on GitHub Actions Linux:
+override - so they could never run on GitHub Actions Linux:
 `run_browser_tests.mjs:103`, `run_example_smoke.mjs:281`,
 `agentic_feed/run_feed_smoke.mjs:139`, `framework_parity/verify.mjs:69`.
 
 ### 3. What changed
 - Made all four runners honor `CHROME_PATH` (`process.env.CHROME_PATH || '<macOS
-  default>'`) — preserves local macOS behavior, enables CI to point at a
+  default>'`) - preserves local macOS behavior, enables CI to point at a
   provisioned Chrome. Cross-platform otherwise (CDP over port 9222 works on Linux).
 - Added `.github/workflows/ci.yml`. The integration's `npm test` is a full chain,
   so CI decomposes it into ordered steps: node gate (`test:runtime` = runtime +
@@ -661,24 +661,24 @@ override — so they could never run on GitHub Actions Linux:
   step is the proper fix for the `vscode-oniguruma` gap I flagged in Turn 7.
 
 ### 4. Validation
-- `CHROME_PATH="<macOS chrome>" node run_browser_tests.mjs`: **54/54** — proves the
+- `CHROME_PATH="<macOS chrome>" node run_browser_tests.mjs`: **54/54** - proves the
   env-var path is correct (not just the default).
 - `.github/workflows/ci.yml`: valid YAML (parsed).
-- `npm run test:vscode` (deps present): **29/29** — confirms the tooling step the
+- `npm run test:vscode` (deps present): **29/29** - confirms the tooling step the
   CI now provisions. So the full pipeline is green on a fresh checkout once CI runs
-  its install steps. (CI YAML itself is unproven until pushed — nothing is pushed.)
+  its install steps. (CI YAML itself is unproven until pushed - nothing is pushed.)
 - node 48/48 and browser 54/54 unchanged; the runner edits are env-var only.
 
 ### 5. Remaining work (narrowing)
-- **HATEOAS service-worker demo (step 14)** — genuinely missing from the substrate; Hardening-owned (mine, next feature port).
-- **Docs reconcile (step 16)** — merge both doc sets, fix the stale pages; Hardening-owned (mine).
-- **Dev overlay + `JST.configure` reconcile (step 13)** — Codex's domain.
-- **Precompile verification (step 8)** — export gap already fixed in substrate; but there's **no precompile test in the gate** — worth a smoke test. Codex's domain.
-- **CHANGELOG** (step 53) — confirm/port; check whether the substrate has one.
+- **HATEOAS service-worker demo (step 14)** - genuinely missing from the substrate; Hardening-owned (mine, next feature port).
+- **Docs reconcile (step 16)** - merge both doc sets, fix the stale pages; Hardening-owned (mine).
+- **Dev overlay + `JST.configure` reconcile (step 13)** - Codex's domain.
+- **Precompile verification (step 8)** - export gap already fixed in substrate; but there's **no precompile test in the gate** - worth a smoke test. Codex's domain.
+- **CHANGELOG** (step 53) - confirm/port; check whether the substrate has one.
 
 ### 6. Next recommended turn (codex)
 Take **precompile verification (step 8)** and/or **dev-overlay + `JST.configure`
-reconcile (step 13)** — both your domain. For precompile, a smoke test (compile a
+reconcile (step 13)** - both your domain. For precompile, a smoke test (compile a
 template via `tools/precompile.mjs`, load the output, assert it renders) would put
 the production CSP path under the gate. I'll take the HATEOAS demo + docs next.
 
@@ -687,7 +687,7 @@ Over to **codex** for precompile verification / dev-overlay reconcile.
 
 ---
 
-## Turn 12 — codex — precompile verification (step 8)
+## Turn 12 - codex - precompile verification (step 8)
 
 ### 1. Previous commit review
 Reviewed Claude's Turn 11 (`CI + CHROME_PATH-portable browser runners`). I accept
@@ -738,17 +738,17 @@ piece.
 
 ---
 
-## Turn 13 — claude — port HATEOAS service-worker demo (step 14)
+## Turn 13 - claude - port HATEOAS service-worker demo (step 14)
 
 ### 1. Previous commit review
 Reviewed Codex's Turn 12 (precompile CLI smoke test). Accepted: it actually runs
 `tools/precompile.mjs`, imports the generated module, and asserts it registers +
-renders — putting the strict-CSP production path under the runtime gate (49/49).
+renders - putting the strict-CSP production path under the runtime gate (49/49).
 Good closure of step 8.
 
 ### 2. What changed
 Ported Hardening's HATEOAS demo into `demo/hateoas/` (`index.html`,
-`service-worker.js`, `README.md`) verbatim. It demonstrates JST's core thesis —
+`service-worker.js`, `README.md`) verbatim. It demonstrates JST's core thesis -
 HTML as the contract: a service worker returns HTML fragments that each carry
 their own `<script type="jst">` component definition, which auto-registers the
 instant it's inserted. The page defines no application components and contains no
@@ -757,10 +757,10 @@ view-model/JSON code.
 ### 3. Compatibility review (before trusting it)
 - Runtime path `../../jst.js` resolves to integration root in this layout.
 - The page script uses only standard APIs (`fetch`, `innerHTML`, SW registration,
-  event delegation) — no JST-specific calls.
+  event delegation) - no JST-specific calls.
 - The over-the-wire fragments use only integration-supported syntax: `props=`,
   `$(...)`, `@click` / `@click.prevent`, `$(url(...))`. **No `jst-model`, no
-  `el.emit`, nothing Hardening-specific** — so no semantics fork is dragged in.
+  `el.emit`, nothing Hardening-specific** - so no semantics fork is dragged in.
 - The integration runtime already has the mechanism the demo depends on: the
   `templateObserver` registers dynamically-inserted `<script type="jst">`
   (jst.js:1090-1100) and `scanForMissingTemplates` resolves unknown elements.
@@ -778,8 +778,8 @@ http, not file://):
 Server + browser + all scratch artifacts cleaned up; only `demo/` is added.
 
 ### 5. Remaining work
-- **Docs reconcile (step 16)** + landing-page link to the demo + CHANGELOG — Hardening-owned (mine, next).
-- **Dev overlay + `JST.configure` reconcile (step 13)** — Codex flagged this is likely a parity review (substrate already has visible dev errors + configure knobs), not a port.
+- **Docs reconcile (step 16)** + landing-page link to the demo + CHANGELOG - Hardening-owned (mine, next).
+- **Dev overlay + `JST.configure` reconcile (step 13)** - Codex flagged this is likely a parity review (substrate already has visible dev errors + configure knobs), not a port.
 - Concerns lab (`concerns.html`) is already in the substrate (Codex-owned); fine.
 
 ### 6. Next recommended turn (codex)
@@ -794,7 +794,7 @@ Over to **codex** for the dev-overlay / `JST.configure` parity review.
 
 ---
 
-## Turn 14 — codex — dev overlay / `JST.configure` parity review (step 13)
+## Turn 14 - codex - dev overlay / `JST.configure` parity review (step 13)
 
 ### 1. Previous commit review
 Reviewed Claude's Turn 13 (HATEOAS service-worker demo). I accept the port:
@@ -854,7 +854,7 @@ Over to **claude** for docs reconcile / CHANGELOG.
 
 ---
 
-## Turn 15 — claude — docs reconcile + CHANGELOG + index (step 16)
+## Turn 15 - claude - docs reconcile + CHANGELOG + index (step 16)
 
 ### 1. Previous commit review
 Reviewed Codex's Turn 14 (dev-overlay / configure parity). Accepted: exposing
@@ -878,14 +878,14 @@ there's one canonical page per topic.
     ("emits `text`") to the agreed **local host-property** semantics (read/write
     `el[prop]`; explicit `.value` + emit for owned state). `el.emit` / "events up"
     elsewhere is correct and kept.
-  - `known-gaps.md`: rewrote the precompile section — it described Hardening's
+  - `known-gaps.md`: rewrote the precompile section - it described Hardening's
     `scripts/precompile.mjs` + `precompile/register.mjs` **innerHTML shim** (wrong
     for this tree). The merged precompile is Codex's in-core `tools/precompile.mjs`
     + `registerPrecompiledTemplate`, which renders through the normal runtime, so
     morphing/keyed/form-state/SSR/modifiers are preserved. Also fixed the stale
     "in progress" label vocabulary.
   - `avoid-jst-when.md`: the "strict CSP" entry said precompile was "in progress /
-    not a fit" — reframed: strict CSP **is** supported via precompile; the only
+    not a fit" - reframed: strict CSP **is** supported via precompile; the only
     real tension is strict-CSP *and* zero-build at once.
 - Added `CHANGELOG.md` (merged 0.1.0 reflecting both branches + agreed semantics).
 - Added `docs/README.md` index linking all docs + the HATEOAS demo + parity study.
@@ -897,11 +897,11 @@ there's one canonical page per topic.
   "being added" / "until it ships" left; all `jst-model` mentions use local-prop
   framing).
 - Parity `README.md` / `JST_PRIMER.md`: no stale capability claims (Codex fixed the
-  primer's `jst-model` in Turn 14) — nothing to change.
+  primer's `jst-model` in Turn 14) - nothing to change.
 - Docs are `.md` (not loaded by the test suites), so node/browser/example/parity
   gates are unaffected.
 
-### 5. Plan status — all 16 steps now addressed
+### 5. Plan status - all 16 steps now addressed
 Steps 1–16 are complete or explicitly converged. Remaining before the `done`
 handshake: a final end-to-end `npm test` (incl. tooling deps) and a completeness
 pass. Optional polish: a link to `demo/hateoas/` from the root `index.html`
@@ -911,7 +911,7 @@ landing page (the docs index already links it).
 Run a **final full validation + completeness review**: `npm ci --prefix
 tooling/vscode-jst` then `npm test` end-to-end, and check the integration branch
 against the Turn 1 ownership table / 16-step plan. If everything passes and you're
-satisfied, state your agreement that the merge is complete and hand back — I'll
+satisfied, state your agreement that the merge is complete and hand back - I'll
 do my own final pass and, if we concur, set `agent_turn.json` to `done`.
 
 ### Handoff
@@ -919,7 +919,7 @@ Over to **codex** for final validation + completeness review.
 
 ---
 
-## Turn 16 — codex — final validation + completeness review
+## Turn 16 - codex - final validation + completeness review
 
 ### 1. Previous commit review
 Reviewed Claude's Turn 15 (docs reconcile + CHANGELOG + docs index). I accept the
@@ -969,7 +969,7 @@ Over to **claude** for final concurrence / done handshake.
 
 ---
 
-## Turn 17 — claude — final concurrence (done)
+## Turn 17 - claude - final concurrence (done)
 
 ### 1. Previous commit review
 Reviewed Codex's Turn 16 (`9ba7eea`). Accepted: the landing-page link to
@@ -1011,4 +1011,4 @@ I concur: the merged solution is complete. Setting `agent_turn.json` to `done`.
 Both agents agree. Ready for Brent's review.
 
 ### Handoff
-None — merge complete. `turn: done`.
+None - merge complete. `turn: done`.

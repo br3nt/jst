@@ -4,7 +4,7 @@ Can JST reproduce the canonical examples of **HTMX, Alpine.js, Vue, React, fixi,
 For every example we built a JST equivalent, validated it loads clean, and
 behaviourally spot-checked a representative sample. Where an example needs a
 "backend", a front-end `fetch` intercept (`lib/mock-fetch.js`) returns HTML
-fragments — which may themselves contain `<script type="jst">` definitions that
+fragments - which may themselves contain `<script type="jst">` definitions that
 auto-register and render on arrival (JST's `MutationObserver`).
 
 The report reflects the current JST core. If something still cannot be done
@@ -25,7 +25,7 @@ idiomatically, it is recorded as a gap rather than hidden in an example.
 | Angular | 6 | 0 | 0 | 6 |
 | **Total** | **103** | **23** | **0** | **126** |
 
-**Every example was reproduced** — 89 as exact, idiomatic matches and 37 needing
+**Every example was reproduced** - 89 as exact, idiomatic matches and 37 needing
 a documented workaround. **Zero were impossible.** But "no ✗" is not "no gaps":
 several `(i)` rows still contain real tradeoffs, called out in **Gaps** below.
 
@@ -35,7 +35,7 @@ deviation) · **✗** could not reproduce.
 
 ## Browse them as a website
 
-There's a clickable hub — sidebar of all 126 examples grouped by framework with
+There's a clickable hub - sidebar of all 126 examples grouped by framework with
 status badges, a filter, an embedded viewer, prev/next, and shareable `#hash`
 URLs (itself built in JST). From `custom_js_components/`:
 
@@ -58,7 +58,7 @@ above, not `file://`, since they load `/jst.js` by absolute path.)
 
 ---
 
-## HTMX — 11 ✓ / 5 (i)
+## HTMX - 11 ✓ / 5 (i)
 
 The fetch-returns-fragment model is JST's natural fit; the `(i)`s are almost all
 about **triggers HTMX gives declaratively** (debounce, poll, reveal) and exit
@@ -77,13 +77,13 @@ animations.
 | active-search | [link](https://htmx.org/examples/active-search/) | (i) | [htmx/active-search.html](htmx/active-search.html) | `oninput` calls a named function; statement combinators (`changed` + `debounce`) pace the fetch, `swap()` lands it. |
 | progress-bar | [link](https://htmx.org/examples/progress-bar/) | (i) | [htmx/progress-bar.html](htmx/progress-bar.html) | Bar is prop-driven; polling is a page-level `setInterval` + `swap()` that stops when the done markup arrives. |
 | value-select (cascading) | [link](https://htmx.org/examples/value-select/) | ✓ | [htmx/value-select.html](htmx/value-select.html) | `change` fetches models, sets a prop on `<model-select>`. |
-| tabs-hateoas | [link](https://htmx.org/examples/tabs-hateoas/) | ✓ | [htmx/tabs-hateoas.html](htmx/tabs-hateoas.html) | Each tab fetch returns a fresh component def + markup; auto-upgraded. Pure HATEOAS — JST's core strength. |
+| tabs-hateoas | [link](https://htmx.org/examples/tabs-hateoas/) | ✓ | [htmx/tabs-hateoas.html](htmx/tabs-hateoas.html) | Each tab fetch returns a fresh component def + markup; auto-upgraded. Pure HATEOAS - JST's core strength. |
 | dialogs (custom modal) | [link](https://htmx.org/examples/modal-custom/) | ✓ | [htmx/modal-custom.html](htmx/modal-custom.html) | Server-fed modal content with `jst-transition` for fade/zoom enter and leave. |
 | sortable | [link](https://htmx.org/examples/sortable/) | ✓ | [htmx/sortable.html](htmx/sortable.html) | Native HTML5 DnD via `ondragstart/ondragover/ondrop`; reorders a page array + POSTs order. `jst-key` preserves row identity when needed. |
 | keyboard-shortcuts | [link](https://htmx.org/examples/keyboard-shortcuts/) | (i) | [htmx/keyboard-shortcuts.html](htmx/keyboard-shortcuts.html) | Result panel clean, but global shortcut is a hand-written `document.addEventListener` (`on<event>` only binds template elements). |
 | polling / update-other-content | [link](https://htmx.org/examples/update-other-content/) | (i) | [htmx/polling.html](htmx/polling.html) | One response updating two regions is idiomatic; polling itself is a hand-written `setInterval`. |
 
-## Alpine.js — 15 ✓ / 5 (i)
+## Alpine.js - 15 ✓ / 5 (i)
 
 Directives split cleanly: rendering, binding, events, local model binding, and
 CSS transitions map directly. Reactivity primitives, refs, and DOM relocation
@@ -107,12 +107,12 @@ still need workarounds. `x-cloak` is actually *better* in JST.
 | $dispatch | [link](https://alpinejs.dev/magics/dispatch) | ✓ | [alpine/dispatch.html](alpine/dispatch.html) | `el.emit(name, detail)` bubbling CustomEvent. |
 | $store (global) | [link](https://alpinejs.dev/globals/alpine-store) | (i) | [alpine/store.html](alpine/store.html) | Shared object passed via props; manually re-published to subscribers. |
 | $watch | [link](https://alpinejs.dev/magics/watch) | (i) | [alpine/watch.html](alpine/watch.html) | No watch; funnel mutations through one setter that captures old→new. |
-| x-cloak | [link](https://alpinejs.dev/directives/cloak) | ✓ | [alpine/cloak.html](alpine/cloak.html) | **Better:** custom-element `:not(:defined){display:none}` — zero JS. |
+| x-cloak | [link](https://alpinejs.dev/directives/cloak) | ✓ | [alpine/cloak.html](alpine/cloak.html) | **Better:** custom-element `:not(:defined){display:none}` - zero JS. |
 | x-teleport | [link](https://alpinejs.dev/directives/teleport) | (i) | [alpine/teleport.html](alpine/teleport.html) | No teleport; hoisted modal to a body-level component driven by events. |
 | dropdown (click-outside) | [link](https://alpinejs.dev/component/dropdown) | ✓ | [alpine/dropdown.html](alpine/dropdown.html) | Open/close local state plus `onclick.outside`. |
 | tabs | [link](https://alpinejs.dev/start-here) | ✓ | [alpine/tabs.html](alpine/tabs.html) | Active tab is local state; no gap. |
 
-## Vue — 10 ✓ / 10 (i)
+## Vue - 10 ✓ / 10 (i)
 
 Templating, components, events, local form binding, and slots map closely. The
 `(i)`s cluster around computed/watch, broader component `v-model` conventions,
@@ -141,7 +141,7 @@ provide/inject, and full transition-group behavior.
 | List transitions | [link](https://vuejs.org/examples/#list-transition) | (i) | [vue/list-transition.html](vue/list-transition.html) | `jst-key` + `jst-transition` cover enter/leave/move classes; full FLIP transition-group behavior still needs custom JS. |
 | Modal with transition | [link](https://vuejs.org/examples/#modal) | ✓ | [vue/modal.html](vue/modal.html) | Conditional keyed node plus `jst-transition`; CSS owns enter and leave. |
 
-## React — 11 ✓ / 3 (i)
+## React - 11 ✓ / 3 (i)
 
 React's "lift state up + props down" is *exactly* JST's model, so the structural
 examples are clean ✓. The remaining `(i)`s are context, reducers as page code,
@@ -164,13 +164,13 @@ and effect-style data fetching conventions.
 | Thinking in React (filter table) | [link](https://react.dev/learn/thinking-in-react) | ✓ | [react/thinking-in-react.html](react/thinking-in-react.html) | Lifted state, explicit events, derived table rendering, and stable controlled inputs map cleanly. |
 | Tic-tac-toe (time travel) | [link](https://react.dev/learn/tutorial-tic-tac-toe) | ✓ | [react/tic-tac-toe.html](react/tic-tac-toe.html) | Immutable history + currentMove in page; board is a dumb renderer. *(verified incl. time travel)* |
 
-## fixi — 10 ✓ / 8 (i)
+## fixi - 10 ✓ / 8 (i)
 
 [fixi](https://github.com/bigskysoftware/fixi) is Carson Gross's minimalist htmx:
 six attributes, ~3KB, swaps via the View Transition API. Its hypermedia model is
 JST's natural fit, so the core round-trips are clean ✓. Most `(i)`s are the
 features fixi itself leaves to **user-land extensions** (debounce, polling,
-intersection, indicators, relative selectors) — JST hand-wires those exactly as a
+intersection, indicators, relative selectors) - JST hand-wires those exactly as a
 fixi extension would, so the gap is shared, not JST's alone.
 
 | Example | Source | Status | Built | Note |
@@ -194,12 +194,12 @@ fixi extension would, so the gap is shared, not JST's alone.
 | view-transition | [link](https://github.com/bigskysoftware/fixi) | (i) | [fixi/view-transition.html](fixi/view-transition.html) | fixi swaps via the View Transition API natively; JST has no native VT swap, so a keyed node + `jst-transition` does the enter/leave (CSS-owned). |
 | fx-ignore | [link](https://github.com/bigskysoftware/fixi) | (i) | [fixi/fx-ignore.html](fixi/fx-ignore.html) | No `jst-ignore` directive yet (open proposal); an uncontrolled third-party widget survives re-renders by living in a projected slot, not the morphed subtree. |
 
-## Lit — 15 ✓ / 5 (i)
+## Lit - 15 ✓ / 5 (i)
 
 [Lit](https://lit.dev) is the closest peer in this study: like JST it compiles to
 real custom elements, so reactive properties, the expression types, events, keyed
 lists, and lifecycle map 1:1 ✓. The `(i)`s are where Lit reaches past vanilla
-custom elements — Shadow-DOM-scoped styles (JST is light-DOM), the `ref`/`until`
+custom elements - Shadow-DOM-scoped styles (JST is light-DOM), the `ref`/`until`
 directives, `@lit/context`, and `@lit/task`.
 
 | Example | Source | Status | Built | Note |
@@ -214,11 +214,11 @@ directives, `@lit/context`, and `@lit/task`.
 | conditional-rendering | [link](https://lit.dev/docs/templates/conditionals/) | ✓ | [lit/conditional-rendering.html](lit/conditional-rendering.html) | Lit `when(cond, a, b)` ↔ JST `$ if (user) {…} $ else {…}` (signed-in/out toggle). |
 | list-rendering | [link](https://lit.dev/docs/templates/lists/) | ✓ | [lit/list-rendering.html](lit/list-rendering.html) | Lit `map(items, i => html\`<li>${i}</li>\`)` ↔ JST `$ items.forEach`. |
 | repeat-keyed | [link](https://lit.dev/docs/templates/lists/#the-repeat-directive) | ✓ | [lit/repeat-keyed.html](lit/repeat-keyed.html) | Lit `repeat(items, i => i.id, tpl)` ↔ JST `forEach` + `jst-key`; reorder preserves node identity and a typed input value. |
-| styles | [link](https://lit.dev/docs/components/styles/) | (i) | [lit/styles.html](lit/styles.html) | Lit's `static styles = css\`…\`` is Shadow-DOM-scoped; JST is light-DOM, so styling is ordinary global CSS — the encapsulation is the genuine gap. |
+| styles | [link](https://lit.dev/docs/components/styles/) | (i) | [lit/styles.html](lit/styles.html) | Lit's `static styles = css\`…\`` is Shadow-DOM-scoped; JST is light-DOM, so styling is ordinary global CSS - the encapsulation is the genuine gap. |
 | classmap-stylemap | [link](https://lit.dev/docs/templates/directives/#classmap) | ✓ | [lit/classmap-stylemap.html](lit/classmap-stylemap.html) | `classMap`/`styleMap` objects ↔ expression-built class/style strings. No object sugar, but covers every case. |
 | ifDefined | [link](https://lit.dev/docs/templates/directives/#ifdefined) | ✓ | [lit/ifdefined.html](lit/ifdefined.html) | `ifDefined(x)` ↔ a conditional attribute emitted only when the value is defined, so the attribute appears/disappears. |
 | live (forms) | [link](https://lit.dev/docs/templates/directives/#live) | ✓ | [lit/forms-live.html](lit/forms-live.html) | `live(x)` ↔ `jst-model`: the prop is the source of truth and property-aware morphing preserves caret/focus while external writes flow back. |
-| ref | [link](https://lit.dev/docs/templates/directives/#ref) | (i) | [lit/ref-directive.html](lit/ref-directive.html) | `ref(createRef())` ↔ `el.querySelector(...)` after render — reaches the node to `.focus()`, but it's a manual lookup, not an auto-populated ref. |
+| ref | [link](https://lit.dev/docs/templates/directives/#ref) | (i) | [lit/ref-directive.html](lit/ref-directive.html) | `ref(createRef())` ↔ `el.querySelector(...)` after render - reaches the node to `.focus()`, but it's a manual lookup, not an auto-populated ref. |
 | lifecycle | [link](https://lit.dev/docs/components/lifecycle/) | ✓ | [lit/lifecycle.html](lit/lifecycle.html) | `connectedCallback`/`firstUpdated`/`disconnectedCallback` ↔ `once()` (returns cleanup) + `onDisconnect()`; a Remove button proves teardown fires. |
 | willUpdate | [link](https://lit.dev/docs/components/lifecycle/#willupdate) | ✓ | [lit/will-update.html](lit/will-update.html) | `willUpdate()` ↔ a `$ const fullName = …` derive line in the template, run before render. |
 | async until | [link](https://lit.dev/docs/templates/directives/#until) | (i) | [lit/async-until.html](lit/async-until.html) | `until(promise, placeholder)` ↔ a `once()`-driven fetch that sets `loading`/`result` props plus a guarded `$ if`; no `until` primitive, async wiring is explicit. |
@@ -227,7 +227,7 @@ directives, `@lit/context`, and `@lit/task`.
 
 ---
 
-## Gaps — what JST can't (yet) do idiomatically
+## Gaps - what JST can't (yet) do idiomatically
 
 Ordered by how often they forced an `(i)`, with a verdict on whether the
 workaround is an acceptable tradeoff. **You decide.**
@@ -235,7 +235,7 @@ workaround is an acceptable tradeoff. **You decide.**
 1. **No reactivity primitives** (computed/watch/effect). Derive inline with
    `$ const`; "watch" by acting in the mutating handler. *Verdict: works and
    re-runs exactly when the (coarse) re-render fires; no memoization or
-   dependency tracking — fine at these sizes, would not scale to heavy derived
+   dependency tracking - fine at these sizes, would not scale to heavy derived
    state.*
 2. **No DI / context / global store.** Prop-drill or a page-level shared object;
    intermediates must forward; reads via `el.closest()` aren't auto-reactive.
@@ -243,9 +243,9 @@ workaround is an acceptable tradeoff. **You decide.**
    grows with depth.*
 3. **There is no declarative trigger layer, by design.** jst-nav only enhances
    links and forms (native activation, native `href`/`action`/`method`); every
-   other cause — reveal (`onreveal`), polling (`setInterval`), keystrokes — is
+   other cause - reveal (`onreveal`), polling (`setInterval`), keystrokes - is
    plain JS calling `swap()`, or a component like `<jst-include>`. *Verdict:
-   covered without any HTMX DSL — causes are events, timers, and components,
+   covered without any HTMX DSL - causes are events, timers, and components,
    things JavaScript already has (v0.6.0).*
 4. **No full transition-group engine.** `jst-transition` provides enter, leave,
    and move classes, but does not calculate FLIP transforms the way Vue's
@@ -257,7 +257,7 @@ workaround is an acceptable tradeoff. **You decide.**
 6. **No Shadow-DOM style scoping.** JST renders to light DOM by design, so
    Lit's `static styles = css\`…\`` encapsulation has no equivalent; you
    namespace selectors with ordinary global CSS. *Verdict: simpler and fully
-   inspectable, but styles are not encapsulated — discipline replaces the
+   inspectable, but styles are not encapsulated - discipline replaces the
    boundary.*
 7. **No uncontrolled-region directive.** fixi's `fx-ignore` (and the proposed
    `jst-ignore`) fence off a subtree so the framework never touches it; today a
@@ -265,16 +265,16 @@ workaround is an acceptable tradeoff. **You decide.**
    *Verdict: works via slots; a dedicated directive would be cleaner.*
 
 ### Where JST is a strong or *better* fit
-- **Real custom elements** — JST and Lit both compile to native custom
+- **Real custom elements** - JST and Lit both compile to native custom
   elements, so the entire Lit core (reactive properties, the four expression
   types, events, keyed lists, lifecycle) maps 1:1 with no workarounds.
-- **"Server returns components" (HTMX's premise)** — the `MutationObserver`
+- **"Server returns components" (HTMX's premise)** - the `MutationObserver`
   auto-registers fetched `<script type="jst">` fragments; `lazy-load` and
   `tabs-hateoas` are clean and idiomatic. This is the standout strength.
-- **Lift-state-up / props-down-events-up** — React's `lifting-state`, `reducer`,
+- **Lift-state-up / props-down-events-up** - React's `lifting-state`, `reducer`,
   and the whole tic-tac-toe tutorial are exact, often *cleaner*, matches.
 - **Slots / composition**, **conditionals & loops**, **attribute/class/style
-  interpolation**, **events**, **DOM & mutable refs** — all exact.
+  interpolation**, **events**, **DOM & mutable refs** - all exact.
 - **`x-cloak`** is *better*: native `:not(:defined)` cloaking, zero JS.
 
 ## Authoring notes

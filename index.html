@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JST — components in plain HTML, no build step</title>
+<title>JST - components in plain HTML, no build step</title>
 <meta name="description" content="JST is a tiny framework for building reactive web components directly in HTML, with no build step. Plain HTML and JavaScript, real custom elements, server-streamable components.">
 <script type="module" src="jst.js"></script>
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <style>
-  /* Self-hosted (no CDN, works offline) — used for the wordmark. */
+  /* Self-hosted (no CDN, works offline) - used for the wordmark. */
   @font-face {
     font-family: 'JetBrains Mono'; font-style: normal; font-weight: 700; font-display: swap;
     src: url('fonts/jetbrains-mono-700.woff2') format('woff2');
@@ -115,8 +115,8 @@
 <header class="hero">
   <div class="wrap">
     <h1>JST</h1>
-    <p class="tag"><strong>JavaScript Templates (JST)</strong> — reactive components in plain HTML, with <strong>JavaScript itself as the templating language</strong>. No build step.</p>
-    <p class="sub">It's just <strong>Web Components</strong> under the hood — every <code>&lt;jst-*&gt;</code> is a real custom element from the platform's own <code>customElements.define</code>. JST renders them; what you ship is standard custom elements.</p>
+    <p class="tag"><strong>JavaScript Templates (JST)</strong> - reactive components in plain HTML, with <strong>JavaScript itself as the templating language</strong>. No build step.</p>
+    <p class="sub">It's just <strong>Web Components</strong> under the hood - every <code>&lt;jst-*&gt;</code> is a real custom element from the platform's own <code>customElements.define</code>. JST renders them; what you ship is standard custom elements.</p>
     <div class="cta">
       <a class="btn primary" href="#examples">Examples ↓</a>
       <a class="btn ghost" href="framework_parity/index.html">Compare vs HTMX · Alpine · Vue · React →</a>
@@ -135,7 +135,7 @@
 <section id="try">
   <div class="wrap">
     <h2>This is JST</h2>
-    <p class="lede">The button below is a JST component — defined and rendered by the same
+    <p class="lede">The button below is a JST component - defined and rendered by the same
       <code>jst.js</code> this page loads. View source: it's all here, nothing built.</p>
 
     <!-- A live JST component, defined inline. -->
@@ -154,7 +154,7 @@
       <div class="panel code-example">
         <h3>Source</h3>
 <pre class="code"><span class="t">&lt;script</span> <span class="k ann" tabindex="0" data-label="type=&quot;jst&quot;" data-detail="This marks the block as a JST template. The runtime compiles it into a real custom element.">type</span>=<span class="s">"jst"</span> <span class="k ann" tabindex="0" data-label="Component name" data-detail="The name becomes the custom element tag. Custom element names must contain a hyphen.">name</span>=<span class="s">"jst-demo-counter"</span> <span class="k ann" tabindex="0" data-label="Attributes" data-detail="attributes declares the template locals and host properties. Here count is available as count and el.count.">attributes</span>=<span class="s">"count"</span><span class="t">&gt;</span>
-  <span class="t">&lt;button</span> <span class="e ann" tabindex="0" data-label="onclick" data-detail="An on&lt;event&gt; attribute attaches a real addEventListener after render. The value must be a single $(…) expression — raw inline JavaScript is rejected. This handler updates the host property.">onclick</span>=<span class="s">"$(() =&gt; el.count = (el.count || 0) + 1)"</span><span class="t">&gt;</span>
+  <span class="t">&lt;button</span> <span class="e ann" tabindex="0" data-label="onclick" data-detail="An on&lt;event&gt; attribute attaches a real addEventListener after render. The value must be a single $(…) expression - raw inline JavaScript is rejected. This handler updates the host property.">onclick</span>=<span class="s">"$(() =&gt; el.count = (el.count || 0) + 1)"</span><span class="t">&gt;</span>
     Clicked <span class="j ann" tabindex="0" data-label="$(count)" data-detail="$(expr) evaluates JavaScript and HTML-escapes the result before insertion.">$(count)</span> times
   <span class="t">&lt;/button&gt;</span>
 <span class="t">&lt;/script&gt;</span>
@@ -172,16 +172,16 @@
     <p class="lede">
       JST is a thin layer over the <strong>Web Components</strong> platform. A
       <code>&lt;script type="jst"&gt;</code> tag is compiled into a class and registered with
-      <code>customElements.define()</code> — so your <code>&lt;jst-*&gt;</code> tags are
+      <code>customElements.define()</code> - so your <code>&lt;jst-*&gt;</code> tags are
       <em>genuine custom elements</em>, not a framework's virtual stand-ins. You write them in
-      ordinary HTML with JavaScript as the templating language — no build-time compiler, no bundler, no JSX,
+      ordinary HTML with JavaScript as the templating language - no build-time compiler, no bundler, no JSX,
       no virtual DOM.
     </p>
     <div class="platform-note">
       Because they're real custom elements, they behave like the platform: they show up in
       DevTools as <code>&lt;jst-counter&gt;</code>, you set data with plain properties
       (<code>el.count = 5</code>), you listen with <code>addEventListener</code>, they work
-      inside any framework or none, and they upgrade automatically when their definition arrives —
+      inside any framework or none, and they upgrade automatically when their definition arrives -
       even from the server. JST adds rendering and ergonomics; the <em>component</em> is the browser's.
     </div>
   </div>
@@ -191,15 +191,15 @@
   <div class="wrap">
     <h2>The hole it fills</h2>
     <p class="lede">JST started from a question: <em>what would a front-end SSR component look
-      like?</em> Could the server send down components, like HTMX — but with real client-side
-      interactivity, like Alpine — without a build step, a virtual DOM, or signals?</p>
+      like?</em> Could the server send down components, like HTMX - but with real client-side
+      interactivity, like Alpine - without a build step, a virtual DOM, or signals?</p>
 
     <table class="pos">
       <tr><th>Tool</th><th>Strength</th><th>The gap JST targets</th></tr>
       <tr><td><b>HTMX</b></td><td>Server returns HTML; hypermedia-driven.</td><td>Optimised for server-driven interactions; reusable client component definitions are outside its core model.</td></tr>
       <tr><td><b>Alpine</b></td><td>Sprinkle client interactivity into existing HTML.</td><td>Local behaviour is the primary abstraction; JST instead targets streamed custom-element definitions with explicit props and events.</td></tr>
       <tr><td><b>React / Vue</b></td><td>Powerful component models.</td><td>Build step, virtual DOM, framework runtime, JSX/SFC tooling.</td></tr>
-      <tr><td><b>JST</b></td><td colspan="2">Components in plain HTML that the <b>server can stream down</b> (a fetched fragment can define <em>and</em> use a component — it auto-registers), with <b>full client interactivity</b>, <b>no build</b>, and <b>no virtual DOM or signals</b> — it rides the platform: custom elements, properties, events, DOM morphing.</td></tr>
+      <tr><td><b>JST</b></td><td colspan="2">Components in plain HTML that the <b>server can stream down</b> (a fetched fragment can define <em>and</em> use a component - it auto-registers), with <b>full client interactivity</b>, <b>no build</b>, and <b>no virtual DOM or signals</b> - it rides the platform: custom elements, properties, events, DOM morphing.</td></tr>
     </table>
 
     <p class="lede" style="margin-top:1.2rem">We tested that claim: <a href="framework_parity/index.html">70 canonical examples</a>
@@ -212,13 +212,13 @@
 
 <section id="shared">
   <div class="wrap">
-    <h2>Hypertext as your API — not JSON</h2>
+    <h2>Hypertext as your API - not JSON</h2>
     <p class="lede">A typical web app is a JSON API plus a separate client that turns that JSON back
-      into HTML — every screen defined twice and kept in sync by hand. JST takes the older idea
-      (HATEOAS): a response <em>is</em> the UI — HTML that carries its own next actions.</p>
+      into HTML - every screen defined twice and kept in sync by hand. JST takes the older idea
+      (HATEOAS): a response <em>is</em> the UI - HTML that carries its own next actions.</p>
     <p class="lede">The part HTMX can't do: a JST response is HTML containing real
       <code>&lt;script type="jst"&gt;</code> components, so it brings its own <strong>front-end
-      interactivity</strong> — the browser registers and runs the JS on arrival. You get HTMX's
+      interactivity</strong> - the browser registers and runs the JS on arrival. You get HTMX's
       "the server just returns HTML" simplicity <strong>and</strong> real client-side behaviour in
       the very same response. No JSON contract, no parallel client app, no duplicated views.</p>
     <div class="platform-note"><strong>Trust boundary:</strong> a streamed
@@ -226,12 +226,12 @@
       auto-register component definitions from trusted sources. Ordinary interpolated data
       is escaped; that does not make an untrusted template safe.</div>
     <p class="lede">You do not need a client router to get there. Use ordinary resourceful URLs
-      and full-page navigation by default — <code>/orders/4471</code>,
+      and full-page navigation by default - <code>/orders/4471</code>,
       <code>/orders/4471/edit</code>, <code>POST /orders/4471/items</code>. Reach for fragment
       swaps only where they improve a workflow: inline editing, live validation, expanding rows,
       or streaming a component definition the page did not know yet.</p>
     <div class="platform-note"><strong>And you may not need a backend at all.</strong> JST is just
-      static files and the browser — no API, no server-side code, no build. The same components a
+      static files and the browser - no API, no server-side code, no build. The same components a
       server <em>could</em> stream down run perfectly well entirely on the client, so a whole app
       can be a folder of static files. (This site is exactly that.)</div>
     <p class="lede" style="margin-top:1rem"><a href="demo/hateoas/">Open the HATEOAS service-worker demo →</a></p>
@@ -243,10 +243,10 @@
     <h2>Philosophy</h2>
     <ul class="principles">
       <li><b>No build-time compiler required.</b> Components live in <code>&lt;script type="jst"&gt;</code> in plain HTML. The runtime compiler handles them in the browser; precompilation remains available for production and strict CSP.</li>
-      <li><b>JavaScript is the templating language.</b> <code>$(expr)</code> to interpolate, <code>$ if</code> / <code>$ forEach</code> for control flow. No new DSL — if you know JavaScript, you know JST.</li>
-      <li><b>Hypertext as the API.</b> Responses are HTML carrying their own UI and next actions — not JSON a client must re-render. Like HTMX, but the response brings its own front-end interactivity.</li>
+      <li><b>JavaScript is the templating language.</b> <code>$(expr)</code> to interpolate, <code>$ if</code> / <code>$ forEach</code> for control flow. No new DSL - if you know JavaScript, you know JST.</li>
+      <li><b>Hypertext as the API.</b> Responses are HTML carrying their own UI and next actions - not JSON a client must re-render. Like HTMX, but the response brings its own front-end interactivity.</li>
       <li><b>No backend required.</b> A JST app is just static files; the same components run on the client, stream down from a server, or ship as a folder of files. No JSON contract, no parallel client app.</li>
-      <li><b>Built on Web Components.</b> JST's runtime/compiler registers every <code>&lt;jst-*&gt;</code> as a real custom element via <code>customElements.define</code>. Data in as <em>properties</em>, actions out as bubbling <em>CustomEvents</em>, DOM patched by morphing — no virtual DOM, no signals, no shadow-DOM lock-in.</li>
+      <li><b>Built on Web Components.</b> JST's runtime/compiler registers every <code>&lt;jst-*&gt;</code> as a real custom element via <code>customElements.define</code>. Data in as <em>properties</em>, actions out as bubbling <em>CustomEvents</em>, DOM patched by morphing - no virtual DOM, no signals, no shadow-DOM lock-in.</li>
       <li><b>Attributes down, events up.</b> Components are dumb renderers; state lives in the page or a parent, recursively.</li>
       <li><b>Safe by default.</b> Interpolation is HTML-escaped unless you opt out with <code>trustedHTML()</code>.</li>
     </ul>
@@ -256,7 +256,7 @@
 <section id="examples">
   <div class="wrap">
     <h2>Examples</h2>
-    <p class="lede">Each of these is running live below — real JST components on this page, in
+    <p class="lede">Each of these is running live below - real JST components on this page, in
       isolated frames. Use <strong>Open standalone ↗</strong> on any example to interact with it
       on its own page, inspect it in DevTools, or view its source: it's plain HTML and
       <code>jst.js</code>.</p>
@@ -314,7 +314,7 @@
     <h2>VS Code tooling</h2>
     <p class="lede">Because JST is plain HTML + JavaScript, the editor experience rides existing
       tools rather than reinventing them. The <a href="tooling/vscode-jst/README.md">extension</a>
-      adds three tiers — all tested headlessly.</p>
+      adds three tiers - all tested headlessly.</p>
     <div class="tiers">
       <div class="tier"><h4>Syntax highlighting</h4><p>TextMate injection grammars highlight <code>$(…)</code>, <code>$ …</code> and <code>.prop</code>/<code>on&lt;event&gt;</code> inside <code>&lt;script type="jst"&gt;</code>, delegating the embedded JS to the editor's own <code>source.js</code>.</p></div>
       <div class="tier"><h4>Diagnostics</h4><p>Runs the <em>real</em> JST compiler over each template, so an editor squiggle is exactly what the runtime would reject. Embedded-JS syntax errors are caught by V8 itself.</p></div>
@@ -337,7 +337,7 @@
 
 <footer>
   <div class="wrap">
-    JST — an exploration in no-build, platform-native components.
+    JST - an exploration in no-build, platform-native components.
     Built with itself: the demo above, the three embedded examples, and the
     comparison browser are all JST components.
   </div>

@@ -6,13 +6,13 @@ of this:
 - **Semi-linear history.** `main` reads as a mostly-straight line. Every branch is
   rebased onto the latest `main` before it merges, so there is no criss-cross.
 - **Versions are tags on `main`. No release branches.** A release *is* an
-  annotated `vX.Y.Z` tag on a `main` commit — never on a feature/PR branch, never
+  annotated `vX.Y.Z` tag on a `main` commit - never on a feature/PR branch, never
   a long-lived `release/*` branch.
 
 ## Branching & merge model
 
 1. Branch off the latest `main` with a short-lived branch (`feat/…`, `fix/…`,
-   `docs/…`). The branch name does **not** confer a version — the tag does.
+   `docs/…`). The branch name does **not** confer a version - the tag does.
 2. Open a PR targeting `main`. Reference the issues it closes (`Closes #NN`).
 3. Keep it **semi-linear**: before merging, rebase your branch onto the latest
    `main` and force-push:
@@ -21,12 +21,12 @@ of this:
    git rebase origin/main        # resolve conflicts here, on your branch
    git push --force-with-lease
    ```
-   Do **not** merge `main` into your branch — that creates the criss-cross we
+   Do **not** merge `main` into your branch - that creates the criss-cross we
    avoid. Always rebase the branch onto `main` instead.
 4. Merge once green. Either is fine because the branch was rebased first, so
    `main` stays semi-linear:
-   - **Rebase and merge** — fast-forward, fully linear; or
-   - **Merge commit** (`--no-ff`) — records the integration point on an otherwise
+   - **Rebase and merge** - fast-forward, fully linear; or
+   - **Merge commit** (`--no-ff`) - records the integration point on an otherwise
      straight `main`.
 5. Delete the branch after merge.
 
@@ -39,7 +39,7 @@ We are in `0.x`. Major stays `0`:
 - **Docs / examples / tooling only** → also bump the **patch**. **Docs are part
   of the deliverable.** A docs change that isn't tagged leaves the docs *at the
   released tag* stale (the exact rot `prerelease_check` guards against), and the
-  CHANGELOG — our migration source — should record it. The runtime can be
+  CHANGELOG - our migration source - should record it. The runtime can be
   byte-identical to the previous release; that's fine. Default to cutting a
   release for any meaningful merged change, not just code.
 
@@ -48,7 +48,7 @@ version-pinned examples in the docs, which `tools/prerelease_check.mjs` enforces
 
 - `package.json` `version`,
 - the `export const version` constant in `jst.js` (the runtime's in-page
-  `JST.version` — a browser ES module can't read `package.json`, so this is a
+  `JST.version` - a browser ES module can't read `package.json`, so this is a
   hand-kept copy), and
 - the top entry in `CHANGELOG.md` (Keep a Changelog format, with an
   `old → new` migration table for breaking releases).
@@ -93,7 +93,7 @@ gh release delete vX.Y.Z --yes --cleanup-tag   # removes the GitHub release + ta
 - [ ] Branch off latest `main`; PR targets `main` with `Closes #NN`.
 - [ ] `package.json` + `jst.js` `version` + `CHANGELOG.md` bumped in the PR (minor for breaking in 0.x, else patch).
 - [ ] Doc version pins bumped (jsDelivr `jst@vX.Y.Z` examples); `node tools/prerelease_check.mjs` passes.
-- [ ] CI green (`npm test`) — includes `check:release`.
+- [ ] CI green (`npm test`) - includes `check:release`.
 - [ ] Branch rebased onto `main` (no merge-from-main commits); merged.
 - [ ] On `main`: `vX.Y.Z` tag pushed, GitHub release created from the tag.
 - [ ] No release branch created; no tag on a non-`main` commit.

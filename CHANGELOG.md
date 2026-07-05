@@ -10,16 +10,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 **Breaking.** One handler semantics everywhere, and jst-nav reduced to pure
 enhancement. Two rules now cover the whole library:
 
-> **An `on<event>` value is a function body** — the native inline-handler
-> contract (`event` in scope, `this` = the element) — in body HTML, in
+> **An `on<event>` value is a function body** - the native inline-handler
+> contract (`event` in scope, `this` = the element) - in body HTML, in
 > templates, for native events and synthetic ones alike.
 >
 > **jst-nav enhances elements that already act** (links navigate, forms
-> submit); it never invents behaviour on inert elements — that's a component's
-> job — and never evaluates attribute strings.
+> submit); it never invents behaviour on inert elements - that's a component's
+> job - and never evaluates attribute strings.
 
 This replaces v0.5.0's expression handlers (`onclick="$(fn)"`) and cause
-attributes (`jst-on*`, `jst-load`, `jst-poll`, shapers) one release later —
+attributes (`jst-on*`, `jst-load`, `jst-poll`, shapers) one release later -
 deliberately: v0.5.0 had zero downstream users and the uniform model closes a
 real trap (the same attribute text meaning different things in templates vs
 body HTML). `tools/codemod.mjs` migrates v0.4 **and** v0.5 spellings;
@@ -45,7 +45,7 @@ body HTML). `tools/codemod.mjs` migrates v0.4 **and** v0.5 spellings;
 | `<input jst-get="/s" jst-oninput="typeahead">` + `JST.nav.shape(…)` | `<input oninput="typeahead(event)">` + a named function calling `swap()` |
 | `<a jst-get="/p" jst-target="#out">` | `<a href="/p" jst-target="#out">` (URL from native `href`) |
 | `<button jst-action="/x" method="delete" …>` | a one-button `<form action="/x" method="delete" …>` (what Rails' `button_to` renders) |
-| `jst-trigger="…"` (any spec) | an event, a timer, or a component — plain JS |
+| `jst-trigger="…"` (any spec) | an event, a timer, or a component - plain JS |
 | `JST.nav.request(el)` / `performRequest` | `swap(target, url, options)` |
 
 ### Added
@@ -55,14 +55,14 @@ body HTML). `tools/codemod.mjs` migrates v0.4 **and** v0.5 spellings;
   work) and attach via `addEventListener` (`this` = the element). Copying a
   handler between a template and plain HTML no longer changes its meaning.
 - **Statement combinators.** `changed(event)` / `throttle(event, ms)` guards,
-  `debounce(event, ms, fn)`, `keys(event, map)` — called *inside* any handler
+  `debounce(event, ms, fn)`, `keys(event, map)` - called *inside* any handler
   body; state keyed per element + event type + delay in WeakMaps (a 300ms
   validate and a 2s autosave on one input never collide). In scope in template
   handler bodies; `JST.fn.*` / module exports elsewhere. `prevent`/`stop`/
-  `self` are deleted — they're native statements.
+  `self` are deleted - they're native statements.
 - **Synthetic `reveal` event.** Binding `onreveal` makes JST observe the
   element (IntersectionObserver) and dispatch a real `CustomEvent('reveal')`
-  each time it scrolls into view — so `addEventListener('reveal', …)` works
+  each time it scrolls into view - so `addEventListener('reveal', …)` works
   too. Observation is released on disconnect.
 - **`configure({ unsafeInlineHandlers: true })`.** Opt-in wiring of synthetic
   events written inline in plain body HTML (JST evaluates the attribute string
@@ -70,11 +70,11 @@ body HTML). `tools/codemod.mjs` migrates v0.4 **and** v0.5 spellings;
   coupled to `dev` (a flag that changes security semantics between dev and
   prod is a footgun); never enable on pages that interpolate untrusted data
   into HTML.
-- **`swap(target, url, options)`** — jst-nav's imperative primitive: the same
+- **`swap(target, url, options)`** - jst-nav's imperative primitive: the same
   pipeline as the declarative attributes (JST-Request + CSRF headers,
   `select`, out-of-band swaps, re-scan), callable from any handler. Returns
   the `Response`.
-- **`<jst-include src when="visible">`** (jst-behaviors.js) — a region whose
+- **`<jst-include src when="visible">`** (jst-behaviors.js) - a region whose
   content lives at a URL: `src` for an HTML fragment, eager by default, lazy
   on reveal. A self-filling region is a *component with well-defined
   behaviour*, not a div wearing magic attributes.
@@ -96,8 +96,8 @@ body HTML). `tools/codemod.mjs` migrates v0.4 **and** v0.5 spellings;
 
 ### Docs
 
-- **The `.md` docs tree is gone.** The documentation is one onboarding page —
-  `docs/index.html` — ordered to teach (components → syntax → handlers → data
+- **The `.md` docs tree is gone.** The documentation is one onboarding page -
+  `docs/index.html` - ordered to teach (components → syntax → handlers → data
   flow → fragments/nav → security/CSP), with annotated examples, the
   script-gadget rule, the two-spellings CSP toggle, and the
   "how far to take strict CSP" ladder (islands, not an accidental SPA).
@@ -108,7 +108,7 @@ body HTML). `tools/codemod.mjs` migrates v0.4 **and** v0.5 spellings;
 now holds across the whole library:
 
 > **HTML says where behaviour attaches; JS says what the behaviour is.**
-> Dotted modifiers and directive values configure *registration/wiring* only —
+> Dotted modifiers and directive values configure *registration/wiring* only -
 > everything about *when a handler fires* is plain JavaScript.
 
 Two grammars were removed: the template behaviour modifiers
@@ -141,32 +141,32 @@ Every removed form has exactly one rewrite:
 
 Composition order note: the old modifier chain secretly ordered operations for
 you; combinators make it visible. `prevent(debounce(300, fn))` cancels the
-default synchronously and debounces the work — `debounce(300, prevent(fn))`
+default synchronously and debounces the work - `debounce(300, prevent(fn))`
 would call `preventDefault()` 300ms too late. The codemod emits the correct
 nesting.
 
 ### Added
 
 - **Handler combinators in core.** `prevent`, `stop`, `self`, `changed`,
-  `debounce`, `throttle`, `keys` — plain functions that wrap a handler to shape
+  `debounce`, `throttle`, `keys` - plain functions that wrap a handler to shape
   when it runs. In scope bare inside every template expression, published as
   `JST.fn.*`, and exported from `jst.js`. They compose (`changed(debounce(300,
   fn))`) and, unlike the removed grammar, support user abstraction: name your
   app's behaviours (`const typeahead = fn => changed(debounce(300, fn))`) and
   reuse them.
 - **jst-nav causes.** Every element is a *cause → request → effect* sentence.
-  The cause is spelled the way HTML spells causes — in the attribute name:
+  The cause is spelled the way HTML spells causes - in the attribute name:
   `jst-on<event>` overrides the default event; `jst-on<event>="name"` gates it
-  through a **shaper** registered with `JST.nav.shape(name, fire => handler)` —
+  through a **shaper** registered with `JST.nav.shape(name, fire => handler)` -
   an inert name in the markup, JS behaviour in your app, built from the same
   combinators. `jst-load` fires on wire, `jst-load="lazy"` on reveal (like
   native `loading="lazy"`), `jst-poll="2s"` on an interval. Unknown shaper
   names fail loud after page load; a late registration heals the element.
   `JST.nav.request(el)` is the public escape hatch for exotic causes (global
-  shortcuts, `from:`-style delegation) — `performRequest` remains as an alias.
+  shortcuts, `from:`-style delegation) - `performRequest` remains as an alias.
 - **`jst-lint --csp`.** Flags native inline `on<event>=` handlers in usage HTML
   (evaluated by the browser; blocked under a strict CSP) and points at the
-  inert `jst-on<event>="name"` spelling. Template handlers are exempt — they
+  inert `jst-on<event>="name"` spelling. Template handlers are exempt - they
   compile to `addEventListener`.
 - **Lint + codemod migration coverage.** `tools/lint.mjs` flags removed
   behaviour modifiers (with the exact combinator rewrite) and leftover
@@ -175,7 +175,7 @@ nesting.
 
 ### Security
 
-- **Directive values are names, never code — documented as a hard line.**
+- **Directive values are names, never code - documented as a hard line.**
   jst-nav reads attribute values from the live DOM, so evaluating them would
   make the library a script gadget (a CSP bypass for injected HTML). Shaper
   references are inert strings; there is no expression evaluation in any
@@ -211,7 +211,7 @@ removal is a compile-time migration, covered by codemod + lint).
   `InvalidAuthenticityToken`. Same-origin-only, on by default; remap via
   `JST.nav.csrf.headerName` / disable via `JST.nav.csrf.metaName = ''`.
 - **`jst-replace-url` (#50.1).** Replaces the current history entry
-  (`history.replaceState`) instead of pushing — for filters / in-place changes
+  (`history.replaceState`) instead of pushing - for filters / in-place changes
   that shouldn't add a back-button step. Mirrors `jst-push-url`; replace wins if
   both are present.
 - **Cancelable `jst:before-swap` (#47).** Fires after the response is read (and
@@ -228,7 +228,7 @@ removal is a compile-time migration, covered by codemod + lint).
   error element in runtime mode instead of rendering empty when `dev:false`.
 - **`jst-trigger="… throttle:Ns"` was a no-op.** The modifier parsed but the
   handler never applied it (only `delay:` was wired). It now rate-limits on the
-  leading edge — fires immediately, then drops events for the interval. `delay:`
+  leading edge - fires immediately, then drops events for the interval. `delay:`
   (debounce) and `throttle:` (rate-limit) are now both real and complementary.
 
 ### Changed
@@ -247,7 +247,7 @@ removal is a compile-time migration, covered by codemod + lint).
 - **No imperative ajax API, by design (#50.3).** Documented in `directives.md`
   ("Coming from `htmx.ajax()`? You don't need an imperative API") why JST has no
   `JST.nav.navigate()`: htmx needs `htmx.process()` to wire inserted nodes, but
-  JST's `MutationObserver` upgrades them automatically — so a programmatic
+  JST's `MutationObserver` upgrades them automatically - so a programmatic
   fetch-and-swap is one line of plain `fetch` + `insertAdjacentHTML`.
 - **Corrected the README size claim.** "Roughly 15 KB runtime/compiler" →
   measured numbers: 10 KB gzipped (33 KB minified) for the full build, or 6 KB
@@ -268,8 +268,8 @@ No breaking changes.
   the View-Transition update callback) and is dispatched on a **connected** node,
   so a delegated `document`-level listener still receives it when an `outerHTML`
   swap detached the trigger (`detail.el` still identifies the source).
-- **Vendoring (#41).** Dropped `utils.js` — a dev/test scratch file with a dangling
-  `test_suite.js` import, imported by nothing at runtime — from the published
+- **Vendoring (#41).** Dropped `utils.js` - a dev/test scratch file with a dangling
+  `test_suite.js` import, imported by nothing at runtime - from the published
   `files` and the vendor docs.
 
 ### Docs
@@ -278,21 +278,21 @@ No breaking changes.
   model, with the **async-render** behaviour stated loudly (#51).
 - jst-nav **request → swap lifecycle order** + what's cancelable + the
   **`JST-Request: true`** header contract + fragment-scope (#51, #46).
-- **Vendor the whole import graph** (or the single-file `jst.global.js`) — vendoring
+- **Vendor the whole import graph** (or the single-file `jst.global.js`) - vendoring
   `jst.js` alone breaks rendering (#51).
 - `once()` **load-order** gotcha for the host-a-widget pattern, with the
   dynamic-import fix (#42); `configure()`-vs-auto-init ordering.
 
 ## 0.4.2 - 2026-06-29
 
-Docs and tooling only — the runtime is byte-identical to 0.4.1. (Docs are part of
+Docs and tooling only - the runtime is byte-identical to 0.4.1. (Docs are part of
 the deliverable: a doc fix that isn't tagged leaves the released docs stale.)
 
 ### Docs
 
 - Finished the `props`→`attributes` rename in **prose**: the "props down, events
   up" mantra → "attributes down, events up", the concept references across the
-  docs, and — most visibly — the two landing pages' syntax-highlighted `props=`
+  docs, and - most visibly - the two landing pages' syntax-highlighted `props=`
   code examples (the keyword sweep couldn't match the span-broken markup).
 - Slimmed the "Upgrading across breaking releases" section to name the CHANGELOG
   as the single migration source (de-duplicated README ↔ `install.md`,
@@ -306,29 +306,29 @@ the deliverable: a doc fix that isn't tagged leaves the released docs stale.)
 
 ## 0.4.1 - 2026-06-28
 
-Additive — **no breaking changes**.
+Additive - **no breaking changes**.
 
 ### Added
 
 - **`view-transition` attribute.** Put it on a component *instance*
   (`<my-list view-transition>`) to wrap that instance's re-renders in the
   browser's View Transition API. It's a usage-site, **per-instance** choice (the
-  consumer's presentation decision) — the component template is unchanged. The
+  consumer's presentation decision) - the component template is unchanged. The
   first paint is never animated; it degrades to an instant render where the API
   is unsupported. Style with `::view-transition-*` CSS. See
   `examples/view_transition_component.html` (and `examples/view_transitions.html`
   for a from-scratch explainer of View Transitions).
-- **`docs/from-other-frameworks.md`** — an explicit "other frameworks do X; in
+- **`docs/from-other-frameworks.md`** - an explicit "other frameworks do X; in
   JST you do Y" map: shared store / context → pass via **attributes**; refs →
   `el.querySelector`; component two-way → explicit `.attr` + event (`jst-model`
   stays for native inputs only); `computed`/`effect`/`watch` → cheap inline, pass
-  the value in, or `once()` (expensive derivation is business logic — keep it out
+  the value in, or `once()` (expensive derivation is business logic - keep it out
   of templates); `fx-ignore`/`x-ignore` → wrap the widget in a component + project
   via a slot; scoped styles → light DOM + global CSS.
 
 ### Changed
 
-- **Framework parity:** `fixi/fx-ignore` (i)→✓ — encapsulating a third-party
+- **Framework parity:** `fixi/fx-ignore` (i)→✓ - encapsulating a third-party
   widget behind a component interface and projecting its DOM via a slot (preserved
   across re-renders) is the idiomatic pattern, not a workaround. **fixi now 18/0.**
 - **Closed the `jst-ignore` proposal (#6):** a slot already gives the uncontrolled
@@ -337,13 +337,13 @@ Additive — **no breaking changes**.
 ## 0.4.0 - 2026-06-28
 
 The directive release: two opt-in libraries of declarative, string-valued
-attributes for *usage* HTML — `jst-nav` (server-driven nav) and `jst-behaviors`
-(client behaviors) — plus a reverse-infinite-scroll pattern. **Additive; no
+attributes for *usage* HTML - `jst-nav` (server-driven nav) and `jst-behaviors`
+(client behaviors) - plus a reverse-infinite-scroll pattern. **Additive; no
 breaking changes** (new opt-in files; nothing to migrate).
 
 ### Added
 
-- **`jst-nav`** — HTMX/fixi-shaped server-driven navigation: `jst-get` /
+- **`jst-nav`** - HTMX/fixi-shaped server-driven navigation: `jst-get` /
   `jst-action` + the native `method` attribute (verbs), `jst-target` (100% CSS
   selectors: bare / `this` / `closest` / `find` / `closest…find`), `jst-swap`
   (innerHTML / outerHTML / insert-adjacent / delete / none / morph / transition,
@@ -352,19 +352,19 @@ breaking changes** (new opt-in files; nothing to migrate).
   `jst-trigger` (`load` / `revealed` / `every Ns` / `keyup changed delay:Nms` /
   key-filtered `keydown[Shift+D] from:body`). In-flight requests abort on
   re-trigger; a `jst-request` class marks the trigger during the fetch.
-- **`jst-behaviors`** — Alpine-shaped client behaviors for what the platform
+- **`jst-behaviors`** - Alpine-shaped client behaviors for what the platform
   doesn't give free: `jst-intersect` (reveal / lazy media) and `jst-teleport`
-  (portal). (Toggle / dismiss / outside-click are native — Invoker Commands +
+  (portal). (Toggle / dismiss / outside-click are native - Invoker Commands +
   Popover + `<dialog>`.)
-- **Reverse infinite scroll** — `jst-swap="afterbegin"` prepends older content
+- **Reverse infinite scroll** - `jst-swap="afterbegin"` prepends older content
   and preserves scroll position (`examples/jst_nav.html`).
-- **Builds** — minified `jst-nav.min.js` (~7.5 KB) + `jst-behaviors.min.js`
+- **Builds** - minified `jst-nav.min.js` (~7.5 KB) + `jst-behaviors.min.js`
   (~2.2 KB) as opt-in add-ons that work with any core build.
-- **`docs/directives.md`** — the directive reference.
+- **`docs/directives.md`** - the directive reference.
 
 ### Changed
 
-- **Framework parity: every directive-addressable partial is now an exact ✓** —
+- **Framework parity: every directive-addressable partial is now an exact ✓** -
   HTMX 16/0, fixi 17/1 (only `fx-ignore`, proposal #6), alpine `x-teleport`. The
   corpus moves to **102 exact / 24 partial / 126**. The remaining `(i)`s
   (alpine ref/effect/store/watch, most Vue, some React/Lit) are inherent
@@ -382,11 +382,11 @@ parity study (Svelte, Solid, Angular).
 - **The template input declaration `props="…"` is renamed to `attributes="…"`**,
   with `attrs="…"` accepted as a shorthand alias. A template's inputs *are* HTML
   attributes; the new name says so (and sheds the React-flavoured "props"). The
-  old `props="…"` is **removed with no alias** — a template still using it throws
+  old `props="…"` is **removed with no alias** - a template still using it throws
   a clear, actionable error. Invalid-identifier and reserved-name errors now say
   "attribute" instead of "prop".
 
-  **Migration** — rename the one keyword on every template *definition*:
+  **Migration** - rename the one keyword on every template *definition*:
 
   | 0.2.x | 0.3.0 |
   | --- | --- |
@@ -408,10 +408,10 @@ parity study (Svelte, Solid, Angular).
   tokens + classless base + layout primitives) and `jst-components.css`
   (Modal/Accordion/Dropdown/Tabs/Toast/Combobox/Table + theme skins), with a
   "which JST tech?" badge and a 10-framework re-skin demo
-  (`examples/components_cross_section.html`). **Preview** — not yet packaged for
+  (`examples/components_cross_section.html`). **Preview** - not yet packaged for
   distribution.
 - **Framework-parity expansion.** Svelte, Solid, and Angular added to the study
-  (18 JST reimplementations) — now **9 frameworks / 126 examples**.
+  (18 JST reimplementations) - now **9 frameworks / 126 examples**.
 
 ### Tooling
 
@@ -426,18 +426,18 @@ No breaking changes (patch bump).
 
 ### Added
 
-- **Runtime-only builds — `jst.runtime.js` (ESM) and `jst.runtime.global.js`
+- **Runtime-only builds - `jst.runtime.js` (ESM) and `jst.runtime.global.js`
   (+ `.min`, classic).** Same runtime as the full builds with the compile
   pipeline omitted (`compiler`/`parser`/`lexer`/`interpreter`/`tokens`/
   `input_reader`), for apps whose templates are precompiled. About **40% smaller**
-  (~16.6 KB vs ~28.2 KB minified) and inherently strict-CSP — no `new Function`.
+  (~16.6 KB vs ~28.2 KB minified) and inherently strict-CSP - no `new Function`.
   They render only precompiled templates; an inline `<script type="jst">` that
   reaches them throws a clear "precompile this" error. (#5)
-- **`precompile.mjs --global`** — emits a classic script that reads
+- **`precompile.mjs --global`** - emits a classic script that reads
   `window.JST.registerPrecompiledTemplate` (no ES import), to pair with
   `jst.runtime.global.js` for a no-build/`file://` precompiled drop-in. The
   default ESM output now recommends `--runtime ./jst.runtime.js`.
-- **`examples/runtime_precompiled.html`** — browser smoke-tested page loading the
+- **`examples/runtime_precompiled.html`** - browser smoke-tested page loading the
   runtime-only global build with a precompiled template.
 
 ### Docs
@@ -445,7 +445,7 @@ No breaking changes (patch bump).
 - A full delivery-modes guide in `install.md`: the four client builds
   (full/runtime-only × ES-module/classic) with a quick chooser, a
   Precompiled + runtime-only section, and a table disambiguating the **two build
-  tools** — `precompile.mjs` (compiles *your* templates) vs `build_global.mjs`
+  tools** - `precompile.mjs` (compiles *your* templates) vs `build_global.mjs`
   (bundles *the framework*). `production.md` documents the prod-and-dev
   "server compiles, client renders" workflow; `known-gaps.md` and README updated.
 
@@ -457,15 +457,15 @@ modes. No breaking changes (patch bump).
 
 ### Added
 
-- **`jst.global.js` + `jst.global.min.js` — classic/global build.** The whole
+- **`jst.global.js` + `jst.global.min.js` - classic/global build.** The whole
   runtime concatenated into one non-module script that exposes `window.JST` and
   self-initializes. Because it has no `import` statements it loads from `file://`
-  with no server and no build step — for prototypes, copied/generated single
+  with no server and no build step - for prototypes, copied/generated single
   files, and one-line CDN drop-ins. Built from the module sources by
   `npm run build` (`tools/build_global.mjs`); a `build:check` mode in CI keeps the
   committed artifacts in sync with `jst.js`. Both ship on npm and as release
   assets. (file-open mode, previously listed as planned)
-- **`examples/global_build.html`** — a browser smoke-tested page that loads the
+- **`examples/global_build.html`** - a browser smoke-tested page that loads the
   global build via a plain `<script src>` and renders a component.
 
 ### Fixed
@@ -473,7 +473,7 @@ modes. No breaking changes (patch bump).
 - **`concerns-standalone.html` was broken at runtime.** The hand-assembled inline
   bundle stripped `import * as Tokens from './tokens.js'` without re-creating a
   `Tokens` object, so the lexer threw `ReferenceError: Tokens is not defined` as
-  soon as it tokenized a template — the "open directly from `file://`" demo never
+  soon as it tokenized a template - the "open directly from `file://`" demo never
   worked. It is now regenerated from the modules by the build (which emits the
   namespace shim) and covered by a functional test.
 
@@ -494,8 +494,8 @@ runtime version, and fills two doc gaps. No breaking changes (patch bump).
 ### Fixed
 
 - **`resolveTemplate` now resolves components already in the initial HTML.**
-  Auto-init runs at module eval — before an importing module can call
-  `configure({ resolveTemplate })` — so components present in the server-rendered
+  Auto-init runs at module eval - before an importing module can call
+  `configure({ resolveTemplate })` - so components present in the server-rendered
   HTML were scanned while the resolver was still `null` and silently never
   upgraded (only later-injected components worked, via the observer). `configure()`
   now re-runs the missing-template scan when a resolver is set after init. The scan
@@ -505,18 +505,18 @@ runtime version, and fills two doc gaps. No breaking changes (patch bump).
 
 ### Added
 
-- **`tools/codemod.mjs` (`jst-codemod`)** — mechanical `@event` → `on<event>`
+- **`tools/codemod.mjs` (`jst-codemod`)** - mechanical `@event` → `on<event>`
   migration that rewrites bindings only inside `<script type="jst">` blocks
   (preserving modifiers and the `$(...)` value), so it is safe to run over server
   views and fragments without touching `@media`, decorators, emails, or
   other-framework `@click`. `--dry-run` previews. (#22)
-- **`tools/lint.mjs` (`jst-lint`)** — scans every `<script type="jst">` block
+- **`tools/lint.mjs` (`jst-lint`)** - scans every `<script type="jst">` block
   across any file type for removed/renamed syntax (`@event`, `raw()`,
   `unsafeHTML()`, `document.jst`) and exits non-zero with `file:line:col`, turning
   a render-time-only failure into a build/CI failure. `--runtime jst.js` also
   flags a stale vendored runtime (`jst-ssr`/`document.jst`). Dogfooded over JST's
   own surfaces via `npm run test:lint`. (#22)
-- **`JST.version`** — the loaded runtime version as an ES export (`import { version }`)
+- **`JST.version`** - the loaded runtime version as an ES export (`import { version }`)
   and on `window.JST`, sourced from `package.json` and kept honest by a drift test.
   With `configure({ dev: true })` the runtime also logs `JST x.y.z` once on load,
   so confirming an upgrade (vs. a stale cache that renders identically) is a
@@ -524,11 +524,11 @@ runtime version, and fills two doc gaps. No breaking changes (patch bump).
 
 ### Docs
 
-- **Serving and caching the no-build assets** — dev `Cache-Control: no-cache`,
-  prod fingerprint/version — in `install.md`, to preempt stale-asset confusion. (#24)
-- **Server-rendered initial data and large payloads** — JSON attribute for small
+- **Serving and caching the no-build assets** - dev `Cache-Control: no-cache`,
+  prod fingerprint/version - in `install.md`, to preempt stale-asset confusion. (#24)
+- **Server-rendered initial data and large payloads** - JSON attribute for small
   structured data; a `<script type="application/json">` sidecar read in `once()`
-  (or slot projection) for large/newline-heavy payloads — in `writing-jst.md`. (#24)
+  (or slot projection) for large/newline-heavy payloads - in `writing-jst.md`. (#24)
 - **Upgrading across breaking releases** and **Which version is live** sections in
   `install.md` documenting the codemod, lint, and `JST.version`.
 
@@ -539,7 +539,7 @@ form, the trusted-HTML helper is consolidated to a single name, the `document.js
 global is removed in favour of the ES-module exports plus a reduced `window.JST`,
 and the unrequested `jst-ssr` adoption feature is removed because it contradicts
 JST's rendering model (the server ships a component fragment + data; the client's
-`jst.js` is the sole renderer — nothing pre-rendered is inserted into the DOM).
+`jst.js` is the sole renderer - nothing pre-rendered is inserted into the DOM).
 Major stays `0`; per 0.x semantics the breaking changes bump the minor.
 
 ### Changed (breaking)
@@ -556,13 +556,13 @@ Major stays `0`; per 0.x semantics the breaking changes bump the minor.
   handler.
 - **`on*` is reserved for event handlers; the event name must start with a
   letter.** An `on…="$(...)"` attribute whose event name does not start with a
-  letter (e.g. `on3d-ready`, `on-foo`) now throws a clear compile error — and is
-  flagged in the VS Code editor (diagnostics run the real compiler) — instead of
+  letter (e.g. `on3d-ready`, `on-foo`) now throws a clear compile error - and is
+  flagged in the VS Code editor (diagnostics run the real compiler) - instead of
   silently degrading to a literal attribute (#19).
 
 ### Removed (breaking)
 
-- **`raw()` and `unsafeHTML()` helpers.** Use `trustedHTML()` — now the only
+- **`raw()` and `unsafeHTML()` helpers.** Use `trustedHTML()` - now the only
   opt-out-of-escaping helper. The render-function helper signature drops `raw`/
   `unsafeHTML`; precompiled output is regenerated accordingly.
 - **`document.jst`.** State now lives in the module; the ES-module exports are
@@ -575,7 +575,7 @@ Major stays `0`; per 0.x semantics the breaking changes bump the minor.
   hydration test, the "SSR hydration plus projected slots" known-gap, and the SSR
   claims in the precompile note and docs are removed. Passing trusted rendered
   content (e.g. markdown) as an attribute placed with `trustedHTML(...)` is still
-  legitimate — that is data on an attribute, not pre-rendered UI structure.
+  legitimate - that is data on an attribute, not pre-rendered UI structure.
 
 ### Added
 
@@ -593,7 +593,7 @@ Major stays `0`; per 0.x semantics the breaking changes bump the minor.
 - **Nested `.prop` propagation on a parent morph (regression-tested).** When a
   parent re-renders (including via `setAttribute`, the morph-by-attribute pattern),
   data passed to a nested managed child via a `.prop="$(expr)"` binding now
-  provably flows into the child's props — `morphNode` syncs the fresh binding
+  provably flows into the child's props - `morphNode` syncs the fresh binding
   markers onto the existing managed child before its early return, and the parent's
   whole-subtree binding pass re-applies them. New runtime tests cover the
   string/object `setAttribute` path and a router-parent-delegating-to-child case,
@@ -612,12 +612,12 @@ Major stays `0`; per 0.x semantics the breaking changes bump the minor.
 | `@keydown.enter.prevent="$(fn)"` | `onkeydown.enter.prevent="$(fn)"` |
 | `@submit.prevent` / `@click.outside` / `@click.once` | `onsubmit.prevent` / `onclick.outside` / `onclick.once` |
 | `@my-event="$(fn)"` (custom event) | `onmy-event="$(fn)"` |
-| `onclick="doThing()"` (raw inline JS — was silently a native handler) | `onclick="$(doThing)"` (must be one `$(...)`) |
+| `onclick="doThing()"` (raw inline JS - was silently a native handler) | `onclick="$(doThing)"` (must be one `$(...)`) |
 | `$(raw(x))` / `$(unsafeHTML(x))` | `$(trustedHTML(x))` |
-| `document.jst.configure({...})` | `import { configure } from './jst.js'` — or `window.JST.configure({...})` |
+| `document.jst.configure({...})` | `import { configure } from './jst.js'` - or `window.JST.configure({...})` |
 | `document.jst.config` | `window.JST.config` (or the `config` returned by `configure`) |
-| `window.JST.raw` / `window.JST.unsafeHTML` / `window.JST.templates` | removed — use `trustedHTML` / ES imports |
-| `<my-cmp jst-ssr>…server HTML…</my-cmp>` | removed — send the component fragment + data (`<my-cmp …></my-cmp>`) and let `jst.js` render it |
+| `window.JST.raw` / `window.JST.unsafeHTML` / `window.JST.templates` | removed - use `trustedHTML` / ES imports |
+| `<my-cmp jst-ssr>…server HTML…</my-cmp>` | removed - send the component fragment + data (`<my-cmp …></my-cmp>`) and let `jst.js` render it |
 
 ## 0.1.1 - 2026-06-21
 

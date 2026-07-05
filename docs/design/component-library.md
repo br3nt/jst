@@ -11,7 +11,7 @@ An **opt-in** component library that makes adopting JST easy, built CSS-first in
 the spirit of [Every Layout](https://every-layout.dev) and the
 [CSS Zen Garden](https://csszengarden.com) bet: structure stays put, the whole
 look re-themes by overriding CSS custom properties. The opposite of a utility
-library like Tailwind — we lean on modern CSS and HTML *first*, and only add a
+library like Tailwind - we lean on modern CSS and HTML *first*, and only add a
 component when it genuinely beats raw HTML + CSS.
 
 Same packaging principle as the runtime-only builds: **core stays tiny,
@@ -21,7 +21,7 @@ everything here is opt-in.**
 
 Layout primitives are pure CSS with zero behavior. But building real components
 (dropdown, modal, collapsible sidebar) you hit the same handful of *behaviors*
-over and over — open/close, outside-click, escape-to-close, enter/leave
+over and over - open/close, outside-click, escape-to-close, enter/leave
 transition, fetch-and-swap. If each component re-implements them, the library
 bloats and drifts. Designed together, those behaviors factor out into a few
 **directives** the components compose. That is the simplification, and it maps
@@ -39,12 +39,12 @@ jst-nav         boost / target / swap / push-url / select + error handling   (se
 
 Dependency direction: `jst-layout` may use `jst-behaviors`; both depend only on
 the platform + core. `jst-nav` is independent. **Finding for #7:** the directives
-are *two* modules, not one — the component library depends on the behaviors tier
+are *two* modules, not one - the component library depends on the behaviors tier
 but not on nav, so they should be separately includable.
 
 ## Layering inside `jst-layout`
 
-### Layer 0 — Base (classless, Pico/Zen-Garden style)
+### Layer 0 - Base (classless, Pico/Zen-Garden style)
 
 A reset + element styling driven entirely by CSS custom properties. The
 deliverable is a **theming contract**: a documented `--jst-*` token set the user
@@ -67,13 +67,13 @@ feature is Baseline-wide):
 | Container queries | component-level responsiveness | Baseline 2023 | media queries |
 
 > **Gotcha (verified in the prototype):** relative-color shade tokens declared at
-> `:root` — `--jst-accent-600: oklch(from var(--jst-accent) …)` — are computed
+> `:root` - `--jst-accent-600: oklch(from var(--jst-accent) …)` - are computed
 > once **at `:root` scope** and inherit as that absolute color. Overriding
 > `--jst-accent` in a *descendant* subtree does **not** re-derive them, so the
 > base accent re-themes but the ramp stays frozen. **Global theming** (override at
 > `:root`) works as expected. For **subtree/per-component theming**, derive the
-> shade at use-site instead — `background: oklch(from var(--jst-accent) calc(l - 0.08) c h)`
-> in the actual property — or redeclare the ramp in that scope. `jst-layout.css`
+> shade at use-site instead - `background: oklch(from var(--jst-accent) calc(l - 0.08) c h)`
+> in the actual property - or redeclare the ramp in that scope. `jst-layout.css`
 > takes the use-site approach for button hover for this reason.
 
 The shade payoff: define **one** accent, derive the ramp.
@@ -90,9 +90,9 @@ The shade payoff: define **one** accent, derive the ramp.
 }
 ```
 
-### Layer 1 — Layout primitives (Every Layout, as CSS-only custom elements)
+### Layer 1 - Layout primitives (Every Layout, as CSS-only custom elements)
 
-Each primitive is a `<jst-*>` element styled purely with CSS — **no JavaScript
+Each primitive is a `<jst-*>` element styled purely with CSS - **no JavaScript
 required**, because an unknown element is still a valid CSS selector. Per-instance
 values come from an inline custom property (no JS) or, with the optional sugar
 loaded, from a reflected attribute.
@@ -119,19 +119,19 @@ loaded, from a reflected attribute.
 custom elements), collision-safe (unlike a bare `.stack` class), groups in
 autocomplete. No `-l` suffix.
 
-### Layer 2 — Components, run through the filter
+### Layer 2 - Components, run through the filter
 
 The rule, applied per component: **does this beat raw HTML + CSS?** If the
 platform already does it, we ship nothing (or thin CSS), and the docs *say so*.
 
-- **Just use HTML + CSS — ship nothing / thin CSS:**
+- **Just use HTML + CSS - ship nothing / thin CSS:**
   - modal → `<dialog>` + `showModal()`
   - accordion / disclosure → `<details>` / `<summary>`
   - tooltip / menu → Popover API + CSS anchor positioning
   - progress → `<progress>`
 - **Genuinely needs a component (behavior + a11y):** tabs, combobox /
   autocomplete, toast stack, sortable data table, command palette. Borrow the
-  *behavioral spec* (keyboard / focus / ARIA) from Radix / React Aria — not their
+  *behavioral spec* (keyboard / focus / ARIA) from Radix / React Aria - not their
   code.
 
 This list **shrinks as the platform advances.** Track against Baseline; when a
@@ -159,7 +159,7 @@ What the platform does *not* give us, so it stays in scope:
 | --- | --- |
 | reveal / lazy on scroll (IntersectionObserver) | `jst-intersect` (the shrunken `jst-behaviors`) |
 | custom-command routing sugar | a tiny helper, not a module (below) |
-| fetch + swap + history | `jst-nav` (#3) — see verbs below |
+| fetch + swap + history | `jst-nav` (#3) - see verbs below |
 
 ### Custom commands ride JST's existing `on*` binding
 
@@ -169,9 +169,9 @@ on its target. JST already binds *any* `on<event>="$(fn)"` via
 compiler path**. The handler gets `event.command` (`"--foo"`) and `event.source`
 (the button).
 
-> **Verified finding — `CommandEvent` does not bubble.** It is dispatched
+> **Verified finding - `CommandEvent` does not bubble.** It is dispatched
 > `bubbles: false, composed: false`, so it fires *only* on the exact `commandfor`
-> target — a parent component cannot catch a child's custom command by bubbling.
+> target - a parent component cannot catch a child's custom command by bubbling.
 > For "events up to a parent," the target handles `oncommand` and then re-emits
 > via JST's own `el.emit(name, detail)` (which *is* `bubbles: true, composed:
 > true`). This keeps the existing attributes-down / events-up mental model intact.
@@ -188,13 +188,13 @@ It is a ~10-line function, so it belongs in **core runtime helpers** (next to
 
 ## Commands and ids: no synthetic id system
 
-`commandfor` (and `popovertarget`) resolve **by `id` only** — the API has no
+`commandfor` (and `popovertarget`) resolve **by `id` only** - the API has no
 relative/scoped form. JST is light DOM, so an `id` hard-coded in a template
 collides when the component is instantiated more than once (issue #12). The
 resolution is **not** a parallel/auto id system. It is:
 
 - **Templates carry no ids.** They are templates.
-- **Ids come from the author at the usage site** — `<my-dialog id="signup">` — like
+- **Ids come from the author at the usage site** - `<my-dialog id="signup">` - like
   any HTML id, and the author keeps them unique like any HTML id.
 - **Component internals use scoped `el.querySelector` + the imperative API**
   (`el.querySelector('.panel').togglePopover()`), so they need no id at all.
@@ -202,7 +202,7 @@ resolution is **not** a parallel/auto id system. It is:
 | Case | Wiring | Ids |
 | --- | --- | --- |
 | dialog/popover in **usage HTML** | native `command`/`commandfor` | author writes the id |
-| **inside** a component (self-contained widget) | `el.querySelector(...)` + `.showModal()`/`.togglePopover()` | **none** — scoped by `el` |
+| **inside** a component (self-contained widget) | `el.querySelector(...)` + `.showModal()`/`.togglePopover()` | **none** - scoped by `el` |
 | custom command **to** a component | `command="--x" commandfor="report1"`, component listens on itself | author gives the *instance* an id |
 
 > **Verified (see `examples/invoker_commands.html`):** built-in commands, scoped
@@ -214,7 +214,7 @@ resolution is **not** a parallel/auto id system. It is:
 >
 > The one place a derived per-instance id is still sometimes unavoidable is
 > **accessibility association** (`<label for>`, `aria-describedby`), which the
-> browser resolves only by id and which has no `querySelector` substitute — see
+> browser resolves only by id and which has no `querySelector` substitute - see
 > `writing-jst.md` §14. That is "author derives an id when a11y forces one," not a
 > framework id namespace.
 
@@ -224,7 +224,7 @@ A template is a template, not an instance, so it can't invent an id. When a
 template legitimately needs one, **the id arrives as a template attribute** (what
 we currently call an attribute) and is interpolated. Three shapes, strongest first:
 
-**1. A reusable trigger pointing at an external target (best — no internal id).**
+**1. A reusable trigger pointing at an external target (best - no internal id).**
 The id is a *reference* to something the author owns elsewhere; the template holds
 no id of its own.
 
@@ -305,30 +305,30 @@ standard CSS selectors**, resolved through the platform's own selector engine
 
 - descend into a subtree → `jst-target=":scope .results"` (resolved from the
   element)
-- nearest ancestor → `jst-target="closest .item"` — `closest()` takes a **CSS
+- nearest ancestor → `jst-target="closest .item"` - `closest()` takes a **CSS
   selector**, so this stays pure CSS, not an invented keyword
 - document-wide → any selector: `#mainview`, `.panel[data-active]`
 
 No `next`/`previous`/`this` keywords. If a relationship can't be written as a CSS
-selector, we don't add a keyword for it — we reconsider the markup.
+selector, we don't add a keyword for it - we reconsider the markup.
 
 ## Gap analysis: HTMX & Alpine minus the platform, CSS, and JST
 
 JST's thesis is "take the gaps HTMX/Alpine fill, then remove whatever the
 platform, CSS, or JST already does." Subtracting those, here is what is actually
-left to build — and where each lands.
+left to build - and where each lands.
 
 ### Alpine.js
 
 | Alpine | Subtract because… | Left for JST |
 | --- | --- | --- |
-| `x-data`, `x-init` | JST components own state (`el.*`) + render | — already JST |
-| `x-show` / `x-if` / `x-bind` / `x-text` | JST `$(…)` interpolation + `$ if`/`$ for` | — already JST |
-| `x-on` (`@click`) | JST `on*` bindings | — already JST |
+| `x-data`, `x-init` | JST components own state (`el.*`) + render | - already JST |
+| `x-show` / `x-if` / `x-bind` / `x-text` | JST `$(…)` interpolation + `$ if`/`$ for` | - already JST |
+| `x-on` (`@click`) | JST `on*` bindings | - already JST |
 | `x-model` | two-way bind | **gap**: a `.value`-style sugar? (open question) |
 | `x-transition` | conditional enter/leave | `jst-transition` / #3 (partly there) |
 | `x-show` toggle + `@click.outside` | popover light-dismiss / `command` | platform |
-| `x-ref` | `el.querySelector` (scoped) | — already JST |
+| `x-ref` | `el.querySelector` (scoped) | - already JST |
 | `x-intersect` | IntersectionObserver | `jst-intersect` |
 | `x-cloak` | FOUC hide before hydrate | **gap**: a 1-line CSS/attr convention |
 | `x-teleport` | move node elsewhere | popover/`<dialog>` top-layer covers most; rest = **gap?** |
@@ -339,7 +339,7 @@ left to build — and where each lands.
 | --- | --- | --- |
 | `hx-get` / `hx-boost` | GET fetch + swap | `jst-boost` / #3 ✅ |
 | `hx-post/put/patch/delete` | verbs on any element | **gap → reuse `method` + `jst-action`** (above) |
-| `hx-target` | where it lands | `jst-target` — **CSS selectors only** (above) |
+| `hx-target` | where it lands | `jst-target` - **CSS selectors only** (above) |
 | `hx-swap` (incl. `morph`) | how it lands | `jst-swap`; JST already morphs |
 | `hx-select` | pick a subtree from a response | `jst-select` / #3 |
 | `hx-push-url` / history | back/forward, restore | `jst-push-url` / #3 |
@@ -350,7 +350,7 @@ left to build — and where each lands.
 | `hx-confirm` | confirm before send | `<dialog>` + `request-close`; or a small hook |
 | `hx-on` | inline handlers | JST `on*` |
 | `hx-disable`/`hx-disinherit` | scope control | `jst-boost="false"` opt-out (#3) |
-| SSE / WebSocket extensions | streaming | out of scope (extension) — relates to #28 |
+| SSE / WebSocket extensions | streaming | out of scope (extension) - relates to #28 |
 
 **Net new gaps surfaced by this pass** (not yet in an issue): two-way input sugar
 (`x-model`), an `x-cloak` FOUC convention, out-of-band swap stance, and
@@ -360,7 +360,7 @@ already the platform, or already tracked in #3/#28/#29.
 
 ## Docs convention
 
-Every component page starts with a **"Do you even need this? — just use HTML +
+Every component page starts with a **"Do you even need this? - just use HTML +
 CSS"** callout and a runnable example, *then* the JST component if one is still
 justified. Each modern-CSS feature is tagged with its Baseline status and a
 fallback. The message throughout: **reach for the platform first.**

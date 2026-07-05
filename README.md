@@ -3,8 +3,8 @@
 **JavaScript Templates (JST)** - reactive web components in plain HTML, with
 **JavaScript itself as the templating language**. **No build step.**
 
-**JST builds on Web Components.** Its runtime/compiler — 11.5 KB gzipped
-(37 KB minified), or 7 KB gzipped runtime-only with precompiled templates — turns a
+**JST builds on Web Components.** Its runtime/compiler - 11.5 KB gzipped
+(37 KB minified), or 7 KB gzipped runtime-only with precompiled templates - turns a
 `<script type="jst">` tag into a class and registers it with
 `customElements.define()`, so every JST component is a genuine custom element:
 inspectable in DevTools, scriptable with plain properties and
@@ -44,7 +44,7 @@ be interactive once it lands in the browser. A fetched fragment can include both
 
 ## Component API
 
-For the full onboarding walkthrough, open [the docs](https://br3nt.github.io/jst/docs/) ([docs/index.html](docs/index.html) locally) — one page, ordered to teach, with annotated examples.
+For the full onboarding walkthrough, open [the docs](https://br3nt.github.io/jst/docs/) ([docs/index.html](docs/index.html) locally) - one page, ordered to teach, with annotated examples.
 
 Inputs are declared in the case-preserving `attributes` attribute:
 
@@ -80,9 +80,9 @@ Inputs are declared in the case-preserving `attributes` attribute:
   `addEventListener`. Inside a JST template, `.prop="$(expr)"` passes rich
   JavaScript values without stringifying.
 - Inside a JST template, `on<event>="…"` attaches a listener whose value is a
-  plain **function body** — the native inline-handler contract (`event` in
+  plain **function body** - the native inline-handler contract (`event` in
   scope, `this` = the element), compiled in render scope and attached with
-  `addEventListener`. Pace behaviour with the statement combinators — in scope
+  `addEventListener`. Pace behaviour with the statement combinators - in scope
   in every handler body: `oninput="if (changed(event)) debounce(event, 300,
   () => search(this.value))"`, `onkeydown="keys(event, { Enter: () => go() })"`.
   Dotted modifiers configure registration only: `.once`, `.capture`,
@@ -109,7 +109,7 @@ JST has two modes:
   server-streamed trusted components.
 - Runtime templates are executable JavaScript. Only auto-register or resolve
   templates from sources you trust; interpolated data remains escaped by default.
-- **Global build**: load `jst.global.js` — the whole runtime as one classic
+- **Global build**: load `jst.global.js` - the whole runtime as one classic
   (non-module) script that exposes `window.JST` and runs from `file://` with no
   server. For prototypes, copied/generated single files, and CDN drop-ins
   (`jst.global.min.js` is minified). See
@@ -118,7 +118,7 @@ JST has two modes:
   This avoids runtime template compilation and is the path for strict CSP apps
   that cannot allow `unsafe-eval`. Pair it with the **runtime-only** build
   `jst.runtime.js` (or classic `jst.runtime.global.js`), which omits the compiler
-  entirely — ~40% smaller. See
+  entirely - ~40% smaller. See
   the [docs Install section](docs/index.html).
 
 ```sh
@@ -147,7 +147,7 @@ configure({
   logs the runtime version (`JST x.y.z`) once on load.
 - `autoRegister: false` disables MutationObserver registration of arriving templates.
 - `autoRegisterRoot` scopes automatic registration to a known container.
-- `resolveTemplate(name)` lazily fetches missing component definitions — including
+- `resolveTemplate(name)` lazily fetches missing component definitions - including
   components already present in the initial server-rendered HTML.
 
 The loaded runtime version is available as `import { version }` and on
@@ -156,8 +156,8 @@ The loaded runtime version is available as `import { version }` and on
 ## Upgrading across breaking releases
 
 Per-version migrations (with before → after tables) live in the
-[CHANGELOG](CHANGELOG.md). To apply them safely — removed/renamed template syntax
-only errors when a component renders in the browser — run `node tools/lint.mjs`
+[CHANGELOG](CHANGELOG.md). To apply them safely - removed/renamed template syntax
+only errors when a component renders in the browser - run `node tools/lint.mjs`
 to find leftovers (wire it into CI) and `node tools/codemod.mjs` for the
 mechanical `@event` → `on<event>` and `attrs` → `attributes` rewrites. Full guidance:
 the [CHANGELOG](CHANGELOG.md) migration tables (`tools/codemod.mjs` automates the mechanical rewrites).
