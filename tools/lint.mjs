@@ -195,39 +195,32 @@ function inRanges(index, ranges) {
   return ranges.some(([start, end]) => index >= start && index < end);
 }
 
-function scanFile(file, findings, csp) {
-  let source;
-  try {
-    source = fs.readFileSync(file, 'utf8');
-  } catch (error) {
-    console.error(`lint: cannot read ${file}: ${error.message}`);
-    process.exitCode = 1;
-    return;
-  }
+/**
+ * Decode the HTML entities used in display code (&lt; &gt; &quot; &#39; &amp;).
+ * Entities contain no newlines, so LINE numbers in the decoded text still match
+ * the source; columns shift left of any entity.
+ */
+function decodeEntities(source) {
+  return source
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&amp;/g, '&');
+}
 
+/** Run the removed-syntax rules over one text (raw source, or decoded examples). */
+function runRemovedSyntaxRules(file, source, findings, suffix = '') {
   const ranges = jstBlockRanges(source);
 
-  // Whole-file rules (usage HTML) run even when the file has no jst blocks.
+  // Whole-file rules (usage HTML) run even when the text has no jst blocks.
   for (const rule of usageRules) {
     const re = rule.find();
     let match;
     while ((match = re.exec(source))) {
       const at = rule.at(match);
       const { line, col } = locate(source, at);
-      findings.push({ file, line, col, message: rule.message(match) });
-    }
-  }
-
-  if (csp) {
-    for (const rule of cspRules) {
-      const re = rule.find();
-      let match;
-      while ((match = re.exec(source))) {
-        const at = rule.at(match);
-        if (inRanges(at, ranges)) continue;   // template handlers compile to addEventListener — exempt
-        const { line, col } = locate(source, at);
-        findings.push({ file, line, col, message: rule.message(match) });
-      }
+      findings.push({ file, line, col, message: rule.message(match) + suffix });
     }
   }
 
@@ -241,7 +234,7 @@ function scanFile(file, findings, csp) {
       const at = rule.at(match);
       if (!inRanges(at, ranges)) continue;
       const { line, col } = locate(source, at);
-      findings.push({ file, line, col, message: rule.message(match) });
+      findings.push({ file, line, col, message: rule.message(match) + suffix });
     }
   }
 
@@ -253,7 +246,43 @@ function scanFile(file, findings, csp) {
       const at = rule.at(match);
       if (!inRanges(at, openTagRanges)) continue;
       const { line, col } = locate(source, at);
-      findings.push({ file, line, col, message: rule.message(match) });
+      findings.push({ file, line, col, message: rule.message(match) + suffix });
+    }
+  }
+}
+
+function scanFile(file, findings, csp) {
+  let source;
+  try {
+    source = fs.readFileSync(file, 'utf8');
+  } catch (error) {
+    console.error(`lint: cannot read ${file}: ${error.message}`);
+    process.exitCode = 1;
+    return;
+  }
+
+  runRemovedSyntaxRules(file, source, findings);
+
+  // Docs and landing pages show code as ENTITY-ESCAPED text inside <pre>
+  // blocks, which the raw scan can't see — exactly where stale examples rot
+  // unnoticed. Decode and scan again (removed-syntax rules only; the CSP rule
+  // stays raw-only because display snippets legitimately teach native
+  // handlers). Lines match the source; columns may shift left of entities.
+  if (source.includes('&lt;')) {
+    runRemovedSyntaxRules(file, decodeEntities(source), findings, ' [in entity-escaped example code]');
+  }
+
+  if (csp) {
+    const ranges = jstBlockRanges(source);
+    for (const rule of cspRules) {
+      const re = rule.find();
+      let match;
+      while ((match = re.exec(source))) {
+        const at = rule.at(match);
+        if (inRanges(at, ranges)) continue;   // template handlers compile to addEventListener — exempt
+        const { line, col } = locate(source, at);
+        findings.push({ file, line, col, message: rule.message(match) });
+      }
     }
   }
 }

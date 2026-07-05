@@ -206,6 +206,24 @@ test('lint --csp flags native inline handlers in usage HTML but not template han
   });
 });
 
+test('lint scans entity-escaped example code in docs pages', async () => {
+  // Display snippets in docs are entity-escaped inside <pre>, invisible to the
+  // raw scan — stale examples rot there. The decoded pass catches them.
+  const page = [
+    '<h1>docs</h1>',
+    '<pre><code>&lt;script type="jst" name="x-doc"&gt;',
+    '  &lt;button onclick="$(fn)"&gt;x&lt;/button&gt;',
+    '&lt;/script&gt;</code></pre>',
+    '<pre><code>&lt;div jst-get="/x" jst-target="#out"&gt;&lt;/div&gt;</code></pre>',
+  ].join('\n');
+  await withTempFile('docs-page.html', page, async (file) => {
+    const { code, stderr } = await run('node', [lint, file]);
+    assert.equal(code, 1);
+    assert.match(stderr, /expression handler.*\[in entity-escaped example code\]/);
+    assert.match(stderr, /removed jst-get.*\[in entity-escaped example code\]/);
+  });
+});
+
 test('lint passes a clean jst file', async () => {
   const clean = `<script type="jst" name="ok" attributes="x"><button onclick="go(event)">$(x)</button></script>`;
   await withTempFile('clean.html', clean, async (file) => {

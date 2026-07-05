@@ -369,20 +369,20 @@
 
     <section id="install">
       <h2>Install</h2>
-      <p>JST has three install stories, and all three ship: open a single file from disk, develop over HTTP with visible errors, or precompile for production and strict CSP.</p>
+      <p>JST has three install stories: open a single file from disk, develop over HTTP with visible errors, or precompile for production and strict CSP.</p>
 
       <div class="grid three">
         <div class="mini" id="file-mode">
           <h3>file:// Mode</h3>
-          <p><strong>Shipped.</strong> <code>jst.global.js</code> (min: <code>jst.global.min.js</code>) is the whole runtime as one classic script — no modules, no server. Copy an example, generate a single HTML file, double-click it from disk, and it runs. It exposes <code>window.JST</code>.</p>
+          <p><code>jst.global.js</code> (min: <code>jst.global.min.js</code>) is the whole runtime as one classic script — no modules, no server. Copy an example, generate a single HTML file, double-click it from disk, and it runs. It exposes <code>window.JST</code>.</p>
         </div>
         <div class="mini" id="dev-mode">
           <h3>Dev Mode</h3>
-          <p><strong>Shipped.</strong> Serve over HTTP, load <code>jst.js</code> as an ES module, enable <code>dev: true</code>, and write templates inline.</p>
+          <p>Serve over HTTP, load <code>jst.js</code> as an ES module, enable <code>dev: true</code>, and write templates inline.</p>
         </div>
         <div class="mini" id="prod-mode">
           <h3>Prod Mode</h3>
-          <p><strong>Shipped.</strong> Precompile templates into a module for strict CSP and lower startup cost. Runtime behavior still goes through the normal JST renderer.</p>
+          <p>Precompile templates into a module for strict CSP and lower startup cost. Runtime behavior still goes through the normal JST renderer.</p>
         </div>
       </div>
 
