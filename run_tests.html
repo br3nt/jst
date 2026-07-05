@@ -1957,9 +1957,11 @@
             let changes = 0;
             if (changed(mkEvent('input'))) changes++;       // '' matches default value — no pass
             input.value = 'a';
-            if (changed(mkEvent('input'))) changes++;
+            const editEvent = mkEvent('input');
+            if (changed(editEvent)) changes++;
             if (changed(mkEvent('input'))) changes++;       // unchanged — no pass
             isEqual(1, changes, 'Expected the changed guard to pass only when the value differs');
+            isEqual(true, changed(editEvent), 'Expected changed() to answer the same for the same event');
 
             let pressed = '';
             keys({ type: 'keydown', key: 'Enter', ctrlKey: false, altKey: false, metaKey: false, shiftKey: false, target: input, currentTarget: input }, { Enter: () => { pressed = 'enter'; } });

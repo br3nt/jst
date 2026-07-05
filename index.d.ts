@@ -55,7 +55,7 @@ export function initializeTemplates(): Map<string, unknown>;
 export function debounce(event: Event, ms: number, fn: () => unknown): void;
 /** Guard: true on the leading edge, false inside the ms window. */
 export function throttle(event: Event, ms: number): boolean;
-/** Guard: true when the control's value differs from the last value seen. Call once per handler body. */
+/** Guard: true when the control's value differs from the value seen on the previous event (first comparison: the control's initial value). Idempotent per event. */
 export function changed(event: Event): boolean;
 /** Key dispatch on the normalized Ctrl+Alt+Meta+Shift+key combo. */
 export function keys(event: KeyboardEvent, map: Record<string, (event: KeyboardEvent) => unknown>): unknown;

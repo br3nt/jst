@@ -600,20 +600,26 @@ export function throttle(event, ms) {
   return true
 }
 
+// changed() answers once per event: asking again for the same event returns
+// the recorded answer instead of comparing (and shifting state) twice.
+const changedAnswers = new WeakMap()
+
 /**
- * Changed guard: true when the control's `value` differs from the last value
- * seen (the first comparison uses the control's initial/default value, so a
- * keyup that edited nothing doesn't pass). It consumes the change — call it
- * once per handler body.
+ * Changed guard: true when the control's `value` differs from the value this
+ * helper saw on the previous event for that control (the first comparison
+ * uses the control's initial/default value, so a keyup that edited nothing
+ * doesn't pass). Idempotent per event.
  */
 export function changed(event) {
+  if (changedAnswers.has(event)) return changedAnswers.get(event)
   const control = event.target
   const map = combinatorSlot(control)
   const key = `changed|${event.type}`
   const last = map.has(key) ? map.get(key) : (control.defaultValue ?? '')
-  if (control.value === last) return false
-  map.set(key, control.value)
-  return true
+  const answer = control.value !== last
+  if (answer) map.set(key, control.value)
+  changedAnswers.set(event, answer)
+  return answer
 }
 
 /**
