@@ -549,7 +549,7 @@ node tools/precompile.mjs components.html <span class="tok-attr">--out</span> di
         <tr><td><code>changed(event)</code></td><td>Returns <code>true</code> only when the control's value actually changed: skip no-op keystrokes in active search.</td></tr>
         <tr><td><code>keys(event, map)</code></td><td>Keyboard shortcuts: <code>keys(event, { Enter: () =&gt; save(), 'Meta+k': () =&gt; palette() })</code>.</td></tr>
       </table>
-      <p>They are ordinary functions: name your app's behaviours once and call them from any attribute - <code>oninput="typeahead(event)"</code>.</p>
+      <p>Our helpers are ordinary functions, so you can add your own and use them the same way: define <code>typeahead</code> once in your app's JS, then call it from any attribute - <code>oninput="typeahead(event)"</code>.</p>
 
       <div class="callout">
         <strong>Two quirks worth knowing.</strong> Bare names don't resolve to element properties in JST handlers (there is no native <code>with(element)</code> scope chain) - write <code>this.value</code>, not <code>value</code>. And <code>changed(event)</code> consumes the change - call it once per handler body.
