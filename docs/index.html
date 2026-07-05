@@ -358,23 +358,23 @@
       <div class="grid">
         <div class="mini" id="use-jst-when">
           <h3>Use JST When</h3>
-          <p>You want the backend and frontend to share the same UI representation: HTML. JST fits static sites, SSR apps, HATEOAS apps, internal tools, progressively enhanced pages, and apps where state naturally belongs in the page or on the server.</p>
+          <p>You want the backend and frontend to share the same UI representation: HTML. JST fits static sites, SSR apps, HATEOAS apps, internal tools, progressively enhanced pages, quick prototypes — including a single HTML file opened straight from disk with the global build — and apps where state naturally belongs in the page or on the server.</p>
         </div>
         <div class="mini" id="avoid-jst-when">
           <h3>Avoid JST When</h3>
-          <p>You need a large client-owned SPA, a mature component ecosystem, fine-grained reactive state graphs, strict CSP with no build step, or TypeScript-first component authoring today.</p>
+          <p>You need a large client-owned SPA, a big catalogue of ready-made third-party components today (the ecosystem, not the capability — a JST component library is on the roadmap), fine-grained reactive state graphs, or TypeScript-first component authoring. Strict CSP is supported — it just requires the one-command precompile step, because the in-browser compiler uses <code>new Function</code>.</p>
         </div>
       </div>
     </section>
 
     <section id="install">
       <h2>Install</h2>
-      <p>JST has three install stories. Development and production module modes ship now. Direct file-open mode is planned and important: it should become the path for a single HTML file an LLM can generate and a user can open from disk.</p>
+      <p>JST has three install stories, and all three ship: open a single file from disk, develop over HTTP with visible errors, or precompile for production and strict CSP.</p>
 
       <div class="grid three">
         <div class="mini" id="file-mode">
           <h3>file:// Mode</h3>
-          <p><strong>Coming.</strong> The goal is a classic/global build such as <code>jst.global.js</code> that works from disk with no server. That matters for copied examples, local prototypes, and LLM-generated HTML files.</p>
+          <p><strong>Shipped.</strong> <code>jst.global.js</code> (min: <code>jst.global.min.js</code>) is the whole runtime as one classic script — no modules, no server. Copy an example, generate a single HTML file, double-click it from disk, and it runs. It exposes <code>window.JST</code>.</p>
         </div>
         <div class="mini" id="dev-mode">
           <h3>Dev Mode</h3>
@@ -399,7 +399,7 @@
 
       <div class="code-example">
         <pre><code><span class="tok-comment"># Production mode: precompile templates for strict CSP.</span>
-node tools/precompile.mjs components.html <span class="tok-attr ann" tabindex="0" data-label="Output module" data-detail="The generated file registers templates through registerPrecompiledTemplate, so keyed morphing, form handling, slots, transitions, and modifiers still work.">--out</span> dist/templates.js <span class="tok-attr">--runtime</span> ../jst.js
+node tools/precompile.mjs components.html <span class="tok-attr ann" tabindex="0" data-label="Output module" data-detail="The generated file registers templates through registerPrecompiledTemplate, so keyed morphing, form handling, slots, transitions, and handler bindings still work.">--out</span> dist/templates.js <span class="tok-attr">--runtime</span> ../jst.js
 
 <span class="tok-tag">&lt;script</span> <span class="tok-attr">type</span>=<span class="tok-string">"module"</span> <span class="tok-attr">src</span>=<span class="tok-string">"/jst.js"</span><span class="tok-tag">&gt;&lt;/script&gt;</span>
 <span class="tok-tag">&lt;script</span> <span class="tok-attr">type</span>=<span class="tok-string">"module"</span> <span class="tok-attr ann" tabindex="0" data-label="Precompiled templates" data-detail="This avoids browser-side new Function, so it is the production path for strict Content-Security-Policy apps.">src</span>=<span class="tok-string">"/dist/templates.js"</span><span class="tok-tag">&gt;&lt;/script&gt;</span></code></pre>
@@ -515,7 +515,7 @@ node tools/precompile.mjs components.html <span class="tok-attr ann" tabindex="0
     <span class="tok-tag">&lt;todo-item</span>
       <span class="tok-attr">jst-key</span>=<span class="tok-string">"$(item.id)"</span>
       <span class="tok-prop ann" tabindex="0" data-label=".item binding" data-detail=".prop is JST-only syntax. It assigns the actual JavaScript value to the child element after render.">.item</span>=<span class="tok-string">"$(item)"</span>
-      <span class="tok-event ann" tabindex="0" data-label="ontoggle listener" data-detail="on&lt;event&gt; is JST-only syntax. It attaches a real listener and can re-emit events upward.">ontoggle</span>=<span class="tok-string">"$(event =&gt; el.emit('toggle', event.detail))"</span><span class="tok-tag">&gt;</span>
+      <span class="tok-event ann" tabindex="0" data-label="ontoggle listener" data-detail="A function body, like every handler: this listens for the child's toggle event and re-emits it upward. event is in scope; el is the host component.">ontoggle</span>=<span class="tok-string">"el.emit('toggle', event.detail)"</span><span class="tok-tag">&gt;</span>
     <span class="tok-tag">&lt;/todo-item&gt;</span>
   <span class="tok-js">$ })</span>
 <span class="tok-tag">&lt;/script&gt;</span></code></pre>
@@ -523,7 +523,7 @@ node tools/precompile.mjs components.html <span class="tok-attr ann" tabindex="0
           </div>
         </div>
       </div>
-      <div class="callout"><code>.prop</code> and <code>on&lt;event&gt;</code> are JST template syntax. They are compiled only inside <code>&lt;script type="jst"&gt;</code>, not in raw top-level HTML. An <code>on*</code> value must be exactly one <code>$(...)</code> expression; raw inline JavaScript like <code>onclick="alert(1)"</code> is rejected at compile time.</div>
+      <div class="callout"><code>.prop</code> is JST template syntax (a single <code>$(...)</code> expression, compiled only inside <code>&lt;script type="jst"&gt;</code>). <code>on&lt;event&gt;</code> means the same thing everywhere — a function body — the difference is who compiles it: the JST compiler inside a template (render scope, strict-CSP safe), the browser in raw top-level HTML (native inline handler, relaxed CSP). A <code>$(...)</code> form inside a handler body is a compile error.</div>
     </section>
 
     <section id="state-and-forms">
@@ -546,7 +546,7 @@ node tools/precompile.mjs components.html <span class="tok-attr ann" tabindex="0
         <pre><code><span class="tok-comment">&lt;!-- Parent-owned value: explicit attributes-down, events-up. --&gt;</span>
 <span class="tok-tag">&lt;input</span>
   <span class="tok-prop ann" tabindex="0" data-label=".value" data-detail="JST morphs form controls through properties, so value, checked, selected state, focus, and caret position stay stable across renders.">.value</span>=<span class="tok-string">"$(title)"</span>
-  <span class="tok-event">oninput</span>=<span class="tok-string">"$(event =&gt; el.emit('title-change', event.target.value))"</span><span class="tok-tag">&gt;</span>
+  <span class="tok-event">oninput</span>=<span class="tok-string">"el.emit('title-change', this.value)"</span><span class="tok-tag">&gt;</span>
 
 <span class="tok-comment">&lt;!-- Local draft value: reads and writes el.title. --&gt;</span>
 <span class="tok-tag">&lt;input</span> <span class="tok-attr ann" tabindex="0" data-label="jst-model" data-detail="jst-model is local host-property sugar. It reads from el.title and writes back to el.title; it is not hidden parent state.">jst-model</span>=<span class="tok-string">"title"</span><span class="tok-tag">&gt;</span></code></pre>
@@ -741,7 +741,6 @@ configure({
     <section id="known-gaps">
       <h2>Known Gaps</h2>
       <ul>
-        <li><strong>Direct file-open mode:</strong> planned, important, and not shipped yet.</li>
         <li><strong>Formatter / tree-sitter / typed expressions:</strong> planned. VS Code diagnostics and highlighting exist now.</li>
         <li><strong>Keyed reconciliation:</strong> shipped and tested, but still a high-risk area that should keep gaining adversarial tests.</li>
         <li><strong>Transitions:</strong> CSS-driven v1 shipped for keyed enter/leave; richer move/FLIP behavior may grow later.</li>
