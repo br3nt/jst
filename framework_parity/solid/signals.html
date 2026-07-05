@@ -11,7 +11,7 @@
 </head><body>
 <h1>Signals</h1>
 <script type="jst" name="so-counter" attributes="count">
-  <button onclick="$(() => el.count = (el.count || 0) + 1)">Count: $(count || 0)</button>
+  <button onclick="el.count = (el.count || 0) + 1">Count: $(count || 0)</button>
 </script>
 <so-counter data-testid="counter" count="0"></so-counter>
 <script>

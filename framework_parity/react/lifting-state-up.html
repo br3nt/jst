@@ -30,7 +30,7 @@
     $ if (active) {
       <div data-testid="body">$(slot())</div>
     $ } else {
-      <button onclick="$(() => el.emit('show'))">Show</button>
+      <button onclick="el.emit('show')">Show</button>
     $ }
   </section>
 </script>

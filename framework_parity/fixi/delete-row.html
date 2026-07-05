@@ -31,7 +31,7 @@
       $ (rows || []).forEach(r => {
         <tr data-testid="row-$(r.id)" jst-key="$(r.id)">
           <td>$(r.name)</td><td>$(r.email)</td><td>$(r.status)</td>
-          <td><button data-testid="del-$(r.id)" onclick="$(() => el.emit('remove', r.id))">Delete</button></td>
+          <td><button data-testid="del-$(r.id)" onclick="el.emit('remove', r.id)">Delete</button></td>
         </tr>
       $ })
     </tbody>

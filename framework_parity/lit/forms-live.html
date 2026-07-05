@@ -31,7 +31,7 @@
   </label>
   <p class="echo" data-testid="echo">Hello, <strong>$(name || 'stranger')</strong>!</p>
   <!-- External writes also flow back into the field because the prop is the source of truth. -->
-  <button id="reset" onclick="$(() => el.name = '')">Reset</button>
+  <button id="reset" onclick="el.name = ''">Reset</button>
 </script>
 
 <live-input id="app" name=""></live-input>

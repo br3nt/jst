@@ -30,7 +30,7 @@
       $ list.forEach(t => {
         <button role="tab" data-testid="tab-$(t.id)"
                 class="$(t.id === current ? 'active' : '')"
-                onclick="$(() => el.active = t.id)">$(t.label)</button>
+                onclick="el.active = t.id">$(t.label)</button>
       $ })
     </div>
     $ const sel = list.find(t => t.id === current);

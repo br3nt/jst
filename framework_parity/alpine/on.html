@@ -4,10 +4,10 @@
   Source: https://alpinejs.dev/directives/on
   Demonstrates: Alpine x-on / @ — event listeners, plus key modifiers
   (@keydown.enter) and event modifiers (.prevent).
-  JST status: ✓ exact — handlers are plain functions shaped with the handler
-  combinators: @keydown.enter.prevent → onkeydown="$(keys({ Enter: prevent(fn) }))",
-  @submit.prevent → onsubmit="$(prevent(fn))". No modifier grammar to learn —
-  composition order is visible in the JS.
+  JST status: ✓ exact — handlers are plain function bodies (the native inline
+  contract): @keydown.enter.prevent → onkeydown="keys(event, { Enter: … })" with
+  event.preventDefault() in the body; @submit.prevent → onsubmit="event.preventDefault()".
+  No modifier grammar to learn — it's just JS statements.
 -->
 <html lang="en">
 <head>
@@ -20,14 +20,15 @@
 
 <script type="jst" name="x-on-demo" attributes="items draft">
   $ const list = items || [];
-  <form onsubmit="$(prevent())">
+  <form onsubmit="event.preventDefault();">
     <input data-testid="field" placeholder="Add item, press Enter"
            jst-model="draft"
-           onkeydown="$(keys({ Enter: prevent(e => {
+           onkeydown="keys(event, { Enter: () => {
+             event.preventDefault();
              const v = (el.draft || '').trim();
              if (v) { el.items = [...list, v]; el.draft = ''; }
-           }) }))">
-    <button type="button" data-testid="clear" onclick="$(() => el.items = [])">Clear</button>
+           } })">
+    <button type="button" data-testid="clear" onclick="el.items = []">Clear</button>
   </form>
   <ul data-testid="list">
     $ list.forEach(i => {

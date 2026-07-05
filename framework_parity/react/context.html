@@ -33,7 +33,7 @@
      here it must receive it as a prop forwarded by its parent. -->
 <script type="jst" name="themed-button" attributes="theme label">
   <button class="$(theme)" data-testid="deep-button"
-          onclick="$(() => el.emit('toggle-theme'))">
+          onclick="el.emit('toggle-theme')">
     $(label) — theme is $(theme) (click to flip)
   </button>
 </script>

@@ -23,7 +23,7 @@
 
 <!-- onclick bound declaratively; the handler bumps the component's own count prop. -->
 <script type="jst" name="click-counter" attributes="count">
-  <button id="inc" data-testid="inc" onclick="$(() => el.count = (el.count || 0) + 1)">
+  <button id="inc" data-testid="inc" onclick="el.count = (el.count || 0) + 1">
     Click count: $(count || 0)
   </button>
 </script>

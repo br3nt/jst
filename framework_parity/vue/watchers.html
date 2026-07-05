@@ -37,7 +37,7 @@
   $   }, 300);
   $ };
   <p>Ask a yes/no question:
-    <input id="question" .value="$(question || '')" oninput="$(onInput)"></p>
+    <input id="question" .value="$(question || '')" oninput="onInput(event)"></p>
   <p id="answer">$(answer || '')</p>
 </script>
 

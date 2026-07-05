@@ -23,9 +23,9 @@
 <!-- count is the component's local reactive state (Alpine's x-data="{ count: 0 }") -->
 <script type="jst" name="x-counter" attributes="count">
   <div class="counter">
-    <button data-testid="dec" onclick="$(() => el.count = (el.count || 0) - 1)">−</button>
+    <button data-testid="dec" onclick="el.count = (el.count || 0) - 1">−</button>
     <span data-testid="value">$(count)</span>
-    <button data-testid="inc" onclick="$(() => el.count = (el.count || 0) + 1)">+</button>
+    <button data-testid="inc" onclick="el.count = (el.count || 0) + 1">+</button>
   </div>
 </script>
 

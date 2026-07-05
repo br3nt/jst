@@ -26,10 +26,10 @@
   <ul id="books">
     $ a.books.forEach(b => { <li>$(b)</li> $ })
   </ul>
-  <button id="add" onclick="$(() => el.author = { ...a, books: [...a.books, 'New Book ' + (a.books.length+1)] })">
+  <button id="add" onclick="el.author = { ...a, books: [...a.books, 'New Book ' + (a.books.length+1)] }">
     Add a book
   </button>
-  <button id="clear" onclick="$(() => el.author = { ...a, books: [] })">Clear books</button>
+  <button id="clear" onclick="el.author = { ...a, books: [] }">Clear books</button>
 </script>
 
 <computed-demo id="app"></computed-demo>

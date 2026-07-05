@@ -11,7 +11,7 @@
 </head><body>
 <h1>@if control flow</h1>
 <script type="jst" name="ng-if" attributes="loggedIn">
-  <button onclick="$(() => el.loggedIn = !el.loggedIn)">Toggle</button>
+  <button onclick="el.loggedIn = !el.loggedIn">Toggle</button>
   $ if (loggedIn) {
     <p data-testid="out">Welcome, user</p>
   $ } else {

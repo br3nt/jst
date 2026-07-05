@@ -19,12 +19,16 @@ import { compileTemplateRenderingFunction } from './compiler.js'
  *   $(slot())               project the component's original child nodes
  *   $(slot('name', 'fb'))   project nodes marked slot="name", with a fallback
  *   .prop="$(expr)"         assign expr as a JS property on the element
- *   onevent="$(fn)"         addEventListener('event', fn); dotted modifiers configure
- *                           registration only (.capture .passive .once .outside) —
- *                           shape the handler itself with the combinators below
- *   combinators             prevent/stop/self/changed/debounce/throttle/keys are in
- *                           scope in template expressions (and on JST.fn) to shape
- *                           handlers: oninput="$(changed(debounce(300, e => …)))"
+ *   onevent="body"          a plain FUNCTION BODY — the native inline-handler
+ *                           contract (`event` in scope, `this` = the element) —
+ *                           compiled in render scope, attached with
+ *                           addEventListener. Dotted modifiers configure
+ *                           registration only (.capture .passive .once .outside)
+ *   onreveal="body"         synthetic event: fires when the element scrolls into
+ *                           view (a real CustomEvent('reveal') is dispatched)
+ *   combinators             statement combinators in scope in handler bodies:
+ *                           oninput="if (changed(event)) debounce(event, 300, () => …)"
+ *                           onkeydown="keys(event, { Enter: () => … })"
  *   jst-model="prop"        local form shorthand: read prop, update el[prop]
  *   once('key', setup)      run setup once per connection, after the DOM commits;
  *                           a returned function is registered as disconnect cleanup
@@ -41,7 +45,7 @@ import { compileTemplateRenderingFunction } from './compiler.js'
  * v0.1 cache renders identically to v0.2, so `JST.version` is the one-liner that
  * tells you which runtime is actually live.
  */
-export const version = '0.5.0'
+export const version = '0.6.0'
 
 const templates = new Map()
 const config = {
@@ -49,6 +53,12 @@ const config = {
   autoRegister: true,
   autoRegisterRoot: null,
   resolveTemplate: null,
+  // Opt-in: wire SYNTHETIC events (onreveal) written as inline attributes in
+  // plain body HTML by evaluating the attribute string, the way the browser
+  // evaluates native inline handlers. Default off — see the security note on
+  // wireInlineSyntheticHandlers. Deliberately not coupled to `dev`: a flag
+  // that changes security semantics between dev and prod is a footgun.
+  unsafeInlineHandlers: false,
 }
 
 let templatesInitialized = false
@@ -91,6 +101,7 @@ export function configure(options = {}) {
 
   Object.assign(config, options);
   announceVersion();
+  if (config.unsafeInlineHandlers) wireInlineSyntheticHandlers(document);
 
   if (shouldRewire && templateObserver) {
     templateObserver.disconnect();
@@ -546,73 +557,71 @@ const boundListeners = new WeakMap()
 const modelListeners = new WeakMap()
 
 /* ---------------------------------------------------------------------------
- * Handler combinators — plain functions that wrap an event handler to shape
- * WHEN it runs. In template expressions they're in scope bare:
+ * Statement combinators — called INSIDE a handler body, which since v0.6.0 is
+ * the one handler shape everywhere (templates, native inline handlers,
+ * addEventListener). They take the current `event`, so they work per-call with
+ * no wrapper closure; state lives in a WeakMap keyed by element + event type
+ * (+ delay), and removed elements take their state with them.
  *
- *   oninput="$(changed(debounce(300, e => search(e.target.value))))"
- *   onkeydown="$(keys({ Enter: prevent(e => submit()), Escape: e => close() }))"
+ *   oninput="if (changed(event)) debounce(event, 300, () => search(this.value))"
+ *   onkeydown="keys(event, { Enter: () => go(), 'Meta+k': () => palette() })"
  *
- * Outside templates they're `JST.fn.*` / module exports. Composition order is
- * the semantics: prevent(debounce(300, fn)) preventDefaults synchronously on
- * every event and debounces the work; debounce(300, prevent(fn)) would call
- * preventDefault 300ms too late. Dotted event modifiers configure listener
- * REGISTRATION only (.capture .passive .once .outside); everything about the
- * firing is expressed in JS with these (or your own) functions.
+ * In template expressions they're in scope bare; elsewhere they're `JST.fn.*`
+ * / module exports. preventDefault/stopPropagation need no helper — they're
+ * native statements in the body: onclick="event.preventDefault(); save()".
  */
 
-/** Call event.preventDefault() synchronously, then the handler (if given). */
-export const prevent = fn => event => { event.preventDefault(); return fn && fn(event) }
-
-/** Call event.stopPropagation() synchronously, then the handler (if given). */
-export const stop = fn => event => { event.stopPropagation(); return fn && fn(event) }
-
-/** Only fire when the event's target IS the element the listener is on. */
-export const self = fn => event => {
-  if (event.target === event.currentTarget) return fn(event)
-}
-
-/** Debounce: reset a timer each event; fire once events go quiet for `ms`. */
-export const debounce = (ms, fn) => {
-  let timeout = null
-  return event => {
-    clearTimeout(timeout)
-    timeout = setTimeout(() => fn(event), ms)
-  }
-}
-
-/** Throttle: fire on the leading edge, then at most once per `ms`. */
-export const throttle = (ms, fn) => {
-  let last = 0
-  return event => {
-    const now = Date.now()
-    if (now - last < ms) return
-    last = now
-    return fn(event)
-  }
+const combinatorState = new WeakMap()
+function combinatorSlot(el) {
+  let map = combinatorState.get(el)
+  if (!map) combinatorState.set(el, map = new Map())
+  return map
 }
 
 /**
- * Only fire when the control's `value` differs from the last value seen. The
- * first comparison uses the control's initial (default) value, so a keyup that
- * edited nothing (Shift, arrow keys) doesn't fire.
+ * Debounce: run `fn` once this event goes quiet for `ms`. State is per
+ * element + event type + delay, so a 300ms validate and a 2s autosave on the
+ * same input never collide.
  */
-export const changed = fn => {
-  let last
-  return event => {
-    const control = event.target
-    if (last === undefined) last = control.defaultValue ?? ''
-    if (control.value === last) return
-    last = control.value
-    return fn(event)
-  }
+export function debounce(event, ms, fn) {
+  const map = combinatorSlot(event.currentTarget ?? event.target)
+  const key = `debounce|${event.type}|${ms}`
+  clearTimeout(map.get(key))
+  map.set(key, setTimeout(fn, ms))
+}
+
+/** Throttle guard: true on the leading edge, false inside the `ms` window. */
+export function throttle(event, ms) {
+  const map = combinatorSlot(event.currentTarget ?? event.target)
+  const key = `throttle|${event.type}|${ms}`
+  const now = Date.now()
+  if (now - (map.get(key) || 0) < ms) return false
+  map.set(key, now)
+  return true
 }
 
 /**
- * Dispatch on event.key: keys({ Enter: fn, Escape: fn, 'Shift+Enter': fn }).
+ * Changed guard: true when the control's `value` differs from the last value
+ * seen (the first comparison uses the control's initial/default value, so a
+ * keyup that edited nothing doesn't pass). It consumes the change — call it
+ * once per handler body.
+ */
+export function changed(event) {
+  const control = event.target
+  const map = combinatorSlot(control)
+  const key = `changed|${event.type}`
+  const last = map.has(key) ? map.get(key) : (control.defaultValue ?? '')
+  if (control.value === last) return false
+  map.set(key, control.value)
+  return true
+}
+
+/**
+ * Key dispatch: keys(event, { Enter: fn, Escape: fn, 'Shift+Enter': fn2 }).
  * Held modifier keys prefix the key name in Ctrl+Alt+Meta+Shift order; a bare
  * key name matches regardless of held modifiers unless a prefixed entry wins.
  */
-export const keys = map => event => {
+export function keys(event, map) {
   const combo = (event.ctrlKey ? 'Ctrl+' : '') + (event.altKey ? 'Alt+' : '')
     + (event.metaKey ? 'Meta+' : '') + (event.shiftKey ? 'Shift+' : '') + event.key
   const handler = map[combo] || map[event.key]
@@ -620,7 +629,7 @@ export const keys = map => event => {
 }
 
 /** The combinator namespace published as JST.fn (and handed to templates). */
-const combinators = { prevent, stop, self, changed, debounce, throttle, keys }
+const combinators = { changed, debounce, throttle, keys }
 
 function parseEventDescriptor(descriptor) {
   const [eventName, ...modifiers] = descriptor.split('.');
@@ -680,22 +689,23 @@ function syncModelControl(element, value) {
 // options / attach point), which a handler can't express from inside itself.
 const registrationModifiers = new Set(['capture', 'passive', 'once', 'outside']);
 
-// Removed-in-v0.5.0 behaviour modifiers → the combinator that replaces each.
+// Removed-in-v0.5.0 behaviour modifiers → the handler-body statement that
+// replaces each (v0.6.0 spellings).
 const removedModifierHints = {
-  prevent: 'onclick="$(prevent(fn))"',
-  stop: 'onclick="$(stop(fn))"',
-  self: 'onclick="$(self(fn))"',
-  debounce: 'oninput="$(debounce(300, fn))"',
-  changed: 'oninput="$(changed(fn))"',
-  enter: 'onkeydown="$(keys({ Enter: fn }))"',
-  escape: 'onkeydown="$(keys({ Escape: fn }))"',
-  esc: 'onkeydown="$(keys({ Escape: fn }))"',
-  tab: 'onkeydown="$(keys({ Tab: fn }))"',
-  space: 'onkeydown="$(keys({ \' \': fn }))"',
-  up: 'onkeydown="$(keys({ ArrowUp: fn }))"',
-  down: 'onkeydown="$(keys({ ArrowDown: fn }))"',
-  left: 'onkeydown="$(keys({ ArrowLeft: fn }))"',
-  right: 'onkeydown="$(keys({ ArrowRight: fn }))"',
+  prevent: 'onclick="event.preventDefault(); …"',
+  stop: 'onclick="event.stopPropagation(); …"',
+  self: 'onclick="if (event.target !== this) return; …"',
+  debounce: 'oninput="debounce(event, 300, () => …)"',
+  changed: 'oninput="if (changed(event)) …"',
+  enter: 'onkeydown="keys(event, { Enter: () => … })"',
+  escape: 'onkeydown="keys(event, { Escape: () => … })"',
+  esc: 'onkeydown="keys(event, { Escape: () => … })"',
+  tab: 'onkeydown="keys(event, { Tab: () => … })"',
+  space: 'onkeydown="keys(event, { \' \': () => … })"',
+  up: 'onkeydown="keys(event, { ArrowUp: () => … })"',
+  down: 'onkeydown="keys(event, { ArrowDown: () => … })"',
+  left: 'onkeydown="keys(event, { ArrowLeft: () => … })"',
+  right: 'onkeydown="keys(event, { ArrowRight: () => … })"',
 };
 
 function assertRegistrationModifiers(eventName, modifiers) {
@@ -704,9 +714,41 @@ function assertRegistrationModifiers(eventName, modifiers) {
     if (/^\d+$/.test(modifier)) continue;   // numeric tail of a removed .debounce.N — that error already points at debounce
     const hint = removedModifierHints[modifier];
     throw new Error(hint
-      ? `JST: the .${modifier} event modifier was removed in v0.5.0 — shape the handler in JS instead: ${hint}. Modifiers now only configure listener registration (.capture .passive .once .outside).`
-      : `JST: on${eventName}.${modifier} — ".${modifier}" is not an event modifier. Modifiers configure listener registration only (.capture .passive .once .outside); shape the handler itself in JS (prevent/stop/self/changed/debounce/throttle/keys).`);
+      ? `JST: the .${modifier} event modifier was removed in v0.5.0 — write it in the handler body instead: ${hint}. Modifiers now only configure listener registration (.capture .passive .once .outside).`
+      : `JST: on${eventName}.${modifier} — ".${modifier}" is not an event modifier. Modifiers configure listener registration only (.capture .passive .once .outside); everything else is plain JS in the handler body.`);
   }
+}
+
+/* ------------------------------------------------------- synthetic events */
+
+// `reveal` — fires when the element scrolls into view. Wired whenever a
+// handler binds onreveal: a shared IntersectionObserver dispatches a real
+// CustomEvent('reveal', { detail: entry }) on the element each time it enters
+// the viewport, so addEventListener('reveal', …) works like any other event.
+export const syntheticEvents = new Set(['reveal']);
+
+let revealObserver = null;
+const revealObserved = new WeakSet();
+
+function observeReveal(element) {
+  if (revealObserved.has(element) || typeof IntersectionObserver === 'undefined') return;
+  if (!revealObserver) {
+    revealObserver = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting) return;
+        if (!entry.target.isConnected) { unobserveReveal(entry.target); return; }
+        entry.target.dispatchEvent(new CustomEvent('reveal', { detail: entry }));
+      });
+    });
+  }
+  revealObserved.add(element);
+  revealObserver.observe(element);
+}
+
+function unobserveReveal(element) {
+  if (!revealObserver || !revealObserved.has(element)) return;
+  revealObserved.delete(element);
+  revealObserver.unobserve(element);
 }
 
 function buildEventListener(element, descriptor, handler) {
@@ -721,13 +763,18 @@ function buildEventListener(element, descriptor, handler) {
 
   return {
     eventName,
+    reveal: syntheticEvents.has(eventName) && eventName === 'reveal',
     target: modifierSet.has('outside') ? document : element,
     options,
+    // The handler is a `function (event) { body }` — passing it straight to
+    // addEventListener gives the native contract (`this` = the element).
+    // `.outside` attaches to document but forwards `this` as the element,
+    // which is the element the behaviour conceptually belongs to.
     listener: modifierSet.has('outside')
-      ? event => {
-          if (!element.contains(event.target)) handler(event);
+      ? function (event) {
+          if (!element.contains(event.target)) return handler.call(element, event);
         }
-      : event => handler(event),
+      : handler,
   };
 }
 
@@ -745,6 +792,7 @@ function applyBinding(element, { kind, name, value }) {
   if (typeof value === 'function') {
     const binding = buildEventListener(element, name, value)
     binding.target.addEventListener(binding.eventName, binding.listener, binding.options)
+    if (binding.reveal) observeReveal(element)
     listeners[name] = binding
     boundListeners.set(element, listeners)
     return binding
@@ -806,10 +854,7 @@ export function registerCustomElementFromTemplate(templateElement) {
       'url',
       'once',
       'trustedHTML',
-      // Handler combinators, in scope bare inside template expressions.
-      'prevent',
-      'stop',
-      'self',
+      // Statement combinators, in scope bare inside handler bodies.
       'changed',
       'debounce',
       'throttle',
@@ -994,9 +1039,6 @@ function defineCustomElementFromRender({
           url,
           (key, setupFn) => this.#runOnce(key, setupFn),
           trustedHTML,
-          prevent,
-          stop,
-          self,
           changed,
           debounce,
           throttle,
@@ -1198,7 +1240,7 @@ function defineCustomElementFromRender({
           // unless explicitly removed. Element-targeted listeners die with their
           // element; document-targeted ones leak and fire after disconnect.
           // Register one cleanup per element that strips its document listeners.
-          if (applied && applied.target === document && !this.#outsideTracked.has(element)) {
+          if (applied && (applied.target === document || applied.reveal) && !this.#outsideTracked.has(element)) {
             this.#outsideTracked.add(element);
             this.#registerDisconnectCleanup(() => {
               const current = boundListeners.get(element);
@@ -1207,6 +1249,9 @@ function defineCustomElementFromRender({
                 if (b.target === document) {
                   b.target.removeEventListener(b.eventName, b.listener, b.options);
                 }
+                // Reveal observation holds a strong ref in the shared
+                // IntersectionObserver — release it with the host.
+                if (b.reveal) unobserveReveal(element);
               });
             });
           }
@@ -1305,6 +1350,69 @@ function observeNewTemplates() {
 
   const root = config.autoRegisterRoot || document.documentElement;
   templateObserver.observe(root, { childList: true, subtree: true });
+}
+
+/* ------------------------------------------------ body-HTML synthetic events */
+
+// Native events in plain body HTML are the browser's business. SYNTHETIC
+// events (onreveal) can only fire if JST evaluates the attribute string —
+// exactly the thing a strict CSP forbids for inline handlers — so it's opt-in:
+//
+//   JST.configure({ unsafeInlineHandlers: true })
+//
+// The value is evaluated with the native contract (function body, `event` in
+// scope, `this` = the element). Never enable this on pages that interpolate
+// untrusted data into HTML: it re-opens the injected-handler hole a strict CSP
+// exists to close (the script-gadget rule — see docs). Under a CSP that blocks
+// 'unsafe-eval' the Function constructor throws loudly rather than silently.
+const inlineWired = new WeakSet();
+let inlineObserver = null;
+
+function wireInlineSyntheticHandlers(root = document) {
+  if (!config.unsafeInlineHandlers || typeof document === 'undefined') return;
+  const selector = [...syntheticEvents].map(name => `[on${name}]`).join(',');
+
+  const wire = (element) => {
+    if (inlineWired.has(element)) return;
+    inlineWired.add(element);
+    syntheticEvents.forEach(name => {
+      const body = element.getAttribute(`on${name}`);
+      if (body == null || !body.trim()) return;
+      let handler;
+      try {
+        handler = new Function('event', body);
+      } catch (error) {
+        console.error(`JST: invalid on${name} handler body on`, element, error);
+        return;
+      }
+      element.addEventListener(name, handler);
+      if (name === 'reveal') observeReveal(element);
+    });
+  };
+
+  const scan = (node) => {
+    if (!node || typeof node.querySelectorAll !== 'function') return;
+    if (node.matches && node.matches(selector)) wire(node);
+    node.querySelectorAll(selector).forEach(wire);
+  };
+
+  scan(root.documentElement || root);
+
+  if (!inlineObserver && typeof MutationObserver !== 'undefined') {
+    inlineObserver = new MutationObserver(mutations => {
+      for (const mutation of mutations) {
+        mutation.addedNodes.forEach(node => { if (node.nodeType === 1) scan(node); });
+        // Release reveal observation for removed subtrees (the shared
+        // IntersectionObserver holds strong refs).
+        mutation.removedNodes.forEach(node => {
+          if (node.nodeType !== 1) return;
+          if (node.matches && node.matches(selector)) unobserveReveal(node);
+          if (typeof node.querySelectorAll === 'function') node.querySelectorAll(selector).forEach(unobserveReveal);
+        });
+      }
+    });
+    inlineObserver.observe(root.documentElement || root, { childList: true, subtree: true });
+  }
 }
 
 export function resetJstForTests() {

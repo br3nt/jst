@@ -11,7 +11,7 @@
 </head><body>
 <h1>Property binding</h1>
 <script type="jst" name="ng-prop" attributes="locked">
-  <button onclick="$(() => el.locked = !el.locked)">Toggle</button>
+  <button onclick="el.locked = !el.locked">Toggle</button>
   <button data-testid="target" .disabled="$(!!locked)">Submit</button>
   <p data-testid="out">Submit is $(locked ? 'disabled' : 'enabled')</p>
 </script>

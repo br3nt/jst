@@ -53,16 +53,21 @@ function mergeJsTokens(templateTokens) {
   return processedTokens
 }
 
-// Tag-position binding attributes whose value is a single $(…) expression:
-//   `.prop="$(expr)"`     assigns the value as a JS property after morphing
-//   `onevent="$(fn)"`     attaches the value with addEventListener after morphing
+// Tag-position binding attributes:
+//   `.prop="$(expr)"`     the value is a single $(…) expression, assigned as a
+//                         JS property after morphing
+//   `onevent="body"`      the value is a plain FUNCTION BODY (same contract as
+//                         a native inline handler: `event` in scope, `this` is
+//                         the element) — compiled in render scope and attached
+//                         with addEventListener after morphing. $()/$-forms do
+//                         not apply inside handler bodies (v0.6.0).
 // Event handlers use the native `on<event>` attribute name with an optional
 // dotted REGISTRATION-modifier tail (`onclick.outside`, `onscroll.passive`);
-// behaviour is shaped in JS with the handler combinators (prevent/debounce/…),
-// not modifiers. The `on` prefix is stripped to recover the event descriptor. `on*` is reserved for
-// handlers: the opener matches any `on…` name (not just valid ones) so an invalid
-// handler — an event name that does not start with a letter, e.g. `on3d-ready` —
-// fails loud instead of silently degrading to a literal attribute.
+// behaviour is plain JS in the body (statement combinators like debounce/keys).
+// `on*` is reserved for handlers: the opener matches any `on…` name (not just
+// valid ones) so an invalid handler — an event name that does not start with a
+// letter, e.g. `on3d-ready` — fails loud instead of silently degrading to a
+// literal attribute.
 const bindingNamePattern = '(\\.[a-zA-Z_$][\\w$-]*(?:\\.[\\w$-]+)*|on[\\w$-]+(?:\\.[\\w$-]+)*)'
 // At the very end of an HTML chunk: a valid opener, immediately followed by the
 // $(…) expression token (which split the chunk here).
@@ -78,20 +83,20 @@ const validEventName = /^on[a-zA-Z][\w$-]*(?:\.[\w$-]+)*$/
 // in v0.5.0 in favour of the handler combinators; fail loud with the rewrite.
 const allowedModifierTail = new Set(['capture', 'passive', 'once', 'outside'])
 const removedModifierRewrites = {
-  prevent: 'onclick="$(prevent(fn))"',
-  stop: 'onclick="$(stop(fn))"',
-  self: 'onclick="$(self(fn))"',
-  debounce: 'oninput="$(debounce(300, fn))"',
-  changed: 'oninput="$(changed(fn))"',
-  enter: 'onkeydown="$(keys({ Enter: fn }))"',
-  escape: 'onkeydown="$(keys({ Escape: fn }))"',
-  esc: 'onkeydown="$(keys({ Escape: fn }))"',
-  tab: 'onkeydown="$(keys({ Tab: fn }))"',
-  space: `onkeydown="$(keys({ ' ': fn }))"`,
-  up: 'onkeydown="$(keys({ ArrowUp: fn }))"',
-  down: 'onkeydown="$(keys({ ArrowDown: fn }))"',
-  left: 'onkeydown="$(keys({ ArrowLeft: fn }))"',
-  right: 'onkeydown="$(keys({ ArrowRight: fn }))"',
+  prevent: 'onclick="event.preventDefault(); …"',
+  stop: 'onclick="event.stopPropagation(); …"',
+  self: 'onclick="if (event.target !== this) return; …"',
+  debounce: 'oninput="debounce(event, 300, () => …)"',
+  changed: 'oninput="if (changed(event)) …"',
+  enter: 'onkeydown="keys(event, { Enter: () => … })"',
+  escape: 'onkeydown="keys(event, { Escape: () => … })"',
+  esc: 'onkeydown="keys(event, { Escape: () => … })"',
+  tab: 'onkeydown="keys(event, { Tab: () => … })"',
+  space: `onkeydown="keys(event, { ' ': () => … })"`,
+  up: 'onkeydown="keys(event, { ArrowUp: () => … })"',
+  down: 'onkeydown="keys(event, { ArrowDown: () => … })"',
+  left: 'onkeydown="keys(event, { ArrowLeft: () => … })"',
+  right: 'onkeydown="keys(event, { ArrowRight: () => … })"',
 }
 
 function assertModifierTail(rawName) {
@@ -101,12 +106,20 @@ function assertModifierTail(rawName) {
     if (/^\d+$/.test(modifier)) continue   // numeric tail of a removed .debounce.N
     const hint = removedModifierRewrites[modifier]
     throw new Error(hint
-      ? `JST: ${rawName}="…" — the .${modifier} event modifier was removed in v0.5.0. Shape the handler in JS instead: ${hint}. Modifiers now only configure listener registration (.capture .passive .once .outside).`
-      : `JST: ${rawName}="…" — ".${modifier}" is not an event modifier. Modifiers configure listener registration only (.capture .passive .once .outside); shape the handler itself in JS (prevent/stop/self/changed/debounce/throttle/keys).`)
+      ? `JST: ${rawName}="…" — the .${modifier} event modifier was removed. Write it in the handler body instead: ${hint}. Modifiers now only configure listener registration (.capture .passive .once .outside).`
+      : `JST: ${rawName}="…" — ".${modifier}" is not an event modifier. Modifiers configure listener registration only (.capture .passive .once .outside); everything else is plain JS in the handler body.`)
   }
+}
+
+// The v0.5 expression-handler syntax (`onclick="$(fn)"`) was replaced by native
+// function-body semantics in v0.6.0 — same contract as a browser inline handler.
+function eventBodyMigrationError(rawName) {
+  return new Error(`JST: ${rawName}="…" — on<event> values are plain function bodies now ($()/$-forms do not apply inside them). Write ${rawName}="fn(event)" or inline statements (event.preventDefault(); …) — run tools/codemod.mjs to migrate, and see the v0.6.0 CHANGELOG migration table.`)
 }
 // Legacy `@event="$(fn)"` syntax (removed): detect and point at the replacement.
 const legacyEventTailPattern = /(^|\s)@([a-zA-Z][\w$-]*(?:\.[\w$-]+)*)\s*=\s*["']$/
+// Tag-position on<event> attribute opener (value = a plain function body).
+const eventAttributePattern = /(^|\s)(on[a-zA-Z][\w$-]*(?:\.[\w$]+)*)\s*=\s*(["'])/g
 const htmlTagInCodePattern = /<\/?[A-Za-z][\w:-]*(?:\s|>|\/)/g
 const regexKeywords = new Set([
   'return',
@@ -347,14 +360,13 @@ function inOpenTagAt(state, html, nameStart) {
   return advanceTagState({ inTag: state.inTag, quote: state.quote }, html.slice(0, nameStart)).inTag
 }
 
-// A valid binding opener sits at the very end of its HTML chunk, because the
-// $(…) value token splits the chunk there. For openers in tag-attribute position:
-//   - an `on*` name that is not a valid event handler is rejected outright;
-//   - a non-empty remainder means the value is not a lone $(…) expression —
-//     leading literal text (`onclick="run $(fn)"`) or raw inline JavaScript
-//     (`onclick="alert(1)"`).
-// Openers in text content are ignored (left as literal text). Fail loud rather
-// than silently degrading a binding to a string attribute.
+// Validate binding openers in tag-attribute position. For `.prop` bindings a
+// valid opener sits at the very end of its HTML chunk (the $(…) value token
+// splits the chunk there); a non-empty remainder means the value is not a lone
+// $(…) expression. For `on*` handlers the value is a plain function body that
+// must CLOSE within this chunk — a value split by a $-form is the removed v0.5
+// expression syntax and fails loud with the migration hint. Openers in text
+// content are ignored (left as literal text).
 function assertNoInvalidBinding(html, state) {
   bindingOpenerPattern.lastIndex = 0
   let match
@@ -364,17 +376,18 @@ function assertNoInvalidBinding(html, state) {
     if (!inOpenTagAt(state, html, nameStart)) continue
 
     const isEvent = rawName[0] !== '.'
-    if (isEvent && !validEventName.test(rawName)) {
-      throw new Error(`JST: ${rawName}="…" is not a valid JST event handler — an on<event> name must start with a letter (got event "${rawName.slice(2)}").`)
+    if (isEvent) {
+      if (!validEventName.test(rawName)) {
+        throw new Error(`JST: ${rawName}="…" is not a valid JST event handler — an on<event> name must start with a letter (got event "${rawName.slice(2)}").`)
+      }
+      assertModifierTail(rawName)
+      const remainder = html.slice(bindingOpenerPattern.lastIndex)
+      if (!remainder.includes(quote)) throw eventBodyMigrationError(rawName)
+      continue
     }
-    if (isEvent) assertModifierTail(rawName)
 
     const remainder = html.slice(bindingOpenerPattern.lastIndex)
     if (remainder.length === 0) continue
-
-    if (isEvent && remainder.includes(quote)) {
-      throw new Error(`JST: ${rawName}="…" must be a single $(…) expression. Raw inline JavaScript in on* handlers is not allowed; wrap the handler in $(…).`)
-    }
     throw new Error(`JST: ${rawName}="…" must contain exactly one $(…) expression and nothing else inside the quotes.`)
   }
 }
@@ -405,6 +418,9 @@ function matchBinding(tokens, i, state) {
   if (!inOpenTagAt(state, token.html, nameStart)) return null
 
   const { kind, name } = classifyBindingName(rawName)
+  // Defensive: on* openers whose value hits a $-form are rejected by
+  // assertNoInvalidBinding above; only .prop bindings take the expression path.
+  if (kind === 'event') throw eventBodyMigrationError(rawName)
 
   if (!(expressionToken instanceof JsExpressionToken)
     || !(closingToken instanceof HtmlToken)
@@ -421,6 +437,37 @@ function matchBinding(tokens, i, state) {
   }
 }
 
+// Emit an HTML chunk, lifting tag-position `on<event>="body"` attributes into
+// event bindings. The body text is spliced verbatim into the compiled render
+// function as `function (event) { body }` — evaluated in render scope (so
+// template params close over live values), attached with addEventListener (so
+// `this` is the element), exactly the native inline-handler contract.
+function emitHtmlChunk(html, state, instructions) {
+  eventAttributePattern.lastIndex = 0
+  let emitted = 0
+  let match
+  while ((match = eventAttributePattern.exec(html))) {
+    const nameStart = match.index + match[1].length
+    if (!inOpenTagAt(state, html, nameStart)) continue
+    const rawName = match[2]
+    if (!validEventName.test(rawName)) continue   // assertNoInvalidBinding already threw for tag position
+    const quote = match[3]
+    const valueStart = eventAttributePattern.lastIndex
+    const valueEnd = html.indexOf(quote, valueStart)
+    if (valueEnd === -1) break                    // split by a $-form — assertNoInvalidBinding threw
+    const body = html.slice(valueStart, valueEnd)
+    if (body.trim()) {
+      assertModifierTail(rawName)
+      instructions.push(`lines.push(${JSON.stringify(html.slice(emitted, nameStart))});`)
+      instructions.push(`lines.push(__bind("event", ${JSON.stringify(rawName.slice(2))}, function (event) { ${body} }));`)
+      emitted = valueEnd + 1
+    }
+    eventAttributePattern.lastIndex = valueEnd + 1
+  }
+  const tail = html.slice(emitted)
+  if (tail) instructions.push(`lines.push(${JSON.stringify(tail)});`)
+}
+
 export function interpretTemplateTokens(templateTokens) {
   const processedTokens = mergeJsTokens(templateTokens)
   const instructions = []
@@ -434,7 +481,7 @@ export function interpretTemplateTokens(templateTokens) {
     const binding = matchBinding(processedTokens, i, tagState)
 
     if (binding) {
-      instructions.push(`lines.push(${JSON.stringify(binding.htmlPrefix)});`)
+      emitHtmlChunk(binding.htmlPrefix, tagState, instructions)
       instructions.push(`lines.push(__bind(${JSON.stringify(binding.kind)}, ${JSON.stringify(binding.name)}, (${binding.expression})));`)
       // The binding contributes htmlPrefix + `name="<value>"`: advance through
       // the prefix, then the attribute's value quote opens and closes (the
@@ -447,12 +494,18 @@ export function interpretTemplateTokens(templateTokens) {
     }
 
     const token = processedTokens[i]
+
+    if (token instanceof HtmlToken) {
+      emitHtmlChunk(token.html, tagState, instructions)
+      advanceTagState(tagState, token.html)
+      continue
+    }
+
     const instruction = interpretTemplateToken(token)
     if (instruction === undefined) throw new Error(`Unknown token at index ${i}: ${token.constructor.name}`)
     instructions.push(instruction)
 
-    if (token instanceof HtmlToken) advanceTagState(tagState, token.html)
-    else if (token instanceof WhitespaceToken) advanceTagState(tagState, token.whitespace)
+    if (token instanceof WhitespaceToken) advanceTagState(tagState, token.whitespace)
     else if (token instanceof Escaped$Token) advanceTagState(tagState, '$')
   }
 

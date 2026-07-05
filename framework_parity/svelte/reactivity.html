@@ -13,7 +13,7 @@
 </head><body>
 <h1>Reactivity</h1>
 <script type="jst" name="sv-counter" attributes="count">
-  <button onclick="$(() => el.count = (el.count || 0) + 1)">count is $(count || 0)</button>
+  <button onclick="el.count = (el.count || 0) + 1">count is $(count || 0)</button>
 </script>
 <sv-counter data-testid="counter" count="0"></sv-counter>
 <p>A reassigned attribute re-renders — Svelte's core reactivity lesson.</p>

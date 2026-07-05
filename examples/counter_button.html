@@ -78,9 +78,9 @@
 
     <script type="jst" name="counter-controls" attributes="count">
         <div class="counter-box">
-            <button onclick="$(() => el.emit('change', count - 1))">−</button>
+            <button onclick="el.emit('change', count - 1)">−</button>
             <strong style="margin: 0 12px;">$(count)</strong>
-            <button onclick="$(() => el.emit('change', count + 1))">+</button>
+            <button onclick="el.emit('change', count + 1)">+</button>
         </div>
     </script>
 

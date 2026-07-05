@@ -29,7 +29,7 @@
     <p class="panel" id="panel" data-testid="panel" .hidden="$(!show)">
       You can see me when <code>show</code> is true.
     </p>
-    <button id="toggle" onclick="$(() => el.show = !el.show)">
+    <button id="toggle" onclick="el.show = !el.show">
       $(show ? 'Hide' : 'Show') panel
     </button>
   </div>

@@ -5,6 +5,103 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.6.0 - 2026-07-05
+
+**Breaking.** One handler semantics everywhere, and jst-nav reduced to pure
+enhancement. Two rules now cover the whole library:
+
+> **An `on<event>` value is a function body** — the native inline-handler
+> contract (`event` in scope, `this` = the element) — in body HTML, in
+> templates, for native events and synthetic ones alike.
+>
+> **jst-nav enhances elements that already act** (links navigate, forms
+> submit); it never invents behaviour on inert elements — that's a component's
+> job — and never evaluates attribute strings.
+
+This replaces v0.5.0's expression handlers (`onclick="$(fn)"`) and cause
+attributes (`jst-on*`, `jst-load`, `jst-poll`, shapers) one release later —
+deliberately: v0.5.0 had zero downstream users and the uniform model closes a
+real trap (the same attribute text meaning different things in templates vs
+body HTML). `tools/codemod.mjs` migrates v0.4 **and** v0.5 spellings;
+`tools/lint.mjs` flags everything left.
+
+### Migration table
+
+| Old (v0.4/v0.5) | New (v0.6.0) |
+| --- | --- |
+| `onclick="$(() => el.count++)"` | `onclick="el.count++"` |
+| `onclick="$(handler)"` | `onclick="handler(event)"` |
+| `onsubmit="$(prevent(fn))"` / `onsubmit.prevent=` | `onsubmit="event.preventDefault(); fn(event)"` |
+| `onclick="$(stop(fn))"` / `.stop` | `onclick="event.stopPropagation(); fn(event)"` |
+| `$(self(fn))` / `.self` | `if (event.target !== this) return; fn(event)` |
+| `oninput="$(debounce(300, fn))"` / `.debounce.300` | `oninput="debounce(event, 300, () => fn(event))"` |
+| `oninput="$(changed(fn))"` | `oninput="if (changed(event)) fn(event)"` |
+| `$(throttle(1000, fn))` | `if (!throttle(event, 1000)) return; fn(event)` |
+| `onkeydown="$(keys({ Enter: fn }))"` / `.enter` | `onkeydown="keys(event, { Enter: () => fn(event) })"` |
+| `.capture` `.passive` `.once` `.outside` | **unchanged** (registration-only modifiers) |
+| `<div jst-get="/x" jst-load>` | `<jst-include src="/x">` (jst-behaviors.js) |
+| `<div jst-get="/x" jst-load="lazy">` | `<jst-include src="/x" when="visible">` |
+| `<div jst-get="/x" jst-poll="2s" jst-target="this">` | `setInterval(() => swap('#region', '/x'), 2000)` |
+| `<input jst-get="/s" jst-oninput="typeahead">` + `JST.nav.shape(…)` | `<input oninput="typeahead(event)">` + a named function calling `swap()` |
+| `<a jst-get="/p" jst-target="#out">` | `<a href="/p" jst-target="#out">` (URL from native `href`) |
+| `<button jst-action="/x" method="delete" …>` | a one-button `<form action="/x" method="delete" …>` (what Rails' `button_to` renders) |
+| `jst-trigger="…"` (any spec) | an event, a timer, or a component — plain JS |
+| `JST.nav.request(el)` / `performRequest` | `swap(target, url, options)` |
+
+### Added
+
+- **Uniform handler bodies.** Template `on<event>` values compile as
+  `function (event) { body }` in render scope (closures over template params
+  work) and attach via `addEventListener` (`this` = the element). Copying a
+  handler between a template and plain HTML no longer changes its meaning.
+- **Statement combinators.** `changed(event)` / `throttle(event, ms)` guards,
+  `debounce(event, ms, fn)`, `keys(event, map)` — called *inside* any handler
+  body; state keyed per element + event type + delay in WeakMaps (a 300ms
+  validate and a 2s autosave on one input never collide). In scope in template
+  handler bodies; `JST.fn.*` / module exports elsewhere. `prevent`/`stop`/
+  `self` are deleted — they're native statements.
+- **Synthetic `reveal` event.** Binding `onreveal` makes JST observe the
+  element (IntersectionObserver) and dispatch a real `CustomEvent('reveal')`
+  each time it scrolls into view — so `addEventListener('reveal', …)` works
+  too. Observation is released on disconnect.
+- **`configure({ unsafeInlineHandlers: true })`.** Opt-in wiring of synthetic
+  events written inline in plain body HTML (JST evaluates the attribute string
+  the way the browser evaluates native handlers). Default off; deliberately not
+  coupled to `dev` (a flag that changes security semantics between dev and
+  prod is a footgun); never enable on pages that interpolate untrusted data
+  into HTML.
+- **`swap(target, url, options)`** — jst-nav's imperative primitive: the same
+  pipeline as the declarative attributes (JST-Request + CSRF headers,
+  `select`, out-of-band swaps, re-scan), callable from any handler. Returns
+  the `Response`.
+- **`<jst-include src when="visible">`** (jst-behaviors.js) — a region whose
+  content lives at a URL: `src` for an HTML fragment, eager by default, lazy
+  on reveal. A self-filling region is a *component with well-defined
+  behaviour*, not a div wearing magic attributes.
+
+### Changed
+
+- **jst-nav is enhancement-only.** Links and forms carrying any effect
+  attribute (`jst-target`, `jst-swap`, …) are upgraded on their **native
+  activation**; URL and verb come from native `href`/`action`/`method`.
+  `jst-get`/`jst-action`/`jst-trigger`/`jst-on*`/`jst-load`/`jst-poll`,
+  shapers, and `request()`/`performRequest` are removed and fail loud with the
+  rewrite. `jst-boost`, OOB swaps, CSRF, history, `jst-confirm`, error routing
+  and the cancelable lifecycle events are unchanged.
+- **Codemod + lint cover the full migration.** `codemod.mjs` rewrites v0.4
+  dotted modifiers, v0.5 expression handlers and wrapper combinators (166
+  handler rewrites across this repo were done by the tool itself); `lint.mjs`
+  flags `$()` in handler bodies, removed modifiers and removed nav attributes,
+  and `--csp` lists native inline handlers for strict-CSP migrations.
+
+### Docs
+
+- **The `.md` docs tree is gone.** The documentation is one onboarding page —
+  `docs/index.html` — ordered to teach (components → syntax → handlers → data
+  flow → fragments/nav → security/CSP), with annotated examples, the
+  script-gadget rule, the two-spellings CSP toggle, and the
+  "how far to take strict CSP" ladder (islands, not an accidental SPA).
+
 ## 0.5.0 - 2026-07-04
 
 **Breaking.** The behaviour microsyntaxes are gone, replaced by one rule that

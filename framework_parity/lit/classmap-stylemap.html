@@ -33,9 +33,9 @@
   <div id="target" data-testid="box" class="$(cls)" style="$(style)">
     active=$(String(active)) · big=$(String(big)) · color=$(color)
   </div>
-  <button id="toggle-active" onclick="$(() => el.active = !el.active)">Toggle active</button>
-  <button id="toggle-big" onclick="$(() => el.big = !el.big)">Toggle big</button>
-  <button id="cycle-color" onclick="$(() => el.color = el.color === '#a00' ? '#06c' : '#a00')">Cycle color</button>
+  <button id="toggle-active" onclick="el.active = !el.active">Toggle active</button>
+  <button id="toggle-big" onclick="el.big = !el.big">Toggle big</button>
+  <button id="cycle-color" onclick="el.color = el.color === '#a00' ? '#06c' : '#a00'">Cycle color</button>
 </script>
 
 <map-demo id="app" active="false" big="false" color="#06c"></map-demo>

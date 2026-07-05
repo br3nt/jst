@@ -19,7 +19,7 @@
   <div>
     <input data-testid="field" placeholder="Type your name"
            .value="$(name || '')"
-           oninput="$(e => el.name = e.target.value)">
+           oninput="const e = event; el.name = e.target.value">
     <!-- x-text equivalent: text content comes from the expression, escaped -->
     <p>Hello, <strong data-testid="out">$(name || 'stranger')</strong>!</p>
   </div>

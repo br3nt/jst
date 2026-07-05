@@ -11,7 +11,7 @@
 </head><body>
 <h1>Event binding</h1>
 <script type="jst" name="ng-clicker" attributes="clicks">
-  <button onclick="$(() => el.clicks = (el.clicks || 0) + 1)">Click me</button>
+  <button onclick="el.clicks = (el.clicks || 0) + 1">Click me</button>
   <p data-testid="out">Clicked $(clicks || 0) times</p>
 </script>
 <ng-clicker data-testid="host" clicks="0"></ng-clicker>

@@ -34,12 +34,12 @@
           <td>$(u.email)</td>
           <td><input type="checkbox" data-testid="cb-$(u.id)"
                      .checked="$(d[u.id] !== undefined ? d[u.id] : u.active)"
-                     onchange="$(e => el.emit('toggle', { id: u.id, active: e.target.checked }))"></td>
+                     onchange="const e = event; el.emit('toggle', { id: u.id, active: e.target.checked })"></td>
         </tr>
       $ })
     </tbody>
   </table>
-  <button data-testid="apply" onclick="$(() => el.emit('apply'))">Bulk Update</button>
+  <button data-testid="apply" onclick="el.emit('apply')">Bulk Update</button>
 </script>
 
 <h1>Bulk Update</h1>

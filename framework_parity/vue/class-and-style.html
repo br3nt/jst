@@ -28,9 +28,9 @@
        style="color: $(color); font-size: $(size)px">
     Bound class = "$(cls)"
   </div>
-  <button id="toggle-active" onclick="$(() => el.active = !el.active)">Toggle active</button>
-  <button id="toggle-error" onclick="$(() => el.haserror = !el.haserror)">Toggle error</button>
-  <button id="grow" onclick="$(() => el.size = (el.size || 0) + 2)">Grow text</button>
+  <button id="toggle-active" onclick="el.active = !el.active">Toggle active</button>
+  <button id="toggle-error" onclick="el.haserror = !el.haserror">Toggle error</button>
+  <button id="grow" onclick="el.size = (el.size || 0) + 2">Grow text</button>
 </script>
 
 <class-style id="app" active="true" haserror="false" color="#333" size="16"></class-style>

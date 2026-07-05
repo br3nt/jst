@@ -32,16 +32,16 @@
 <script type="jst" name="task-board" attributes="tasks">
   <div class="add">
     <input type="text" data-testid="new" placeholder="Add task"
-           onkeydown="$(e => { if (e.key === 'Enter' && e.target.value.trim()) { el.emit('action', { type: 'added', text: e.target.value.trim() }); e.target.value = ''; } })">
+           onkeydown="const e = event; if (e.key === 'Enter' && e.target.value.trim()) { el.emit('action', { type: 'added', text: e.target.value.trim() }); e.target.value = ''; }">
   </div>
   <ul data-testid="list">
     $ (tasks || []).forEach(task => {
       <li>
         <input type="checkbox" .checked="$(task.done)"
-               onchange="$(e => el.emit('action', { type: 'changed', id: task.id, done: e.target.checked }))">
+               onchange="const e = event; el.emit('action', { type: 'changed', id: task.id, done: e.target.checked })">
         <input type="text" .value="$(task.text)"
-               oninput="$(e => el.emit('action', { type: 'changed', id: task.id, text: e.target.value }))">
-        <button onclick="$(() => el.emit('action', { type: 'deleted', id: task.id }))">✕</button>
+               oninput="const e = event; el.emit('action', { type: 'changed', id: task.id, text: e.target.value })">
+        <button onclick="el.emit('action', { type: 'deleted', id: task.id })">✕</button>
       </li>
     $ })
   </ul>

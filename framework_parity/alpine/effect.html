@@ -23,7 +23,7 @@
   $ document.title = 'count = ' + count;
   $ el.__runs = (el.__runs || 0) + 1;
   <div>
-    <button data-testid="inc" onclick="$(() => el.count = (el.count || 0) + 1)">increment</button>
+    <button data-testid="inc" onclick="el.count = (el.count || 0) + 1">increment</button>
     <p>count: <strong data-testid="value">$(count)</strong></p>
     <p data-testid="effect">document.title is kept in sync (effect ran $(el.__runs) times)</p>
   </div>

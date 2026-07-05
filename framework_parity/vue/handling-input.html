@@ -18,8 +18,8 @@
   $ const reverse = () => el.message = message.split('').reverse().join('');
   $ const notify  = () => alert('navigated!');
   <h1 id="message">$(message)</h1>
-  <button id="reverse" onclick="$(reverse)">Reverse Message</button>
-  <a href="#" id="notify" onclick="$(e => { e.preventDefault(); notify(); })">Notify</a>
+  <button id="reverse" onclick="reverse(event)">Reverse Message</button>
+  <a href="#" id="notify" onclick="const e = event; e.preventDefault(); notify();">Notify</a>
 </script>
 
 <handling-input id="app" message="Hello World!"></handling-input>

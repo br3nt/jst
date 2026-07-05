@@ -4,16 +4,26 @@
  * © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst
  */
 /**
- * Codemod: migrate removed JST syntax inside <script type="jst"> blocks:
- *   - `@event="$(fn)"` -> `onevent="$(fn)"`
- *   - behaviour modifiers -> handler combinators (v0.5.0):
- *       onsubmit.prevent="$(fn)"      -> onsubmit="$(prevent(fn))"
- *       oninput.debounce.300="$(fn)"  -> oninput="$(debounce(300, fn))"
- *       onkeydown.enter="$(fn)"       -> onkeydown="$(keys({ Enter: fn }))"
- *     Registration modifiers (.capture .passive .once .outside) are kept on
- *     the attribute name. The rewrite nests checks-first, work-debounced
- *     (`prevent(debounce(...))`), which is the correct composition even where
- *     the old modifier chain secretly reordered for you.
+ * Codemod: migrate removed JST syntax inside <script type="jst"> blocks to the
+ * v0.6.0 uniform handler model (on<event> = a plain function body, the native
+ * inline-handler contract):
+ *   - `@event="$(fn)"` -> `onevent` (then migrated like any handler)
+ *   - v0.5 expression handlers -> function bodies:
+ *       onclick="$(() => el.count++)"   -> onclick="el.count++"
+ *       onclick="$(handler)"            -> onclick="handler(event)"
+ *       onclick="$(e => save(e))"       -> onclick="const e = event; save(e)"
+ *   - v0.5 wrapper combinators -> body statements:
+ *       onsubmit="$(prevent(fn))"       -> onsubmit="event.preventDefault(); fn(event)"
+ *       oninput="$(changed(debounce(300, fn)))"
+ *         -> oninput="if (!changed(event)) return; debounce(event, 300, () => { fn(event) })"
+ *       onkeydown="$(keys({ Enter: fn }))" -> onkeydown="keys(event, { Enter: fn })"
+ *   - v0.4 behaviour modifiers -> body statements (registration modifiers
+ *     .capture .passive .once .outside stay on the attribute name):
+ *       onsubmit.prevent="$(fn)"        -> onsubmit="event.preventDefault(); fn(event)"
+ *       onkeydown.enter="$(fn)"         -> onkeydown="if (event.key !== 'Enter') return; fn(event)"
+ *       oninput.debounce.300="$(fn)"    -> oninput="debounce(event, 300, () => { fn(event) })"
+ *     Guards run synchronously; debounced work is deferred — the correct
+ *     composition even where the old modifier chain secretly reordered for you.
  *   - open-tag `attrs="..."` -> `attributes="..."`
  *
  * It rewrites bindings ONLY inside `<script type="jst">` blocks, so it is safe to
@@ -58,52 +68,134 @@ function parseArgs(argv) {
 function usage(code) {
   const out = code === 0 ? console.log : console.error;
   out('Usage: node tools/codemod.mjs <files...> [--dry-run]');
-  out('  Inside <script type="jst"> blocks, rewrites @event="$(fn)" -> onevent="$(fn)",');
-  out('  behaviour modifiers -> combinators (onclick.prevent -> onclick="$(prevent(fn))"),');
-  out('  and attrs="…" -> attributes="…".');
+  out('  Inside <script type="jst"> blocks, rewrites @event= and the v0.4/v0.5 handler');
+  out('  spellings (dotted behaviour modifiers, $(…) expression handlers, wrapper');
+  out('  combinators) to v0.6.0 function-body handlers, and attrs="…" -> attributes="…".');
   process.exit(code);
 }
 
-// v0.5.0: behaviour modifiers became handler combinators; only these stay.
+// Registration modifiers survive on the attribute name; everything else was a
+// behaviour modifier and becomes statements in the handler body.
 const registrationMods = new Set(['capture', 'passive', 'once', 'outside']);
 const keyModMap = {
-  enter: 'Enter', escape: 'Escape', esc: 'Escape', tab: 'Tab', space: "' '",
+  enter: 'Enter', escape: 'Escape', esc: 'Escape', tab: 'Tab', space: ' ',
   up: 'ArrowUp', down: 'ArrowDown', left: 'ArrowLeft', right: 'ArrowRight',
 };
 
-/** Wrap a handler expression in the combinators equivalent to `mods`. */
-function wrapExpression(mods, expr) {
-  let out = expr.trim();
-  const debounceIdx = mods.indexOf('debounce');
-  if (debounceIdx !== -1) {
-    const n = /^\d+$/.test(mods[debounceIdx + 1] || '') ? mods[debounceIdx + 1] : '250';
-    out = `debounce(${n}, ${out})`;
+/** Slice out a balanced (…) group starting at `open` (the index of '('). */
+function balancedGroup(src, open) {
+  let depth = 0;
+  for (let i = open; i < src.length; i++) {
+    if (src[i] === '(') depth++;
+    else if (src[i] === ')' && --depth === 0) return src.slice(open + 1, i);
   }
-  if (mods.includes('stop')) out = `stop(${out})`;
-  if (mods.includes('prevent')) out = `prevent(${out})`;
-  if (mods.includes('self')) out = `self(${out})`;
-  const key = mods.find(mod => keyModMap[mod]);
-  if (key) out = `keys({ ${keyModMap[key]}: ${out} })`;
-  return out;
+  return null;
+}
+
+/** Split "MS, HANDLER" at the first top-level comma. */
+function splitFirstArg(src) {
+  let depth = 0;
+  for (let i = 0; i < src.length; i++) {
+    const ch = src[i];
+    if (ch === '(' || ch === '{' || ch === '[') depth++;
+    else if (ch === ')' || ch === '}' || ch === ']') depth--;
+    else if (ch === ',' && depth === 0) return [src.slice(0, i).trim(), src.slice(i + 1).trim()];
+  }
+  return null;
+}
+
+/** Strip `{ … }` from a braced arrow body; leave expression bodies alone. */
+function arrowBodyToStatements(bodySrc) {
+  const trimmed = bodySrc.trim();
+  if (trimmed.startsWith('{') && trimmed.endsWith('}')) return trimmed.slice(1, -1).trim();
+  return trimmed;
+}
+
+// Rewrite keys({...}) map VALUES that are v0.5 wrapper-combinator calls
+// (prevent(fn) / stop(fn)) into plain handler functions.
+function rewriteKeysMap(mapSrc) {
+  let out = '';
+  let i = 0;
+  const wrapperAt = /\b(prevent|stop)\s*\(/g;
+  let match;
+  while ((match = wrapperAt.exec(mapSrc))) {
+    const open = mapSrc.indexOf('(', match.index + match[1].length);
+    const inner = balancedGroup(mapSrc, open);
+    if (inner === null) continue;
+    const call = match[1] === 'prevent' ? 'event.preventDefault()' : 'event.stopPropagation()';
+    out += mapSrc.slice(i, match.index)
+      + `event => { ${call}; return (${inner.trim()})(event); }`;
+    i = open + inner.length + 2;
+    wrapperAt.lastIndex = i;
+  }
+  return out + mapSrc.slice(i);
 }
 
 /**
- * Rewrite `on<event>.<mods>="$(expr)"` bindings whose tail contains removed
- * behaviour modifiers. The expression is extracted with a balanced-paren scan
- * (good enough for handler expressions; a paren imbalanced inside a string
- * literal is left untouched rather than mangled).
+ * Convert a v0.5 handler EXPRESSION (something that evaluated to a handler
+ * function) into v0.6 function-body STATEMENTS. Handles the wrapper
+ * combinators, arrows, identifiers, and async; falls back to calling the
+ * expression, which is semantically correct for any stateless handler value.
  */
-function migrateModifierBindings(body) {
-  const bindingPattern = /(^|\s)(on[a-zA-Z][\w$-]*)((?:\.[\w$]+)+)(\s*=\s*)(["'])\$\(/g;
+function expressionToBody(expr) {
+  expr = expr.trim();
+  let m;
+
+  // v0.5 wrapper combinators → statements (guards sync, work deferred)
+  if ((m = expr.match(/^prevent\s*\(([\s\S]*)\)$/)))
+    return joinStatements('event.preventDefault();', m[1].trim() && expressionToBody(m[1]));
+  if ((m = expr.match(/^stop\s*\(([\s\S]*)\)$/)))
+    return joinStatements('event.stopPropagation();', m[1].trim() && expressionToBody(m[1]));
+  if ((m = expr.match(/^self\s*\(([\s\S]*)\)$/)))
+    return joinStatements('if (event.target !== this) return;', expressionToBody(m[1]));
+  if ((m = expr.match(/^changed\s*\(([\s\S]*)\)$/)))
+    return joinStatements('if (!changed(event)) return;', expressionToBody(m[1]));
+  if ((m = expr.match(/^throttle\s*\(([\s\S]*)\)$/))) {
+    const args = splitFirstArg(m[1]);
+    if (args) return joinStatements(`if (!throttle(event, ${args[0]})) return;`, expressionToBody(args[1]));
+  }
+  if ((m = expr.match(/^debounce\s*\(([\s\S]*)\)$/))) {
+    const args = splitFirstArg(m[1]);
+    if (args) return `debounce(event, ${args[0]}, () => { ${expressionToBody(args[1])} })`;
+  }
+  if ((m = expr.match(/^keys\s*\(([\s\S]*)\)$/)))
+    return `keys(event, ${rewriteKeysMap(m[1].trim())})`;
+
+  // bare identifier → call it with the event
+  if (/^[a-zA-Z_$][\w$.]*$/.test(expr)) return `${expr}(event)`;
+
+  // zero-param arrow → its body IS the handler body
+  if ((m = expr.match(/^\(\s*\)\s*=>\s*([\s\S]*)$/))) return arrowBodyToStatements(m[1]);
+
+  // single-param arrow → alias the param to `event` (or use it directly)
+  if ((m = expr.match(/^(?:\(\s*([a-zA-Z_$][\w$]*)\s*\)|([a-zA-Z_$][\w$]*))\s*=>\s*([\s\S]*)$/))) {
+    const param = m[1] || m[2];
+    const body = arrowBodyToStatements(m[3]);
+    return param === 'event' ? body : `const ${param} = event; ${body}`;
+  }
+
+  // async / anything else: calling the expression with the event is correct
+  // for any stateless handler value (async handlers fire-and-forget natively).
+  return `(${expr})(event)`;
+}
+
+function joinStatements(...parts) {
+  return parts.filter(Boolean).map(p => p.trim()).join(' ').replace(/;\s*$/, ';').replace(/;$/, ';');
+}
+
+/**
+ * Rewrite every `on<event>[.mods]="$(expr)"` binding (v0.4 and v0.5 spellings)
+ * to a v0.6 function body. The expression is extracted with a balanced-paren
+ * scan (good enough for handler expressions; a paren imbalanced inside a
+ * string literal is left untouched — lint will flag it).
+ */
+function migrateHandlerBindings(body) {
+  const bindingPattern = /(^|\s)(on[a-zA-Z][\w$-]*)((?:\.[\w$]+)*)(\s*=\s*)(["'])\s*\$\(/g;
   let count = 0;
   let result = '';
   let last = 0;
   let match;
   while ((match = bindingPattern.exec(body))) {
-    const mods = match[3].split('.').filter(Boolean);
-    const removed = mods.filter(mod => !registrationMods.has(mod) && !/^\d+$/.test(mod));
-    if (!removed.length) continue;   // registration-only tail — valid, leave alone
-
     const exprStart = bindingPattern.lastIndex;   // just after `$(`
     let i = exprStart;
     let depth = 1;
@@ -113,14 +205,34 @@ function migrateModifierBindings(body) {
       i++;
     }
     const quote = match[5];
-    if (depth !== 0 || body[i] !== quote) continue;   // can't rewrite safely — lint will flag it
+    const closeQuote = body.indexOf(quote, i);
+    if (depth !== 0 || closeQuote === -1 || body.slice(i, closeQuote).trim() !== '') continue;
 
     const expr = body.slice(exprStart, i - 1);
+    const mods = match[3].split('.').filter(Boolean);
     const kept = mods.filter(mod => registrationMods.has(mod));
+
+    // Inner conversion first, then v0.4 dotted behaviour modifiers as body
+    // statements: guards run synchronously, debounced work is deferred.
+    let newBody = expressionToBody(expr);
+    const debounceIdx = mods.indexOf('debounce');
+    if (debounceIdx !== -1) {
+      const n = /^\d+$/.test(mods[debounceIdx + 1] || '') ? mods[debounceIdx + 1] : '250';
+      newBody = `debounce(event, ${n}, () => { ${newBody} })`;
+    }
+    if (mods.includes('stop')) newBody = joinStatements('event.stopPropagation();', newBody);
+    if (mods.includes('prevent')) newBody = joinStatements('event.preventDefault();', newBody);
+    if (mods.includes('self')) newBody = joinStatements('if (event.target !== this) return;', newBody);
+    const keyMod = mods.find(mod => keyModMap[mod]);
+    if (keyMod) newBody = joinStatements(`if (event.key !== '${keyModMap[keyMod]}') return;`, newBody);
+
+    // A rewritten body must not contain the delimiting quote.
+    if (newBody.includes(quote)) { bindingPattern.lastIndex = closeQuote + 1; continue; }
+
     const name = match[2] + (kept.length ? '.' + kept.join('.') : '');
     result += body.slice(last, match.index)
-      + match[1] + name + match[4] + quote + '$(' + wrapExpression(mods, expr) + ')' + quote;
-    last = i + 1;
+      + match[1] + name + match[4] + quote + newBody + quote;
+    last = closeQuote + 1;
     bindingPattern.lastIndex = last;
     count++;
   }
@@ -135,9 +247,9 @@ function migrateBody(body) {
     count++;
     return `${lead}on${eventAndMods}${tail}`;
   });
-  // Then migrate behaviour-modifier tails (including ones the @event pass just produced).
-  const modifierResult = migrateModifierBindings(legacyMigrated);
-  return { migrated: modifierResult.migrated, count: count + modifierResult.count };
+  // Then migrate handler bindings (including ones the @event pass just produced).
+  const handlerResult = migrateHandlerBindings(legacyMigrated);
+  return { migrated: handlerResult.migrated, count: count + handlerResult.count };
 }
 
 function migrateOpenTag(open) {

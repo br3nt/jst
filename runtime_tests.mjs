@@ -638,7 +638,7 @@ test('name is an ordinary prop when declared in attributes', async () => {
     {
       name: 'x-hello',
       attributes: [{ name: 'attributes', value: 'name' }],
-      innerHTML: '<p>Hello, $(name)!</p><button onclick="$(() => el.name = \'world\')">reset</button>',
+      innerHTML: '<p>Hello, $(name)!</p><button onclick="el.name = \'world\'">reset</button>',
     },
   ]);
 

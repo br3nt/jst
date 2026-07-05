@@ -72,7 +72,7 @@ Releases are cut from `main` **after** the work has merged. Never tag a PR branc
    - `tools/prerelease_check.mjs` passes. It catches what `npm test` doesn't: the
      version agreeing across `package.json` / `jst.js` / `CHANGELOG`, **and** that
      no doc still pins an old release (the jsDelivr `jst@vX.Y.Z` examples in
-     `docs/install.md` etc. that silently go stale every bump). It also runs as
+     `docs/index.html` etc. that silently go stale every bump). It also runs as
      the last step of `npm test`. **Bump those doc pins in the release PR.**
 3. Tag the `main` commit and push the tag:
    ```sh

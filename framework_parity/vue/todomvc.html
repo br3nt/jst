@@ -68,22 +68,22 @@
 
   <h1>todos</h1>
   <div class="box">
-    <input id="new-todo" class="new-todo" placeholder="What needs to be done?" onkeyup="$(add)">
+    <input id="new-todo" class="new-todo" placeholder="What needs to be done?" onkeyup="add(event)">
     <div>
       <label><input id="toggle-all" type="checkbox" .checked="$(items.length > 0 && remaining === 0)"
-        onchange="$(e => toggleAll(e.target.checked))"> Mark all as complete</label>
+        onchange="const e = event; toggleAll(e.target.checked)"> Mark all as complete</label>
     </div>
     <ul id="list">
       $ shown.forEach(todo => {
         <li class="$(todo.done ? 'completed ' : '')$(editingid === todo.id ? 'editing' : '')" data-id="$(todo.id)">
           <div class="view">
-            <input class="toggle" type="checkbox" .checked="$(todo.done)" onchange="$(() => toggle(todo.id))">
-            <label ondblclick="$(() => startEdit(todo.id))">$(todo.title)</label>
-            <button class="destroy" onclick="$(() => destroy(todo.id))">×</button>
+            <input class="toggle" type="checkbox" .checked="$(todo.done)" onchange="toggle(todo.id)">
+            <label ondblclick="startEdit(todo.id)">$(todo.title)</label>
+            <button class="destroy" onclick="destroy(todo.id)">×</button>
           </div>
           <input class="edit" .value="$(todo.title)"
-            onkeyup="$(e => { if (e.key === 'Enter') commit(todo.id, e.target.value); if (e.key === 'Escape') cancel(); })"
-            onblur="$(e => { if (editingid === todo.id) commit(todo.id, e.target.value); })">
+            onkeyup="const e = event; if (e.key === 'Enter') commit(todo.id, e.target.value); if (e.key === 'Escape') cancel();"
+            onblur="const e = event; if (editingid === todo.id) commit(todo.id, e.target.value);">
         </li>
       $ })
     </ul>
@@ -96,7 +96,7 @@
           <a href="#/completed" class="$(flt === 'completed' ? 'selected' : '')">Completed</a>
         </span>
         $ if (items.some(t => t.done)) {
-          <button id="clear" class="destroy" onclick="$(clearCompleted)">Clear completed</button>
+          <button id="clear" class="destroy" onclick="clearCompleted(event)">Clear completed</button>
         $ }
       </div>
     $ }

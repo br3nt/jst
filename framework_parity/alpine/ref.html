@@ -21,8 +21,8 @@
   <div>
     <!-- "ref" target -->
     <input data-testid="field" class="target" placeholder="I get focused / read">
-    <button data-testid="focus" onclick="$(() => el.querySelector('.target').focus())">Focus the input</button>
-    <button data-testid="read" onclick="$(() => el.msg = el.querySelector('.target').value)">Read its value</button>
+    <button data-testid="focus" onclick="el.querySelector('.target').focus()">Focus the input</button>
+    <button data-testid="read" onclick="el.msg = el.querySelector('.target').value">Read its value</button>
     <p>Last read: <strong data-testid="out">$(msg || '—')</strong></p>
   </div>
 </script>

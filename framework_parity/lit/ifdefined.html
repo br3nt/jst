@@ -33,8 +33,8 @@
     <span id="target" data-testid="target" $(trustedHTML(tipAttr))>Hover me (has title attr only when defined)</span>
     <p>Current title attribute: <code data-testid="readout">$(tipAttr || '(removed)')</code></p>
   </div>
-  <button id="set" onclick="$(() => el.tip = 'A helpful tooltip')">Set title</button>
-  <button id="clear" onclick="$(() => el.tip = undefined)">Clear title</button>
+  <button id="set" onclick="el.tip = 'A helpful tooltip'">Set title</button>
+  <button id="clear" onclick="el.tip = undefined">Clear title</button>
 </script>
 
 <if-defined id="app"></if-defined>

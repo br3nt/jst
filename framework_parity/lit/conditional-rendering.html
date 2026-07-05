@@ -28,10 +28,10 @@
   <div>
     $ if (user) {
       <p class="user" data-testid="status">User: $(user.name)</p>
-      <button id="action" onclick="$(() => el.user = null)">Sign Out</button>
+      <button id="action" onclick="el.user = null">Sign Out</button>
     $ } else {
       <p data-testid="status">You are signed out.</p>
-      <button id="action" onclick="$(() => el.user = { name: 'Ada' })">Sign In</button>
+      <button id="action" onclick="el.user = { name: 'Ada' }">Sign In</button>
     $ }
   </div>
 </script>

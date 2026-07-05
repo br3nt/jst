@@ -23,9 +23,9 @@
 
 <h1>Relative target (no global ids)</h1>
 <div data-testid="rows">
-  <div class="row" data-testid="row-alpha"><button class="lookup" data-testid="lookup-alpha" jst-get="/api/lookup/alpha" jst-target="closest .row find output" jst-swap="innerHTML">Resolve "alpha"</button><output data-testid="out-alpha">—</output></div>
-  <div class="row" data-testid="row-bravo"><button class="lookup" data-testid="lookup-bravo" jst-get="/api/lookup/bravo" jst-target="closest .row find output" jst-swap="innerHTML">Resolve "bravo"</button><output data-testid="out-bravo">—</output></div>
-  <div class="row" data-testid="row-charlie"><button class="lookup" data-testid="lookup-charlie" jst-get="/api/lookup/charlie" jst-target="closest .row find output" jst-swap="innerHTML">Resolve "charlie"</button><output data-testid="out-charlie">—</output></div>
+  <div class="row" data-testid="row-alpha"><a role="button" class="lookup" data-testid="lookup-alpha" href="/api/lookup/alpha" jst-target="closest .row find output" jst-swap="innerHTML">Resolve "alpha"</a><output data-testid="out-alpha">—</output></div>
+  <div class="row" data-testid="row-bravo"><a role="button" class="lookup" data-testid="lookup-bravo" href="/api/lookup/bravo" jst-target="closest .row find output" jst-swap="innerHTML">Resolve "bravo"</a><output data-testid="out-bravo">—</output></div>
+  <div class="row" data-testid="row-charlie"><a role="button" class="lookup" data-testid="lookup-charlie" href="/api/lookup/charlie" jst-target="closest .row find output" jst-swap="innerHTML">Resolve "charlie"</a><output data-testid="out-charlie">—</output></div>
 </div>
 
 <script>

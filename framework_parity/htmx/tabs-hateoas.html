@@ -40,7 +40,7 @@
   JSTMock.route('GET /api/tab/:id', req => {
     const id = req.params.id;
     const buttons = Object.entries(TABS).map(([k, label]) =>
-      `<button class="${k === id ? 'active' : ''}" data-testid="tab-${k}" onclick="$(() => el.emit('select', '${k}'))">${label}<\/button>`
+      `<button class="${k === id ? 'active' : ''}" data-testid="tab-${k}" onclick="el.emit('select', '${k}')">${label}<\/button>`
     ).join('');
     return `
       <script type="jst" name="tab-panel-${id}">

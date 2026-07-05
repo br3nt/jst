@@ -12,7 +12,7 @@
 <h1>Derived signals</h1>
 <script type="jst" name="so-doubler" attributes="count">
   $ const doubled = (count || 0) * 2;
-  <button onclick="$(() => el.count = (el.count || 0) + 1)">Count: $(count || 0)</button>
+  <button onclick="el.count = (el.count || 0) + 1">Count: $(count || 0)</button>
   <p data-testid="out">Doubled: $(doubled)</p>
 </script>
 <so-doubler data-testid="counter" count="0"></so-doubler>

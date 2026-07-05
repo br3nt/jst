@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>JST · jst-nav (fetch / swap / causes + reverse scroll)</title>
+  <title>JST · jst-nav (enhanced links/forms + swap() + onreveal)</title>
   <link rel="stylesheet" href="../jst-layout.css">
   <style>
     .log { block-size: 18rem; overflow-y: auto; border: var(--jst-border-width) solid var(--jst-border); border-radius: var(--jst-radius); padding: var(--jst-space-s); display: flex; flex-direction: column; gap: var(--jst-space-2xs); }
@@ -26,7 +26,7 @@
         for (let id = top; id < before; id++) {
           const isOldest = id === top && top > 1;
           const trig = isOldest
-            ? ` jst-get="/older?before=${top}" jst-load="lazy" jst-target="#log" jst-swap="afterbegin"`
+            ? ` onreveal="if (this.dataset.loaded) return; this.dataset.loaded = 1; JST.nav.swap('#log', '/older?before=${top}', { swap: 'afterbegin' })"`
             : '';
           html += `<div class="msg" id="m-${id}"${trig}>Message #${id}</div>`;
         }
@@ -48,6 +48,12 @@
   </script>
 
   <script type="module" src="../jst-nav.js"></script>
+  <script type="module">
+    // The reverse-scroll sentinels use the synthetic onreveal event in plain
+    // body HTML — opt-in, because JST must evaluate the attribute string.
+    import { configure } from '../jst.js';
+    configure({ unsafeInlineHandlers: true });
+  </script>
   <style>body { max-inline-size: 44rem; margin-inline: auto; padding: var(--jst-space-l); }</style>
 </head>
 <body>
@@ -57,8 +63,10 @@
   <h2>Reverse infinite scroll</h2>
   <p style="color:var(--jst-muted)">Newest at the bottom. Scroll <strong>up</strong> — older messages fetch and prepend, and the scroll position stays put.</p>
   <div class="log" id="log">
-    <!-- Top sentinel lazy-loads the first older batch when scrolled into view. -->
-    <div class="msg" id="m-89" jst-get="/older?before=89" jst-load="lazy" jst-target="#log" jst-swap="afterbegin">Message #89</div>
+    <!-- Top sentinel: onreveal fires when scrolled into view; swap() prepends
+         the older batch (scroll position is preserved). Each batch carries the
+         next sentinel. -->
+    <div class="msg" id="m-89" onreveal="if (this.dataset.loaded) return; this.dataset.loaded = 1; JST.nav.swap('#log', '/older?before=89', { swap: 'afterbegin' })">Message #89</div>
     <div class="msg" id="m-90">Message #90</div>
     <div class="msg" id="m-91">Message #91</div>
     <div class="msg" id="m-92">Message #92</div>
@@ -72,24 +80,26 @@
     <div class="msg" id="m-100">Message #100 (newest)</div>
   </div>
 
-  <h2 style="margin-top:2rem">Active search (a named shaper paces the firing)</h2>
-  <!-- The CAUSE is the input event (jst-oninput), shaped by "typeahead" — a
-       named function registered below with JST combinators. The attribute value
-       is an inert name, never code. -->
-  <input type="search" placeholder="Search people…" jst-get="/search" jst-oninput="typeahead" jst-target="#results" jst-swap="innerHTML" name="q">
+  <h2 style="margin-top:2rem">Active search (a named handler paces the fetch)</h2>
+  <!-- The attribute calls a named function — behaviour is plain JS: statement
+       combinators (changed, debounce) pace it, swap() lands the result. -->
+  <input type="search" placeholder="Search people…" name="q" oninput="typeahead(event)">
   <div id="results" style="margin-top:.5rem; display:flex; flex-direction:column; gap:.25rem"></div>
 
   <script type="module">
-    // Shapers are written once per app: they gate/pace `fire` (the element's
-    // declared request) using the same combinators templates use.
     import { changed, debounce } from '../jst.js';
-    import { shape } from '../jst-nav.js';
-    shape('typeahead', fire => changed(debounce(300, fire)));
+    import { swap } from '../jst-nav.js';
+    window.typeahead = (event) => {
+      if (!changed(event)) return;
+      debounce(event, 300, () => swap('#results', '/search?q=' + encodeURIComponent(event.target.value)));
+    };
   </script>
 
-  <h2 style="margin-top:2rem">Click to load (append)</h2>
+  <h2 style="margin-top:2rem">Click to load (an enhanced link appends)</h2>
+  <!-- Enhancement: the link already navigates; jst-target/jst-swap turn its
+       native click into a fragment fetch + append. URL comes from href. -->
   <div id="items" style="display:flex; flex-direction:column; gap:.25rem"></div>
-  <button jst-get="/more-items" jst-target="#items" jst-swap="beforeend" style="margin-top:.5rem">Load more</button>
+  <a role="button" href="/more-items" jst-target="#items" jst-swap="beforeend" style="margin-top:.5rem; display:inline-block">Load more</a>
 
   <script>
     // Start the reverse-scroll view pinned to the bottom (newest).

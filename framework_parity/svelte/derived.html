@@ -13,7 +13,7 @@
 <h1>Derived state</h1>
 <script type="jst" name="sv-doubler" attributes="count">
   $ const doubled = (count || 0) * 2;
-  <button onclick="$(() => el.count = (el.count || 0) + 1)">count is $(count || 0)</button>
+  <button onclick="el.count = (el.count || 0) + 1">count is $(count || 0)</button>
   <p data-testid="out">$(count || 0) doubled is $(doubled)</p>
 </script>
 <sv-doubler data-testid="counter" count="0"></sv-doubler>

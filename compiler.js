@@ -69,10 +69,7 @@ const reservedPropNames = new Set([
   'emit',
   '__esc',
   '__bind',
-  // handler combinators (in scope inside template expressions)
-  'prevent',
-  'stop',
-  'self',
+  // statement combinators (in scope inside handler bodies)
   'changed',
   'debounce',
   'throttle',

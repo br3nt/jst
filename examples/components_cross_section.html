@@ -41,7 +41,7 @@
     $ };
     <div role="tablist" aria-label="Demo tabs">
       $ items.forEach((t, i) => {
-        <button role="tab" type="button" aria-selected="$(i === idx)" tabindex="$(i === idx ? 0 : -1)" onclick="$(() => el.active = i)" onkeydown="$(onKey)">$(t.label)</button>
+        <button role="tab" type="button" aria-selected="$(i === idx)" tabindex="$(i === idx ? 0 : -1)" onclick="el.active = i" onkeydown="onKey(event)">$(t.label)</button>
       $ })
     </div>
     <div role="tabpanel">$(items[idx] ? items[idx].body : '')</div>
@@ -63,7 +63,7 @@
     $ (toasts || []).forEach(t => {
       <div class="jst-toast" data-variant="$(t.variant)" jst-key="$(t.id)">
         <span>$(t.message)</span>
-        <button type="button" aria-label="Dismiss" onclick="$(() => el.dismiss(t.id))">×</button>
+        <button type="button" aria-label="Dismiss" onclick="el.dismiss(t.id)">×</button>
       </div>
     $ })
   </script>
@@ -83,11 +83,11 @@
     $   else if (e.key === 'Enter') { e.preventDefault(); if (isOpen && matches[hi] != null) choose(matches[hi]); }
     $   else if (e.key === 'Escape') { el.open = false; }
     $ };
-    <input type="text" role="combobox" aria-expanded="$(isOpen)" placeholder="Search fruit…" .value="$(query || '')" oninput="$(e => { el.query = e.target.value; el.open = true; el.highlighted = 0; })" onkeydown="$(onKey)" onfocus="$(() => el.open = true)" onblur="$(debounce(150, () => el.open = false))">
+    <input type="text" role="combobox" aria-expanded="$(isOpen)" placeholder="Search fruit…" .value="$(query || '')" oninput="const e = event; el.query = e.target.value; el.open = true; el.highlighted = 0;" onkeydown="onKey(event)" onfocus="el.open = true" onblur="debounce(event, 150, () => { el.open = false })">
     $ if (isOpen) {
       <ul role="listbox">
         $ matches.forEach((o, i) => {
-          <li role="option" data-active="$(i === hi)" aria-selected="$(i === hi)" onmousedown="$(e => { e.preventDefault(); choose(o); })">$(o)</li>
+          <li role="option" data-active="$(i === hi)" aria-selected="$(i === hi)" onmousedown="const e = event; e.preventDefault(); choose(o);">$(o)</li>
         $ })
       </ul>
     $ }
@@ -105,7 +105,7 @@
         <tr>
           $ cols.forEach(c => {
             <th aria-sort="$(key === c.key ? (dir === 'asc' ? 'ascending' : 'descending') : 'none')">
-              <button type="button" onclick="$(() => toggleSort(c.key))">$(c.label) $(key === c.key ? (dir === 'asc' ? '▲' : '▼') : '')</button>
+              <button type="button" onclick="toggleSort(c.key)">$(c.label) $(key === c.key ? (dir === 'asc' ? '▲' : '▼') : '')</button>
             </th>
           $ })
         </tr>

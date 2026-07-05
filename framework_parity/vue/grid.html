@@ -41,12 +41,12 @@
   $ };
 
   <p>Search: <input id="search" .value="$(query || '')"
-       oninput="$(e => el.query = e.target.value)"></p>
+       oninput="const e = event; el.query = e.target.value"></p>
   <table>
     <thead>
       <tr>
         $ cols.forEach(c => {
-          <th class="col-$(c)" onclick="$(() => setSort(c))">
+          <th class="col-$(c)" onclick="setSort(c)">
             $(c.charAt(0).toUpperCase() + c.slice(1))
             $ if (key === c) {
               <span class="arrow $(asc ? 'asc' : 'dsc')"></span>

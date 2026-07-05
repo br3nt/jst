@@ -20,7 +20,7 @@
   $ } else {
     <p id="bool-msg">Now you don't</p>
   $ }
-  <button id="toggle" onclick="$(() => el.show = !el.show)">Toggle</button>
+  <button id="toggle" onclick="el.show = !el.show">Toggle</button>
 
   <ul id="list">
     $ (list || []).forEach((item, i) => {

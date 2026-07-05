@@ -18,7 +18,7 @@
 
 <script type="jst" name="x-if-demo" attributes="open">
   <div>
-    <button data-testid="toggle" onclick="$(() => el.open = !el.open)">
+    <button data-testid="toggle" onclick="el.open = !el.open">
       $(open ? 'Remove' : 'Add')
     </button>
     $ if (open) {

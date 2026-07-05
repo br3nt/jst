@@ -53,22 +53,31 @@ const templateRules = [
     at: m => m.index,
   },
   {
+    id: 'expression-handler',
+    // v0.5 `on<event>="$(expr)"` — handlers are plain function bodies now.
+    find: () => /(^|\s)(on[a-zA-Z][\w$-]*(?:\.[\w$]+)*)\s*=\s*["']\s*\$\(/g,
+    message: m => `removed on<event>="$(…)" expression handler — ${m[2]} takes a plain function body now (native contract: event in scope, this = element). Run: node tools/codemod.mjs <file>`,
+    at: m => m.index + m[1].length,
+  },
+  {
     id: 'behaviour-modifier',
     // on<event> with a dotted tail containing anything beyond the four
-    // registration modifiers (v0.5.0: behaviour moved to the combinators).
+    // registration modifiers (behaviour lives in the handler body now).
     find: () => /(^|\s)(on[a-zA-Z][\w$-]*?((?:\.[\w$]+)+))\s*=\s*["']/g,
     message: m => {
       const removed = m[3].split('.').filter(Boolean)
         .filter(mod => !['capture', 'passive', 'once', 'outside'].includes(mod) && !/^\d+$/.test(mod));
       const hints = {
-        prevent: 'prevent(fn)', stop: 'stop(fn)', self: 'self(fn)', changed: 'changed(fn)',
-        debounce: 'debounce(300, fn)', enter: 'keys({ Enter: fn })', escape: 'keys({ Escape: fn })',
-        esc: 'keys({ Escape: fn })', tab: 'keys({ Tab: fn })', space: "keys({ ' ': fn })",
-        up: 'keys({ ArrowUp: fn })', down: 'keys({ ArrowDown: fn })',
-        left: 'keys({ ArrowLeft: fn })', right: 'keys({ ArrowRight: fn })',
+        prevent: 'event.preventDefault()', stop: 'event.stopPropagation()',
+        self: 'if (event.target !== this) return', changed: 'if (changed(event)) …',
+        debounce: 'debounce(event, 300, () => …)', enter: "keys(event, { Enter: … })",
+        escape: "keys(event, { Escape: … })", esc: "keys(event, { Escape: … })",
+        tab: "keys(event, { Tab: … })", space: "keys(event, { ' ': … })",
+        up: "keys(event, { ArrowUp: … })", down: "keys(event, { ArrowDown: … })",
+        left: "keys(event, { ArrowLeft: … })", right: "keys(event, { ArrowRight: … })",
       };
-      const rewrites = removed.map(mod => hints[mod] || `a combinator`).join(', ');
-      return `removed .${removed.join('/.')} event modifier(s) — shape the handler in JS: ${rewrites} (registration-only modifiers: .capture .passive .once .outside)`;
+      const rewrites = removed.map(mod => hints[mod] || 'a body statement').join(', ');
+      return `removed .${removed.join('/.')} event modifier(s) — write it in the handler body: ${rewrites} (registration-only modifiers: .capture .passive .once .outside). Run: node tools/codemod.mjs <file>`;
     },
     at: m => m.index + m[1].length,
     when: m => m[3].split('.').filter(Boolean)
@@ -79,9 +88,9 @@ const templateRules = [
 // Rules that apply to the WHOLE file (usage HTML outside jst blocks included).
 const usageRules = [
   {
-    id: 'jst-trigger',
-    find: () => /\bjst-trigger\s*=/g,
-    message: () => 'removed jst-trigger (v0.5.0) — declare the cause with jst-on<event>[="shaper"], jst-load[="lazy"], or jst-poll="2s" (see CHANGELOG migration table)',
+    id: 'removed-nav-attrs',
+    find: () => /\bjst-(get|action|trigger|load|poll|on[a-z]+)\s*=/g,
+    message: m => `removed jst-${m[1]} (v0.6.0) — jst-nav enhances links/forms only (native href/action/method + jst-target/jst-swap); self-filling regions are <jst-include src="…">; other causes call swap() from a handler or component (see CHANGELOG migration table)`,
     at: m => m.index,
   },
 ];

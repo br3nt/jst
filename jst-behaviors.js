@@ -12,6 +12,16 @@
  *   jst-intersect[="once|repeat"]   on reveal: copy data-src→src (lazy media),
  *                                   add the `jst-revealed` class, fire jst:reveal
  *   jst-teleport="<css>|body"       move this element into the target (portal)
+ *
+ * Also defines <jst-include> — a component whose content lives at a URL:
+ *
+ *   <jst-include src="/banner"></jst-include>                 eager
+ *   <jst-include src="/comments" when="visible"></jst-include> when scrolled into view
+ *
+ * A self-filling region is a COMPONENT with well-defined behaviour, not a div
+ * wearing magic attributes — an inert element never gains behaviour from
+ * jst-nav. Want polling, verbs, params, spinners? Write your own component;
+ * this one is the pattern.
  */
 
 const WIRED = Symbol('jstBehaviorsWired');
@@ -53,6 +63,67 @@ function observeIntersect(el) {
     }, { rootMargin: '0px 0px 100px 0px' });
   }
   io.observe(el);
+}
+
+/* -------------------------------------------------------------- jst-include */
+
+// A region whose content is a URL — `src` for an HTML fragment, like <img src>.
+// Eager by default; when="visible" defers the fetch until it scrolls into view
+// (the same policy as native loading="lazy"). Fires jst:included after the
+// fragment lands; the JST core observer upgrades any components inside it.
+class JstInclude extends HTMLElement {
+  static get observedAttributes() { return ['src']; }
+
+  #loaded = false;
+  #observer = null;
+
+  connectedCallback() {
+    if (this.getAttribute('when') === 'visible' && typeof IntersectionObserver !== 'undefined') {
+      this.#observer = new IntersectionObserver((entries) => {
+        if (!entries.some(e => e.isIntersecting)) return;
+        this.#observer.disconnect();
+        this.#observer = null;
+        this.#load();
+      }, { rootMargin: '0px 0px 200px 0px' });
+      this.#observer.observe(this);
+    } else {
+      this.#load();
+    }
+  }
+
+  disconnectedCallback() {
+    this.#observer?.disconnect();
+    this.#observer = null;
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    // Changing src after the initial load re-fetches (a live region can be
+    // repointed); before the first load it just informs the pending fetch.
+    if (name === 'src' && this.#loaded && oldValue !== newValue) this.#load();
+  }
+
+  async #load() {
+    const src = this.getAttribute('src');
+    if (!src) return;
+    let res;
+    try {
+      res = await fetch(src, { headers: { 'JST-Request': 'true' } });
+    } catch (error) {
+      this.dispatchEvent(new CustomEvent('jst:include-error', { bubbles: true, detail: { error } }));
+      return;
+    }
+    if (!res.ok) {
+      this.dispatchEvent(new CustomEvent('jst:include-error', { bubbles: true, detail: { response: res, status: res.status } }));
+      return;
+    }
+    this.innerHTML = await res.text();
+    this.#loaded = true;
+    this.dispatchEvent(new CustomEvent('jst:included', { bubbles: true, detail: { src, response: res } }));
+  }
+}
+
+if (typeof customElements !== 'undefined' && !customElements.get('jst-include')) {
+  customElements.define('jst-include', JstInclude);
 }
 
 /* ----------------------------------------------------------- scan + observe */

@@ -26,10 +26,8 @@
 <body>
 
 <script type="jst" name="add-form" attributes="draft">
-  <form data-testid="form" onsubmit="$(prevent(() => {
-      const text = (el.draft || '').trim();
-      if (text) el.emit('add', text);
-    }))">
+  <form data-testid="form" onsubmit="event.preventDefault(); const text = (el.draft || '').trim();
+      if (text) el.emit('add', text);">
     <input data-testid="input" jst-model="draft" placeholder="New todo…" autofocus>
     <button data-testid="add" type="submit">Add</button>
   </form>

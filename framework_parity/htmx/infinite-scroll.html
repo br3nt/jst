@@ -3,16 +3,22 @@
 <!--
   Source: https://htmx.org/examples/infinite-scroll/
   Demonstrates: as the last row scrolls into view, the next page is fetched and appended.
-  JST status: ✓ exact — jst-nav's `jst-load="lazy"` is htmx's reveal
-  trigger. The server returns rows plus a sentinel row carrying the next
-  `jst-get` + `jst-load="lazy"`; jst-nav re-wires it after each swap. No
-  hand-rolled IntersectionObserver.
+  JST status: ✓ exact — the sentinel row declares onreveal (JST's synthetic
+  reveal event, opt-in for body HTML via unsafeInlineHandlers) and calls
+  swap() to append the next page, then removes itself. No hand-rolled
+  IntersectionObserver.
 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <title>JST · infinite-scroll</title>
 <script type="module" src="../../jst-nav.js"></script>
+<script type="module">
+  // The sentinel row uses the synthetic onreveal event in plain body HTML —
+  // opt-in, since JST must evaluate the attribute string to wire it.
+  import { configure } from '../../jst.js';
+  configure({ unsafeInlineHandlers: true });
+</script>
 <style>
   body { font-family: system-ui, sans-serif; max-width: 32rem; margin: 2rem auto; }
   table { width: 100%; border-collapse: collapse; }
@@ -40,7 +46,7 @@
         html += `<tr data-testid="row-${i + 1}"><td>${i + 1}</td><td>Agent ${i + 1}</td></tr>`;
       }
       if (start + PER < TOTAL) {
-        html += `<tr class="sentinel" data-testid="sentinel" jst-get="/feed?page=${page + 1}" jst-load="lazy" jst-target="#rows" jst-swap="beforeend"><td colspan="2" class="loading">Loading more…</td></tr>`;
+        html += `<tr class="sentinel" data-testid="sentinel" onreveal="JST.nav.swap('#rows', '/feed?page=${page + 1}', { swap: 'beforeend' }); this.remove()"><td colspan="2" class="loading">Loading more…</td></tr>`;
       }
       return new Response(html, { headers: { 'Content-Type': 'text/html' } });
     }
@@ -58,7 +64,7 @@
   window.__parityTest = async () => {
     const before = document.querySelectorAll('[data-testid^="row-"]').length;
     const s = document.querySelector('.sentinel');
-    if (s && window.JST && window.JST.nav) await window.JST.nav.performRequest(s);
+    if (s) s.dispatchEvent(new CustomEvent('reveal'));
     await new Promise(r => setTimeout(r, 200));
     const after = document.querySelectorAll('[data-testid^="row-"]').length;
     return { ok: after > before, detail: `revealed trigger appended the next page (${before} → ${after} rows)` };

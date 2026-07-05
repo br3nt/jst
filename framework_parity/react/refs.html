@@ -28,15 +28,15 @@
 <script type="jst" name="focus-field" attributes="count">
   <div>
     <input data-testid="field" placeholder="I will be focused">
-    <button data-testid="focus" onclick="$(() => el.querySelector('input').focus())">
+    <button data-testid="focus" onclick="el.querySelector('input').focus()">
       Focus the input
     </button>
   </div>
   <div style="margin-top:1rem">
-    <button data-testid="tap" onclick="$(() => { el._taps = (el._taps || 0) + 1; })">
+    <button data-testid="tap" onclick="el._taps = (el._taps || 0) + 1;">
       Tap (mutates a ref, no re-render)
     </button>
-    <button data-testid="reveal" onclick="$(() => el.count = el._taps || 0)">
+    <button data-testid="reveal" onclick="el.count = el._taps || 0">
       Reveal tap count into state
     </button>
     <p data-testid="out">Rendered tap count (state): $(count || 0)</p>

@@ -3,6 +3,8 @@ export const version: string;
 export interface JSTConfig {
   dev: boolean;
   autoRegister: boolean;
+  /** Opt-in: wire synthetic events (onreveal) written inline in body HTML by evaluating the attribute string. Never enable on pages that interpolate untrusted data into HTML. */
+  unsafeInlineHandlers: boolean;
   autoRegisterRoot: ParentNode | null;
   resolveTemplate: ((name: string) => string | URL | null | undefined | Promise<string | URL | null | undefined>) | null;
 }
@@ -10,6 +12,7 @@ export interface JSTConfig {
 export interface ConfigureOptions {
   dev?: boolean;
   autoRegister?: boolean;
+  unsafeInlineHandlers?: boolean;
   autoRegisterRoot?: ParentNode | null;
   resolveTemplate?: JSTConfig['resolveTemplate'];
 }
@@ -44,21 +47,20 @@ export function registerPrecompiledTemplate(
 ): CustomElementConstructor | undefined;
 export function initializeTemplates(): Map<string, unknown>;
 
-export type JSTEventHandler<E extends Event = Event> = (event: E) => unknown;
-
-/** Handler combinators — shape WHEN a handler runs. In scope bare inside template expressions; JST.fn.* elsewhere. */
-export function prevent<E extends Event>(fn?: JSTEventHandler<E>): JSTEventHandler<E>;
-export function stop<E extends Event>(fn?: JSTEventHandler<E>): JSTEventHandler<E>;
-export function self<E extends Event>(fn: JSTEventHandler<E>): JSTEventHandler<E>;
-export function changed<E extends Event>(fn: JSTEventHandler<E>): JSTEventHandler<E>;
-export function debounce<E extends Event>(ms: number, fn: JSTEventHandler<E>): JSTEventHandler<E>;
-export function throttle<E extends Event>(ms: number, fn: JSTEventHandler<E>): JSTEventHandler<E>;
-export function keys(map: Record<string, JSTEventHandler<KeyboardEvent>>): JSTEventHandler<KeyboardEvent>;
+/**
+ * Statement combinators — called inside a handler body with the current event.
+ * State is keyed per element + event type (+ delay). In scope bare inside
+ * template handler bodies; JST.fn.* elsewhere.
+ */
+export function debounce(event: Event, ms: number, fn: () => unknown): void;
+/** Guard: true on the leading edge, false inside the ms window. */
+export function throttle(event: Event, ms: number): boolean;
+/** Guard: true when the control's value differs from the last value seen. Call once per handler body. */
+export function changed(event: Event): boolean;
+/** Key dispatch on the normalized Ctrl+Alt+Meta+Shift+key combo. */
+export function keys(event: KeyboardEvent, map: Record<string, (event: KeyboardEvent) => unknown>): unknown;
 
 export interface JSTCombinators {
-  prevent: typeof prevent;
-  stop: typeof stop;
-  self: typeof self;
   changed: typeof changed;
   debounce: typeof debounce;
   throttle: typeof throttle;
@@ -70,17 +72,18 @@ export interface JSTNavCsrfConfig {
   headerName: string;
 }
 
-/** A shaper gates/paces `fire` (the element's declared request); it can't change what firing does. */
-export type JSTNavShaper = (fire: (event?: Event) => void) => JSTEventHandler;
+export interface JSTNavSwapOptions extends RequestInit {
+  /** How the response lands: innerHTML (default), outerHTML, positions, delete, none, morph, transition. */
+  swap?: string;
+  /** CSS selector to pull a subtree out of the response. */
+  select?: string;
+}
 
 export interface JSTNav {
   csrf: JSTNavCsrfConfig;
   configure(root?: Document | Element): void;
-  /** Fire the element's declared request now (the escape hatch for exotic causes). */
-  request(element: Element, sourceEvent?: Event): Promise<void>;
-  /** Register a named shaper for jst-on<event>="name" attributes. */
-  shape(name: string, shaper: JSTNavShaper): void;
-  performRequest?(element: Element, sourceEvent?: Event): Promise<void>;
+  /** Fetch url and swap the response into target — the imperative primitive. */
+  swap(target: Element | string | null, url: string, options?: JSTNavSwapOptions): Promise<Response>;
 }
 
 export interface JSTBehaviors {

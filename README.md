@@ -3,8 +3,8 @@
 **JavaScript Templates (JST)** - reactive web components in plain HTML, with
 **JavaScript itself as the templating language**. **No build step.**
 
-**JST builds on Web Components.** Its runtime/compiler — 10 KB gzipped
-(33 KB minified), or 6 KB gzipped runtime-only with precompiled templates — turns a
+**JST builds on Web Components.** Its runtime/compiler — 11.5 KB gzipped
+(37 KB minified), or 7 KB gzipped runtime-only with precompiled templates — turns a
 `<script type="jst">` tag into a class and registers it with
 `customElements.define()`, so every JST component is a genuine custom element:
 inspectable in DevTools, scriptable with plain properties and
@@ -15,7 +15,7 @@ inspectable in DevTools, scriptable with plain properties and
 
 <script type="jst" name="hello-name" attributes="name">
   <p>Hello, <strong>$(name)</strong>!</p>
-  <button onclick="$(() => el.name = 'world')">reset</button>
+  <button onclick="el.name = 'world'">reset</button>
 </script>
 
 <hello-name name="JST"></hello-name>
@@ -44,14 +44,14 @@ be interactive once it lands in the browser. A fetched fragment can include both
 
 ## Component API
 
-For a practical walkthrough, see [docs/writing-jst.md](docs/writing-jst.md).
+For the full onboarding walkthrough, open [the docs](https://br3nt.github.io/jst/docs/) ([docs/index.html](docs/index.html) locally) — one page, ordered to teach, with annotated examples.
 
 Inputs are declared in the case-preserving `attributes` attribute:
 
 ```html
 <script type="jst" name="todo-item" attributes="item">
   <li jst-key="$(item.id)">
-    <button onclick="$(stop(() => el.emit('toggle', item)))">Done</button>
+    <button onclick="event.stopPropagation(); el.emit('toggle', item)">Done</button>
     $(item.text)
   </li>
 </script>
@@ -79,12 +79,15 @@ Inputs are declared in the case-preserving `attributes` attribute:
 - In ordinary HTML, use normal JavaScript property assignment and
   `addEventListener`. Inside a JST template, `.prop="$(expr)"` passes rich
   JavaScript values without stringifying.
-- Inside a JST template, `on<event>="$(fn)"` attaches listeners. Shape *when*
-  the handler runs with plain-function combinators — `prevent`, `stop`, `self`,
-  `changed`, `debounce`, `throttle`, `keys` — in scope in every template
-  expression: `onsubmit="$(prevent(fn))"`, `oninput="$(debounce(300, fn))"`,
-  `onkeydown="$(keys({ Enter: fn }))"`. Dotted modifiers configure registration
-  only: `.once`, `.capture`, `.passive`, `.outside`.
+- Inside a JST template, `on<event>="…"` attaches a listener whose value is a
+  plain **function body** — the native inline-handler contract (`event` in
+  scope, `this` = the element), compiled in render scope and attached with
+  `addEventListener`. Pace behaviour with the statement combinators — in scope
+  in every handler body: `oninput="if (changed(event)) debounce(event, 300,
+  () => search(this.value))"`, `onkeydown="keys(event, { Enter: () => go() })"`.
+  Dotted modifiers configure registration only: `.once`, `.capture`,
+  `.passive`, `.outside`. The synthetic `onreveal` event fires when the element
+  scrolls into view.
 - `jst-model="title"` is local form shorthand: read from `title` and update
   `el.title` when the user changes it.
 - `jst-key="$(id)"` preserves DOM identity during list inserts and reorders.
@@ -110,19 +113,19 @@ JST has two modes:
   (non-module) script that exposes `window.JST` and runs from `file://` with no
   server. For prototypes, copied/generated single files, and CDN drop-ins
   (`jst.global.min.js` is minified). See
-  [docs/install.md](docs/install.md#global-build-no-modules-or-server).
+  the [docs Install section](docs/index.html).
 - **Precompiled mode**: run `tools/precompile.mjs` and load the generated module.
   This avoids runtime template compilation and is the path for strict CSP apps
   that cannot allow `unsafe-eval`. Pair it with the **runtime-only** build
   `jst.runtime.js` (or classic `jst.runtime.global.js`), which omits the compiler
   entirely — ~40% smaller. See
-  [docs/install.md](docs/install.md#precompiled-and-the-runtime-only-builds).
+  the [docs Install section](docs/index.html).
 
 ```sh
 node tools/precompile.mjs index.html --out dist/templates.js --runtime ../jst.js
 ```
 
-See [docs/production.md](docs/production.md) and [SECURITY.md](SECURITY.md).
+See the [docs Security section](docs/index.html) and [SECURITY.md](SECURITY.md).
 
 ## Runtime Configuration
 
@@ -157,7 +160,7 @@ Per-version migrations (with before → after tables) live in the
 only errors when a component renders in the browser — run `node tools/lint.mjs`
 to find leftovers (wire it into CI) and `node tools/codemod.mjs` for the
 mechanical `@event` → `on<event>` and `attrs` → `attributes` rewrites. Full guidance:
-[docs/install.md](docs/install.md#upgrading-across-breaking-releases).
+the [CHANGELOG](CHANGELOG.md) migration tables (`tools/codemod.mjs` automates the mechanical rewrites).
 
 ## Try it
 
@@ -181,7 +184,7 @@ python3 -m http.server 8000
 | `tools/` | `precompile.mjs` (CSP build), `codemod.mjs` + `lint.mjs` (migration) |
 | `tooling/vscode-jst/` | VS Code syntax highlighting, diagnostics, and language server |
 | `agentic_feed/` | a HATEOAS-feed prototype |
-| `docs/` | practical authoring guide, decision guide, production notes |
+| `docs/index.html` | the docs: one onboarding page with annotated examples |
 | `run_tests.html` / `runtime_tests.mjs` | test suites |
 
 ## Tests

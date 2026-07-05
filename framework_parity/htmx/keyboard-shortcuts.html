@@ -3,11 +3,10 @@
 <!--
   Source: https://htmx.org/examples/keyboard-shortcuts/
   Demonstrates: triggering a server action from a global keyboard shortcut.
-  JST status: ✓ exact — a global shortcut is the documented escape hatch: the
-  elements declare the request + effect (jst-get / jst-target), and a plain
-  body-level listener built from the keys() combinator calls JST.nav.request(el).
-  No trigger grammar — where the listener attaches is just which element you
-  called addEventListener on.
+  JST status: ✓ exact — a global shortcut is a plain body-level keydown
+  listener: keys(event, {...}) dispatches on the normalized combo and swap()
+  fetches the fragment into the panel. No trigger grammar — where the listener
+  attaches is just which element you called addEventListener on.
 -->
 <html lang="en">
 <head>
@@ -27,17 +26,14 @@
 
 <div id="panel" class="panel"><p data-testid="last">Last shortcut: <kbd>—</kbd></p></div>
 
-<!-- The elements declare WHAT happens (request + effect); the global CAUSE is
-     wired below with a normal body listener + JST.nav.request. -->
-<span hidden id="shortcut-details" jst-get="/api/details" jst-target="#panel" jst-swap="innerHTML"></span>
-<span hidden id="shortcut-reset"   jst-get="/api/reset"   jst-target="#panel" jst-swap="innerHTML"></span>
-
+<!-- A global shortcut is a body listener: keys() dispatches on the combo and
+     swap() fetches the fragment into the panel. Plain JS, no hidden elements. -->
 <script type="module">
   import { keys } from '../../jst.js';
-  import { request } from '../../jst-nav.js';
-  document.body.addEventListener('keydown', keys({
-    'Shift+D': () => request(document.getElementById('shortcut-details')),
-    'Shift+R': () => request(document.getElementById('shortcut-reset')),
+  import { swap } from '../../jst-nav.js';
+  document.body.addEventListener('keydown', event => keys(event, {
+    'Shift+D': () => swap('#panel', '/api/details'),
+    'Shift+R': () => swap('#panel', '/api/reset'),
   }));
 </script>
 

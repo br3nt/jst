@@ -18,14 +18,14 @@
 <script type="jst" name="blog-post" attributes="title">
   <div class="blog-post">
     <h4>$(title)</h4>
-    <button onclick="$(() => el.emit('enlarge-text'))">Enlarge text</button>
+    <button onclick="el.emit('enlarge-text')">Enlarge text</button>
   </div>
 </script>
 
 <!-- Parent owns fontSize, listens for the event, re-renders. -->
 <script type="jst" name="blog-app" attributes="posts fontsize">
   $ const size = fontsize || 1;
-  <div id="blog" style="font-size: $(size)em" onenlarge-text="$(() => el.fontsize = (el.fontsize || 1) + 0.1)">
+  <div id="blog" style="font-size: $(size)em" onenlarge-text="el.fontsize = (el.fontsize || 1) + 0.1">
     $ (posts || []).forEach(post => {
       <blog-post title="$(post.title)"></blog-post>
     $ })
