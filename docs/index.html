@@ -80,10 +80,15 @@
     background: var(--accent);
     color: #fff;
   }
+  .wrap.layout { max-width: 110rem; }
   .layout {
     display: grid;
-    grid-template-columns: 260px minmax(0, 1fr);
-    gap: 1.35rem;
+    /* Content is centered when there's room: equal gutters either side of a
+       66rem column, with the menu sitting at the inner edge of the left
+       gutter. When the viewport narrows the right gutter gives way first,
+       so the spacing either side of the content may differ. */
+    grid-template-columns: minmax(260px, 1fr) minmax(0, 66rem) minmax(0, 1fr);
+    gap: 1.25rem;
     padding: 1.25rem 0 2.5rem;
     timeline-scope:
       --short-version,
@@ -101,6 +106,9 @@
       --tooling;
   }
   .toc {
+    grid-column: 1;
+    justify-self: end;
+    width: 260px;
     position: sticky;
     top: 1rem;
     align-self: start;
@@ -151,7 +159,11 @@
     color: var(--accent);
     border-left-color: var(--accent);
   }
+  @media (min-width: 861px) {
+    table td:first-child code { white-space: nowrap; }
+  }
   main {
+    grid-column: 2;
     display: grid;
     /* One column capped at the free space: a long unbreakable code line then
        scrolls inside its pre instead of blowing the page out sideways. */
@@ -339,8 +351,9 @@
     padding: 0 0 2rem;
   }
   @media (max-width: 860px) {
-    .layout { grid-template-columns: 1fr; }
-    .toc { position: static; max-height: none; }
+    .layout { grid-template-columns: minmax(0, 1fr); }
+    .toc { position: static; max-height: none; grid-column: auto; justify-self: stretch; width: auto; }
+    main { grid-column: auto; }
     .grid,
     .grid.three { grid-template-columns: 1fr; }
   }
