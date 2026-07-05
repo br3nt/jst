@@ -82,7 +82,7 @@ Inputs are declared in the case-preserving `attributes` attribute:
 - Inside a JST template, `on<event>="…"` attaches a listener whose value is a
   plain **function body** - the native inline-handler contract (`event` in
   scope, `this` = the element), compiled in render scope and attached with
-  `addEventListener`. Pace behaviour with the statement combinators - in scope
+  `addEventListener`. Pace behaviour with the handler helpers - in scope
   in every handler body: `oninput="if (changed(event)) debounce(event, 300,
   () => search(this.value))"`, `onkeydown="keys(event, { Enter: () => go() })"`.
   Dotted modifiers configure registration only: `.once`, `.capture`,

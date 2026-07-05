@@ -534,14 +534,22 @@ node tools/precompile.mjs components.html <span class="tok-attr">--out</span> di
 
       <div class="code-example">
         <pre><code><span class="tok-tag">&lt;form</span> <span class="tok-event ann" tabindex="0" data-label="Native statements" data-detail="preventDefault and stopPropagation need no helper - they're plain statements in the body, like every other line of JavaScript you know.">onsubmit</span>=<span class="tok-string">"event.preventDefault(); save()"</span><span class="tok-tag">&gt;</span>
-<span class="tok-tag">&lt;input</span> <span class="tok-event ann" tabindex="0" data-label="Statement combinators" data-detail="changed(event) is a guard: true only when the control's value actually differs from the last value seen. debounce(event, ms, fn) defers fn until the events go quiet. State is kept per element + event type + delay, so a 300ms validate and a 2s autosave on one input never collide.">oninput</span>=<span class="tok-string">"if (changed(event)) debounce(event, 300, () =&gt; search(this.value))"</span><span class="tok-tag">&gt;</span>
+<span class="tok-tag">&lt;input</span> <span class="tok-event ann" tabindex="0" data-label="Handler helpers" data-detail="changed(event) is a guard: true only when the control's value actually differs from the last value seen. debounce(event, ms, fn) defers fn until the events go quiet. State is kept per element + event type + delay, so a 300ms validate and a 2s autosave on one input never collide.">oninput</span>=<span class="tok-string">"if (changed(event)) debounce(event, 300, () =&gt; search(this.value))"</span><span class="tok-tag">&gt;</span>
 <span class="tok-tag">&lt;div</span> <span class="tok-event ann" tabindex="0" data-label="keys()" data-detail="keys(event, map) dispatches on the normalized key combo - held modifiers prefix the key in Ctrl+Alt+Meta+Shift order.">onkeydown</span>=<span class="tok-string">"keys(event, { Enter: () =&gt; open(item), Escape: () =&gt; close() })"</span><span class="tok-tag">&gt;</span>
 <span class="tok-tag">&lt;p</span> <span class="tok-event ann" tabindex="0" data-label="onreveal (synthetic)" data-detail="reveal is a JST synthetic event: when a handler binds onreveal, JST watches the element with an IntersectionObserver and dispatches a real CustomEvent('reveal') each time it scrolls into view. Because it's a real event, addEventListener('reveal', …) works too.">onreveal</span>=<span class="tok-string">"el.emit('seen')"</span><span class="tok-tag">&gt;</span>lazy region<span class="tok-tag">&lt;/p&gt;</span>
 <span class="tok-tag">&lt;button</span> <span class="tok-event ann" tabindex="0" data-label="Registration modifiers" data-detail="The only dotted modifiers left configure how the listener is REGISTERED - .once .capture .passive (addEventListener options) and .outside (attach to document; fire only for events outside the element). Everything about when the handler runs is plain JS in the body.">onclick.outside</span>=<span class="tok-string">"el.open = false"</span><span class="tok-tag">&gt;</span>menu<span class="tok-tag">&lt;/button&gt;</span></code></pre>
         <div class="snippet-detail" aria-live="polite"><strong>Hover over the code</strong><span>Hover over parts of the code snippet to get a detailed explanation.</span></div>
       </div>
 
-      <p>The statement combinators - <code>changed(event)</code>, <code>throttle(event, ms)</code> (guards), <code>debounce(event, ms, fn)</code>, <code>keys(event, map)</code> - are in scope inside template handler bodies, and available as <code>JST.fn.*</code> (or module imports) everywhere else. They're ordinary functions: name your app's behaviours once and call them from any attribute - <code>oninput="typeahead(event)"</code>.</p>
+      <p>JST provides helper functions for the patterns modern web apps keep needing: waiting for typing to pause, rate-limiting noisy events, reacting only to real changes, keyboard shortcuts. They are in scope inside every template handler body, and available as <code>JST.fn.*</code> (or module imports) everywhere else. This is the full list:</p>
+      <table>
+        <tr><th>Helper</th><th>Pattern it serves</th></tr>
+        <tr><td><code>debounce(event, ms, fn)</code></td><td>Run <code>fn</code> once the events go quiet for <code>ms</code>: typeahead search, autosave.</td></tr>
+        <tr><td><code>throttle(event, ms)</code></td><td>Rate-limit: returns <code>true</code> at most once per <code>ms</code>. Guard scroll and resize work with <code>if (throttle(event, 500)) …</code>.</td></tr>
+        <tr><td><code>changed(event)</code></td><td>Returns <code>true</code> only when the control's value actually changed: skip no-op keystrokes in active search.</td></tr>
+        <tr><td><code>keys(event, map)</code></td><td>Keyboard shortcuts: <code>keys(event, { Enter: () =&gt; save(), 'Meta+k': () =&gt; palette() })</code>.</td></tr>
+      </table>
+      <p>They are ordinary functions: name your app's behaviours once and call them from any attribute - <code>oninput="typeahead(event)"</code>.</p>
 
       <div class="callout">
         <strong>Two quirks worth knowing.</strong> Bare names don't resolve to element properties in JST handlers (there is no native <code>with(element)</code> scope chain) - write <code>this.value</code>, not <code>value</code>. And <code>changed(event)</code> consumes the change - call it once per handler body.
@@ -671,7 +679,7 @@ node tools/precompile.mjs components.html <span class="tok-attr">--out</span> di
       <div class="code-example">
         <pre><code><span class="tok-js">import</span> { swap } <span class="tok-js">from</span> <span class="tok-string">'./jst-nav.js'</span>;
 
-<span class="tok-comment">// active search: statement combinators pace it, swap() lands it</span>
+<span class="tok-comment">// active search: the handler helpers pace it, swap() lands it</span>
 <span class="tok-js">const</span> typeahead = (event) =&gt; {
   <span class="tok-js">if</span> (!changed(event)) <span class="tok-js">return</span>;
   <span class="tok-attr ann" tabindex="0" data-label="debounce + swap" data-detail="swap() runs the same pipeline as the declarative attributes (JST-Request + CSRF headers, select, out-of-band swaps, re-scan) minus the element-centric parts. Returns the Response.">debounce</span>(event, 300, () =&gt; swap(<span class="tok-string">'#results'</span>, <span class="tok-string">'/search?q='</span> + event.target.value));
@@ -793,7 +801,7 @@ configure({
       </div>
 
       <h3>Testing &amp; TypeScript</h3>
-      <p><strong>Testing:</strong> components are real custom elements in light DOM - render them into a DOM (jsdom with custom elements, or Playwright against a served page), set attributes/properties, dispatch events, and assert on <code>innerHTML</code>. No special test renderer. <strong>TypeScript:</strong> the npm package ships hand-written <code>.d.ts</code> for the runtime API, <code>window.JST</code>, <code>JST.nav</code>, and the combinators - typed consumption without a build step (typed template <em>expressions</em> are a known gap).</p>
+      <p><strong>Testing:</strong> components are real custom elements in light DOM - render them into a DOM (jsdom with custom elements, or Playwright against a served page), set attributes/properties, dispatch events, and assert on <code>innerHTML</code>. No special test renderer. <strong>TypeScript:</strong> the npm package ships hand-written <code>.d.ts</code> for the runtime API, <code>window.JST</code>, <code>JST.nav</code>, and the handler helpers - typed consumption without a build step (typed template <em>expressions</em> are a known gap).</p>
     </section>
 
     <section id="browser-support">
