@@ -414,7 +414,7 @@
       </div>
 
       <h3 id="dev-mode">Dev Mode</h3>
-      <p>Serve over HTTP, load <code>jst.js</code> as an ES module, enable <code>dev: true</code>, and write templates inline.</p>
+      <p>Serve over HTTP, load <code>jst.js</code> as an ES module, enable <code>dev: true</code>, and write templates inline. The CDN works here too: the runtime's own imports resolve against the CDN URL, so one pinned import is the whole install.</p>
       <div class="code-example">
         <pre><code><span class="tok-comment">&lt;!-- Dev mode: serve over http://, then load the module runtime. --&gt;</span>
 <span class="tok-tag">&lt;script</span> <span class="tok-attr ann" tabindex="0" data-label="ES module runtime" data-detail="The module runtime imports its compiler files, and browsers load imports only from http:// or https://, not from a direct file:// page. For disk-opened files use the global build above.">type</span>=<span class="tok-string">"module"</span> <span class="tok-attr">src</span>=<span class="tok-string">"/jst.js"</span><span class="tok-tag">&gt;&lt;/script&gt;</span>
@@ -422,18 +422,30 @@
 <span class="tok-tag">&lt;script</span> <span class="tok-attr">type</span>=<span class="tok-string">"module"</span><span class="tok-tag">&gt;</span>
   <span class="tok-js">import</span> { configure } <span class="tok-js">from</span> <span class="tok-string">'/jst.js'</span>;
   configure({ <span class="tok-attr ann" tabindex="0" data-label="dev: true" data-detail="Dev mode shows visible render/compile errors and gives better diagnostics while templates are changing.">dev</span>: true });
+<span class="tok-tag">&lt;/script&gt;</span>
+
+<span class="tok-comment">&lt;!-- No local copy at all: import straight from the CDN. --&gt;</span>
+<span class="tok-tag">&lt;script</span> <span class="tok-attr">type</span>=<span class="tok-string">"module"</span><span class="tok-tag">&gt;</span>
+  <span class="tok-js">import</span> { configure } <span class="tok-js">from</span> <span class="tok-string">'https://cdn.jsdelivr.net/gh/br3nt/jst@v0.6.0/jst.js'</span>;
+  configure({ <span class="tok-attr ann" tabindex="0" data-label="One URL, one instance" data-detail="Modules dedupe by URL. Use the same URL for every import of the runtime on a page; a second copy loaded from a different URL is a second, separate template registry.">dev</span>: true });
 <span class="tok-tag">&lt;/script&gt;</span></code></pre>
         <div class="snippet-detail" aria-live="polite"><strong>Hover over the code</strong><span>Hover over parts of the code snippet to get a detailed explanation.</span></div>
       </div>
 
       <h3 id="prod-mode">Prod Mode</h3>
-      <p>Precompile templates into a module for strict CSP and lower startup cost. Runtime behavior still goes through the normal JST renderer. For multi-file apps, see <a href="#bundling">Bundling many components</a> below.</p>
+      <p>Precompile templates into a module for strict CSP and lower startup cost. Runtime behavior still goes through the normal JST renderer. The runtime can come from the CDN here too: point <code>--runtime</code> at the pinned URL and the generated module imports it itself, so the templates file is the only script tag you add. For multi-file apps, see <a href="#bundling">Bundling many components</a> below.</p>
       <div class="code-example">
         <pre><code><span class="tok-comment"># Production mode: precompile templates for strict CSP.</span>
 node tools/precompile.mjs components.html <span class="tok-attr ann" tabindex="0" data-label="Output module" data-detail="The generated file registers templates through registerPrecompiledTemplate, so keyed morphing, form handling, slots, transitions, and handler bindings still work.">--out</span> dist/templates.js <span class="tok-attr">--runtime</span> ../jst.js
 
 <span class="tok-tag">&lt;script</span> <span class="tok-attr">type</span>=<span class="tok-string">"module"</span> <span class="tok-attr">src</span>=<span class="tok-string">"/jst.js"</span><span class="tok-tag">&gt;&lt;/script&gt;</span>
-<span class="tok-tag">&lt;script</span> <span class="tok-attr">type</span>=<span class="tok-string">"module"</span> <span class="tok-attr ann" tabindex="0" data-label="Precompiled templates" data-detail="This avoids browser-side new Function, so it is the production path for strict Content-Security-Policy apps.">src</span>=<span class="tok-string">"/dist/templates.js"</span><span class="tok-tag">&gt;&lt;/script&gt;</span></code></pre>
+<span class="tok-tag">&lt;script</span> <span class="tok-attr">type</span>=<span class="tok-string">"module"</span> <span class="tok-attr ann" tabindex="0" data-label="Precompiled templates" data-detail="This avoids browser-side new Function, so it is the production path for strict Content-Security-Policy apps.">src</span>=<span class="tok-string">"/dist/templates.js"</span><span class="tok-tag">&gt;&lt;/script&gt;</span>
+
+<span class="tok-comment"># Or serve the runtime from the CDN: the templates module imports it directly,</span>
+<span class="tok-comment"># so the templates file is the only script tag on the page.</span>
+node tools/precompile.mjs components.html <span class="tok-attr">--out</span> dist/templates.js <span class="tok-attr ann" tabindex="0" data-label="CDN runtime" data-detail="The generated module does: import { registerPrecompiledTemplate } from this URL. Keep it identical to any other runtime import on the page; modules dedupe by URL and a second URL means a second registry.">--runtime</span> https://cdn.jsdelivr.net/gh/br3nt/jst@v0.6.0/jst.runtime.js
+
+<span class="tok-tag">&lt;script</span> <span class="tok-attr">type</span>=<span class="tok-string">"module"</span> <span class="tok-attr">src</span>=<span class="tok-string">"/dist/templates.js"</span><span class="tok-tag">&gt;&lt;/script&gt;</span></code></pre>
         <div class="snippet-detail" aria-live="polite"><strong>Hover over the code</strong><span>Hover over parts of the code snippet to get a detailed explanation.</span></div>
       </div>
 
