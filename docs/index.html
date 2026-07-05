@@ -530,7 +530,7 @@ node tools/precompile.mjs components.html <span class="tok-attr">--out</span> di
 
     <section id="handlers">
       <h2>Handlers &amp; Behaviour</h2>
-      <p>An <code>on&lt;event&gt;</code> attribute value is a <strong>function body</strong>, exactly like a native inline handler: <code>event</code> is in scope and <code>this</code> is the element. In plain body HTML the browser compiles it; in a JST template the JST compiler does, in render scope, attached with <code>addEventListener</code>, strict-CSP safe.</p>
+      <p>An <code>on&lt;event&gt;</code> attribute value is a <strong>function body</strong>, exactly like a native inline handler: <code>event</code> is in scope and <code>this</code> is the element. In plain body HTML the browser compiles it; in a JST template the JST compiler does, and template values (<code>item</code>, <code>el</code>, your declared attributes) stay usable inside the handler.</p>
 
       <div class="code-example">
         <pre><code><span class="tok-tag">&lt;form</span> <span class="tok-event ann" tabindex="0" data-label="Native statements" data-detail="preventDefault and stopPropagation need no helper - they're plain statements in the body, like every other line of JavaScript you know.">onsubmit</span>=<span class="tok-string">"event.preventDefault(); save()"</span><span class="tok-tag">&gt;</span>
@@ -546,6 +546,8 @@ node tools/precompile.mjs components.html <span class="tok-attr">--out</span> di
       <div class="callout">
         <strong>Two quirks worth knowing.</strong> Bare names don't resolve to element properties in JST handlers (there is no native <code>with(element)</code> scope chain) - write <code>this.value</code>, not <code>value</code>. And <code>changed(event)</code> consumes the change - call it once per handler body.
       </div>
+
+      <p>How handlers interact with Content-Security-Policy (who compiles what, and what a strict policy changes) is covered in <a href="#csp">Handlers and CSP</a> under Security And Production.</p>
     </section>
 
     <section id="data-flow">
@@ -764,7 +766,7 @@ setInterval(() =&gt; swap(<span class="tok-string">'#status'</span>, <span class
       <h3>Names, never code (the script-gadget rule)</h3>
       <p>jst-nav and jst-behaviors read attribute values from the <em>live</em> DOM - including server-rendered and swapped-in HTML - so their values are only ever inert strings: URLs, CSS selectors, names. This is a hard line, not a style choice: a framework that evaluates DOM attribute strings becomes a <strong>script gadget</strong> - on a site that deployed strict CSP precisely to neutralise injected <code>onclick=</code> handlers, an attacker who achieves HTML injection could ride the framework around the policy. JST refuses to be that gadget.</p>
 
-      <h3>Inline handlers and CSP - two spellings, one pattern</h3>
+      <h3 id="csp">Handlers and CSP</h3>
       <p>In plain body HTML, native <code>oninput="typeahead(event)"</code> is evaluated by the <em>browser</em> - plain platform code that needs a relaxed CSP. Under a strict CSP, the same behaviour moves into a template (where handlers compile to <code>addEventListener</code> - no nonce, no <code>unsafe-inline</code>) or a script. <code>jst-lint --csp</code> lists every native inline handler when you're ready to make that move.</p>
       <p><strong>Synthetic events in body HTML</strong> (<code>onreveal</code> outside a template) require JST to evaluate the attribute string, so they're opt-in and loudly named:</p>
       <div class="code-example">
