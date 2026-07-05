@@ -73,9 +73,9 @@ animations.
 | edit-row | [link](https://htmx.org/examples/edit-row/) | ✓ | [htmx/edit-row.html](htmx/edit-row.html) | Page owns rows + one `editingId`; other Edit buttons disabled while editing. |
 | lazy-load | [link](https://htmx.org/examples/lazy-load/) | ✓ | [htmx/lazy-load.html](htmx/lazy-load.html) | Fetched fragment ships a `<script type="jst">` def + markup; auto-upgraded on insert. |
 | inline-validation | [link](https://htmx.org/examples/inline-validation/) | ✓ | [htmx/inline-validation.html](htmx/inline-validation.html) | Plain input (keeps focus) POSTs per keystroke; `<field-status>` renders verdict. |
-| infinite-scroll | [link](https://htmx.org/examples/infinite-scroll/) | (i) | [htmx/infinite-scroll.html](htmx/infinite-scroll.html) | Sentinel row declares `jst-get` + `jst-load="lazy"`; jst-nav re-wires it after each swap. |
-| active-search | [link](https://htmx.org/examples/active-search/) | (i) | [htmx/active-search.html](htmx/active-search.html) | Cause is `jst-oninput="typeahead"` — a named shaper built from the JST combinators (changed + debounce). |
-| progress-bar | [link](https://htmx.org/examples/progress-bar/) | (i) | [htmx/progress-bar.html](htmx/progress-bar.html) | Bar is prop-driven; polling is declarative via `jst-poll="200ms"`. |
+| infinite-scroll | [link](https://htmx.org/examples/infinite-scroll/) | (i) | [htmx/infinite-scroll.html](htmx/infinite-scroll.html) | Sentinel row declares `onreveal` (synthetic event, opt-in for body HTML) and calls `swap()` to append the next page. |
+| active-search | [link](https://htmx.org/examples/active-search/) | (i) | [htmx/active-search.html](htmx/active-search.html) | `oninput` calls a named function; statement combinators (`changed` + `debounce`) pace the fetch, `swap()` lands it. |
+| progress-bar | [link](https://htmx.org/examples/progress-bar/) | (i) | [htmx/progress-bar.html](htmx/progress-bar.html) | Bar is prop-driven; polling is a page-level `setInterval` + `swap()` that stops when the done markup arrives. |
 | value-select (cascading) | [link](https://htmx.org/examples/value-select/) | ✓ | [htmx/value-select.html](htmx/value-select.html) | `change` fetches models, sets a prop on `<model-select>`. |
 | tabs-hateoas | [link](https://htmx.org/examples/tabs-hateoas/) | ✓ | [htmx/tabs-hateoas.html](htmx/tabs-hateoas.html) | Each tab fetch returns a fresh component def + markup; auto-upgraded. Pure HATEOAS — JST's core strength. |
 | dialogs (custom modal) | [link](https://htmx.org/examples/modal-custom/) | ✓ | [htmx/modal-custom.html](htmx/modal-custom.html) | Server-fed modal content with `jst-transition` for fade/zoom enter and leave. |
@@ -241,12 +241,12 @@ workaround is an acceptable tradeoff. **You decide.**
    intermediates must forward; reads via `el.closest()` aren't auto-reactive.
    *Verdict: acceptable and explicit for shallow trees; a boilerplate tax that
    grows with depth.*
-3. **Declarative server causes live in jst-nav, not core.** Page-level polling
-   (`jst-poll`), reveal (`jst-load="lazy"`), and request orchestration are
-   declarative in the opt-in jst-nav layer; behaviour shaping stays in JS via
-   named shapers built from the same combinators templates use. *Verdict:
-   covered without a second HTMX DSL — the trigger microsyntax was removed in
-   v0.5.0.*
+3. **There is no declarative trigger layer, by design.** jst-nav only enhances
+   links and forms (native activation, native `href`/`action`/`method`); every
+   other cause — reveal (`onreveal`), polling (`setInterval`), keystrokes — is
+   plain JS calling `swap()`, or a component like `<jst-include>`. *Verdict:
+   covered without any HTMX DSL — causes are events, timers, and components,
+   things JavaScript already has (v0.6.0).*
 4. **No full transition-group engine.** `jst-transition` provides enter, leave,
    and move classes, but does not calculate FLIP transforms the way Vue's
    `<transition-group>` can. *Verdict: CSS covers common cases; complex move

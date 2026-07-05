@@ -343,8 +343,8 @@ left to build — and where each lands.
 | `hx-swap` (incl. `morph`) | how it lands | `jst-swap`; JST already morphs |
 | `hx-select` | pick a subtree from a response | `jst-select` / #3 |
 | `hx-push-url` / history | back/forward, restore | `jst-push-url` / #3 |
-| `hx-trigger` (events, modifiers, `from:`) | when it fires | `jst-on<event>`[="shaper"] + `jst-poll`; `from:` = addEventListener + `JST.nav.request` |
-| `hx-trigger="revealed"` | scroll-in | `jst-load="lazy"` (nav) / `jst-intersect` (behaviors) |
+| `hx-trigger` (events, modifiers, `from:`) | when it fires | plain `on*` handlers + statement combinators; `from:` = addEventListener + `swap()` (v0.6.0) |
+| `hx-trigger="revealed"` | scroll-in | synthetic `onreveal` event / `<jst-include when="visible">` / `jst-intersect` |
 | `hx-swap-oob` | out-of-band updates | **gap?**: decide vs. JST's component model |
 | `hx-indicator` | loading state | CSS `:has()` + a request class = mostly CSS; → #28 for data |
 | `hx-confirm` | confirm before send | `<dialog>` + `request-close`; or a small hook |
