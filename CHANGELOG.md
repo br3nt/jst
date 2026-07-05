@@ -54,7 +54,7 @@ body HTML). `tools/codemod.mjs` migrates v0.4 **and** v0.5 spellings;
   `function (event) { body }` in render scope (closures over template params
   work) and attach via `addEventListener` (`this` = the element). Copying a
   handler between a template and plain HTML no longer changes its meaning.
-- **Statement combinators.** `changed(event)` / `throttle(event, ms)` guards,
+- **Handler helpers.** `changed(event)` / `throttle(event, ms)` guards,
   `debounce(event, ms, fn)`, `keys(event, map)` - called *inside* any handler
   body; state keyed per element + event type + delay in WeakMaps (a 300ms
   validate and a 2s autosave on one input never collide). In scope in template
@@ -64,9 +64,12 @@ body HTML). `tools/codemod.mjs` migrates v0.4 **and** v0.5 spellings;
   element (IntersectionObserver) and dispatch a real `CustomEvent('reveal')`
   each time it scrolls into view - so `addEventListener('reveal', …)` works
   too. Observation is released on disconnect.
-- **`configure({ unsafeInlineHandlers: true })`.** Opt-in wiring of synthetic
-  events written inline in plain body HTML (JST evaluates the attribute string
-  the way the browser evaluates native handlers). Default off; deliberately not
+- **`configure({ unsafeInlineHandlers: true })`.** Opt-in wiring of the on*
+  attributes the platform does not implement, written inline in plain body
+  HTML: component custom events (`onitem-selected`) and synthetic events
+  (`onreveal`). JST evaluates the attribute string the way the browser
+  evaluates its own handlers; browser-owned names are never double-wired.
+  Default off; deliberately not
   coupled to `dev` (a flag that changes security semantics between dev and
   prod is a footgun); never enable on pages that interpolate untrusted data
   into HTML.

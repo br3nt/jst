@@ -3,7 +3,7 @@ export const version: string;
 export interface JSTConfig {
   dev: boolean;
   autoRegister: boolean;
-  /** Opt-in: wire synthetic events (onreveal) written inline in body HTML by evaluating the attribute string. Never enable on pages that interpolate untrusted data into HTML. */
+  /** Opt-in: wire the on* attributes the platform does not implement (component custom events, onreveal) written inline in body HTML, by evaluating the attribute string. Never enable on pages that interpolate untrusted data into HTML. */
   unsafeInlineHandlers: boolean;
   autoRegisterRoot: ParentNode | null;
   resolveTemplate: ((name: string) => string | URL | null | undefined | Promise<string | URL | null | undefined>) | null;

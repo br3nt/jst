@@ -2012,19 +2012,33 @@
             }
         });
 
-        await suite.testAsync("JST Runtime: unsafeInlineHandlers wires body-HTML synthetic events (opt-in)", async () => {
+        await suite.testAsync("JST Runtime: unsafeInlineHandlers wires non-platform body handlers (opt-in)", async () => {
             configure({ unsafeInlineHandlers: true });
             const zone = document.createElement('div');
-            zone.innerHTML = `<div style="height:120vh"></div><p id="lazy-body" onreveal="window.__bodyRevealed = (window.__bodyRevealed || 0) + 1">lazy</p>`;
+            zone.innerHTML = `
+                <div style="height:120vh"></div>
+                <p id="lazy-body" onreveal="window.__bodyRevealed = (window.__bodyRevealed || 0) + 1">lazy</p>
+                <div id="custom-body" onitem-selected="window.__bodyCustom = (window.__bodyCustom || 0) + 1; window.__bodyCustomThis = (this === event.currentTarget)"></div>
+                <button id="native-body" onclick="window.__bodyNative = (window.__bodyNative || 0) + 1">n</button>
+            `;
             document.body.appendChild(zone);
             await sleep(30);   // inline wiring rides a MutationObserver
             try {
+                // Custom component event: platform ignores onitem-selected; JST wires it.
+                zone.querySelector('#custom-body').dispatchEvent(new CustomEvent('item-selected'));
+                isEqual(1, window.__bodyCustom, 'Expected the custom-event inline body to run');
+                isEqual(true, window.__bodyCustomThis, 'Expected this to be the element (native contract)');
+
+                // Platform event: browser owns onclick; JST must NOT double-wire it.
+                zone.querySelector('#native-body').click();
+                isEqual(1, window.__bodyNative, 'Expected the native handler to fire exactly once (no double wiring)');
+
                 zone.querySelector('#lazy-body').scrollIntoView();
                 await sleep(120);
                 isEqual(true, (window.__bodyRevealed || 0) >= 1, 'Expected the inline onreveal body to run');
             } finally {
                 configure({ unsafeInlineHandlers: false });
-                delete window.__bodyRevealed;
+                delete window.__bodyRevealed; delete window.__bodyCustom; delete window.__bodyCustomThis; delete window.__bodyNative;
                 zone.remove();
                 window.scrollTo(0, 0);
             }

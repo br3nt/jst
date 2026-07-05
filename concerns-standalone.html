@@ -1266,11 +1266,12 @@ const config = {
   autoRegister: true,
   autoRegisterRoot: null,
   resolveTemplate: null,
-  // Opt-in: wire SYNTHETIC events (onreveal) written as inline attributes in
-  // plain body HTML by evaluating the attribute string, the way the browser
-  // evaluates native inline handlers. Default off — see the security note on
-  // wireInlineSyntheticHandlers. Deliberately not coupled to `dev`: a flag
-  // that changes security semantics between dev and prod is a footgun.
+  // Opt-in: wire the on* attributes the platform does NOT implement (component
+  // custom events, onreveal) in plain body HTML, by evaluating the attribute
+  // string the way the browser evaluates its own inline handlers. Default off,
+  // see the security note on wireInlineBodyHandlers. Deliberately not coupled
+  // to `dev`: a flag that changes security semantics between dev and prod is a
+  // footgun.
   unsafeInlineHandlers: false,
 }
 
@@ -1314,7 +1315,7 @@ function configure(options = {}) {
 
   Object.assign(config, options);
   announceVersion();
-  if (config.unsafeInlineHandlers) wireInlineSyntheticHandlers(document);
+  if (config.unsafeInlineHandlers) wireInlineBodyHandlers(document);
 
   if (shouldRewire && templateObserver) {
     templateObserver.disconnect();
@@ -2573,46 +2574,54 @@ function observeNewTemplates() {
 
 /* ------------------------------------------------ body-HTML synthetic events */
 
-// Native events in plain body HTML are the browser's business. SYNTHETIC
-// events (onreveal) can only fire if JST evaluates the attribute string —
-// exactly the thing a strict CSP forbids for inline handlers — so it's opt-in:
+// Native events in plain body HTML are the browser's business: it wires
+// on<event> attributes for its own event names. Everything ELSE — component
+// custom events (onitem-selected) and JST's synthetic events (onreveal) — can
+// only fire if JST evaluates the attribute string, exactly the thing a strict
+// CSP forbids for inline handlers. So it's opt-in:
 //
 //   JST.configure({ unsafeInlineHandlers: true })
 //
-// The value is evaluated with the native contract (function body, `event` in
-// scope, `this` = the element). Never enable this on pages that interpolate
-// untrusted data into HTML: it re-opens the injected-handler hole a strict CSP
-// exists to close (the script-gadget rule — see docs). Under a CSP that blocks
-// 'unsafe-eval' the Function constructor throws loudly rather than silently.
+// With the flag on, JST wires every on* attribute the platform does NOT
+// implement (checked via `'on'+name in element`, so browser-owned handlers
+// are never double-wired). The value is evaluated with the native contract
+// (function body, `event` in scope, `this` = the element). Never enable this
+// on pages that interpolate untrusted data into HTML: it re-opens the
+// injected-handler hole a strict CSP exists to close (the script-gadget rule —
+// see docs). Under a CSP that blocks 'unsafe-eval' the Function constructor
+// throws loudly rather than silently.
 const inlineWired = new WeakSet();
 let inlineObserver = null;
+const inlineHandlerAttribute = /^on[a-z]/;
 
-function wireInlineSyntheticHandlers(root = document) {
+function wireInlineBodyHandlers(root = document) {
   if (!config.unsafeInlineHandlers || typeof document === 'undefined') return;
-  const selector = [...syntheticEvents].map(name => `[on${name}]`).join(',');
 
   const wire = (element) => {
     if (inlineWired.has(element)) return;
     inlineWired.add(element);
-    syntheticEvents.forEach(name => {
-      const body = element.getAttribute(`on${name}`);
-      if (body == null || !body.trim()) return;
+    for (const name of element.getAttributeNames()) {
+      if (!inlineHandlerAttribute.test(name)) continue;
+      if (name in element) continue;   // platform-implemented: the browser owns it
+      const body = element.getAttribute(name);
+      if (!body || !body.trim()) continue;
       let handler;
       try {
         handler = new Function('event', body);
       } catch (error) {
-        console.error(`JST: invalid on${name} handler body on`, element, error);
-        return;
+        console.error(`JST: invalid ${name} handler body on`, element, error);
+        continue;
       }
-      element.addEventListener(name, handler);
-      if (name === 'reveal') observeReveal(element);
-    });
+      const type = name.slice(2);
+      element.addEventListener(type, handler);
+      if (type === 'reveal') observeReveal(element);
+    }
   };
 
   const scan = (node) => {
     if (!node || typeof node.querySelectorAll !== 'function') return;
-    if (node.matches && node.matches(selector)) wire(node);
-    node.querySelectorAll(selector).forEach(wire);
+    if (node.nodeType === 1) wire(node);
+    node.querySelectorAll('*').forEach(wire);
   };
 
   scan(root.documentElement || root);
@@ -2625,8 +2634,8 @@ function wireInlineSyntheticHandlers(root = document) {
         // IntersectionObserver holds strong refs).
         mutation.removedNodes.forEach(node => {
           if (node.nodeType !== 1) return;
-          if (node.matches && node.matches(selector)) unobserveReveal(node);
-          if (typeof node.querySelectorAll === 'function') node.querySelectorAll(selector).forEach(unobserveReveal);
+          if (node.matches && node.matches('[onreveal]')) unobserveReveal(node);
+          if (typeof node.querySelectorAll === 'function') node.querySelectorAll('[onreveal]').forEach(unobserveReveal);
         });
       }
     });

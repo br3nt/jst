@@ -585,16 +585,14 @@ node tools/precompile.mjs components.html <span class="tok-attr">--out</span> di
         <div>
           <h3>Raw HTML + page JavaScript</h3>
           <div class="code-example">
-            <pre><code><span class="tok-tag">&lt;todo-list</span> <span class="tok-attr">id</span>=<span class="tok-string">"todos"</span><span class="tok-tag">&gt;&lt;/todo-list&gt;</span>
+            <pre><code><span class="tok-tag">&lt;todo-list</span> <span class="tok-attr">id</span>=<span class="tok-string">"todos"</span>
+  <span class="tok-event ann" tabindex="0" data-label="Component events inline" data-detail="The browser wires its own event names natively. For a component's custom event names, enable configure({ unsafeInlineHandlers: true }) and JST wires the rest with the same function-body contract. Under a strict CSP, move this markup into a component template instead; addEventListener always works without either.">ontoggle</span>=<span class="tok-string">"this.items = this.items.map(item =&gt;
+    item.id === event.detail.id ? { ...item, done: !item.done } : item)"</span><span class="tok-tag">&gt;</span>
+<span class="tok-tag">&lt;/todo-list&gt;</span>
 
 <span class="tok-tag">&lt;script&gt;</span>
   <span class="tok-js">const</span> list = document.getElementById(<span class="tok-string">'todos'</span>);
   list.<span class="tok-prop ann" tabindex="0" data-label="Property assignment" data-detail="Objects, arrays, functions, classes, and DOM nodes should be assigned as properties. They are not squeezed through attributes.">items</span> = [{ id: 1, text: <span class="tok-string">'Write docs'</span>, done: false }];
-  list.<span class="tok-js ann" tabindex="0" data-label="Why not ontoggle= here?" data-detail="In raw HTML the browser owns inline on<event> attributes, and it only wires them for its own built-in event names, not for a component's custom events. addEventListener works for any event name. Inside a JST template (right), on<event> works for any event, because the JST compiler wires it.">addEventListener</span>(<span class="tok-string">'toggle'</span>, event =&gt; {
-    list.items = list.items.map(item =&gt;
-      item.id === event.detail.id ? { ...item, done: !item.done } : item
-    );
-  });
 <span class="tok-tag">&lt;/script&gt;</span></code></pre>
             <div class="snippet-detail" aria-live="polite"><strong>Hover over the code</strong><span>Hover over parts of the code snippet to get a detailed explanation.</span></div>
           </div>
@@ -796,7 +794,7 @@ setInterval(() =&gt; swap(<span class="tok-string">'#status'</span>, <span class
 
       <h3 id="csp">Handlers and CSP</h3>
       <p>In plain body HTML, native <code>oninput="typeahead(event)"</code> is evaluated by the <em>browser</em> - plain platform code that needs a relaxed CSP. Under a strict CSP, the same behaviour moves into a template (where handlers compile to <code>addEventListener</code> - no nonce, no <code>unsafe-inline</code>) or a script. <code>jst-lint --csp</code> lists every native inline handler when you're ready to make that move.</p>
-      <p><strong>Synthetic events in body HTML</strong> (<code>onreveal</code> outside a template) require JST to evaluate the attribute string, so they're opt-in and loudly named:</p>
+      <p><strong>Component events and synthetic events in body HTML</strong> (an <code>onitem-selected</code> or <code>onreveal</code> attribute outside a template) require JST to evaluate the attribute string, because the browser only wires its own event names. So they're opt-in and loudly named:</p>
       <div class="code-example">
         <pre><code>configure({ <span class="tok-attr ann" tabindex="0" data-label="unsafeInlineHandlers" data-detail="Default off. With no CSP, the platform already evaluates inline handlers, so this adds little new surface - but never enable it on pages that interpolate untrusted data into HTML, and it is deliberately NOT coupled to dev mode (a flag that changes security semantics between dev and prod is a footgun).">unsafeInlineHandlers</span>: true });</code></pre>
         <div class="snippet-detail" aria-live="polite"><strong>Hover over the code</strong><span>Hover over parts of the code snippet to get a detailed explanation.</span></div>
