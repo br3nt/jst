@@ -586,13 +586,15 @@ node tools/precompile.mjs components.html <span class="tok-attr">--out</span> di
           <h3>Raw HTML + page JavaScript</h3>
           <div class="code-example">
             <pre><code><span class="tok-tag">&lt;todo-list</span> <span class="tok-attr">id</span>=<span class="tok-string">"todos"</span>
+  <span class="tok-attr ann" tabindex="0" data-label="JSON attribute" data-detail="Attribute values that look like JSON (numbers, booleans, quoted strings, arrays, objects) are parsed, so a server can render data straight into the tag. It must be valid JSON: double-quoted keys and strings, hence the single-quoted HTML attribute. The value is data, never a variable reference.">items</span>=<span class="tok-string">'[{"id":1,"text":"Write docs","done":false}]'</span>
   <span class="tok-event ann" tabindex="0" data-label="Component events inline" data-detail="The browser wires its own event names natively. For a component's custom event names, enable configure({ unsafeInlineHandlers: true }) and JST wires the rest with the same function-body contract. Under a strict CSP, move this markup into a component template instead; addEventListener always works without either.">ontoggle</span>=<span class="tok-string">"this.items = this.items.map(item =&gt;
     item.id === event.detail.id ? { ...item, done: !item.done } : item)"</span><span class="tok-tag">&gt;</span>
 <span class="tok-tag">&lt;/todo-list&gt;</span>
 
 <span class="tok-tag">&lt;script&gt;</span>
-  <span class="tok-js">const</span> list = document.getElementById(<span class="tok-string">'todos'</span>);
-  list.<span class="tok-prop ann" tabindex="0" data-label="Property assignment" data-detail="Objects, arrays, functions, classes, and DOM nodes should be assigned as properties. They are not squeezed through attributes.">items</span> = [{ id: 1, text: <span class="tok-string">'Write docs'</span>, done: false }];
+  <span class="tok-comment">// Updating later, or passing values JSON can't carry (functions,</span>
+  <span class="tok-comment">// class instances, DOM nodes): assign the property.</span>
+  document.getElementById(<span class="tok-string">'todos'</span>).<span class="tok-prop ann" tabindex="0" data-label="Property assignment" data-detail="Every declared attribute is also a JavaScript property on the element. Properties carry rich values attributes can't, and assigning one re-renders.">items</span> = loadedItems;
 <span class="tok-tag">&lt;/script&gt;</span></code></pre>
             <div class="snippet-detail" aria-live="polite"><strong>Hover over the code</strong><span>Hover over parts of the code snippet to get a detailed explanation.</span></div>
           </div>
