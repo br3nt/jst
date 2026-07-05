@@ -552,7 +552,7 @@ node tools/precompile.mjs components.html <span class="tok-attr">--out</span> di
       <p>Our helpers are ordinary functions, so you can add your own and use them the same way: define <code>typeahead</code> once in your app's JS, then call it from any attribute - <code>oninput="typeahead(event)"</code>.</p>
 
       <div class="callout">
-        <strong>One quirk worth knowing.</strong> In a native inline handler the browser resolves undotted names against the element itself, so writing <code>value</code> can silently mean <code>this.value</code>. JST handlers do not recreate that scope chain: always write <code>this.value</code>.
+        <strong>One quirk worth knowing.</strong> In a native inline handler the browser resolves undotted names against the element itself, so writing <code>value</code> can silently mean <code>this.value</code>. JST handlers do not recreate that scope chain: always write <code>this.value</code>. It is left out deliberately: your template values live in the handler's scope, and an element's hundreds of DOM properties (<code>title</code>, <code>name</code>, <code>value</code>, …) would silently shadow them. A bare name in a JST handler always means your template value.
       </div>
 
       <p>How handlers interact with Content-Security-Policy (who compiles what, and what a strict policy changes) is covered in <a href="#csp">Handlers and CSP</a> under Security And Production.</p>
