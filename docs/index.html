@@ -530,7 +530,7 @@ node tools/precompile.mjs components.html <span class="tok-attr">--out</span> di
 
     <section id="handlers">
       <h2>Handlers &amp; Behaviour</h2>
-      <p>One rule, everywhere: <strong>an <code>on&lt;event&gt;</code> attribute value is a function body.</strong> In plain body HTML the browser compiles it (as it always has); in a JST template the JST compiler does - in render scope, attached via <code>addEventListener</code>, strict-CSP safe. Same text, same meaning: <code>event</code> is in scope and <code>this</code> is the element.</p>
+      <p>An <code>on&lt;event&gt;</code> attribute value is a <strong>function body</strong>, exactly like a native inline handler: <code>event</code> is in scope and <code>this</code> is the element. In plain body HTML the browser compiles it; in a JST template the JST compiler does, in render scope, attached with <code>addEventListener</code>, strict-CSP safe.</p>
 
       <div class="code-example">
         <pre><code><span class="tok-tag">&lt;form</span> <span class="tok-event ann" tabindex="0" data-label="Native statements" data-detail="preventDefault and stopPropagation need no helper - they're plain statements in the body, like every other line of JavaScript you know.">onsubmit</span>=<span class="tok-string">"event.preventDefault(); save()"</span><span class="tok-tag">&gt;</span>
