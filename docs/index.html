@@ -153,6 +153,9 @@
   }
   main {
     display: grid;
+    /* One column capped at the free space: a long unbreakable code line then
+       scrolls inside its pre instead of blowing the page out sideways. */
+    grid-template-columns: minmax(0, 1fr);
     gap: .95rem;
   }
   section {
@@ -161,7 +164,11 @@
     border-radius: 6px;
     padding: 1.05rem;
     scroll-margin-top: 1rem;
+    /* Grid items default to min-width:auto, so one long unbreakable code line
+       would blow the track out past the viewport; pres scroll instead. */
+    min-width: 0;
   }
+  .grid > * { min-width: 0; }
   #short-version { view-timeline-name: --short-version; }
   #install { view-timeline-name: --install; }
   #first-component { view-timeline-name: --first-component; }
@@ -503,10 +510,10 @@ node tools/precompile.mjs components.html <span class="tok-attr">--out</span> di
         <tr><td><code class="chip jst">$identifier</code></td><td>Shorthand for a single identifier interpolation.</td></tr>
         <tr><td><code class="chip js">$ statement</code></td><td>Run a JavaScript statement line.</td></tr>
         <tr><td><code class="chip js">${ ... }</code></td><td>Run a JavaScript block.</td></tr>
-        <tr><td><code class="chip prop">.prop="$(expr)"</code></td><td>Set a JavaScript property on a rendered element.</td></tr>
+        <tr><td><code class="chip prop">.property="$(expr)"</code></td><td>Set a JavaScript property on a rendered element.</td></tr>
         <tr><td><code class="chip event">on&lt;event&gt;="…statements…"</code></td><td>Add an event listener. The value is a plain function body - <code>event</code> in scope, <code>this</code> = the element - exactly like a native inline handler.</td></tr>
         <tr><td><code class="chip attr">jst-key="$(id)"</code></td><td>Preserve DOM identity in lists.</td></tr>
-        <tr><td><code class="chip attr">jst-model="prop"</code></td><td>Local form shorthand: read/write <code>el[prop]</code>.</td></tr>
+        <tr><td><code class="chip attr">jst-model="title"</code></td><td>Local form shorthand: read/write <code>el.title</code>.</td></tr>
         <tr><td><code class="chip jst">$(slot())</code></td><td>Project the component's original children.</td></tr>
       </table>
 
@@ -552,7 +559,7 @@ node tools/precompile.mjs components.html <span class="tok-attr">--out</span> di
       <p>Our helpers are ordinary functions, so you can add your own and use them the same way: define <code>typeahead</code> once in your app's JS, then call it from any attribute - <code>oninput="typeahead(event)"</code>.</p>
 
       <div class="callout">
-        <strong>One quirk worth knowing.</strong> In a native inline handler the browser resolves undotted names against the element itself, so writing <code>value</code> can silently mean <code>this.value</code>. JST handlers do not recreate that scope chain: always write <code>this.value</code>. It is left out deliberately: your template values live in the handler's scope, and an element's hundreds of DOM properties (<code>title</code>, <code>name</code>, <code>value</code>, …) would silently shadow them. A bare name in a JST handler always means your template value.
+        <strong>One quirk worth knowing.</strong> In a native inline handler the browser resolves undotted names against the element itself, so writing <code>value</code> can silently mean <code>this.value</code>. JST handlers do not recreate that scope chain: always write <code>this.value</code>. This is deliberate: the element's hundreds of DOM properties would otherwise shadow your template values.
       </div>
 
       <p>How handlers interact with Content-Security-Policy (who compiles what, and what a strict policy changes) is covered in <a href="#csp">Handlers and CSP</a> under Security And Production.</p>
@@ -560,7 +567,7 @@ node tools/precompile.mjs components.html <span class="tok-attr">--out</span> di
 
     <section id="data-flow">
       <h2>Data Flow</h2>
-      <p>In raw top-level HTML, pass simple values as attributes and rich values with normal JavaScript properties. Inside a JST template, use <code>.prop</code> and <code>on&lt;event&gt;</code> bindings.</p>
+      <p>In raw top-level HTML, pass simple values as attributes and rich values with normal JavaScript property assignment. Inside a JST template, a dot-prefixed attribute assigns a JavaScript property (<code>.item="$(item)"</code>) and <code>on&lt;event&gt;</code> attaches a listener.</p>
       <div class="grid">
         <div>
           <h3>Raw HTML + page JavaScript</h3>
@@ -570,7 +577,7 @@ node tools/precompile.mjs components.html <span class="tok-attr">--out</span> di
 <span class="tok-tag">&lt;script&gt;</span>
   <span class="tok-js">const</span> list = document.getElementById(<span class="tok-string">'todos'</span>);
   list.<span class="tok-prop ann" tabindex="0" data-label="Property assignment" data-detail="Objects, arrays, functions, classes, and DOM nodes should be assigned as properties. They are not squeezed through attributes.">items</span> = [{ id: 1, text: <span class="tok-string">'Write docs'</span>, done: false }];
-  list.addEventListener(<span class="tok-string">'toggle'</span>, event =&gt; {
+  list.<span class="tok-js ann" tabindex="0" data-label="Why not ontoggle= here?" data-detail="In raw HTML the browser owns inline on<event> attributes, and it only wires them for its own built-in event names, not for a component's custom events. addEventListener works for any event name. Inside a JST template (right), on<event> works for any event, because the JST compiler wires it.">addEventListener</span>(<span class="tok-string">'toggle'</span>, event =&gt; {
     list.items = list.items.map(item =&gt;
       item.id === event.detail.id ? { ...item, done: !item.done } : item
     );
@@ -586,7 +593,7 @@ node tools/precompile.mjs components.html <span class="tok-attr">--out</span> di
   <span class="tok-js">$ (items || []).forEach(item =&gt; {</span>
     <span class="tok-tag">&lt;todo-item</span>
       <span class="tok-attr">jst-key</span>=<span class="tok-string">"$(item.id)"</span>
-      <span class="tok-prop ann" tabindex="0" data-label=".item binding" data-detail=".prop is JST-only syntax. It assigns the actual JavaScript value to the child element after render.">.item</span>=<span class="tok-string">"$(item)"</span>
+      <span class="tok-prop ann" tabindex="0" data-label=".item binding" data-detail="A dot-prefixed attribute is JST-only syntax. It assigns the actual JavaScript value as a property on the child element after render.">.item</span>=<span class="tok-string">"$(item)"</span>
       <span class="tok-event ann" tabindex="0" data-label="ontoggle listener" data-detail="A function body, like every handler: this listens for the child's toggle event and re-emits it upward. event is in scope; el is the host component.">ontoggle</span>=<span class="tok-string">"el.emit('toggle', event.detail)"</span><span class="tok-tag">&gt;</span>
     <span class="tok-tag">&lt;/todo-item&gt;</span>
   <span class="tok-js">$ })</span>
@@ -595,7 +602,7 @@ node tools/precompile.mjs components.html <span class="tok-attr">--out</span> di
           </div>
         </div>
       </div>
-      <div class="callout"><code>.prop</code> is JST template syntax (a single <code>$(...)</code> expression, compiled only inside <code>&lt;script type="jst"&gt;</code>). <code>on&lt;event&gt;</code> means the same thing everywhere - a function body - the difference is who compiles it: the JST compiler inside a template (render scope, strict-CSP safe), the browser in raw top-level HTML (native inline handler, relaxed CSP). A <code>$(...)</code> form inside a handler body is a compile error.</div>
+      <div class="callout">Dot-prefixed attributes are JST template syntax (a single <code>$(...)</code> expression, compiled only inside <code>&lt;script type="jst"&gt;</code>). <code>on&lt;event&gt;</code> means the same thing everywhere - a function body - the difference is who compiles it: the JST compiler inside a template (render scope, strict-CSP safe), the browser in raw top-level HTML (native inline handler, relaxed CSP). A <code>$(...)</code> form inside a handler body is a compile error.</div>
     </section>
 
     <section id="state-and-forms">
@@ -824,7 +831,7 @@ configure({
     <section id="tooling">
       <h2>Tooling</h2>
       <p>The VS Code extension under <code>tooling/</code> already provides syntax highlighting, diagnostics, and a language server. The next tooling path is marketplace packaging, formatter support, typed expression checking, and a tree-sitter grammar.</p>
-      <div class="callout">Tooling should support the same simple model as runtime JST: props are declared explicitly, template expressions are JavaScript, invalid bindings fail loudly, and rich values move through properties rather than string attributes.</div>
+      <div class="callout">Tooling should support the same simple model as runtime JST: attributes are declared explicitly, template expressions are JavaScript, invalid bindings fail loudly, and rich values move through properties rather than string attributes.</div>
     </section>
   </main>
 </div>

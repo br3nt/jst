@@ -24,7 +24,7 @@ inspectable in DevTools, scriptable with plain properties and
 ## What hole it fills
 
 - **HTMX** is strongest when server round-trips drive UI changes; JST targets fragments that also define reusable client-side component behavior.
-- **Alpine** is strongest for behavior attached to existing markup; JST additionally gives streamed component definitions custom-element identity and a props/events boundary.
+- **Alpine** is strongest for behavior attached to existing markup; JST additionally gives streamed component definitions custom-element identity and an attributes-in, events-out boundary.
 - **React/Vue** are powerful, but usually bring a build step, a runtime model, and a client-owned render pipeline.
 
 JST targets HATEOAS-style apps where the backend and frontend should be able to
@@ -40,7 +40,7 @@ be interactive once it lands in the browser. A fetched fragment can include both
 4. **Attributes down, events up** - components are controlled renderers; state lives in the page, parent, or server.
 5. **No store, no proxies, no hidden graph** - use plain JavaScript objects, properties, and events.
 6. **Safe interpolation by default** - `$(expr)` escapes HTML; `url()` guards URL attributes; `trustedHTML()` is the explicit trusted-HTML escape.
-7. **Fail loud** - invalid prop declarations, malformed bindings, and render errors should be visible during development.
+7. **Fail loud** - invalid attribute declarations, malformed bindings, and render errors should be visible during development.
 
 ## Component API
 
@@ -66,8 +66,8 @@ Inputs are declared in the case-preserving `attributes` attribute:
 ```
 
 - `attributes="item"` declares the bare locals available in the template.
-- Each prop is also a property on the element: `el.item` here, or `el.onToggle`
-  when `onToggle` is declared.
+- Each declared attribute is also a JavaScript property on the element: `el.item`
+  here, or `el.onToggle` when `onToggle` is declared.
 - External HTML attributes use platform casing rules, so multi-word call sites
   use kebab-case: `on-toggle` maps to `onToggle`.
 - Plain attributes pass JSON-ish primitives (`count="1"`, `open="true"`).
@@ -77,7 +77,7 @@ Inputs are declared in the case-preserving `attributes` attribute:
 - When the next value depends on the current value inside an event handler, read
   the live element property: `el.count = (el.count || 0) + 1`.
 - In ordinary HTML, use normal JavaScript property assignment and
-  `addEventListener`. Inside a JST template, `.prop="$(expr)"` passes rich
+  `addEventListener`. Inside a JST template, `.property="$(expr)"` passes rich
   JavaScript values without stringifying.
 - Inside a JST template, `on<event>="…"` attaches a listener whose value is a
   plain **function body** - the native inline-handler contract (`event` in

@@ -1,0 +1,617 @@
+- generic [active] [ref=f1e1]:
+  - banner [ref=f1e2]:
+    - generic [ref=f1e3]:
+      - heading "JST docs" [level=1] [ref=f1e4]
+      - paragraph [ref=f1e5]: "JST is for HTML-first apps where the server and browser can share one UI contract: HTML. A server can return pages or fragments; the browser can run those same components with client-side interactivity, no JSON view-model layer, no virtual DOM, and no build step."
+      - generic [ref=f1e6]:
+        - link "Landing page" [ref=f1e7] [cursor=pointer]:
+          - /url: ../index.html
+        - link "HATEOAS demo" [ref=f1e8] [cursor=pointer]:
+          - /url: ../demo/hateoas/
+        - link "Framework parity" [ref=f1e9] [cursor=pointer]:
+          - /url: ../framework_parity/index.html
+        - link "Changelog" [ref=f1e10] [cursor=pointer]:
+          - /url: ../CHANGELOG.md
+  - generic [ref=f1e11]:
+    - navigation "Documentation sections" [ref=f1e12]:
+      - heading "Contents" [level=2] [ref=f1e13]
+      - link "Short Version" [ref=f1e14] [cursor=pointer]:
+        - /url: "#short-version"
+      - link "Use JST When" [ref=f1e15] [cursor=pointer]:
+        - /url: "#use-jst-when"
+      - link "Avoid JST When" [ref=f1e16] [cursor=pointer]:
+        - /url: "#avoid-jst-when"
+      - link "Install" [ref=f1e17] [cursor=pointer]:
+        - /url: "#install"
+      - link "file:// Mode" [ref=f1e18] [cursor=pointer]:
+        - /url: "#file-mode"
+      - link "Dev Mode" [ref=f1e19] [cursor=pointer]:
+        - /url: "#dev-mode"
+      - link "Prod Mode" [ref=f1e20] [cursor=pointer]:
+        - /url: "#prod-mode"
+      - link "Bundling" [ref=f1e21] [cursor=pointer]:
+        - /url: "#bundling"
+      - link "Write Your First Component" [ref=f1e22] [cursor=pointer]:
+        - /url: "#first-component"
+      - link "Template Syntax" [ref=f1e23] [cursor=pointer]:
+        - /url: "#template-syntax"
+      - link "Handlers & Behaviour" [ref=f1e24] [cursor=pointer]:
+        - /url: "#handlers"
+      - link "Data Flow" [ref=f1e25] [cursor=pointer]:
+        - /url: "#data-flow"
+      - link "State, Forms, Lists" [ref=f1e26] [cursor=pointer]:
+        - /url: "#state-and-forms"
+      - link "Slots" [ref=f1e27] [cursor=pointer]:
+        - /url: "#slots"
+      - link "HATEOAS Fragments" [ref=f1e28] [cursor=pointer]:
+        - /url: "#hateoas-fragments"
+      - link "Server-Side Rendering" [ref=f1e29] [cursor=pointer]:
+        - /url: "#server-side-rendering"
+      - link "Security And Production" [ref=f1e30] [cursor=pointer]:
+        - /url: "#security-and-production"
+      - link "Browser Support" [ref=f1e31] [cursor=pointer]:
+        - /url: "#browser-support"
+      - link "Known Gaps" [ref=f1e32] [cursor=pointer]:
+        - /url: "#known-gaps"
+      - link "Tooling" [ref=f1e33] [cursor=pointer]:
+        - /url: "#tooling"
+    - main [ref=f1e34]:
+      - generic [ref=f1e35]:
+        - heading "Short Version" [level=2] [ref=f1e36]
+        - paragraph [ref=f1e37]: Most web apps turn database state into backend models, then DTOs, then frontend models, then components, then HTML. JST asks whether the backend and browser can both speak the final format directly.
+        - paragraph [ref=f1e38]: A JST component is HTML plus JavaScript. The browser registers it as a real custom element. A server can emit that same component syntax in an ordinary HTML response.
+        - generic [ref=f1e39]: "Start with resourceful URLs and full-page navigation. Add fragment swaps only where they make a workflow better: inline validation, load-more feeds, modal bodies, expanding rows, or shipping a component definition the page did not know yet."
+        - generic [ref=f1e40]:
+          - generic [ref=f1e41]:
+            - heading "Use JST When" [level=3] [ref=f1e42]
+            - paragraph [ref=f1e43]: "You want the backend and frontend to share the same UI representation: HTML. JST fits static sites, SSR apps, HATEOAS apps, internal tools, progressively enhanced pages, quick prototypes including a single HTML file opened straight from disk, and apps whose state lives in the DOM, the URL, or the server rather than a client store."
+          - generic [ref=f1e44]:
+            - heading "Avoid JST When" [level=3] [ref=f1e45]
+            - paragraph [ref=f1e46]: You need a large client-owned SPA, a big catalogue of ready-made third-party components today, fine-grained reactive state graphs, or TypeScript-first component authoring.
+      - generic [ref=f1e47]:
+        - heading "Install" [level=2] [ref=f1e48]
+        - paragraph [ref=f1e49]:
+          - text: "JST has three install stories:"
+          - link "file:// Mode" [ref=f1e50] [cursor=pointer]:
+            - /url: "#file-mode"
+          - text: (open a single file from disk),
+          - link "Dev Mode" [ref=f1e51] [cursor=pointer]:
+            - /url: "#dev-mode"
+          - text: (serve over HTTP with visible errors), and
+          - link "Prod Mode" [ref=f1e52] [cursor=pointer]:
+            - /url: "#prod-mode"
+          - text: (precompile for production and strict CSP).
+        - heading "file:// Mode" [level=3] [ref=f1e53]
+        - paragraph [ref=f1e54]:
+          - code [ref=f1e55]: jst.global.js
+          - text: "(min:"
+          - code [ref=f1e56]: jst.global.min.js
+          - text: ") is the whole runtime as one classic script: no modules, no server. Copy an example, generate a single HTML file, double-click it from disk, and it runs. It exposes"
+          - code [ref=f1e57]: window.JST
+          - text: .
+        - generic [ref=f1e58]:
+          - code [ref=f1e60]: <!-- Copy jst.global.min.js next to your HTML file... --> <script src="jst.global.min.js"></script> <!-- ...or load it from the CDN, pinned to a release tag. --> <script src="https://cdn.jsdelivr.net/gh/br3nt/jst@v0.6.0/jst.global.min.js"></script>
+          - generic [ref=f1e61]:
+            - strong [ref=f1e62]: Hover over the code
+            - text: Hover over parts of the code snippet to get a detailed explanation.
+        - heading "Dev Mode" [level=3] [ref=f1e63]
+        - paragraph [ref=f1e64]:
+          - text: Serve over HTTP, load
+          - code [ref=f1e65]: jst.js
+          - text: as an ES module, enable
+          - code [ref=f1e66]: "dev: true"
+          - text: ", and write templates inline. The CDN works here too: the runtime's own imports resolve against the CDN URL, so one pinned import is the whole install."
+        - generic [ref=f1e67]:
+          - code [ref=f1e69]: "<!-- Dev mode: serve over http://, then load the module runtime. --> <script type=\"module\" src=\"/jst.js\"></script> <script type=\"module\"> import { configure } from '/jst.js'; configure({ dev: true }); </script> <!-- No local copy at all: import straight from the CDN. --> <script type=\"module\"> import { configure } from 'https://cdn.jsdelivr.net/gh/br3nt/jst@v0.6.0/jst.js'; configure({ dev: true }); </script>"
+          - generic [ref=f1e70]:
+            - strong [ref=f1e71]: Hover over the code
+            - text: Hover over parts of the code snippet to get a detailed explanation.
+        - heading "Prod Mode" [level=3] [ref=f1e72]
+        - paragraph [ref=f1e73]:
+          - text: "Precompile templates into a module for strict CSP and lower startup cost. Runtime behavior still goes through the normal JST renderer. The runtime can come from the CDN here too: point"
+          - code [ref=f1e74]: "--runtime"
+          - text: at the pinned URL and the generated module imports it itself, so the templates file is the only script tag you add. For multi-file apps, see
+          - link "Bundling many components" [ref=f1e75] [cursor=pointer]:
+            - /url: "#bundling"
+          - text: below.
+        - generic [ref=f1e76]:
+          - code [ref=f1e78]: "# Production mode: precompile templates for strict CSP. node tools/precompile.mjs components.html --out dist/templates.js --runtime ../jst.js <script type=\"module\" src=\"/jst.js\"></script> <script type=\"module\" src=\"/dist/templates.js\"></script> # Or serve the runtime from the CDN: the templates module imports it directly, # so the templates file is the only script tag on the page. node tools/precompile.mjs components.html --out dist/templates.js --runtime https://cdn.jsdelivr.net/gh/br3nt/jst@v0.6.0/jst.runtime.js <script type=\"module\" src=\"/dist/templates.js\"></script>"
+          - generic [ref=f1e79]:
+            - strong [ref=f1e80]: Hover over the code
+            - text: Hover over parts of the code snippet to get a detailed explanation.
+        - heading "Bundling many components" [level=3] [ref=f1e81]
+        - paragraph [ref=f1e82]:
+          - text: Point the precompiler at every file that contains templates, server views included; it writes one module that registers them all. Pair it with the runtime-only build, which drops the in-browser compiler (about 40% smaller). For classic no-module pages,
+          - code [ref=f1e83]: "--global"
+          - text: emits a plain script that registers through
+          - code [ref=f1e84]: window.JST
+          - text: .
+        - generic [ref=f1e85]:
+          - code [ref=f1e87]: "# Every template in views/ and components/, one output module. node tools/precompile.mjs views/*.html components/*.html --out dist/templates.js --runtime /jst.runtime.js <script type=\"module\" src=\"/jst.runtime.js\"></script> <script type=\"module\" src=\"/dist/templates.js\"></script> # Classic pages: --global output, paired with jst.runtime.global.js. node tools/precompile.mjs components.html --out dist/templates.global.js --global"
+          - generic [ref=f1e88]:
+            - strong [ref=f1e89]: Hover over the code
+            - text: Hover over parts of the code snippet to get a detailed explanation.
+      - generic [ref=f1e90]:
+        - heading "Write Your First Component" [level=2] [ref=f1e91]
+        - paragraph [ref=f1e92]:
+          - text: A component is a
+          - code [ref=f1e93]: <script type="jst">
+          - text: block. JST registers it as a real custom element via
+          - code [ref=f1e94]: customElements.define()
+          - text: ": the template's"
+          - code [ref=f1e95]: name
+          - text: becomes the tag name, usable anywhere plain HTML works and inspectable in DevTools like any other element. The
+          - code [ref=f1e96]: attributes
+          - text: list declares the values available inside the template.
+        - generic [ref=f1e97]:
+          - code [ref=f1e99]: <script type="jst" name="hello-name" attributes="name count"> <p>Hello, <strong>$(name)</strong>.</p> <button onclick="el.count = (el.count || 0) + 1"> Clicked $(count || 0) times </button> </script> <hello-name name="JST" count="0"></hello-name>
+          - generic [ref=f1e100]:
+            - strong [ref=f1e101]: Hover over the code
+            - text: Hover over parts of the code snippet to get a detailed explanation.
+        - paragraph [ref=f1e102]: "That exact template is registered on this page. Here it is running:"
+        - generic [ref=f1e103]:
+          - generic [ref=f1e104]: Live
+          - generic [ref=f1e105]:
+            - paragraph [ref=f1e106]:
+              - text: Hello,
+              - strong [ref=f1e107]: JST
+              - text: .
+            - button "Clicked 0 times" [ref=f1e108] [cursor=pointer]
+      - generic [ref=f1e109]:
+        - heading "Template Syntax" [level=2] [ref=f1e110]
+        - paragraph [ref=f1e111]: "The colors in code examples match this table. The template language is intentionally small: HTML stays HTML, and the dynamic parts are JavaScript."
+        - table [ref=f1e112]:
+          - rowgroup [ref=f1e113]:
+            - row "Syntax Meaning" [ref=f1e114]:
+              - columnheader "Syntax" [ref=f1e115]
+              - columnheader "Meaning" [ref=f1e116]
+            - row "$(expr) Evaluate JavaScript and HTML-escape the result." [ref=f1e117]:
+              - cell "$(expr)" [ref=f1e118]:
+                - code [ref=f1e119]: $(expr)
+              - cell "Evaluate JavaScript and HTML-escape the result." [ref=f1e120]
+            - row "$identifier Shorthand for a single identifier interpolation." [ref=f1e121]:
+              - cell "$identifier" [ref=f1e122]:
+                - code [ref=f1e123]: $identifier
+              - cell "Shorthand for a single identifier interpolation." [ref=f1e124]
+            - row "$ statement Run a JavaScript statement line." [ref=f1e125]:
+              - cell "$ statement" [ref=f1e126]:
+                - code [ref=f1e127]: $ statement
+              - cell "Run a JavaScript statement line." [ref=f1e128]
+            - 'row "${ ... } Run a JavaScript block." [ref=f1e129]':
+              - 'cell "${ ... }" [ref=f1e130]':
+                - code [ref=f1e131]: "${ ... }"
+              - cell "Run a JavaScript block." [ref=f1e132]
+            - row ".property=\"$(expr)\" Set a JavaScript property on a rendered element." [ref=f1e133]:
+              - cell ".property=\"$(expr)\"" [ref=f1e134]:
+                - code [ref=f1e135]: .property="$(expr)"
+              - cell "Set a JavaScript property on a rendered element." [ref=f1e136]
+            - row "on<event>=\"…statements…\" Add an event listener. The value is a plain function body - event in scope, this = the element - exactly like a native inline handler." [ref=f1e137]:
+              - cell "on<event>=\"…statements…\"" [ref=f1e138]:
+                - code [ref=f1e139]: on<event>="…statements…"
+              - cell "Add an event listener. The value is a plain function body - event in scope, this = the element - exactly like a native inline handler." [ref=f1e140]:
+                - text: Add an event listener. The value is a plain function body -
+                - code [ref=f1e141]: event
+                - text: in scope,
+                - code [ref=f1e142]: this
+                - text: = the element - exactly like a native inline handler.
+            - row "jst-key=\"$(id)\" Preserve DOM identity in lists." [ref=f1e143]:
+              - cell "jst-key=\"$(id)\"" [ref=f1e144]:
+                - code [ref=f1e145]: jst-key="$(id)"
+              - cell "Preserve DOM identity in lists." [ref=f1e146]
+            - 'row "jst-model=\"title\" Local form shorthand: read/write el.title." [ref=f1e147]':
+              - cell "jst-model=\"title\"" [ref=f1e148]:
+                - code [ref=f1e149]: jst-model="title"
+              - 'cell "Local form shorthand: read/write el.title." [ref=f1e150]':
+                - text: "Local form shorthand: read/write"
+                - code [ref=f1e151]: el.title
+                - text: .
+            - row "$(slot()) Project the component's original children." [ref=f1e152]:
+              - cell "$(slot())" [ref=f1e153]:
+                - code [ref=f1e154]: $(slot())
+              - cell "Project the component's original children." [ref=f1e155]
+        - generic [ref=f1e156]:
+          - code [ref=f1e158]: "<script type=\"jst\" name=\"todo-list\" attributes=\"items filter\"> $ const visible = (items || []).filter(item => { $ if (filter === 'done') return item.done; $ if (filter === 'active') return !item.done; $ return true; $ }); <ul> $ visible.forEach(item => { <li jst-key=\"$(item.id)\">$(item.text)</li> $ }) </ul> </script>"
+          - generic [ref=f1e159]:
+            - strong [ref=f1e160]: Hover over the code
+            - text: Hover over parts of the code snippet to get a detailed explanation.
+      - generic [ref=f1e161]:
+        - heading "Handlers & Behaviour" [level=2] [ref=f1e162]
+        - paragraph [ref=f1e163]:
+          - text: An
+          - code [ref=f1e164]: on<event>
+          - text: attribute value is a
+          - strong [ref=f1e165]: function body
+          - text: ", exactly like a native inline handler:"
+          - code [ref=f1e166]: event
+          - text: is in scope and
+          - code [ref=f1e167]: this
+          - text: is the element. In plain body HTML the browser compiles it; in a JST template the JST compiler does, and template values (
+          - code [ref=f1e168]: item
+          - text: ","
+          - code [ref=f1e169]: el
+          - text: ", your declared attributes) stay usable inside the handler."
+        - generic [ref=f1e170]:
+          - code [ref=f1e172]: "<form onsubmit=\"event.preventDefault(); save()\"> <input oninput=\"if (changed(event)) debounce(event, 300, () => search(this.value))\"> <div onkeydown=\"keys(event, { Enter: () => open(item), Escape: () => close() })\"> <p onreveal=\"el.emit('seen')\">lazy region</p> <button onclick.outside=\"el.open = false\">menu</button>"
+          - generic [ref=f1e173]:
+            - strong [ref=f1e174]: Hover over the code
+            - text: Hover over parts of the code snippet to get a detailed explanation.
+        - paragraph [ref=f1e175]:
+          - text: "JST provides helper functions for the patterns modern web apps keep needing: waiting for typing to pause, rate-limiting noisy events, reacting only to real changes, keyboard shortcuts. They are in scope inside every template handler body, and available as"
+          - code [ref=f1e176]: JST.fn.*
+          - text: "(or module imports) everywhere else. This is the full list:"
+        - table [ref=f1e177]:
+          - rowgroup [ref=f1e178]:
+            - row "Helper Pattern it serves" [ref=f1e179]:
+              - columnheader "Helper" [ref=f1e180]
+              - columnheader "Pattern it serves" [ref=f1e181]
+            - 'row "debounce(event, ms, fn) Run fn once the events go quiet for ms: typeahead search, autosave." [ref=f1e182]':
+              - cell "debounce(event, ms, fn)" [ref=f1e183]:
+                - code [ref=f1e184]: debounce(event, ms, fn)
+              - 'cell "Run fn once the events go quiet for ms: typeahead search, autosave." [ref=f1e185]':
+                - text: Run
+                - code [ref=f1e186]: fn
+                - text: once the events go quiet for
+                - code [ref=f1e187]: ms
+                - text: ": typeahead search, autosave."
+            - 'row "throttle(event, ms) Rate-limit: returns true at most once per ms. Guard scroll and resize work with if (throttle(event, 500)) …." [ref=f1e188]':
+              - cell "throttle(event, ms)" [ref=f1e189]:
+                - code [ref=f1e190]: throttle(event, ms)
+              - 'cell "Rate-limit: returns true at most once per ms. Guard scroll and resize work with if (throttle(event, 500)) …." [ref=f1e191]':
+                - text: "Rate-limit: returns"
+                - code [ref=f1e192]: "true"
+                - text: at most once per
+                - code [ref=f1e193]: ms
+                - text: . Guard scroll and resize work with
+                - code [ref=f1e194]: if (throttle(event, 500)) …
+                - text: .
+            - row "changed(event) Compares event.target.value with the value it saw on the previous event for that control, starting from the control's initial value. Returns true only when they differ, so events that edited nothing (arrow keys, Shift) are skipped in active search." [ref=f1e195]:
+              - cell "changed(event)" [ref=f1e196]:
+                - code [ref=f1e197]: changed(event)
+              - cell "Compares event.target.value with the value it saw on the previous event for that control, starting from the control's initial value. Returns true only when they differ, so events that edited nothing (arrow keys, Shift) are skipped in active search." [ref=f1e198]:
+                - text: Compares
+                - code [ref=f1e199]: event.target.value
+                - text: with the value it saw on the previous event for that control, starting from the control's initial value. Returns
+                - code [ref=f1e200]: "true"
+                - text: only when they differ, so events that edited nothing (arrow keys, Shift) are skipped in active search.
+            - 'row "keys(event, map) Keyboard shortcuts: keys(event, { Enter: () => save(), ''Meta+k'': () => palette() })." [ref=f1e201]':
+              - cell "keys(event, map)" [ref=f1e202]:
+                - code [ref=f1e203]: keys(event, map)
+              - 'cell "Keyboard shortcuts: keys(event, { Enter: () => save(), ''Meta+k'': () => palette() })." [ref=f1e204]':
+                - text: "Keyboard shortcuts:"
+                - code [ref=f1e205]: "keys(event, { Enter: () => save(), 'Meta+k': () => palette() })"
+                - text: .
+        - paragraph [ref=f1e206]:
+          - text: "Our helpers are ordinary functions, so you can add your own and use them the same way: define"
+          - code [ref=f1e207]: typeahead
+          - text: once in your app's JS, then call it from any attribute -
+          - code [ref=f1e208]: oninput="typeahead(event)"
+          - text: .
+        - generic [ref=f1e209]:
+          - strong [ref=f1e210]: One quirk worth knowing.
+          - text: In a native inline handler the browser resolves undotted names against the element itself, so writing
+          - code [ref=f1e211]: value
+          - text: can silently mean
+          - code [ref=f1e212]: this.value
+          - text: ". JST handlers do not recreate that scope chain: always write"
+          - code [ref=f1e213]: this.value
+          - text: ". This is deliberate: the element's hundreds of DOM properties would otherwise shadow your template values."
+        - paragraph [ref=f1e214]:
+          - text: How handlers interact with Content-Security-Policy (who compiles what, and what a strict policy changes) is covered in
+          - link "Handlers and CSP" [ref=f1e215] [cursor=pointer]:
+            - /url: "#csp"
+          - text: under Security And Production.
+      - generic [ref=f1e216]:
+        - heading "Data Flow" [level=2] [ref=f1e217]
+        - paragraph [ref=f1e218]:
+          - text: In raw top-level HTML, pass simple values as attributes and rich values with normal JavaScript property assignment. Inside a JST template, a dot-prefixed attribute assigns a JavaScript property (
+          - code [ref=f1e219]: .item="$(item)"
+          - text: ) and
+          - code [ref=f1e220]: on<event>
+          - text: attaches a listener.
+        - generic [ref=f1e221]:
+          - generic [ref=f1e222]:
+            - heading "Raw HTML + page JavaScript" [level=3] [ref=f1e223]
+            - generic [ref=f1e224]:
+              - code [ref=f1e226]: "<todo-list id=\"todos\"></todo-list> <script> const list = document.getElementById('todos'); list.items = [{ id: 1, text: 'Write docs', done: false }]; list.addEventListener('toggle', event => { list.items = list.items.map(item => item.id === event.detail.id ? { ...item, done: !item.done } : item ); }); </script>"
+              - generic [ref=f1e227]:
+                - strong [ref=f1e228]: Hover over the code
+                - text: Hover over parts of the code snippet to get a detailed explanation.
+          - generic [ref=f1e229]:
+            - heading "Inside a JST template" [level=3] [ref=f1e230]
+            - generic [ref=f1e231]:
+              - code [ref=f1e233]: "<script type=\"jst\" name=\"todo-list\" attributes=\"items\"> $ (items || []).forEach(item => { <todo-item jst-key=\"$(item.id)\" .item=\"$(item)\" ontoggle=\"el.emit('toggle', event.detail)\"> </todo-item> $ }) </script>"
+              - generic [ref=f1e234]:
+                - strong [ref=f1e235]: Hover over the code
+                - text: Hover over parts of the code snippet to get a detailed explanation.
+        - generic [ref=f1e236]:
+          - text: Dot-prefixed attributes are JST template syntax (a single
+          - code [ref=f1e237]: $(...)
+          - text: expression, compiled only inside
+          - code [ref=f1e238]: <script type="jst">
+          - text: ).
+          - code [ref=f1e239]: on<event>
+          - text: "means the same thing everywhere - a function body - the difference is who compiles it: the JST compiler inside a template (render scope, strict-CSP safe), the browser in raw top-level HTML (native inline handler, relaxed CSP). A"
+          - code [ref=f1e240]: $(...)
+          - text: form inside a handler body is a compile error.
+      - generic [ref=f1e241]:
+        - heading "State, Forms, Lists" [level=2] [ref=f1e242]
+        - heading "State Updates" [level=3] [ref=f1e243]
+        - paragraph [ref=f1e244]: Assigning a declared prop property publishes component state. Objects and arrays render even when the reference is the same, because assigning the same reference is treated as an explicit publish signal.
+        - generic [ref=f1e245]:
+          - code [ref=f1e247]: counter.count = counter.count + 1; list.items.push(nextItem); list.items = list.items; list.items = [...list.items, nextItem]; // immutable-style update also works
+          - generic [ref=f1e248]:
+            - strong [ref=f1e249]: Hover over the code
+            - text: Hover over parts of the code snippet to get a detailed explanation.
+        - heading "Forms" [level=3] [ref=f1e250]
+        - paragraph [ref=f1e251]:
+          - text: For parent/server-owned state, keep the boundary explicit. For local draft state, use
+          - code [ref=f1e252]: jst-model
+          - text: .
+        - generic [ref=f1e253]:
+          - code [ref=f1e255]: "<!-- Parent-owned value: explicit attributes-down, events-up. --> <input .value=\"$(title)\" oninput=\"el.emit('title-change', this.value)\"> <!-- Local draft value: reads and writes el.title. --> <input jst-model=\"title\">"
+          - generic [ref=f1e256]:
+            - strong [ref=f1e257]: Hover over the code
+            - text: Hover over parts of the code snippet to get a detailed explanation.
+      - generic [ref=f1e258]:
+        - heading "Slots" [level=2] [ref=f1e259]
+        - paragraph [ref=f1e260]: Slots project the custom element's original light-DOM children. Light DOM means the nodes are ordinary page DOM, not hidden inside a shadow root.
+        - generic [ref=f1e261]:
+          - code [ref=f1e263]: <script type="jst" name="app-panel" attributes="title"> <section> <h2>$(title)</h2> <div class="body">$(slot())</div> <footer>$(slot('footer', ''))</footer> </section> </script> <app-panel title="Hello"> <p>Main content</p> <button slot="footer">Save</button> </app-panel>
+          - generic [ref=f1e264]:
+            - strong [ref=f1e265]: Hover over the code
+            - text: Hover over parts of the code snippet to get a detailed explanation.
+      - generic [ref=f1e266]:
+        - heading "HATEOAS Fragments" [level=2] [ref=f1e267]
+        - paragraph [ref=f1e268]: JST's unusual feature is that a server response can define and use a component in the same HTML fragment. When inserted into a trusted auto-register root, the template registers and the element upgrades.
+        - generic [ref=f1e269]:
+          - code [ref=f1e271]: <!-- Server response body --> <script type="jst" name="app-notice" attributes="message level"> <aside class="notice $(level)">$(message)</aside> </script> <app-notice level="info" message="Saved"></app-notice>
+          - generic [ref=f1e272]:
+            - strong [ref=f1e273]: Hover over the code
+            - text: Hover over parts of the code snippet to get a detailed explanation.
+        - paragraph [ref=f1e274]:
+          - text: "Use ordinary links and forms for whole-resource navigation:"
+          - code [ref=f1e275]: GET /orders/4471
+          - text: ","
+          - code [ref=f1e276]: GET /orders/4471/edit
+          - text: ","
+          - code [ref=f1e277]: POST /orders/4471/items
+          - text: ","
+          - code [ref=f1e278]: PATCH /orders/4471/items/8
+          - text: . Fragment swaps are an enhancement for places where partial updates are worth the extra moving parts.
+        - heading "jst-nav - enhance links and forms" [level=3] [ref=f1e279]
+        - paragraph [ref=f1e280]:
+          - text: The opt-in
+          - code [ref=f1e281]: jst-nav.js
+          - text: "library does exactly one thing: it upgrades elements that"
+          - emphasis [ref=f1e282]: already act
+          - text: "- a link navigates, a form submits - so their native action fetches a fragment instead of loading a whole page. The URL and verb come from the element's own"
+          - code [ref=f1e283]: href
+          - text: /
+          - code [ref=f1e284]: action
+          - text: /
+          - code [ref=f1e285]: method
+          - text: ; adding any effect attribute opts it in, and it degrades to normal navigation with JS off.
+        - generic [ref=f1e286]:
+          - code [ref=f1e288]: <a href="/page/2" jst-target="#list">next</a> <form action="/orders" method="post" jst-target="#list" jst-swap="beforeend">…</form> <!-- A region whose content lives at a URL is a COMPONENT, not a decorated div --> <jst-include src="/comments" when="visible"></jst-include>
+          - generic [ref=f1e289]:
+            - strong [ref=f1e290]: Hover over the code
+            - text: Hover over parts of the code snippet to get a detailed explanation.
+        - paragraph [ref=f1e291]:
+          - text: "Other effect attributes:"
+          - code [ref=f1e292]: jst-select
+          - text: (pull a subtree out of a full-page response),
+          - code [ref=f1e293]: jst-push-url
+          - text: /
+          - code [ref=f1e294]: jst-replace-url
+          - text: (history),
+          - code [ref=f1e295]: jst-confirm
+          - text: ","
+          - code [ref=f1e296]: jst-boost
+          - text: (boost every descendant link/form of a container),
+          - code [ref=f1e297]: jst-target-4xx/5xx/error
+          - text: (route error responses), plus out-of-band swaps via
+          - code [ref=f1e298]: jst-swap-oob
+          - text: in the response. Cancelable lifecycle events (
+          - code [ref=f1e299]: jst:before-request
+          - text: ","
+          - code [ref=f1e300]: jst:before-swap
+          - text: ) bubble from the element.
+        - paragraph [ref=f1e301]:
+          - text: Every other cause - keystrokes, reveal, polling, websockets - is plain JS calling the same pipeline through
+          - strong [ref=f1e302]:
+            - code [ref=f1e303]: swap(target, url, options)
+          - text: ", the imperative primitive:"
+        - generic [ref=f1e304]:
+          - code [ref=f1e306]: "import { swap } from './jst-nav.js'; // active search: the handler helpers pace it, swap() lands it const typeahead = (event) => { if (!changed(event)) return; debounce(event, 300, () => swap('#results', '/search?q=' + event.target.value)); }; // polling is an interval; a websocket push is a listener - no grammar setInterval(() => swap('#status', '/job/42'), 2000);"
+          - generic [ref=f1e307]:
+            - strong [ref=f1e308]: Hover over the code
+            - text: Hover over parts of the code snippet to get a detailed explanation.
+        - generic [ref=f1e309]:
+          - strong [ref=f1e310]: "The line that keeps this small:"
+          - text: jst-nav decorates elements that already act; it never invents behaviour on inert elements (that's a component's job, like
+          - code [ref=f1e311]: <jst-include>
+          - text: ") and never evaluates attribute strings (values are inert URLs/selectors, so server HTML can't smuggle code). There is no trigger grammar to learn - causes are events, timers, and components: things JavaScript already has."
+      - generic [ref=f1e312]:
+        - heading "Server-Side Rendering Examples" [level=2] [ref=f1e313]
+        - paragraph [ref=f1e314]: These examples are for backend web frameworks that render HTML on the server. The point is not that JST needs those frameworks; it is that they can emit JST directly because the wire format is HTML.
+        - generic [ref=f1e315]:
+          - generic [ref=f1e316]:
+            - heading "Rails ERB" [level=3] [ref=f1e317]
+            - generic [ref=f1e318]:
+              - code [ref=f1e320]: <task-row task-id="<%= task.id %>" title="<%= h task.title %>" done="<%= task.done.to_json %>"> </task-row>
+              - generic [ref=f1e321]:
+                - strong [ref=f1e322]: Hover over the code
+                - text: Escaped server values become ordinary JST attributes.
+          - generic [ref=f1e323]:
+            - heading "ASP.NET Razor" [level=3] [ref=f1e324]
+            - generic [ref=f1e325]:
+              - code [ref=f1e327]: <script type="jst" name="task-row" attributes="taskId title done"> <button onclick="el.emit('complete', taskId)">Complete</button> </script> <task-row task-id="@Model.Task.Id" title="@Model.Task.Title"></task-row>
+              - generic [ref=f1e328]:
+                - strong [ref=f1e329]: Hover over the code
+                - text: Hover over parts of the code snippet to get a detailed explanation.
+          - generic [ref=f1e330]:
+            - heading "Plain PHP" [level=3] [ref=f1e331]
+            - generic [ref=f1e332]:
+              - code [ref=f1e334]: <task-row task-id="<?= htmlspecialchars($task['id']) ?>" title="<?= htmlspecialchars($task['title']) ?>" done="<?= json_encode($task['done']) ?>"> </task-row>
+              - generic [ref=f1e335]:
+                - strong [ref=f1e336]: Hover over the code
+                - text: Plain PHP can output JST tags directly. Escape strings and JSON-encode booleans/numbers.
+          - generic [ref=f1e337]:
+            - heading "Laravel Blade" [level=3] [ref=f1e338]
+            - generic [ref=f1e339]:
+              - code [ref=f1e341]: "<task-row task-id=\"{{ $task->id }}\" title=\"{{ $task->title }}\" done=\"@json($task->done)\"> </task-row>"
+              - generic [ref=f1e342]:
+                - strong [ref=f1e343]: Hover over the code
+                - text: "Blade escapes {{ }} output by default; @json is useful for non-string values."
+          - generic [ref=f1e344]:
+            - heading "Go html/template" [level=3] [ref=f1e345]
+            - generic [ref=f1e346]:
+              - code [ref=f1e348]: "<task-row task-id=\"{{ .Task.ID }}\" title=\"{{ .Task.Title }}\" done=\"{{ .Task.Done }}\"> </task-row>"
+              - generic [ref=f1e349]:
+                - strong [ref=f1e350]: Hover over the code
+                - text: Go's html/template context-escapes attribute values. For arrays/objects, render JSON into a script block or assign properties from page JS.
+          - generic [ref=f1e351]:
+            - heading "Django / Jinja-style templates" [level=3] [ref=f1e352]
+            - generic [ref=f1e353]:
+              - code [ref=f1e355]: "<task-row task-id=\"{{ task.id }}\" title=\"{{ task.title }}\" done=\"{{ task.done|yesno:'true,false' }}\"> </task-row>"
+              - generic [ref=f1e356]:
+                - strong [ref=f1e357]: Hover over the code
+                - text: Server-rendered Python templates can emit JST custom elements like any other HTML tag.
+          - generic [ref=f1e358]:
+            - heading "Rust Askama" [level=3] [ref=f1e359]
+            - generic [ref=f1e360]:
+              - code [ref=f1e362]: "<task-row task-id=\"{{ task.id }}\" title=\"{{ task.title }}\" done=\"{{ task.done }}\"> </task-row>"
+              - generic [ref=f1e363]:
+                - strong [ref=f1e364]: Hover over the code
+                - text: "Rust SSR template engines can do the same thing: output HTML tags and let the browser upgrade them."
+      - generic [ref=f1e365]:
+        - heading "Security And Production" [level=2] [ref=f1e366]
+        - heading "Trust Boundary" [level=3] [ref=f1e367]
+        - list [ref=f1e368]:
+          - listitem [ref=f1e369]:
+            - code [ref=f1e370]: $(expr)
+            - text: escapes HTML by default.
+          - listitem [ref=f1e371]:
+            - code [ref=f1e372]: url(value)
+            - text: blocks dangerous URL schemes in URL-bearing attributes.
+          - listitem [ref=f1e373]:
+            - code [ref=f1e374]: trustedHTML(value)
+            - text: bypasses escaping. It is the only opt-out-of-escaping helper; only use it for HTML your app produced or sanitized.
+          - listitem [ref=f1e375]:
+            - text: Fetched JST templates are code. Scope them with
+            - code [ref=f1e376]: autoRegisterRoot
+            - text: and allowlist names in
+            - code [ref=f1e377]: resolveTemplate
+            - text: .
+        - generic [ref=f1e378]:
+          - code [ref=f1e380]: <p>$(comment)</p> <a href="$(url(userLink))">go</a> <article>$(trustedHTML(renderedMarkdown))</article>
+          - generic [ref=f1e381]:
+            - strong [ref=f1e382]: Hover over the code
+            - text: Hover over parts of the code snippet to get a detailed explanation.
+        - heading "Names, never code (the script-gadget rule)" [level=3] [ref=f1e383]
+        - paragraph [ref=f1e384]:
+          - text: jst-nav and jst-behaviors read attribute values from the
+          - emphasis [ref=f1e385]: live
+          - text: "DOM - including server-rendered and swapped-in HTML - so their values are only ever inert strings: URLs, CSS selectors, names. This is a hard line, not a style choice: a framework that evaluates DOM attribute strings becomes a"
+          - strong [ref=f1e386]: script gadget
+          - text: "- on a site that deployed strict CSP precisely to neutralise injected"
+          - code [ref=f1e387]: onclick=
+          - text: handlers, an attacker who achieves HTML injection could ride the framework around the policy. JST refuses to be that gadget.
+        - heading "Handlers and CSP" [level=3] [ref=f1e388]
+        - paragraph [ref=f1e389]:
+          - text: In plain body HTML, native
+          - code [ref=f1e390]: oninput="typeahead(event)"
+          - text: is evaluated by the
+          - emphasis [ref=f1e391]: browser
+          - text: "- plain platform code that needs a relaxed CSP. Under a strict CSP, the same behaviour moves into a template (where handlers compile to"
+          - code [ref=f1e392]: addEventListener
+          - text: "- no nonce, no"
+          - code [ref=f1e393]: unsafe-inline
+          - text: ) or a script.
+          - code [ref=f1e394]: jst-lint --csp
+          - text: lists every native inline handler when you're ready to make that move.
+        - paragraph [ref=f1e395]:
+          - strong [ref=f1e396]: Synthetic events in body HTML
+          - text: (
+          - code [ref=f1e397]: onreveal
+          - text: "outside a template) require JST to evaluate the attribute string, so they're opt-in and loudly named:"
+        - generic [ref=f1e398]:
+          - code [ref=f1e400]: "configure({ unsafeInlineHandlers: true });"
+          - generic [ref=f1e401]:
+            - strong [ref=f1e402]: Hover over the code
+            - text: Hover over parts of the code snippet to get a detailed explanation.
+        - heading "How far to take strict CSP" [level=3] [ref=f1e403]
+        - paragraph [ref=f1e404]:
+          - text: "The strict-CSP ladder: plain pages need nothing special → interactive regions become components (islands), precompiled for no"
+          - code [ref=f1e405]: unsafe-eval
+          - text: → and at the extreme, the whole page becomes one root component.
+          - strong [ref=f1e406]: "Know when you've overcorrected:"
+          - text: a single app-shell template is a SPA - you lose native cross-document view transitions and simple server-rendered pages for a constraint you may not actually have. If your CSP isn't strict, you don't need any of this; put the ladder down at the rung your policy requires and no further.
+        - heading "Configuration" [level=3] [ref=f1e407]
+        - generic [ref=f1e408]:
+          - code [ref=f1e410]: "import { configure } from './jst.js'; configure({ dev: location.hostname === 'localhost', autoRegisterRoot: document.getElementById('trusted-fragments'), resolveTemplate(name) { if (!name.startsWith('app-')) return null; return `/components/${name}.html`; }, });"
+          - generic [ref=f1e411]:
+            - strong [ref=f1e412]: Hover over the code
+            - text: Hover over parts of the code snippet to get a detailed explanation.
+        - heading "Testing & TypeScript" [level=3] [ref=f1e413]
+        - paragraph [ref=f1e414]:
+          - strong [ref=f1e415]: "Testing:"
+          - text: components are real custom elements in light DOM - render them into a DOM (jsdom with custom elements, or Playwright against a served page), set attributes/properties, dispatch events, and assert on
+          - code [ref=f1e416]: innerHTML
+          - text: . No special test renderer.
+          - strong [ref=f1e417]: "TypeScript:"
+          - text: the npm package ships hand-written
+          - code [ref=f1e418]: .d.ts
+          - text: for the runtime API,
+          - code [ref=f1e419]: window.JST
+          - text: ","
+          - code [ref=f1e420]: JST.nav
+          - text: ", and the handler helpers - typed consumption without a build step (typed template"
+          - emphasis [ref=f1e421]: expressions
+          - text: are a known gap).
+      - generic [ref=f1e422]:
+        - heading "Browser Support" [level=2] [ref=f1e423]
+        - paragraph [ref=f1e424]:
+          - text: "JST targets modern evergreen browsers and uses platform features directly: Custom Elements v1, ES modules,"
+          - code [ref=f1e425]: MutationObserver
+          - text: ","
+          - code [ref=f1e426]: queueMicrotask
+          - text: ","
+          - code [ref=f1e427]: CustomEvent
+          - text: ", and modern DOM APIs. Internet Explorer and very old pre-evergreen browsers are out of scope."
+        - paragraph [ref=f1e428]:
+          - text: The default browser compiler uses
+          - code [ref=f1e429]: new Function
+          - text: ", which Content Security Policy treats as eval. That is a CSP concern, not a browser compatibility concern. Use precompiled mode for strict CSP."
+      - generic [ref=f1e430]:
+        - heading "Known Gaps" [level=2] [ref=f1e431]
+        - list [ref=f1e432]:
+          - listitem [ref=f1e433]:
+            - strong [ref=f1e434]: "Formatter / tree-sitter / typed expressions:"
+            - text: planned. VS Code diagnostics and highlighting exist now.
+          - listitem [ref=f1e435]:
+            - strong [ref=f1e436]: "Keyed reconciliation:"
+            - text: shipped and tested, but still a high-risk area that should keep gaining adversarial tests.
+          - listitem [ref=f1e437]:
+            - strong [ref=f1e438]: "Transitions:"
+            - text: CSS-driven v1 shipped for keyed enter/leave; richer move/FLIP behavior may grow later.
+          - listitem [ref=f1e439]:
+            - strong [ref=f1e440]: "Light DOM:"
+            - text: deliberate. There is no style or id encapsulation, so prefer classes and derive ids from attributes.
+          - listitem [ref=f1e441]:
+            - strong [ref=f1e442]: "Handler bodies and $-forms:"
+            - text: a handler body cannot contain
+            - code [ref=f1e443]: $(…)
+            - text: /
+            - code [ref=f1e444]: $
+            - text: "-forms or lines starting with"
+            - code [ref=f1e445]: $
+            - text: "- use a named function for complex handlers."
+      - generic [ref=f1e446]:
+        - heading "Tooling" [level=2] [ref=f1e447]
+        - paragraph [ref=f1e448]:
+          - text: The VS Code extension under
+          - code [ref=f1e449]: tooling/
+          - text: already provides syntax highlighting, diagnostics, and a language server. The next tooling path is marketplace packaging, formatter support, typed expression checking, and a tree-sitter grammar.
+        - generic [ref=f1e450]: "Tooling should support the same simple model as runtime JST: attributes are declared explicitly, template expressions are JavaScript, invalid bindings fail loudly, and rich values move through properties rather than string attributes."
+  - contentinfo [ref=f1e451]: JST docs. Serve over HTTP for module and service-worker demos.
