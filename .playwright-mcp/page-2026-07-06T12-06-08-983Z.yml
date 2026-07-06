@@ -1,0 +1,126 @@
+- generic [ref=e3]:
+  - generic [ref=e4]:
+    - heading "jst-layout primitives" [level=1] [ref=e5]
+    - paragraph [ref=e6]:
+      - text: Every primitive below is a
+      - code [ref=e7]: <jst-*>
+      - text: element styled by CSS alone; there is no script on this page. Per-instance values are set with an inline custom property like
+      - code [ref=e8]: "--space"
+      - text: .
+  - generic [ref=e10]:
+    - heading "Stack" [level=2] [ref=e11]
+    - paragraph [ref=e12]: Even vertical space between flow children.
+    - generic [ref=e13]:
+      - textbox "Name" [ref=e14]
+      - textbox "Email" [ref=e15]
+      - button "Save" [ref=e16] [cursor=pointer]
+  - generic [ref=e18]:
+    - heading "Cluster" [level=2] [ref=e19]
+    - paragraph [ref=e20]: A group of things that wraps; good for tags and button rows.
+    - generic [ref=e21]:
+      - button "Primary" [ref=e22] [cursor=pointer]
+      - button "Another" [ref=e23] [cursor=pointer]
+      - button "Third" [ref=e24] [cursor=pointer]
+      - button "Fourth action" [ref=e25] [cursor=pointer]
+      - button "Fifth" [ref=e26] [cursor=pointer]
+  - generic [ref=e28]:
+    - heading "Grid" [level=2] [ref=e29]
+    - paragraph [ref=e30]:
+      - text: As many
+      - code [ref=e31]: "--min"
+      - text: "-wide columns as fit. Resize to see it reflow; no media queries."
+    - generic [ref=e32]:
+      - strong [ref=e34]: One
+      - strong [ref=e36]: Two
+      - strong [ref=e38]: Three
+      - strong [ref=e40]: Four
+  - generic [ref=e42]:
+    - heading "Sidebar" [level=2] [ref=e43]
+    - paragraph [ref=e44]: Sidebar beside content; wraps under it when content gets too narrow.
+    - generic [ref=e45]:
+      - generic [ref=e47]:
+        - strong [ref=e48]: Aside
+        - link "Link one" [ref=e49] [cursor=pointer]:
+          - /url: "#"
+        - link "Link two" [ref=e50] [cursor=pointer]:
+          - /url: "#"
+      - paragraph [ref=e52]: Main content takes the rest of the row and stays at least 60% wide before the sidebar wraps above it.
+  - generic [ref=e54]:
+    - heading "Switcher" [level=2] [ref=e55]
+    - paragraph [ref=e56]:
+      - text: Children share the row equally until the container is narrower than
+      - code [ref=e57]: "--threshold"
+      - text: ", then all of them stack. The"
+      - code [ref=e58]: limit
+      - text: attribute caps items per row.
+    - generic [ref=e59]:
+      - generic [ref=e60]:
+        - strong [ref=e61]: Plan
+        - paragraph [ref=e62]: Starter
+      - generic [ref=e63]:
+        - strong [ref=e64]: Plan
+        - paragraph [ref=e65]: Team
+      - generic [ref=e66]:
+        - strong [ref=e67]: Plan
+        - paragraph [ref=e68]: Enterprise
+  - generic [ref=e70]:
+    - heading "Cover" [level=2] [ref=e71]
+    - paragraph [ref=e72]:
+      - text: The
+      - code [ref=e73]: data-principal
+      - text: child centers vertically inside
+      - code [ref=e74]: "--min-height"
+      - text: ; anything before or after it sits at the edges.
+    - generic [ref=e75]:
+      - paragraph [ref=e76]:
+        - emphasis [ref=e77]: Eyebrow text
+      - heading "A centered hero heading" [level=3] [ref=e78]
+      - paragraph [ref=e79]: Footer line
+  - generic [ref=e81]:
+    - heading "Frame" [level=2] [ref=e82]
+    - paragraph [ref=e83]:
+      - text: Crops media (or centers anything else) to
+      - code [ref=e84]: "--ratio"
+      - text: .
+    - strong [ref=e86]: 21 / 9
+  - generic [ref=e88]:
+    - heading "Reel" [level=2] [ref=e89]
+    - paragraph [ref=e90]:
+      - text: Overflowing children scroll horizontally at
+      - code [ref=e91]: "--item-width"
+      - text: instead of shrinking.
+    - generic [ref=e92]:
+      - generic [ref=e93]: Card one
+      - generic [ref=e94]: Card two
+      - generic [ref=e95]: Card three
+      - generic [ref=e96]: Card four
+      - generic [ref=e97]: Card five
+      - generic [ref=e98]: Card six
+  - generic [ref=e100]:
+    - heading "Imposter" [level=2] [ref=e101]
+    - paragraph [ref=e102]:
+      - text: "Positions over its parent, centered by default. The parent needs no class: any element with a"
+      - code [ref=e103]: <jst-imposter>
+      - text: child becomes the positioning container.
+    - generic [ref=e104]:
+      - paragraph [ref=e105]: Content underneath underneath underneath
+      - strong [ref=e108]: On top
+  - generic [ref=e110]:
+    - heading "Icon" [level=2] [ref=e111]
+    - paragraph [ref=e112]:
+      - text: "Inline SVG sized to the capital height of the surrounding text:"
+      - generic [ref=e113]:
+        - img [ref=e114]
+        - generic [ref=e116]: with a label
+      - text: and it scales with the font, even in a
+      - strong [ref=e117]:
+        - text: bigger
+        - img [ref=e119]
+      - text: setting.
+  - generic [ref=e122]:
+    - heading "Re-themed by one token" [level=2] [ref=e123]
+    - paragraph [ref=e124]:
+      - text: This box only sets
+      - code [ref=e125]: "--jst-accent"
+      - text: . The shade ramp and accessible foreground re-derive automatically.
+    - button "Accent button" [ref=e131] [cursor=pointer]

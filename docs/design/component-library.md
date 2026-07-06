@@ -1,6 +1,7 @@
 # Design: component library + the directive seam
 
-Status: **design / in progress**. Tracks issue [#8](https://github.com/br3nt/jst/issues/8)
+Status: **Layers 0 and 1 built** (`jst-layout.css`, all twelve primitives); Layer 2
+components not started. Tracks issue [#8](https://github.com/br3nt/jst/issues/8)
 (layout primitives) and informs [#7](https://github.com/br3nt/jst/issues/7) /
 [#3](https://github.com/br3nt/jst/issues/3) (directives) and [#28](https://github.com/br3nt/jst/issues/28)
 (datasource).
@@ -33,7 +34,7 @@ cleanly onto two mental models JST users already have: client behaviors
 ```
 jst.js          core: compile <script type="jst"> → custom elements + morph
 jst-layout      CSS base + design tokens + layout primitives + components   (runtime-OPTIONAL)
-jst-behaviors   toggle / dismiss / show+transition / outside-click / intersect   (client, Alpine-shaped)
+jst-behaviors   <jst-include> / jst-teleport: client components the platform lacks
 jst-nav         boost / target / swap / push-url / select + error handling   (server, HTMX-shaped, #3)
 ```
 
@@ -157,15 +158,15 @@ What the platform does *not* give us, so it stays in scope:
 
 | Still needs JS / a directive | Home |
 | --- | --- |
-| reveal / lazy on scroll (IntersectionObserver) | `jst-intersect` (the shrunken `jst-behaviors`) |
+| reveal / lazy on scroll (IntersectionObserver) | synthetic `onreveal` event (core) + `<jst-include when="visible">` (`jst-behaviors`) |
 | custom-command routing sugar | a tiny helper, not a module (below) |
 | fetch + swap + history | `jst-nav` (#3) - see verbs below |
 
 ### Custom commands ride JST's existing `on*` binding
 
 A custom command (`command="--foo"`) dispatches a `CommandEvent` named `command`
-on its target. JST already binds *any* `on<event>="$(fn)"` via
-`addEventListener` (`interpreter.js`), so `oncommand="$(fn)"` works with **no new
+on its target. JST already attaches *any* `on<event>` function body via
+`addEventListener` (`interpreter.js`), so `oncommand="…"` works with **no new
 compiler path**. The handler gets `event.command` (`"--foo"`) and `event.source`
 (the button).
 
@@ -177,14 +178,15 @@ compiler path**. The handler gets `event.command` (`"--foo"`) and `event.source`
 > true`). This keeps the existing attributes-down / events-up mental model intact.
 
 The only code worth adding is a command **router** (so a target handling several
-`--commands` doesn't need a hand-written `switch`):
+`--commands` doesn't need a hand-written `switch`). Shaped like the `keys(event,
+map)` handler helper:
 
 ```html
-<my-thing oncommand="$(onCommand({ '--save': save, '--revert': revert }))">
+<my-thing oncommand="commands(event, { '--save': save, '--revert': revert })">
 ```
 
-It is a ~10-line function, so it belongs in **core runtime helpers** (next to
-`$`), not in a `jst-behaviors` module.
+It is a ~10-line function, so it belongs with the **handler helpers** (next to
+`keys`), not in a `jst-behaviors` module. Not yet built.
 
 ## Commands and ids: no synthetic id system
 
@@ -267,30 +269,25 @@ otherwise scoped query (case 3).** The id is always author-owned, never minted.
 | outside-click / escape | native popover light-dismiss | platform |
 | custom action → component | `oncommand` + the router helper | core helper |
 | reveal / lazy on scroll | `jst-intersect` | `jst-behaviors` (client) |
-| enter/leave transition (conditional) | `jst-transition` / `jst-show` | `jst-behaviors` (client) / #3 |
-| fetch + swap + history + verbs | `jst-boost` / `method` / `jst-action` / `jst-target` / `jst-swap` | `jst-nav` (server, #3) |
+| enter/leave transition (conditional) | `jst-transition` on keyed nodes | core |
+| fetch + swap + history + verbs | `jst-boost` / native `href`/`action`/`method` / `jst-target` / `jst-swap` / `swap()` | `jst-nav` (server, #3) |
 
-## `jst-nav` and HTTP verbs: reuse native `method` (#3)
+## `jst-nav` and HTTP verbs: reuse native `method` (shipped in v0.6.0)
 
 HTMX's headline is *any element fires any verb* (`hx-get/post/put/patch/delete`).
-#3 captured GET (`jst-boost`, `jst-get`) and POST (native forms) but **not**
-PUT/PATCH/DELETE on arbitrary elements. Unlike the command work above, the
-platform gives us nothing free here: native forms still only do GET/POST, so the
-verbs genuinely require the `jst-nav` fetch layer.
+The shipped answer reuses the platform's own spelling rather than inventing
+`jst-method` or five per-verb attributes:
 
-Decision: **reuse the native `method` attribute** rather than invent `jst-method`
-or five per-verb attributes.
-
-- A form already carries `action` + `method`; `jst-boost` just reads them, and the
-  swap layer honors `method="put|patch|delete"` (which the browser would otherwise
-  normalize to GET).
-- For a non-form trigger (a `<button>`/`<a>`), add `jst-action="/url"` and reuse
-  `method` for the verb (GET if omitted). `jst-action` only exists because plain
-  buttons have no native `action`.
+- A form already carries `action` + `method`; jst-nav reads them, and the swap
+  layer honors `method="put|patch|delete"` (which the browser would otherwise
+  normalize to GET). `method` is honored on enhanced links too.
+- There is no `jst-action`: jst-nav only enhances elements that already act
+  (links and forms). A plain button firing a verb is a handler calling
+  `swap(target, url, { method: 'DELETE' })`.
 
 ```html
 <form action="/items/8" method="delete" jst-target="closest .item">…</form>
-<button jst-action="/items/8" method="delete" jst-target="closest .item">Delete</button>
+<button onclick="swap(this.closest('.item'), '/items/8', { method: 'DELETE', swap: 'outerHTML' })">Delete</button>
 ```
 
 This keeps the surface tiny (the fixi note on #3: "resist an htmx-sized surface")
@@ -325,38 +322,38 @@ left to build - and where each lands.
 | `x-data`, `x-init` | JST components own state (`el.*`) + render | - already JST |
 | `x-show` / `x-if` / `x-bind` / `x-text` | JST `$(…)` interpolation + `$ if`/`$ for` | - already JST |
 | `x-on` (`@click`) | JST `on*` bindings | - already JST |
-| `x-model` | two-way bind | **gap**: a `.value`-style sugar? (open question) |
-| `x-transition` | conditional enter/leave | `jst-transition` / #3 (partly there) |
-| `x-show` toggle + `@click.outside` | popover light-dismiss / `command` | platform |
+| `x-model` | two-way bind | `jst-model` - already JST |
+| `x-transition` | conditional enter/leave | `jst-transition` - already JST |
+| `x-show` toggle + `@click.outside` | popover light-dismiss / `command`; `.outside` registration modifier | platform / already JST |
 | `x-ref` | `el.querySelector` (scoped) | - already JST |
-| `x-intersect` | IntersectionObserver | `jst-intersect` |
-| `x-cloak` | FOUC hide before hydrate | **gap**: a 1-line CSS/attr convention |
-| `x-teleport` | move node elsewhere | popover/`<dialog>` top-layer covers most; rest = **gap?** |
+| `x-intersect` | IntersectionObserver | synthetic `onreveal` + `<jst-include when="visible">` - already JST |
+| `x-cloak` | FOUC hide before hydrate | `:not(:defined) { display: none }` - platform (better: zero JS) |
+| `x-teleport` | move node elsewhere | `jst-teleport` (jst-behaviors); popover/`<dialog>` top-layer covers most |
 
 ### HTMX
 
 | HTMX | Subtract because… | Left for JST |
 | --- | --- | --- |
 | `hx-get` / `hx-boost` | GET fetch + swap | `jst-boost` / #3 ✅ |
-| `hx-post/put/patch/delete` | verbs on any element | **gap → reuse `method` + `jst-action`** (above) |
+| `hx-post/put/patch/delete` | verbs on any element | native `method` on links/forms; other causes call `swap(url, { method })` (above) |
 | `hx-target` | where it lands | `jst-target` - **CSS selectors only** (above) |
 | `hx-swap` (incl. `morph`) | how it lands | `jst-swap`; JST already morphs |
 | `hx-select` | pick a subtree from a response | `jst-select` / #3 |
 | `hx-push-url` / history | back/forward, restore | `jst-push-url` / #3 |
 | `hx-trigger` (events, modifiers, `from:`) | when it fires | plain `on*` handlers + the handler helpers; `from:` = addEventListener + `swap()` (v0.6.0) |
-| `hx-trigger="revealed"` | scroll-in | synthetic `onreveal` event / `<jst-include when="visible">` / `jst-intersect` |
-| `hx-swap-oob` | out-of-band updates | **gap?**: decide vs. JST's component model |
-| `hx-indicator` | loading state | CSS `:has()` + a request class = mostly CSS; → #28 for data |
-| `hx-confirm` | confirm before send | `<dialog>` + `request-close`; or a small hook |
+| `hx-trigger="revealed"` | scroll-in | synthetic `onreveal` event / `<jst-include when="visible">` |
+| `hx-swap-oob` | out-of-band updates | `jst-swap-oob` in jst-nav responses |
+| `hx-indicator` | loading state | the `jst-request` class during a fetch + CSS; → #28 for data |
+| `hx-confirm` | confirm before send | `jst-confirm` |
 | `hx-on` | inline handlers | JST `on*` |
 | `hx-disable`/`hx-disinherit` | scope control | `jst-boost="false"` opt-out (#3) |
 | SSE / WebSocket extensions | streaming | out of scope (extension) - relates to #28 |
 
-**Net new gaps surfaced by this pass** (not yet in an issue): two-way input sugar
-(`x-model`), an `x-cloak` FOUC convention, out-of-band swap stance, and
-trigger polling / `from:` event sourcing. None are urgent; flag for `jst-nav`
-(#3) and a future `jst-behaviors` scope. Everything else is either already JST,
-already the platform, or already tracked in #3/#28/#29.
+The gaps this pass originally surfaced (two-way input sugar, an `x-cloak` FOUC
+convention, out-of-band swaps, trigger/`from:` event sourcing) have since landed
+as `jst-model`, native `:not(:defined)` cloaking, `jst-swap-oob`, and the v0.6.0
+cause model (handlers + `swap()`). Everything else is either already JST,
+already the platform, or tracked in #3/#28/#29.
 
 ## Docs convention
 
@@ -374,8 +371,11 @@ fallback. The message throughout: **reach for the platform first.**
 - Where does the line sit between `jst-layout` shipping a component vs. pointing
   at a `jst-behaviors` directive + plain markup?
 
-## First slice (prototype)
+## Current state
 
-Layer 0 tokens + base, plus `<jst-stack>` / `<jst-cluster>` / `<jst-grid>` /
-`<jst-sidebar>`, and a composed demo that re-themes by overriding one token. See
-`jst-layout.css` and `examples/layout_primitives.html`.
+Layer 0 (tokens + classless base) and all twelve Layer 1 primitives are in
+`jst-layout.css`: stack, cluster, grid, sidebar, center, box, switcher, cover,
+frame, reel, imposter, icon. `examples/layout_primitives.html` demonstrates each
+one plus the one-token re-theme, with zero JavaScript on the page. Next: settle
+the open questions above, then run Layer 2 candidates (tabs, toast, combobox)
+through the "does this beat raw HTML + CSS?" filter.
