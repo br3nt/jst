@@ -1,0 +1,6 @@
+[      62ms] [ERROR] JST Compile Error in <jst-palette>: SyntaxError: Unexpected token ')'
+    at new Function (<anonymous>)
+    at registerCustomElementFromTemplate (http://127.0.0.1:8642/jst.js:869:22)
+    at NodeList.forEach (<anonymous>)
+    at initializeTemplates (http://127.0.0.1:8642/jst.js:1346:51)
+    at http://127.0.0.1:8642/jst.js:1478:1 @ http://127.0.0.1:8642/jst.js:923

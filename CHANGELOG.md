@@ -39,6 +39,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (opt-in container-query context), and the lazy accordion pattern: a
   `<jst-include when="visible">` inside a closed `<details>` fetches only
   when the panel opens - pure composition, smoke-tested.
+- **jst-components: command palette (`jst-palette`).** Global shortcut via
+  `keys()` (Cmd/Ctrl+K), type-to-filter, arrow/Enter/Escape keyboard model,
+  backdrop dismiss, and a bubbling `run` event the page executes. Composes
+  the shared floating-panel rules; none of the surveyed libraries ship one.
+- **jst-layout: the long-form and app-chrome misses.** `.jst-prose` (flow
+  rhythm for article content, since the reset zeroes margins for app
+  composition), `.jst-kv` key-value pairs, `[data-scheme]` manual dark-mode
+  toggle riding `light-dark()`, `.jst-skip-link`, toaster `data-position`
+  corners, and striped tables (`jst-table[striped]` / `table.jst-striped`).
 - **jst-include: symmetric reveal margin.** An include the user scrolls past
   (now above the viewport) loads too; previously only the approach from below
   triggered the fetch.

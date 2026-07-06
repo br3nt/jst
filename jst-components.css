@@ -174,9 +174,9 @@
  * Dropdown menu - native [popover] + command="toggle-popover". The invoker is
  * the popover's implicit anchor, so no ids/anchor-names are needed to place it.
  * ==========================================================================*/
-/* The floating-panel surface, shared by the dropdown menu and the combobox
-   listbox (and any future floating list). Declared once. */
-.jst-menu[popover], jst-combobox [role="listbox"] {
+/* The floating-panel surface, shared by the dropdown menu, the combobox
+   listbox, and the command palette. Declared once. */
+.jst-menu[popover], jst-combobox [role="listbox"], .jst-palette {
   padding: var(--jst-space-2xs);
   border: var(--jst-border-width) solid var(--jst-border);
   border-radius: var(--jst-radius);
@@ -185,7 +185,7 @@
 }
 /* Items inside a floating panel: same box, different activation cue (menu
    items respond to hover, combobox options to data-active). */
-:where(.jst-menu, jst-combobox [role="listbox"]) :where(button, a, [role="option"]) {
+:where(.jst-menu, jst-combobox [role="listbox"], .jst-palette) :where(button, a, [role="option"]) {
   display: flex; align-items: center; gap: var(--jst-space-xs);
   inline-size: 100%; text-align: start;
   padding: var(--jst-space-2xs) var(--jst-space-s);
@@ -242,6 +242,10 @@ jst-toaster {
   display: flex; flex-direction: column; gap: var(--jst-space-xs); z-index: 9999;
   pointer-events: none;
 }
+/* Corners and centers via data-position; end-bottom is the default above. */
+jst-toaster[data-position~="start"]  { inset-inline: var(--jst-space-l) auto; }
+jst-toaster[data-position~="top"]    { inset-block: var(--jst-space-l) auto; }
+jst-toaster[data-position~="center"] { inset-inline: 50% auto; translate: -50% 0; align-items: center; }
 /* What only the toast adds to the shared status surface: it floats. */
 jst-toaster .jst-toast {
   pointer-events: auto;
@@ -339,6 +343,7 @@ jst-table thead button {
 jst-table thead button:hover { color: var(--jst-fg); }
 jst-table th[aria-sort="ascending"] button, jst-table th[aria-sort="descending"] button { color: var(--jst-fg); }
 jst-table tbody tr:hover { background: var(--jst-surface); }
+:where(jst-table[striped], table.jst-striped) tbody tr:nth-child(even) { background: color-mix(in oklch, var(--jst-surface) 55%, var(--jst-bg)); }
 
 /* ============================================================================
  * Skeleton - a shimmering placeholder while content loads. Pairs with
@@ -547,6 +552,37 @@ jst-table tbody tr:hover { background: var(--jst-surface); }
 .jst-page-header [data-actions] { display: inline-flex; gap: var(--jst-space-2xs); flex: none; }
 .jst-page-header .jst-sub { color: var(--jst-muted); font-size: var(--jst-font-small); margin: 0; }
 /* .jst-eyebrow shares the micro-label rule in jst-layout.css. */
+
+/* ============================================================================
+ * Command palette - a JST component: global shortcut, filter, keyboard run.
+ * The panel and options ride the shared floating-panel rules above.
+ * ==========================================================================*/
+jst-palette .jst-palette-overlay {
+  position: fixed; inset: 0; z-index: 10000;
+  background: var(--jst-backdrop);
+  display: flex; justify-content: center; align-items: flex-start;
+  padding-block-start: 12vb;
+}
+jst-palette .jst-palette {
+  inline-size: min(34rem, 92vw);
+  display: flex; flex-direction: column;
+  max-block-size: 60vb;
+}
+jst-palette .jst-palette > input {
+  font-size: 1rem;
+  border: none; border-block-end: var(--jst-border-width) solid var(--jst-border);
+  border-radius: 0; outline: none; box-shadow: none;
+  padding: 0.6em 0.8em;
+  background: transparent;
+}
+jst-palette .jst-palette > ul {
+  list-style: none; margin: 0; padding: var(--jst-space-2xs);
+  overflow: auto;
+}
+jst-palette .jst-palette [role="option"] { justify-content: space-between; cursor: pointer; }
+jst-palette .jst-palette [role="option"][data-active="true"] { background: var(--jst-accent); color: var(--jst-accent-fg); }
+jst-palette .jst-palette [role="option"][data-active="true"] kbd { border-color: transparent; background: oklch(from var(--jst-accent) calc(l - 0.1) c h); color: var(--jst-accent-fg); }
+jst-palette .jst-empty-line { padding: var(--jst-space-s); color: var(--jst-muted); }
 
 /* ---- More framework skins (#1): one token-block each. ---------------------- */
 

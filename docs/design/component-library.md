@@ -1,7 +1,8 @@
 # Design: component library + the directive seam
 
-Status: **Layers 0 and 1 built** (`jst-layout.css`, all twelve primitives); Layer 2
-components not started. Tracks issue [#8](https://github.com/br3nt/jst/issues/8)
+Status: **built through Layer 2** (`jst-layout.css` + `jst-components.css`); the
+audit's coverage table below shows per-pattern verdicts. Packaging is the
+remaining step. Tracks issue [#8](https://github.com/br3nt/jst/issues/8)
 (layout primitives) and informs [#7](https://github.com/br3nt/jst/issues/7) /
 [#3](https://github.com/br3nt/jst/issues/3) (directives) and [#28](https://github.com/br3nt/jst/issues/28)
 (datasource).
@@ -212,7 +213,7 @@ OP = Open Props, Rx = Radix (behavioral spec only).
 | Navbar | BS, Pico, dUI | flex CSS | `jst-cluster`/`jst-sidebar` recipes | have it (doc recipe) |
 | Button / toggle group | BS, WA, Rx | flex + border collapse | `.jst-join` | have it |
 | Carousel | BS, WA, dUI | scroll-snap (widely); `::scroll-button`/`::scroll-marker` Chromium-only, NOT Baseline | `jst-reel[data-carousel]`: snap everywhere, zero-JS arrows + dot markers where supported | have it (progressive) |
-| Command palette | none of the six | `<dialog>` + combobox pattern | nothing | genuine gap: build (compose `.jst-modal` + `jst-combobox`; differentiator) |
+| Command palette | none of the six | `<dialog>` + combobox pattern | `jst-palette`: global shortcut via `keys()`, filter, keyboard run, `run` event | have it (differentiator) |
 | Stepper / steps | dUI | ol + counters CSS | nothing | skip (doc recipe) |
 | Rating | WA, dUI | radio group + CSS | nothing | skip (niche) |
 | Tree view | WA | none native | nothing | skip (large a11y surface, small audience) |
@@ -227,14 +228,11 @@ OP = Open Props, Rx = Radix (behavioral spec only).
 
 ### Ranked build list from the audit
 
-Items 1-7 (skeleton, badge, validation states, breadcrumb + pagination,
-drawer, join/input group, avatar) plus the file-input and kbd/visually-hidden
-freebies were built from this audit as thin CSS; the cross-section demo shows
-each one. What remains:
-
-1. **Command palette**: composes `.jst-modal` + `jst-combobox`; none of the
-   surveyed libraries ship one, making it a differentiator rather than
-   catch-up (the one JS-bearing item).
+Everything on the list is built: the seven thin-CSS gaps (skeleton, badge,
+validation states, breadcrumb + pagination, drawer, join/input group, avatar),
+the file-input and kbd/visually-hidden freebies, and the command palette
+(`jst-palette`, the one JS-bearing item: none of the surveyed libraries ship
+one). The cross-section demo shows each.
 
 Notable non-gaps confirmed by the Baseline checks: accordion animation is now
 platform (`::details-content`), popovers and invokers are fully cross-browser,

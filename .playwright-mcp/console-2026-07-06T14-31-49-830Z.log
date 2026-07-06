@@ -1,0 +1,10 @@
+[      56ms] [ERROR] JST Compile Error in <jst-palette>: Error: Invalid JST attribute "commands". Template attributes cannot use JavaScript keywords or JST helper names.
+    at http://127.0.0.1:8642/compiler.js:91:15
+    at Array.map (<anonymous>)
+    at parseAttributesDeclaration (http://127.0.0.1:8642/compiler.js:86:6)
+    at getTemplateRenderingFunctionParams (http://127.0.0.1:8642/compiler.js:131:22)
+    at compileTemplateRenderingFunction (http://127.0.0.1:8642/compiler.js:145:40)
+    at registerCustomElementFromTemplate (http://127.0.0.1:8642/jst.js:868:22)
+    at NodeList.forEach (<anonymous>)
+    at initializeTemplates (http://127.0.0.1:8642/jst.js:1346:51)
+    at http://127.0.0.1:8642/jst.js:1478:1 @ http://127.0.0.1:8642/jst.js:923

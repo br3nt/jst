@@ -31,6 +31,46 @@
 </head>
 <body data-theme="jst">
 
+  <!-- Command palette: filter + keyboard + run, one template. The page owns
+       the command list and the global shortcut; the palette emits `run`. -->
+  <script type="jst" name="jst-palette" attributes="actions open query active">
+    $ const q = (query || '').toLowerCase();
+    $ const items = (actions || []).filter(a => !q || a.label.toLowerCase().includes(q));
+    $ const idx = Math.max(0, Math.min(active || 0, Math.max(items.length - 1, 0)));
+    $ const run = (c) => { el.open = false; el.query = ''; el.active = 0; el.emit('run', c.id); };
+    $ const onKey = (e) => keys(e, {
+    $   ArrowDown: () => { e.preventDefault(); el.active = Math.min(idx + 1, items.length - 1); },
+    $   ArrowUp:   () => { e.preventDefault(); el.active = Math.max(idx - 1, 0); },
+    $   Enter:     () => items[idx] && run(items[idx]),
+    $   Escape:    () => { el.open = false; },
+    $ });
+    $ if (open) {
+    $   queueMicrotask(() => { const i = el.querySelector('input'); if (i && document.activeElement !== i) i.focus(); });
+      <div class="jst-palette-overlay" onclick="if (event.target === this) el.open = false">
+        <div class="jst-palette" role="dialog" aria-label="Command palette">
+          <input placeholder="Type a command…" role="combobox" aria-expanded="true"
+                 .value="$(query || '')"
+                 oninput="el.query = event.target.value; el.active = 0"
+                 onkeydown="onKey(event)">
+          <ul role="listbox">
+            $ items.forEach((c, i) => {
+              <li role="option" jst-key="$(c.id)" aria-selected="$(i === idx)" data-active="$(i === idx)"
+                  onclick="run(c)" onmousemove="el.active = i">
+                <span>$(c.label)</span>
+                $ if (c.kbd) {
+                  <kbd>$(c.kbd)</kbd>
+                $ }
+              </li>
+            $ })
+            $ if (!items.length) {
+              <li class="jst-empty-line">No matching commands</li>
+            $ }
+          </ul>
+        </div>
+      </div>
+    $ }
+  </script>
+
   <!-- ===== Stage 2: genuine JST components (no native equivalent) ===== -->
 
   <script type="jst" name="jst-tabs" attributes="tabs active">
@@ -317,6 +357,19 @@
         <p style="color:var(--jst-muted);font-size:0.85em;margin-block-start:var(--jst-space-s)">A region whose content lives at a URL (<code>jst-behaviors.js</code>). <code>when="visible"</code> defers the fetch until it scrolls into view, and the fragment carries its own component definition, which auto-registers on arrival.</p>
       </div>
 
+      <!-- COMMAND PALETTE -->
+      <div class="card">
+        <header>
+          <h3>Command palette</h3>
+          <span class="jst-tag" data-tech="jst">JST component</span>
+        </header>
+        <jst-cluster>
+          <button type="button" data-variant="quiet" onclick="document.getElementById('palette').open = true">Open palette</button>
+          <span style="color:var(--jst-muted);font-size:var(--jst-font-small)">or press <kbd>⌘K</kbd> / <kbd>Ctrl+K</kbd> anywhere on this page</span>
+        </jst-cluster>
+        <p style="color:var(--jst-muted);font-size:var(--jst-font-small);margin-block-start:var(--jst-space-s)">Composes the pieces on this page: the floating-panel surface, <code>keys()</code> for the shortcut and navigation, and a bubbling <code>run</code> event the page executes. None of the surveyed libraries ship one.</p>
+      </div>
+
       <!-- CAROUSEL -->
       <div class="card">
         <header>
@@ -582,9 +635,38 @@
     <jst-toaster id="toaster"></jst-toaster>
   </jst-center>
 
+  <jst-palette id="palette" open="false" query="" active="0"></jst-palette>
+
   <script type="module">
+    import { keys } from '../jst.js';
+
     document.getElementById('theme').addEventListener('change', (e) => {
       document.body.dataset.theme = e.target.value;
+    });
+
+    // Command palette: the page owns the commands; the palette just runs them.
+    const palette = document.getElementById('palette');
+    const themeSelect = document.getElementById('theme');
+    palette.actions = [
+      { id: 'toast', label: 'Show a success toast', kbd: 'T' },
+      { id: 'modal', label: 'Open the modal' },
+      { id: 'drawer', label: 'Open the drawer' },
+      { id: 'theme-shadcn', label: 'Re-skin as shadcn/ui' },
+      { id: 'theme-jst', label: 'Re-skin as JST (default)' },
+    ];
+    document.addEventListener('keydown', (e) => keys(e, {
+      'Meta+k': () => { e.preventDefault(); palette.open = true; },
+      'Ctrl+k': () => { e.preventDefault(); palette.open = true; },
+    }));
+    palette.addEventListener('run', (e) => {
+      const actions = {
+        toast: () => document.getElementById('toaster').push?.('Saved from the palette.', 'success'),
+        modal: () => document.querySelector('dialog.jst-modal').showModal(),
+        drawer: () => document.getElementById('demo-drawer').showModal(),
+        'theme-shadcn': () => { document.body.dataset.theme = 'shadcn'; themeSelect.value = 'shadcn'; },
+        'theme-jst': () => { document.body.dataset.theme = 'jst'; themeSelect.value = 'jst'; },
+      };
+      actions[e.detail]?.();
     });
     // Backdrop click closes modals and drawers (fallback for engines without
     // closedby="any"; the padding-less dialogs make e.target === dialog reliable).

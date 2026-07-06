@@ -75,6 +75,11 @@
   --jst-font-small: 0.8rem;
 }
 
+/* Manual scheme override: set data-scheme on <html> (or any subtree) and the
+   light-dark() tokens follow. This is the whole dark-mode toggle. */
+[data-scheme="light"] { color-scheme: light; }
+[data-scheme="dark"]  { color-scheme: dark; }
+
 @supports (color: contrast-color(red)) {
   :root { --jst-accent-fg: contrast-color(var(--jst-accent)); }
 }
@@ -215,6 +220,38 @@ kbd {
   border-radius: calc(var(--jst-radius) / 2);
   background: var(--jst-surface);
 }
+
+/* Prose: long-form flow. The global reset zeroes margins because app UIs
+   space through <jst-stack>; inside .jst-prose, flowing text gets its rhythm
+   back (the Every Layout flow owl), with more air before headings. */
+.jst-prose > * + * { margin-block-start: var(--jst-space-m); }
+.jst-prose > :where(h1, h2, h3, h4) { margin-block-start: var(--jst-space-xl); }
+.jst-prose > :where(h1, h2, h3, h4) + * { margin-block-start: var(--jst-space-s); }
+.jst-prose :where(ul, ol) { padding-inline-start: 1.2em; }
+.jst-prose li + li { margin-block-start: var(--jst-space-3xs); }
+
+/* Key-value pairs: the metadata block every record screen needs. */
+.jst-kv {
+  display: grid; grid-template-columns: max-content 1fr;
+  gap: var(--jst-space-3xs) var(--jst-space-m);
+  margin: 0;
+}
+.jst-kv dt {
+  font-family: var(--jst-font-mono); font-size: 0.68rem; font-weight: 600;
+  letter-spacing: 0.04em; text-transform: uppercase; color: var(--jst-muted);
+  align-self: baseline;
+}
+.jst-kv dd { margin: 0; min-inline-size: 0; }
+
+/* Skip link: visually hidden until focused, then a floating button. */
+.jst-skip-link {
+  position: absolute; inset-block-start: var(--jst-space-s); inset-inline-start: var(--jst-space-s);
+  z-index: 100;
+  padding: 0.3em 0.75em; border-radius: var(--jst-radius);
+  background: var(--jst-accent); color: var(--jst-accent-fg); text-decoration: none;
+  translate: 0 calc(-100% - var(--jst-space-l));
+}
+.jst-skip-link:focus-visible { translate: 0; }
 
 /* Screen-reader-only content that stays in the accessibility tree. */
 .jst-visually-hidden {

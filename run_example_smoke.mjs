@@ -344,14 +344,31 @@ const checks = [
       while (!faq.querySelector('[data-testid="faq-loaded"]') && Date.now() - t1 < 3000) await flush();
       const faqLoadedOpen = !!faq.querySelector('[data-testid="faq-loaded"]');
 
-      return { tabCount: tabs.querySelectorAll('[role=tab]').length, changed: before !== after, selected, lazyStats, faqLoadedClosed, faqLoadedOpen };
+      // Command palette: open via property, filter, run -> a toast lands.
+      const palette = document.getElementById('palette');
+      palette.open = true;
+      await flush();
+      const paletteOpened = !!palette.querySelector('input');
+      palette.query = 'toast';
+      await flush();
+      const paletteFiltered = palette.querySelectorAll('[role=option]').length;
+      palette.querySelector('[role=option]').click();
+      await flush(); await flush();
+      const paletteRan = !!document.querySelector('jst-toaster .jst-toast');
+      const paletteClosed = !palette.querySelector('input');
+
+      return { tabCount: tabs.querySelectorAll('[role=tab]').length, changed: before !== after, selected, lazyStats, faqLoadedClosed, faqLoadedOpen, paletteOpened, paletteFiltered, paletteRan, paletteClosed };
     })()`,
     assert: result => result.tabCount === 3
       && result.changed === true
       && result.selected === 'true'
       && result.lazyStats === 3
       && result.faqLoadedClosed === false
-      && result.faqLoadedOpen === true,
+      && result.faqLoadedOpen === true
+      && result.paletteOpened === true
+      && result.paletteFiltered === 1
+      && result.paletteRan === true
+      && result.paletteClosed === true,
   },
 ];
 
