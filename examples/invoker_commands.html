@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>JST × Invoker Commands — no synthetic ids</title>
+  <title>JST × Invoker Commands: no synthetic ids</title>
   <link rel="stylesheet" href="../jst-layout.css">
   <style>
     dialog { border: var(--jst-border-width) solid var(--jst-border); border-radius: var(--jst-radius); padding: var(--jst-space-l); }
@@ -19,7 +19,7 @@
 
   <!-- ============================================================
        Component B: self-contained widget. Internal toggle uses
-       el.querySelector — scoped to THIS instance. NO ids anywhere
+       el.querySelector - scoped to THIS instance. NO ids anywhere
        in the template; it is a template, so it needs none.
        ============================================================ -->
   <script type="jst" name="disclosure-card" attributes="label">
@@ -30,7 +30,7 @@
       </jst-cluster>
       <div class="panel" hidden>
         <jst-stack style="--space: var(--jst-space-2xs)">
-          <span>Panel for <strong>$(label)</strong> — toggled by scoped <code>el.querySelector</code>, no id.</span>
+          <span>Panel for <strong>$(label)</strong> - toggled by scoped <code>el.querySelector</code>, no id.</span>
           <a href="#">Item one</a>
           <a href="#">Item two</a>
         </jst-stack>
@@ -44,11 +44,17 @@
        the component listens on itself. No internal/synthetic ids.
        ============================================================ -->
   <script type="jst" name="tally-card" attributes="label count">
-    $ if (!el.__cmdWired) { el.__cmdWired = true; el.addEventListener('command', (e) => {
-    $   if (e.command === '--increment') el.count = (el.count || 0) + 1;
-    $   else if (e.command === '--reset') el.count = 0;
-    $   window.__log && window.__log(`${el.id}: ${e.command} (src=${e.source.textContent.trim()}) → ${el.count || 0}`);
-    $ }); }
+    $ once('command-router', () => {
+    $   const route = (event) => {
+    $     commands(event, {
+    $       '--increment': () => el.count = (el.count || 0) + 1,
+    $       '--reset': () => el.count = 0,
+    $     });
+    $     window.__log && window.__log(`${el.id}: ${event.command} (src=${event.source.textContent.trim()}) → ${el.count || 0}`);
+    $   };
+    $   el.addEventListener('command', route);
+    $   return () => el.removeEventListener('command', route);
+    $ });
     <jst-box>
       <jst-cluster>
         <strong>$(label)</strong>
@@ -70,7 +76,7 @@
            Author owns the ids; multiple instances = distinct author ids.
            Zero JS, zero JST. -->
       <jst-stack>
-        <h2>A. Plain usage HTML — author-owned ids (no JS, no component)</h2>
+        <h2>A. Plain usage HTML - author-owned ids (no JS, no component)</h2>
         <jst-cluster>
           <button command="show-modal" commandfor="signup">Open signup</button>
           <button command="show-modal" commandfor="settings">Open settings</button>
@@ -87,7 +93,7 @@
 
       <!-- Pattern B: component internals, scoped querySelector, NO ids. -->
       <jst-stack>
-        <h2>B. Component internals — scoped <code>el.querySelector</code>, no ids</h2>
+        <h2>B. Component internals - scoped <code>el.querySelector</code>, no ids</h2>
         <disclosure-card label="Alpha"></disclosure-card>
         <disclosure-card label="Bravo"></disclosure-card>
         <disclosure-card label="Charlie"></disclosure-card>

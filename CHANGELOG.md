@@ -5,6 +5,23 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Added
+
+- **`commands(event, map)` handler helper.** The Invoker Commands router: a
+  `commandfor` target handling several custom commands routes them without a
+  hand-written `switch` - `oncommand="commands(event, { '--save': save,
+  '--revert': revert })"` dispatches on `event.command` and ignores unmatched
+  commands. In scope in template handler bodies, `JST.fn.commands` elsewhere,
+  and emitted by the precompiler. `examples/invoker_commands.html` uses it for
+  its host-level command listener.
+- **jst-layout: the full Every Layout primitive set.** switcher, cover, frame,
+  reel, imposter, and icon join stack, cluster, grid, sidebar, center, and box
+  in `jst-layout.css` - all CSS-only. `examples/layout_primitives.html`
+  demonstrates each one, and the example smoke suite exercises both library
+  demo pages.
+
 ## 0.6.0 - 2026-07-05
 
 **Breaking.** One handler semantics everywhere, and jst-nav reduced to pure

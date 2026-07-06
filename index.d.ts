@@ -59,12 +59,15 @@ export function throttle(event: Event, ms: number): boolean;
 export function changed(event: Event): boolean;
 /** Key dispatch on the normalized Ctrl+Alt+Meta+Shift+key combo. */
 export function keys(event: KeyboardEvent, map: Record<string, (event: KeyboardEvent) => unknown>): unknown;
+/** Invoker Commands dispatch on event.command ('--save' etc); unmatched commands are ignored. */
+export function commands(event: Event & { command?: string }, map: Record<string, (event: Event) => unknown>): unknown;
 
 export interface JSTCombinators {
   changed: typeof changed;
   debounce: typeof debounce;
   throttle: typeof throttle;
   keys: typeof keys;
+  commands: typeof commands;
 }
 
 export interface JSTNavCsrfConfig {

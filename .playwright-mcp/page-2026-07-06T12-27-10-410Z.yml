@@ -1,0 +1,39 @@
+- generic [ref=e3]:
+  - generic [ref=e4]:
+    - heading "Invoker Commands without a synthetic id system" [level=1] [ref=e5]
+    - paragraph [ref=e6]: Ids come only from the author at the usage site, or not at all. No id is ever minted inside a template.
+  - generic [ref=e7]:
+    - heading "A. Plain usage HTML — author-owned ids (no JS, no component)" [level=2] [ref=e8]
+    - generic [ref=e9]:
+      - button "Open signup" [ref=e10] [cursor=pointer]
+      - button "Open settings" [ref=e11] [cursor=pointer]
+  - generic [ref=e12]:
+    - heading "B. Component internals — scoped el.querySelector, no ids" [level=2] [ref=e13]:
+      - text: B. Component internals — scoped
+      - code [ref=e14]: el.querySelector
+      - text: ", no ids"
+    - generic [ref=e17]:
+      - strong [ref=e18]: Alpha
+      - button "Toggle ▾" [ref=e19] [cursor=pointer]
+    - generic [ref=e22]:
+      - strong [ref=e23]: Bravo
+      - button "Toggle ▾" [ref=e24] [cursor=pointer]
+    - generic [ref=e27]:
+      - strong [ref=e28]: Charlie
+      - button "Toggle ▾" [ref=e29] [cursor=pointer]
+  - generic [ref=e30]:
+    - heading "C. Custom --command to a component (author-given instance id)" [level=2] [ref=e31]:
+      - text: C. Custom
+      - code [ref=e32]: "--command"
+      - text: to a component (author-given instance id)
+    - generic [ref=e33]:
+      - button "+1 A" [ref=e34] [cursor=pointer]
+      - button "+1 B" [ref=e35] [cursor=pointer]
+      - button "reset B" [ref=e36] [cursor=pointer]
+    - generic [ref=e39]:
+      - strong [ref=e40]: Tally A
+      - status [ref=e41]: "0"
+    - generic [ref=e44]:
+      - strong [ref=e45]: Tally B
+      - status [ref=e46]: "0"
+    - generic [ref=e47]: "log:"

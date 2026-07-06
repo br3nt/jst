@@ -142,6 +142,7 @@ allTemplates.forEach((template, index) => {
     'debounce',
     'throttle',
     'keys',
+    'commands',
   ];
 
   lines.push(`function ${fn}(${args.join(', ')}) {`);

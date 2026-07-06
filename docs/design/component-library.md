@@ -177,16 +177,17 @@ compiler path**. The handler gets `event.command` (`"--foo"`) and `event.source`
 > via JST's own `el.emit(name, detail)` (which *is* `bubbles: true, composed:
 > true`). This keeps the existing attributes-down / events-up mental model intact.
 
-The only code worth adding is a command **router** (so a target handling several
-`--commands` doesn't need a hand-written `switch`). Shaped like the `keys(event,
-map)` handler helper:
+The command **router** (so a target handling several `--commands` doesn't need
+a hand-written `switch`) is the `commands(event, map)` handler helper, shaped
+like `keys(event, map)`:
 
 ```html
 <my-thing oncommand="commands(event, { '--save': save, '--revert': revert })">
 ```
 
-It is a ~10-line function, so it belongs with the **handler helpers** (next to
-`keys`), not in a `jst-behaviors` module. Not yet built.
+It lives with the other handler helpers (in scope in template handler bodies;
+`JST.fn.commands` elsewhere). `examples/invoker_commands.html` uses it for the
+host-level command listener.
 
 ## Commands and ids: no synthetic id system
 
