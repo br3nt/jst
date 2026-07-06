@@ -328,18 +328,30 @@ const checks = [
 
       // The lazy region: scrolling the <jst-include when="visible"> into view
       // fetches the fragment, whose component definition auto-registers.
-      const include = document.querySelector('jst-include');
+      const include = document.querySelector('#team-include, jst-include');
       include.scrollIntoView();
       const started = Date.now();
       while (!document.querySelector('team-stats strong') && Date.now() - started < 3000) await flush();
       const lazyStats = document.querySelectorAll('team-stats strong').length;
 
-      return { tabCount: tabs.querySelectorAll('[role=tab]').length, changed: before !== after, selected, lazyStats };
+      // The lazy accordion: a closed details must NOT fetch, opening it must.
+      const faq = document.getElementById('lazy-faq');
+      faq.scrollIntoView({ block: 'center' });
+      await flush(); await flush(); await flush();
+      const faqLoadedClosed = !!faq.querySelector('[data-testid="faq-loaded"]');
+      faq.open = true;
+      const t1 = Date.now();
+      while (!faq.querySelector('[data-testid="faq-loaded"]') && Date.now() - t1 < 3000) await flush();
+      const faqLoadedOpen = !!faq.querySelector('[data-testid="faq-loaded"]');
+
+      return { tabCount: tabs.querySelectorAll('[role=tab]').length, changed: before !== after, selected, lazyStats, faqLoadedClosed, faqLoadedOpen };
     })()`,
     assert: result => result.tabCount === 3
       && result.changed === true
       && result.selected === 'true'
-      && result.lazyStats === 3,
+      && result.lazyStats === 3
+      && result.faqLoadedClosed === false
+      && result.faqLoadedOpen === true,
   },
 ];
 

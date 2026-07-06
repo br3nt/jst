@@ -211,7 +211,7 @@ OP = Open Props, Rx = Radix (behavioral spec only).
 | Pagination | BS, dUI | `nav` + CSS | `.jst-pagination` (`aria-current` carries state) | have it |
 | Navbar | BS, Pico, dUI | flex CSS | `jst-cluster`/`jst-sidebar` recipes | have it (doc recipe) |
 | Button / toggle group | BS, WA, Rx | flex + border collapse | `.jst-join` | have it |
-| Carousel | BS, WA, dUI | scroll-snap (widely); `::scroll-button`/`::scroll-marker` Chromium-only, NOT Baseline | `jst-reel` (+ `--snap`) | have most; add scroll-marker CSS when Baseline |
+| Carousel | BS, WA, dUI | scroll-snap (widely); `::scroll-button`/`::scroll-marker` Chromium-only, NOT Baseline | `jst-reel[data-carousel]`: snap everywhere, zero-JS arrows + dot markers where supported | have it (progressive) |
 | Command palette | none of the six | `<dialog>` + combobox pattern | nothing | genuine gap: build (compose `.jst-modal` + `jst-combobox`; differentiator) |
 | Stepper / steps | dUI | ol + counters CSS | nothing | skip (doc recipe) |
 | Rating | WA, dUI | radio group + CSS | nothing | skip (niche) |

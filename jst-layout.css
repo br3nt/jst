@@ -419,6 +419,56 @@ jst-form-row {
 jst-form-row > * { flex: 1 1 var(--field-min, 9rem); min-inline-size: 0; }
 jst-form-row > :where(button, [data-actions]) { flex: 0 0 auto; }
 
+/* Carousel: a reel that snaps one child per view. Progressive: engines with
+   CSS carousels (Chromium) get scroll buttons and clickable markers with zero
+   JS; everywhere else it is a smooth snapping reel. */
+jst-reel[data-carousel] {
+  position: relative;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+}
+jst-reel[data-carousel] > * { flex: 0 0 100%; scroll-snap-align: center; }
+@supports selector(::scroll-marker) {
+  jst-reel[data-carousel] { scroll-marker-group: after; }
+  jst-reel[data-carousel]::scroll-marker-group {
+    display: flex; justify-content: center; gap: var(--jst-space-2xs);
+    padding-block: var(--jst-space-2xs);
+  }
+  jst-reel[data-carousel] > *::scroll-marker {
+    content: "";
+    inline-size: 0.5em; block-size: 0.5em; border-radius: 50%;
+    background: var(--jst-border); cursor: pointer;
+  }
+  jst-reel[data-carousel] > *::scroll-marker:target-current { background: var(--jst-accent); }
+  jst-reel[data-carousel]::scroll-button(left),
+  jst-reel[data-carousel]::scroll-button(right) {
+    position: absolute; align-self: center; z-index: 1;
+    border: var(--jst-border-width) solid var(--jst-border); border-radius: 50%;
+    inline-size: 1.8em; block-size: 1.8em;
+    background: var(--jst-bg); color: var(--jst-fg); cursor: pointer;
+  }
+  jst-reel[data-carousel]::scroll-button(left)  { content: "‹"; inset-inline-start: var(--jst-space-2xs); }
+  jst-reel[data-carousel]::scroll-button(right) { content: "›"; inset-inline-end: var(--jst-space-2xs); }
+  jst-reel[data-carousel]::scroll-button(*):disabled { opacity: 0.3; }
+}
+
+/* Opt-in container-query context: the subtree of any [data-container] element
+   can respond to ITS width with @container, not the viewport's. */
+[data-container] { container-type: inline-size; }
+
+/* Reveal-on-scroll: scroll-driven animation, zero JS. Progressive (Chromium;
+   Firefox behind a flag) and disabled for reduced-motion users. */
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .jst-reveal {
+      animation: jst-reveal both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 60%;
+    }
+    @keyframes jst-reveal { from { opacity: 0; translate: 0 1rem; } }
+  }
+}
+
 /* Icon: an inline icon sized and aligned to the surrounding text, with an
    even gap when a label follows. 1cap tracks the font's capital height where
    supported; the em fallback is close enough elsewhere. */

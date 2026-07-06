@@ -32,6 +32,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`.jst-list` with `data-main`/`data-actions` rows), empty states
   (`.jst-empty`), stat tiles (`.jst-stat` with `data-trend`), and page headers
   (`.jst-page-header` + `.jst-eyebrow`).
+- **jst-layout: the modern-CSS showpieces.** `jst-reel[data-carousel]` (a
+  snapping carousel; engines with CSS carousels add zero-JS arrows and dot
+  markers), `.jst-reveal` (scroll-driven fade-in via
+  `animation-timeline: view()`, off under reduced motion), `[data-container]`
+  (opt-in container-query context), and the lazy accordion pattern: a
+  `<jst-include when="visible">` inside a closed `<details>` fetches only
+  when the panel opens - pure composition, smoke-tested.
 - **jst-include: symmetric reveal margin.** An include the user scrolls past
   (now above the viewport) loads too; previously only the approach from below
   triggered the fetch.

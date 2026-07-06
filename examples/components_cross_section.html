@@ -22,6 +22,11 @@
     }
     .card > header { display: flex; align-items: center; justify-content: space-between; gap: var(--jst-space-m); margin-block-end: var(--jst-space-m); }
     .card h3 { margin: 0; }
+    /* Container-query demo: the stats respond to their container's width. */
+    .cq-stats { display: flex; gap: var(--jst-space-l); }
+    @container (width < 24rem) {
+      .cq-stats { flex-direction: column; gap: var(--jst-space-xs); }
+    }
   </style>
 </head>
 <body data-theme="jst">
@@ -310,6 +315,68 @@
         </header>
         <jst-include src="fragments/team_stats.html" when="visible"></jst-include>
         <p style="color:var(--jst-muted);font-size:0.85em;margin-block-start:var(--jst-space-s)">A region whose content lives at a URL (<code>jst-behaviors.js</code>). <code>when="visible"</code> defers the fetch until it scrolls into view, and the fragment carries its own component definition, which auto-registers on arrival.</p>
+      </div>
+
+      <!-- CAROUSEL -->
+      <div class="card">
+        <header>
+          <h3>Carousel</h3>
+          <span class="jst-tag" data-tech="layout">jst-reel + CSS carousels</span>
+        </header>
+        <jst-reel data-carousel style="--space: 0">
+          <jst-frame style="--ratio: 21 / 9; background: var(--jst-accent); color: var(--jst-accent-fg)"><strong>Slide one</strong></jst-frame>
+          <jst-frame style="--ratio: 21 / 9; background: oklch(from var(--jst-accent) calc(l - 0.12) c h); color: var(--jst-accent-fg)"><strong>Slide two</strong></jst-frame>
+          <jst-frame style="--ratio: 21 / 9; background: oklch(from var(--jst-accent) calc(l - 0.24) c h); color: var(--jst-accent-fg)"><strong>Slide three</strong></jst-frame>
+        </jst-reel>
+        <p style="color:var(--jst-muted);font-size:var(--jst-font-small);margin-block-start:var(--jst-space-s)">Scroll-snap does the sliding. Engines with CSS carousels add the arrows and clickable dot markers with zero JS; elsewhere it degrades to a snapping swipe.</p>
+      </div>
+
+      <!-- LAZY ACCORDION -->
+      <div class="card">
+        <header>
+          <h3>Lazy accordion</h3>
+          <span class="jst-tag" data-tech="jst">&lt;details&gt; + &lt;jst-include&gt;</span>
+        </header>
+        <div class="jst-accordion">
+          <details name="lazyfaq">
+            <summary>What does JST weigh?</summary>
+            <div class="jst-accordion-body">About 11.5 KB gzipped, 7 KB runtime-only. This panel is ordinary inline content.</div>
+          </details>
+          <details name="lazyfaq" id="lazy-faq">
+            <summary>Fetch this answer on open</summary>
+            <div class="jst-accordion-body"><jst-include src="fragments/faq_body.html" when="visible"><span class="jst-skeleton" style="inline-size: 70%"></span></jst-include></div>
+          </details>
+        </div>
+        <p style="color:var(--jst-muted);font-size:var(--jst-font-small);margin-block-start:var(--jst-space-s)">Pure composition: a <code>&lt;jst-include when="visible"&gt;</code> inside a closed <code>&lt;details&gt;</code> is not rendered, so the fetch fires the moment you open the panel. The skeleton is the pre-fetch content.</p>
+      </div>
+
+      <!-- REVEAL ON SCROLL -->
+      <div class="card">
+        <header>
+          <h3>Reveal on scroll</h3>
+          <span class="jst-tag" data-tech="none">scroll-driven CSS</span>
+        </header>
+        <jst-stack style="--space: var(--jst-space-s)">
+          <jst-box class="jst-reveal">These boxes fade and rise as they enter the viewport.</jst-box>
+          <jst-box class="jst-reveal">Driven by <code>animation-timeline: view()</code>: no observers, no JS.</jst-box>
+          <jst-box class="jst-reveal">Disabled automatically for reduced-motion users.</jst-box>
+        </jst-stack>
+      </div>
+
+      <!-- CONTAINER QUERIES -->
+      <div class="card">
+        <header>
+          <h3>Container queries</h3>
+          <span class="jst-tag" data-tech="layout">data-container</span>
+        </header>
+        <div data-container style="resize: horizontal; overflow: auto; border: var(--jst-border-width) dashed var(--jst-border); border-radius: var(--jst-radius); padding: var(--jst-space-s); min-inline-size: 14rem; max-inline-size: 100%">
+          <div class="cq-stats">
+            <div class="jst-stat"><span class="jst-eyebrow">Income</span><span class="jst-stat-value">$8,120</span></div>
+            <div class="jst-stat" data-trend="down"><span class="jst-eyebrow">Spent</span><span class="jst-stat-value">$5,867</span></div>
+            <div class="jst-stat" data-trend="up"><span class="jst-eyebrow">Remaining</span><span class="jst-stat-value">$2,253</span></div>
+          </div>
+        </div>
+        <p style="color:var(--jst-muted);font-size:var(--jst-font-small);margin-block-start:var(--jst-space-s)">Drag the corner handle. <code>[data-container]</code> makes the box a query container, so the stats respond to <em>its</em> width, not the viewport's: side by side when wide, stacked when narrow.</p>
       </div>
 
       <!-- BUTTON VARIANTS -->
