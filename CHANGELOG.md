@@ -5,6 +5,40 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.7.1 - 2026-07-07
+
+Fixes from three production apps migrating to 0.6/0.7 (#57, #58, #60, #61).
+
+### Fixed
+
+- **A swap that finds no target is a detectable miss, not a silent success
+  (#57).** The target is re-resolved at write time: with a View Transition the
+  write runs inside an async update callback, and an overlapping swap could
+  detach the node resolved at response time - `outerHTML` on a parentless node
+  is a silent spec no-op, yet the URL changed and `jst:swapped` fired. Now a
+  fresh, connected match wins; a still-connected original is kept; nothing
+  emits a bubbling **`jst:swap-missed`** and skips the history entry and
+  `jst:swapped`. The connected-node dispatch fallback (#48) now also covers
+  `jst:before-swap`, `jst:after-request`, `jst:response-error`, and
+  `jst:send-error`.
+
+### Added
+
+- **`navigate(url, options)`: programmatic navigation with the full pipeline
+  (#58, #60).** The enhanced-element pipeline (bubbling lifecycle events,
+  `confirm`, `select`, history) driven from JS against a library-owned driver
+  anchor, so document-level delegated listeners see exactly what a clicked
+  link produces. Options: `target`, `swap`, `select`, `confirm`, `method`,
+  `pushUrl`/`replaceUrl` (true = the request URL, or an explicit string), and
+  `dataset` for app attributes your listeners read. Returns the Response.
+  `swap()` stays the bare primitive; the 0.6.0 migration table row that
+  equated it with `performRequest` is amended.
+- **Migration tooling (#61).** codemod drops a `jst-get` that duplicates an
+  identical `href` on the same anchor; lint gives `<button jst-get/jst-action>`
+  the two rewrites inline (link for navigation, one-button form for an
+  action); `lint --js-strings` scans string/template literals in `.js` files
+  for removed syntax, so markup built in JS stops sailing past the HTML scan.
+
 ## 0.7.0 - 2026-07-07
 
 The component library becomes consumable: one fragment of component
@@ -129,7 +163,7 @@ body HTML). `tools/codemod.mjs` migrates v0.4 **and** v0.5 spellings;
 | `<a jst-get="/p" jst-target="#out">` | `<a href="/p" jst-target="#out">` (URL from native `href`) |
 | `<button jst-action="/x" method="delete" …>` | a one-button `<form action="/x" method="delete" …>` (what Rails' `button_to` renders) |
 | `jst-trigger="…"` (any spec) | an event, a timer, or a component - plain JS |
-| `JST.nav.request(el)` / `performRequest` | `swap(target, url, options)` |
+| `JST.nav.request(el)` / `performRequest` | `navigate(url, options)` for the full pipeline (lifecycle events, confirm, history; added in 0.7.1 - the row previously pointed at `swap()`, which is the bare fetch + swap with none of those) |
 
 ### Added
 

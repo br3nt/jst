@@ -45,7 +45,7 @@ import { compileTemplateRenderingFunction } from './compiler.js'
  * v0.1 cache renders identically to v0.2, so `JST.version` is the one-liner that
  * tells you which runtime is actually live.
  */
-export const version = '0.7.0'
+export const version = '0.7.1'
 
 const templates = new Map()
 const config = {

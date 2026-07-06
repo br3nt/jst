@@ -265,15 +265,41 @@ function migrateOpenTag(open) {
   };
 }
 
+/**
+ * Redundant jst-get beside an identical href (#61): v0.6 removed jst-get, and
+ * when the tag already carries the same URL natively, dropping the attribute
+ * is the whole migration. Different URLs are left for lint to flag: choosing
+ * between them is a human call.
+ */
+const redundantJstGetPattern = /<a\b[^>]*>/gi;
+function dropRedundantJstGet(source) {
+  let count = 0;
+  const out = source.replace(redundantJstGetPattern, (tag) => {
+    const href = tag.match(/\bhref\s*=\s*("([^"]*)"|'([^']*)')/i);
+    const get = tag.match(/\s+jst-get\s*=\s*("([^"]*)"|'([^']*)')/i);
+    if (!href || !get) return tag;
+    const hrefValue = href[2] ?? href[3];
+    const getValue = get[2] ?? get[3];
+    if (hrefValue !== getValue) return tag;
+    count++;
+    return tag.replace(get[0], '');
+  });
+  return { out, count };
+}
+
 /** Rewrite every jst block in a file's source. Non-jst text is untouched. */
 function migrateSource(source) {
   let total = 0;
-  const out = source.replace(scriptPattern, (whole, open, _quote, body, close) => {
+  let out = source.replace(scriptPattern, (whole, open, _quote, body, close) => {
     const openResult = migrateOpenTag(open);
     const bodyResult = migrateBody(body);
     total += openResult.count + bodyResult.count;
     return `${openResult.migrated}${bodyResult.migrated}${close}`;
   });
+  // Whole-file pass: usage HTML outside jst blocks.
+  const jstGet = dropRedundantJstGet(out);
+  out = jstGet.out;
+  total += jstGet.count;
   return { out, total };
 }
 

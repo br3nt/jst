@@ -89,6 +89,47 @@ test('codemod migrates v0.4 modifiers and v0.5 wrappers to body statements', asy
   });
 });
 
+test('codemod drops jst-get when it duplicates an identical href (#61)', async () => {
+  const sample = [
+    '<a href="/orders" jst-get="/orders" jst-target="#main">orders</a>',
+    '<a href="/a" jst-get="/b" jst-target="#main">different URLs stay</a>',
+    '<a href="/plain">untouched</a>',
+  ].join('\n');
+  await withTempFile('nav.html', sample, async (file) => {
+    const { code, stdout } = await run('node', [codemod, file]);
+    assert.equal(code, 0);
+    assert.match(stdout, /1 change/);
+    const out = fs.readFileSync(file, 'utf8');
+    assert.match(out, /<a href="\/orders" jst-target="#main">orders<\/a>/);
+    assert.match(out, /jst-get="\/b"/);   // human call: left for lint
+  });
+});
+
+test('lint gives <button jst-get> the two-rewrite advice (#61)', async () => {
+  const sample = '<button jst-get="/tags/x" jst-target="#main">x</button>';
+  await withTempFile('button.html', sample, async (file) => {
+    const { code, stderr } = await run('node', [lint, file]);
+    assert.equal(code, 1);
+    assert.match(stderr, /<button jst-get="\/tags\/x"> has no enhance-only equivalent/);
+    assert.match(stderr, /a navigation becomes a link/);
+    assert.match(stderr, /one-button form/);
+  });
+});
+
+test('lint --js-strings scans template literals for removed syntax (#61)', async () => {
+  const sample = [
+    'const row = (id) => `<a jst-get="/items/${id}" jst-target="#main">open</a>`;',
+    "const ok = '<a href=\"/fine\">plain</a>';",
+  ].join('\n');
+  await withTempFile('board.js', sample, async (file) => {
+    const { code, stderr } = await run('node', [lint, file, '--js-strings']);
+    assert.equal(code, 1);
+    assert.match(stderr, /removed jst-get/);
+    assert.match(stderr, /\[in JS string\]/);
+    assert.match(stderr, /board\.js:1:/);
+  });
+});
+
 test('codemod --dry-run reports but writes nothing', async () => {
   await withTempFile('view.erb', SAMPLE, async (file) => {
     const before = fs.readFileSync(file, 'utf8');

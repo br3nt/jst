@@ -82,11 +82,27 @@ export interface JSTNavSwapOptions extends RequestInit {
   select?: string;
 }
 
+export interface JSTNavNavigateOptions {
+  /** CSS selector for where the response lands. */
+  target?: string;
+  swap?: string;
+  select?: string;
+  confirm?: string;
+  method?: string;
+  /** true = the request URL; a string = an explicit URL. */
+  pushUrl?: boolean | string;
+  replaceUrl?: boolean | string;
+  /** data-* attributes set on the driver element for delegated listeners to read. */
+  dataset?: Record<string, string>;
+}
+
 export interface JSTNav {
   csrf: JSTNavCsrfConfig;
   configure(root?: Document | Element): void;
-  /** Fetch url and swap the response into target — the imperative primitive. */
+  /** Fetch url and swap the response into target — the imperative primitive (no events, no history). */
   swap(target: Element | string | null, url: string, options?: JSTNavSwapOptions): Promise<Response>;
+  /** Programmatic navigation with the FULL enhanced-element pipeline: lifecycle events, confirm, select, history. Returns the Response, or null when cancelled. */
+  navigate(url: string, options?: JSTNavNavigateOptions): Promise<Response | null>;
 }
 
 export interface JSTBehaviors {
