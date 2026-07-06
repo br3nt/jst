@@ -5,9 +5,40 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.7.0 - 2026-07-07
+
+The component library becomes consumable: one fragment of component
+definitions plus two stylesheets, loadable at runtime or precompiled.
 
 ### Added
+
+- **`jst-components.html`: the consumable component fragment.** The five JST
+  components (`jst-palette`, `jst-tabs`, `jst-toaster`, `jst-combobox`,
+  `jst-table`) ship as one fragment. Runtime consumption:
+  `<jst-include src="/jst-components.html">` and the definitions
+  auto-register on arrival (properties set before the upgrade are
+  preserved). Strict CSP: `tools/precompile.mjs jst-components.html`
+  compiles all five. The cross-section demo consumes the fragment the same
+  way an app would.
+- **The color system uses the modern color features end to end.**
+  `contrast-color()` picks the foreground for every on-color surface (accent,
+  ok, warn, error) where supported, with hand-tuned fallbacks (the warning
+  badge's text is dark on amber, not white); `color-mix()` derives tinted
+  status surfaces for alerts and toasts, table stripes, and the selection
+  color from the same tokens; the caret follows the accent. Everything still
+  flows from `light-dark()` + oklch + the relative-color ramp.
+- **Carousel scroll buttons position via anchor positioning.** The buttons'
+  containing block is not the reel, so plain insets escaped it; an
+  `anchor-name`/`anchor-scope` pair overlays them just inside the reel's
+  edges (several carousels can share a page). Carousels also hide their
+  scrollbar: the dot markers are the indicator. Verified in Chrome: a real
+  click on the arrow pages exactly one slide, zero JS.
+- **Dark mode verified.** The full library reviewed under an emulated dark
+  scheme: tokens flip every surface, the status tints and contrast-picked
+  foregrounds hold, and the one real finding (escaped carousel buttons) is
+  the fix above.
+- **Minified stylesheets.** `jst-layout.min.css` and `jst-components.min.css`
+  are built (and size-reported) by `npm run build` alongside the JS bundles.
 
 - **`commands(event, map)` handler helper.** The Invoker Commands router: a
   `commandfor` target handling several custom commands routes them without a

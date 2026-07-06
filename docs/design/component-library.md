@@ -83,6 +83,7 @@ feature is Baseline-wide):
 | `:has()` | imposter's parent becomes its positioning container | Baseline 2023 | author sets `position: relative` |
 | `cap` unit | icon sized to the text's capital height | Baseline 2024 | `0.75em` |
 | Scroll snap | opt-in reel snapping via `--snap` | Baseline 2022 | plain scrolling |
+| `color-mix()` | tinted status surfaces, table stripes, selection color, all mixed from tokens | Baseline 2023 | (used only for enhancement colors) |
 
 Audited against 2026 CSS: `aspect-ratio` replaced the padded-box hack (frame),
 `gap` replaced owl selectors (stack/cluster), logical properties are used

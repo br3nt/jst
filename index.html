@@ -120,6 +120,7 @@
     <div class="cta">
       <a class="btn primary" href="#examples">Examples ↓</a>
       <a class="btn ghost" href="framework_parity/index.html">Compare vs HTMX · Alpine · Vue · React · Lit &amp; more →</a>
+      <a class="btn ghost" href="examples/components_cross_section.html">Component library →</a>
       <a class="btn ghost" href="docs/">Read the docs →</a>
     </div>
   </div>
@@ -295,6 +296,23 @@
 
     <div class="example">
       <div class="example-head">
+        <h3 id="example-components">Component library</h3>
+        <div class="example-actions">
+          <a class="open-standalone" href="examples/components_cross_section.html" target="_blank" rel="noopener" aria-label="Open the component library as its own page">Open standalone ↗</a>
+        </div>
+      </div>
+      <p class="blurb">The opt-in, CSS-first library: layout primitives, ~30 component patterns
+        (most of them platform + tokens, a handful of real JST components incl. a command palette),
+        re-skinnable to any framework's look by swapping theme tokens. The
+        <a href="examples/layout_primitives.html">layout primitives page</a> runs with zero JavaScript.</p>
+      <div class="embed breakout">
+        <iframe class="demo-frame" data-autosize src="examples/components_cross_section.html" loading="lazy" title="Component library (live preview)" aria-describedby="example-components"></iframe>
+        <button class="embed-shield" aria-label="Activate this preview to interact in place (or use Open standalone above)"><span class="hint">click to interact</span></button>
+      </div>
+    </div>
+
+    <div class="example">
+      <div class="example-head">
         <h3 id="example-slots">Slots &amp; composition</h3>
         <div class="example-actions">
           <a class="open-standalone" href="examples/slots.html" target="_blank" rel="noopener" aria-label="Open the Slots and composition example as its own page">Open standalone ↗</a>
@@ -339,7 +357,7 @@
 <footer>
   <div class="wrap">
     JST: an exploration in no-build, platform-native components.
-    Built with itself: the demo above, the three embedded examples, and the
+    Built with itself: the demo above, the four embedded examples, and the
     comparison browser are all JST components.
   </div>
 </footer>
