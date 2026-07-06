@@ -102,11 +102,6 @@
   .jst-tag[data-tech="jst"]      { background: oklch(0.32 0.08 30);  color: oklch(0.86 0.10 30);  border-color: oklch(0.42 0.10 30); }
 }
 
-/* Shared fallbacks if a theme omits them. */
-:where([data-theme]) {
-  --jst-shadow: var(--jst-shadow, 0 0.25rem 0.75rem oklch(0 0 0 / 0.12));
-}
-
 /* Focus-visible ring driven by the theme token. */
 :where([data-theme]) :where(button, a, summary, input, [tabindex]):focus-visible {
   outline: none;
@@ -126,7 +121,7 @@
   color: var(--jst-fg);
   box-shadow: var(--jst-shadow);
 }
-.jst-modal::backdrop { background: oklch(0 0 0 / 0.45); }
+:where(.jst-modal, .jst-drawer)::backdrop { background: var(--jst-backdrop); }
 /* Modal and drawer share their anatomy: one rule set for sections and header. */
 :where(.jst-modal, .jst-drawer) > header,
 .jst-modal > .jst-modal-body,
@@ -142,11 +137,12 @@
   display: flex; justify-content: flex-end; gap: var(--jst-space-xs);
   border-block-start: var(--jst-border-width) solid var(--jst-border);
 }
-.jst-modal-close {
+/* The dismiss ×: one pattern for modal, drawer, and toast. */
+.jst-modal-close, jst-toaster .jst-toast > button {
   background: none; border: none; color: var(--jst-muted);
-  font-size: 1.25rem; line-height: 1; cursor: pointer; padding: 0.1em 0.3em;
+  font-size: 1.1em; line-height: 1; cursor: pointer; padding: 0.1em 0.3em;
 }
-.jst-modal-close:hover { color: var(--jst-fg); background: none; }
+.jst-modal-close:hover, jst-toaster .jst-toast > button:hover { color: var(--jst-fg); background: none; }
 
 /* Enter/leave animation via @starting-style + allow-discrete (Baseline 2024). */
 @supports (transition-behavior: allow-discrete) {
@@ -178,13 +174,27 @@
  * Dropdown menu - native [popover] + command="toggle-popover". The invoker is
  * the popover's implicit anchor, so no ids/anchor-names are needed to place it.
  * ==========================================================================*/
-.jst-menu[popover] {
-  margin: 0; padding: var(--jst-space-2xs);
-  inline-size: max-content; min-inline-size: 10rem;
+/* The floating-panel surface, shared by the dropdown menu and the combobox
+   listbox (and any future floating list). Declared once. */
+.jst-menu[popover], jst-combobox [role="listbox"] {
+  padding: var(--jst-space-2xs);
   border: var(--jst-border-width) solid var(--jst-border);
   border-radius: var(--jst-radius);
   background: var(--jst-bg); color: var(--jst-fg);
   box-shadow: var(--jst-shadow);
+}
+/* Items inside a floating panel: same box, different activation cue (menu
+   items respond to hover, combobox options to data-active). */
+:where(.jst-menu, jst-combobox [role="listbox"]) :where(button, a, [role="option"]) {
+  display: flex; align-items: center; gap: var(--jst-space-xs);
+  inline-size: 100%; text-align: start;
+  padding: var(--jst-space-2xs) var(--jst-space-s);
+  background: none; border: none; border-radius: calc(var(--jst-radius) - 2px);
+  color: var(--jst-fg); font: inherit; text-decoration: none; cursor: pointer;
+}
+.jst-menu[popover] {
+  margin: 0;
+  inline-size: max-content; min-inline-size: 10rem;
 }
 @supports (position-area: bottom) {
   .jst-menu[popover] {
@@ -196,13 +206,6 @@
 @supports not (position-area: bottom) {
   /* Fallback: keep it in flow-ish near the trigger. */
   .jst-menu[popover] { position: fixed; inset: auto; }
-}
-.jst-menu button, .jst-menu a {
-  display: flex; align-items: center; gap: var(--jst-space-xs);
-  inline-size: 100%; text-align: start;
-  padding: var(--jst-space-2xs) var(--jst-space-s);
-  background: none; border: none; border-radius: calc(var(--jst-radius) - 2px);
-  color: var(--jst-fg); font: inherit; text-decoration: none; cursor: pointer;
 }
 .jst-menu button:hover, .jst-menu a:hover { background: var(--jst-surface); }
 .jst-menu hr { border: none; border-block-start: var(--jst-border-width) solid var(--jst-border); margin: var(--jst-space-2xs) 0; }
@@ -246,7 +249,7 @@ jst-toaster .jst-toast {
   min-inline-size: 11rem;
   animation: jst-toast-in 0.18s ease-out;
 }
-jst-toaster .jst-toast button { margin-inline-start: auto; background: none; border: none; color: var(--jst-muted); cursor: pointer; font-size: 1em; line-height: 1; padding: 0 0.2em; }
+jst-toaster .jst-toast > button { margin-inline-start: auto; }
 @keyframes jst-toast-in { from { opacity: 0; transform: translateY(0.5rem); } }
 
 /* ============================================================================
@@ -256,13 +259,7 @@ jst-combobox { display: block; position: relative; max-inline-size: 22rem; }
 jst-combobox input { inline-size: 100%; }
 jst-combobox [role="listbox"] {
   position: absolute; inset-inline: 0; z-index: 20; margin-block-start: var(--jst-space-2xs);
-  max-block-size: 14rem; overflow: auto;
-  padding: var(--jst-space-2xs); list-style: none;
-  border: var(--jst-border-width) solid var(--jst-border); border-radius: var(--jst-radius);
-  background: var(--jst-bg); box-shadow: var(--jst-shadow);
-}
-jst-combobox [role="option"] {
-  padding: var(--jst-space-2xs) var(--jst-space-s); border-radius: calc(var(--jst-radius) - 2px); cursor: pointer;
+  max-block-size: 14rem; overflow: auto; list-style: none;
 }
 jst-combobox [role="option"][data-active="true"] { background: var(--jst-accent); color: var(--jst-accent-fg); }
 jst-combobox .jst-empty { padding: var(--jst-space-s); color: var(--jst-muted); }
@@ -416,7 +413,6 @@ jst-table tbody tr:hover { background: var(--jst-surface); }
 }
 .jst-pagination :where(a, button):hover { background: var(--jst-surface); color: var(--jst-fg); }
 .jst-pagination [aria-current="page"] { background: var(--jst-accent); color: var(--jst-accent-fg); font-weight: 600; }
-.jst-pagination [disabled], .jst-pagination [aria-disabled="true"] { opacity: 0.4; pointer-events: none; }
 
 /* ============================================================================
  * Drawer - the modal's edge-docked variant: same native <dialog>, same invoker
@@ -431,7 +427,6 @@ jst-table tbody tr:hover { background: var(--jst-surface); }
   background: var(--jst-bg); color: var(--jst-fg);
   box-shadow: var(--jst-shadow);
 }
-.jst-drawer::backdrop { background: oklch(0 0 0 / 0.45); }
 
 /* Edge placement: the dialog's auto margins do the docking. */
 .jst-drawer:not([data-side]), .jst-drawer[data-side="end"] {
@@ -550,12 +545,8 @@ jst-table tbody tr:hover { background: var(--jst-surface); }
 .jst-page-header > [data-main] { flex: 1; min-inline-size: 0; }
 .jst-page-header h1, .jst-page-header h2 { margin: 0; }
 .jst-page-header [data-actions] { display: inline-flex; gap: var(--jst-space-2xs); flex: none; }
-.jst-page-header .jst-sub { color: var(--jst-muted); font-size: 0.9rem; margin: 0; }
-/* Eyebrow: the mono micro-label, as a heading kicker. */
-.jst-eyebrow {
-  font-family: var(--jst-font-mono); font-size: 0.72rem; font-weight: 600;
-  letter-spacing: 0.04em; text-transform: uppercase; color: var(--jst-muted);
-}
+.jst-page-header .jst-sub { color: var(--jst-muted); font-size: var(--jst-font-small); margin: 0; }
+/* .jst-eyebrow shares the micro-label rule in jst-layout.css. */
 
 /* ---- More framework skins (#1): one token-block each. ---------------------- */
 
