@@ -64,10 +64,15 @@
      contrast-color() where supported (not yet Baseline). */
   --jst-accent-fg: white;
 
-  /* Status roles, used by validation, alerts, badges, and toasts. */
+  /* Status roles, used by validation, alerts, badges, and toasts. Each has a
+     foreground for text ON that color: a static fallback below, upgraded to
+     contrast-color() where the engine can pick it (not yet Baseline). */
   --jst-ok: oklch(0.62 0.15 150);
   --jst-warn: oklch(0.75 0.15 80);
   --jst-error: oklch(0.55 0.19 25);
+  --jst-ok-fg: white;
+  --jst-warn-fg: oklch(0.25 0.05 80);
+  --jst-error-fg: white;
 
   /* Elevation and overlay dimming, shared by every floating surface. */
   --jst-shadow: 0 0.25rem 0.75rem oklch(0 0 0 / 0.12);
@@ -83,7 +88,12 @@
 [data-scheme="dark"]  { color-scheme: dark; }
 
 @supports (color: contrast-color(red)) {
-  :root { --jst-accent-fg: contrast-color(var(--jst-accent)); }
+  :root {
+    --jst-accent-fg: contrast-color(var(--jst-accent));
+    --jst-ok-fg: contrast-color(var(--jst-ok));
+    --jst-warn-fg: contrast-color(var(--jst-warn));
+    --jst-error-fg: contrast-color(var(--jst-error));
+  }
 }
 
 /* Fallback for engines without light-dark(): swap the role tokens by scheme. */
@@ -117,9 +127,13 @@ body {
   line-height: var(--jst-line);
   -webkit-text-size-adjust: 100%;
   /* Native checkboxes, radios, ranges, and progress bars pick up the accent
-     (Baseline 2022): themed form controls with zero component CSS. */
+     (Baseline 2022): themed form controls with zero component CSS. The caret
+     and text selection derive from the same token. */
   accent-color: var(--jst-accent);
+  caret-color: var(--jst-accent);
 }
+
+::selection { background: color-mix(in oklch, var(--jst-accent) 22%, transparent); }
 
 h1, h2, h3, h4, p, ul, ol, figure, blockquote { margin-block: 0; }
 :where(h1, h2, h3, h4) { line-height: 1.15; text-wrap: balance; }
@@ -161,7 +175,7 @@ a { color: var(--jst-accent-600); }
   color: var(--jst-muted);
 }
 :where(button, .jst-button)[data-variant="ghost"]:hover { background: var(--jst-surface); color: var(--jst-fg); }
-:where(button, .jst-button)[data-variant="danger"] { background: var(--jst-error); color: white; }
+:where(button, .jst-button)[data-variant="danger"] { background: var(--jst-error); color: var(--jst-error-fg); }
 :where(button, .jst-button)[data-variant="danger"]:hover { background: oklch(from var(--jst-error) calc(l - 0.07) c h); }
 
 :where(input, textarea, select) {
@@ -465,10 +479,17 @@ jst-reel[data-carousel] {
   position: relative;
   scroll-snap-type: x mandatory;
   scroll-behavior: smooth;
+  scrollbar-width: none;
 }
 jst-reel[data-carousel] > * { flex: 0 0 100%; scroll-snap-align: center; }
 @supports selector(::scroll-marker) {
-  jst-reel[data-carousel] { scroll-marker-group: after; }
+  jst-reel[data-carousel] {
+    scroll-marker-group: after;
+    /* Explicit anchor for the scroll buttons; anchor-scope keeps each
+       carousel's name to itself so several can share a page. */
+    anchor-name: --jst-carousel;
+    anchor-scope: --jst-carousel;
+  }
   jst-reel[data-carousel]::scroll-marker-group {
     display: flex; justify-content: center; gap: var(--jst-space-2xs);
     padding-block: var(--jst-space-2xs);
@@ -479,15 +500,21 @@ jst-reel[data-carousel] > * { flex: 0 0 100%; scroll-snap-align: center; }
     background: var(--jst-border); cursor: pointer;
   }
   jst-reel[data-carousel] > *::scroll-marker:target-current { background: var(--jst-accent); }
+  /* The buttons implicitly anchor to the scroll container; anchor() insets
+     overlay them just inside its edges (their containing block is NOT the
+     reel, so plain insets would escape it). */
   jst-reel[data-carousel]::scroll-button(left),
   jst-reel[data-carousel]::scroll-button(right) {
-    position: absolute; align-self: center; z-index: 1;
+    position: absolute; z-index: 1;
+    position-anchor: --jst-carousel;
+    inset-block-start: anchor(center); translate: 0 -50%;
+    display: grid; place-items: center;
     border: var(--jst-border-width) solid var(--jst-border); border-radius: 50%;
-    inline-size: 1.8em; block-size: 1.8em;
+    inline-size: 1.8em; block-size: 1.8em; padding: 0;
     background: var(--jst-bg); color: var(--jst-fg); cursor: pointer;
   }
-  jst-reel[data-carousel]::scroll-button(left)  { content: "‹"; inset-inline-start: var(--jst-space-2xs); }
-  jst-reel[data-carousel]::scroll-button(right) { content: "›"; inset-inline-end: var(--jst-space-2xs); }
+  jst-reel[data-carousel]::scroll-button(left)  { content: "‹"; inset-inline-start: calc(anchor(start) + var(--jst-space-2xs)); }
+  jst-reel[data-carousel]::scroll-button(right) { content: "›"; inset-inline-end: calc(anchor(end) + var(--jst-space-2xs)); }
   jst-reel[data-carousel]::scroll-button(*):disabled { opacity: 0.3; }
 }
 

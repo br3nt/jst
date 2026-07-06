@@ -314,9 +314,9 @@ jst-combobox .jst-empty { padding: var(--jst-space-s); color: var(--jst-muted); 
   border-radius: var(--jst-radius);
   background: var(--jst-bg); color: var(--jst-fg);
 }
-.jst-alert[data-variant="success"], jst-toaster .jst-toast[data-variant="success"] { border-inline-start-color: var(--jst-ok); }
-.jst-alert[data-variant="warning"], jst-toaster .jst-toast[data-variant="warning"] { border-inline-start-color: var(--jst-warn); }
-.jst-alert[data-variant="error"],   jst-toaster .jst-toast[data-variant="error"]   { border-inline-start-color: var(--jst-error); }
+.jst-alert[data-variant="success"], jst-toaster .jst-toast[data-variant="success"] { border-inline-start-color: var(--jst-ok); background: color-mix(in oklch, var(--jst-ok) 7%, var(--jst-bg)); }
+.jst-alert[data-variant="warning"], jst-toaster .jst-toast[data-variant="warning"] { border-inline-start-color: var(--jst-warn); background: color-mix(in oklch, var(--jst-warn) 8%, var(--jst-bg)); }
+.jst-alert[data-variant="error"],   jst-toaster .jst-toast[data-variant="error"]   { border-inline-start-color: var(--jst-error); background: color-mix(in oklch, var(--jst-error) 7%, var(--jst-bg)); }
 
 /* ============================================================================
  * Progress + spinner - native <progress> + a CSS spinner. CSS + HTML only.
@@ -372,9 +372,9 @@ jst-table tbody tr:hover { background: var(--jst-surface); }
   background: var(--jst-accent); color: var(--jst-accent-fg);
 }
 .jst-badge[data-variant="muted"]   { background: var(--jst-surface); color: var(--jst-muted); border: var(--jst-border-width) solid var(--jst-border); }
-.jst-badge[data-variant="success"] { background: var(--jst-ok); color: white; }
-.jst-badge[data-variant="warning"] { background: var(--jst-warn); color: white; }
-.jst-badge[data-variant="error"]   { background: var(--jst-error); color: white; }
+.jst-badge[data-variant="success"] { background: var(--jst-ok); color: var(--jst-ok-fg); }
+.jst-badge[data-variant="warning"] { background: var(--jst-warn); color: var(--jst-warn-fg); }
+.jst-badge[data-variant="error"]   { background: var(--jst-error); color: var(--jst-error-fg); }
 
 /* ============================================================================
  * Avatar - a circle with an image, or initials as the fallback. Size via
