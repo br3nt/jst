@@ -41,7 +41,7 @@
   --jst-font-mono: ui-monospace, monospace;
   --jst-font-size: 0.875rem;
   --jst-line: 1.45;
-  --jst-control-size: 0.85rem;
+  --jst-control-size: 0.8rem;
 
   /* Color roles. light-dark() (Baseline 2024) gives free dark mode; the
      @media fallback below covers older engines. */
@@ -120,7 +120,8 @@ a { color: var(--jst-accent-600); }
 :where(button, .jst-button) {
   font: inherit;
   font-size: var(--jst-control-size);
-  padding: 0.3em 0.75em;
+  line-height: 1.3;
+  padding: 0.25em 0.65em;
   border: var(--jst-border-width) solid transparent;
   border-radius: var(--jst-radius);
   background: var(--jst-accent);
@@ -153,7 +154,8 @@ a { color: var(--jst-accent-600); }
 :where(input, textarea, select) {
   font: inherit;
   font-size: var(--jst-control-size);
-  padding: 0.3em 0.55em;
+  line-height: 1.3;
+  padding: 0.25em 0.5em;
   border: var(--jst-border-width) solid var(--jst-border);
   border-radius: var(--jst-radius);
   background: var(--jst-bg);

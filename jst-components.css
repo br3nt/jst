@@ -274,16 +274,16 @@ jst-combobox .jst-empty { padding: var(--jst-space-s); color: var(--jst-muted); 
 .jst-switch { display: inline-flex; align-items: center; gap: var(--jst-space-xs); cursor: pointer; }
 .jst-switch input { position: absolute; opacity: 0; inline-size: 0; block-size: 0; }
 .jst-switch > .track {
-  inline-size: 2.4em; block-size: 1.4em; padding: 0.15em; border-radius: 99px;
+  inline-size: 2.1em; block-size: 1.2em; padding: 0.15em; border-radius: 99px;
   background: var(--jst-border); transition: background 0.15s;
   display: inline-flex; align-items: center;
 }
 .jst-switch > .track::before {
-  content: ""; inline-size: 1.1em; block-size: 1.1em; border-radius: 50%;
+  content: ""; inline-size: 0.95em; block-size: 0.95em; border-radius: 50%;
   background: var(--jst-bg); transition: transform 0.15s; box-shadow: 0 1px 2px oklch(0 0 0 / 0.3);
 }
 .jst-switch input:checked + .track { background: var(--jst-accent); }
-.jst-switch input:checked + .track::before { transform: translateX(1em); }
+.jst-switch input:checked + .track::before { transform: translateX(0.9em); }
 .jst-switch input:focus-visible + .track { box-shadow: var(--jst-ring, 0 0 0 3px oklch(0.6 0.1 262 / 0.5)); }
 
 /* ============================================================================
@@ -360,7 +360,7 @@ jst-table tbody tr:hover { background: var(--jst-surface); }
  * ==========================================================================*/
 .jst-badge {
   display: inline-flex; align-items: center; gap: 0.35em;
-  font-size: 0.68rem; font-weight: 600; line-height: 1.4;
+  font-size: 0.65rem; font-weight: 600; line-height: 1.4;
   padding: 0.08em 0.55em; border-radius: 99px; white-space: nowrap;
   background: var(--jst-accent); color: var(--jst-accent-fg);
 }
@@ -404,7 +404,7 @@ jst-table tbody tr:hover { background: var(--jst-surface); }
 .jst-pagination { display: flex; flex-wrap: wrap; gap: var(--jst-space-2xs); font-size: var(--jst-control-size); }
 .jst-pagination :where(a, button, span) {
   display: inline-flex; align-items: center; justify-content: center;
-  min-inline-size: 1.8em; padding: 0.15em 0.4em;
+  min-inline-size: 1.6em; padding: 0.1em 0.35em;
   border: var(--jst-border-width) solid var(--jst-border);
   border-radius: var(--jst-radius);
   background: var(--jst-bg); color: var(--jst-fg);
