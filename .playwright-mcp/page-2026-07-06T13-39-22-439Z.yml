@@ -1,0 +1,353 @@
+- generic [active] [ref=f7e1]:
+  - generic [ref=f7e2]:
+    - generic [ref=f7e3]: "Re-skin as:"
+    - combobox "Re-skin as:" [ref=f7e4]:
+      - option "JST (default)" [selected]
+      - option "Bootstrap"
+      - option "shadcn/ui"
+      - option "Shoelace / Web Awesome"
+      - option "Pico CSS"
+      - option "W3.CSS (W3Schools)"
+      - option "Bulma"
+      - option "Material Design 3"
+      - option "Ant Design"
+      - option "Tailwind UI"
+      - option "DaisyUI"
+    - generic [ref=f7e5]: Same markup. Only the theme tokens change.
+  - generic [ref=f7e7]:
+    - generic [ref=f7e8]:
+      - heading "One component, every framework's look" [level=1] [ref=f7e9]
+      - paragraph [ref=f7e10]:
+        - text: Each card is built
+        - strong [ref=f7e11]: once
+        - text: in JST and re-skinned by the selector above. The badge says which JST technology it actually needed - often
+        - emphasis [ref=f7e12]: none
+        - text: .
+    - generic [ref=f7e13]:
+      - banner [ref=f7e14]:
+        - heading "Modal / Dialog" [level=3] [ref=f7e15]
+        - generic [ref=f7e16]: ● command + <dialog>
+      - button "Open modal" [ref=f7e17] [cursor=pointer]
+    - generic [ref=f7e18]:
+      - banner [ref=f7e19]:
+        - heading "Accordion" [level=3] [ref=f7e20]
+        - generic [ref=f7e21]: ● CSS + HTML only
+      - generic [ref=f7e22]:
+        - group [ref=f7e23]:
+          - generic "What is it? ▾" [ref=f7e24] [cursor=pointer]
+          - generic [ref=f7e25]:
+            - text: Three
+            - code [ref=f7e26]: <details name="acc">
+            - text: "- the shared"
+            - code [ref=f7e27]: name
+            - text: makes them mutually exclusive (Baseline). No script, no component.
+        - group [ref=f7e28]:
+          - generic "How does it animate? ▾" [ref=f7e29] [cursor=pointer]
+        - group [ref=f7e30]:
+          - generic "What did JST add? ▾" [ref=f7e31] [cursor=pointer]
+    - generic [ref=f7e32]:
+      - banner [ref=f7e33]:
+        - heading "Dropdown menu" [level=3] [ref=f7e34]
+        - generic [ref=f7e35]: ● Popover + command
+      - button "Actions ▾" [ref=f7e36] [cursor=pointer]
+      - paragraph [ref=f7e37]:
+        - code [ref=f7e38]: "[popover]"
+        - text: +
+        - code [ref=f7e39]: command="toggle-popover"
+        - text: . Outside-click and Esc dismissal are built in; the menu anchors to its button automatically.
+    - generic [ref=f7e40]:
+      - banner [ref=f7e41]:
+        - heading "Tabs" [level=3] [ref=f7e42]
+        - generic [ref=f7e43]: ● JST component
+      - generic [ref=f7e44]:
+        - tablist "Demo tabs" [ref=f7e45]:
+          - tab "Overview" [selected] [ref=f7e46] [cursor=pointer]
+          - tab "Behavior" [ref=f7e47] [cursor=pointer]
+          - tab "Theming" [ref=f7e48] [cursor=pointer]
+        - tabpanel [ref=f7e49]: There is no native tabs element, so this is a real JST custom element - roving tabindex, aria-selected, and ArrowLeft/Right navigation.
+    - generic [ref=f7e50]:
+      - banner [ref=f7e51]:
+        - heading "Toast" [level=3] [ref=f7e52]
+        - generic [ref=f7e53]: ● JST component + command
+      - generic [ref=f7e54]:
+        - button "Success toast" [ref=f7e55] [cursor=pointer]
+        - button "Error toast" [ref=f7e56] [cursor=pointer]
+      - paragraph [ref=f7e57]:
+        - text: A
+        - code [ref=f7e58]: <jst-toaster>
+        - text: stack, fed by a custom
+        - code [ref=f7e59]: "--toast"
+        - text: command; the message rides on the button's
+        - code [ref=f7e60]: data-*
+        - text: (read from
+        - code [ref=f7e61]: event.source
+        - text: ). Auto-dismisses after 4s.
+    - generic [ref=f7e62]:
+      - banner [ref=f7e63]:
+        - heading "Combobox / Autocomplete" [level=3] [ref=f7e64]
+        - generic [ref=f7e65]: ● JST component
+      - combobox "Search fruit…" [ref=f7e67]
+      - paragraph [ref=f7e68]:
+        - text: Type to filter; ↑↓ to move, Enter to pick, Esc to close. ARIA
+        - code [ref=f7e69]: combobox
+        - text: /
+        - code [ref=f7e70]: listbox
+        - text: roles.
+    - generic [ref=f7e71]:
+      - banner [ref=f7e72]:
+        - heading "Switch" [level=3] [ref=f7e73]
+        - generic [ref=f7e74]: ● CSS + HTML only
+      - generic [ref=f7e75]:
+        - generic [ref=f7e76] [cursor=pointer]:
+          - checkbox "Wi-Fi" [checked]
+          - text: Wi-Fi
+        - generic [ref=f7e78] [cursor=pointer]:
+          - checkbox "Bluetooth"
+          - text: Bluetooth
+      - paragraph [ref=f7e80]:
+        - text: A native
+        - code [ref=f7e81]: <input type="checkbox">
+        - text: styled into a toggle - real checkbox semantics, keyboard, and form participation for free.
+    - generic [ref=f7e82]:
+      - banner [ref=f7e83]:
+        - heading "Tooltip" [level=3] [ref=f7e84]
+        - generic [ref=f7e85]: ● CSS + HTML only
+      - paragraph [ref=f7e86]: Hover or focus this term Rendered with CSS ::after - no JavaScript, no component. to see the tip.
+    - generic [ref=f7e87]:
+      - banner [ref=f7e88]:
+        - heading "Alert / Callout" [level=3] [ref=f7e89]
+        - generic [ref=f7e90]: ● CSS + HTML only
+      - generic [ref=f7e91]:
+        - generic [ref=f7e92]:
+          - strong [ref=f7e93]: Saved.
+          - text: Your changes are live.
+        - generic [ref=f7e94]:
+          - strong [ref=f7e95]: Heads up.
+          - text: This action can't be undone.
+        - generic [ref=f7e96]:
+          - strong [ref=f7e97]: Failed.
+          - text: Check your connection and retry.
+    - generic [ref=f7e98]:
+      - banner [ref=f7e99]:
+        - heading "Progress & Spinner" [level=3] [ref=f7e100]
+        - generic [ref=f7e101]: ● CSS + HTML only
+      - generic [ref=f7e102]:
+        - progressbar [ref=f7e103]
+        - generic [ref=f7e104]:
+          - status "Loading" [ref=f7e105]
+          - text: Loading…
+      - paragraph [ref=f7e106]:
+        - text: Native
+        - code [ref=f7e107]: <progress>
+        - text: + a CSS keyframe spinner.
+    - generic [ref=f7e108]:
+      - banner [ref=f7e109]:
+        - heading "Data table (sortable)" [level=3] [ref=f7e110]
+        - generic [ref=f7e111]: ● JST component
+      - table [ref=f7e113]:
+        - rowgroup [ref=f7e114]:
+          - row "Name Role Commits" [ref=f7e115]:
+            - columnheader "Name" [ref=f7e116]:
+              - button "Name" [ref=f7e117] [cursor=pointer]
+            - columnheader "Role" [ref=f7e118]:
+              - button "Role" [ref=f7e119] [cursor=pointer]
+            - columnheader "Commits" [ref=f7e120]:
+              - button "Commits" [ref=f7e121] [cursor=pointer]
+        - rowgroup [ref=f7e122]:
+          - row "Ada Lead 312" [ref=f7e123]:
+            - cell "Ada" [ref=f7e124]
+            - cell "Lead" [ref=f7e125]
+            - cell "312" [ref=f7e126]
+          - row "Linus Core 987" [ref=f7e127]:
+            - cell "Linus" [ref=f7e128]
+            - cell "Core" [ref=f7e129]
+            - cell "987" [ref=f7e130]
+          - row "Grace Core 154" [ref=f7e131]:
+            - cell "Grace" [ref=f7e132]
+            - cell "Core" [ref=f7e133]
+            - cell "154" [ref=f7e134]
+          - row "Alan Docs 48" [ref=f7e135]:
+            - cell "Alan" [ref=f7e136]
+            - cell "Docs" [ref=f7e137]
+            - cell "48" [ref=f7e138]
+      - paragraph [ref=f7e139]:
+        - text: Click a column header to sort; click again to reverse.
+        - code [ref=f7e140]: aria-sort
+        - text: reflects state. Ties to the datasource proposal (#28).
+    - generic [ref=f7e141]:
+      - banner [ref=f7e142]:
+        - heading "Lazy region" [level=3] [ref=f7e143]
+        - generic [ref=f7e144]: ● <jst-include>
+      - paragraph [ref=f7e145]:
+        - text: A region whose content lives at a URL (
+        - code [ref=f7e146]: jst-behaviors.js
+        - text: ).
+        - code [ref=f7e147]: when="visible"
+        - text: defers the fetch until it scrolls into view, and the fragment carries its own component definition, which auto-registers on arrival.
+    - generic [ref=f7e148]:
+      - banner [ref=f7e149]:
+        - heading "Button variants" [level=3] [ref=f7e150]
+        - generic [ref=f7e151]: ● HTML + CSS
+      - generic [ref=f7e152]:
+        - button "Save" [ref=f7e153] [cursor=pointer]
+        - button "Cancel" [ref=f7e154] [cursor=pointer]
+        - button "Skip" [ref=f7e155] [cursor=pointer]
+        - button "Delete" [ref=f7e156] [cursor=pointer]
+        - button "Disabled" [disabled] [ref=f7e157]
+      - paragraph [ref=f7e158]:
+        - text: "One attribute re-roles a button: accent by default,"
+        - code [ref=f7e159]: data-variant="quiet | ghost | danger"
+        - text: for the rest.
+    - generic [ref=f7e160]:
+      - banner [ref=f7e161]:
+        - heading "Page header & Stats" [level=3] [ref=f7e162]
+        - generic [ref=f7e163]: ● HTML + CSS
+      - generic [ref=f7e164]:
+        - generic [ref=f7e165]:
+          - generic [ref=f7e166]:
+            - text: Household
+            - heading "March budget" [level=2] [ref=f7e167]
+            - paragraph [ref=f7e168]: Shared with 2 people
+          - generic [ref=f7e169]:
+            - button "Export" [ref=f7e170] [cursor=pointer]
+            - button "Add expense" [ref=f7e171] [cursor=pointer]
+        - generic [ref=f7e172]:
+          - generic [ref=f7e173]:
+            - generic [ref=f7e174]: Income
+            - generic [ref=f7e175]: $8,120
+          - generic [ref=f7e176]:
+            - generic [ref=f7e177]: Spent
+            - generic [ref=f7e178]: $5,867
+          - generic [ref=f7e179]:
+            - generic [ref=f7e180]: Remaining
+            - generic [ref=f7e181]: $2,253
+    - generic [ref=f7e182]:
+      - banner [ref=f7e183]:
+        - heading "List & Empty state" [level=3] [ref=f7e184]
+        - generic [ref=f7e185]: ● HTML + CSS
+      - generic [ref=f7e186]:
+        - list [ref=f7e187]:
+          - listitem [ref=f7e188]:
+            - generic [ref=f7e189]: AL
+            - generic [ref=f7e190]:
+              - strong [ref=f7e191]: Ada Lovelace
+              - text: ada@example.com
+            - generic [ref=f7e192]: Owner
+            - generic [ref=f7e193]:
+              - button "Edit" [ref=f7e194] [cursor=pointer]
+              - button "×" [ref=f7e195] [cursor=pointer]
+          - listitem [ref=f7e196]:
+            - generic [ref=f7e197]: GH
+            - generic [ref=f7e198]:
+              - strong [ref=f7e199]: Grace Hopper
+              - text: grace@example.com
+            - generic [ref=f7e200]: Member
+            - generic [ref=f7e201]:
+              - button "Edit" [ref=f7e202] [cursor=pointer]
+              - button "×" [ref=f7e203] [cursor=pointer]
+        - generic [ref=f7e204]:
+          - strong [ref=f7e205]: No invitations yet
+          - generic [ref=f7e206]: People you invite will show up here.
+          - button "Invite someone" [ref=f7e207] [cursor=pointer]
+    - generic [ref=f7e208]:
+      - banner [ref=f7e209]:
+        - heading "Badge & Avatar" [level=3] [ref=f7e210]
+        - generic [ref=f7e211]: ● HTML + CSS
+      - generic [ref=f7e212]:
+        - generic [ref=f7e213]: Accent
+        - generic [ref=f7e214]: Paid
+        - generic [ref=f7e215]: Pending
+        - generic [ref=f7e216]: Overdue
+        - generic [ref=f7e217]: Draft
+        - generic [ref=f7e218]: AL
+        - generic [ref=f7e219]: GH
+    - generic [ref=f7e220]:
+      - banner [ref=f7e221]:
+        - heading "Skeleton" [level=3] [ref=f7e222]
+        - generic [ref=f7e223]: ● HTML + CSS
+      - paragraph [ref=f7e228]:
+        - text: Put skeletons inside a
+        - code [ref=f7e229]: <jst-include>
+        - text: as its pre-fetch content and the swap replaces them with the real thing.
+    - generic [ref=f7e230]:
+      - banner [ref=f7e231]:
+        - heading "Breadcrumb & Pagination" [level=3] [ref=f7e232]
+        - generic [ref=f7e233]: ● HTML + CSS
+      - generic [ref=f7e234]:
+        - navigation "Breadcrumb" [ref=f7e235]:
+          - list [ref=f7e236]:
+            - listitem [ref=f7e237]:
+              - link "Orders" [ref=f7e238] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=f7e239]:
+              - text: /
+              - link "2026" [ref=f7e240] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=f7e241]:
+              - text: /
+              - generic [ref=f7e242]: "#4471"
+        - navigation "Pagination" [ref=f7e243]:
+          - link "‹" [disabled]:
+            - /url: "#"
+          - link "1" [ref=f7e244] [cursor=pointer]:
+            - /url: "#"
+          - generic [ref=f7e245] [cursor=pointer]: "2"
+          - link "3" [ref=f7e246] [cursor=pointer]:
+            - /url: "#"
+          - link "4" [ref=f7e247] [cursor=pointer]:
+            - /url: "#"
+          - link "›" [ref=f7e248] [cursor=pointer]:
+            - /url: "#"
+      - paragraph [ref=f7e249]:
+        - text: "Server-rendered pages emit these constantly: plain"
+        - code [ref=f7e250]: nav
+        - text: markup,
+        - code [ref=f7e251]: aria-current
+        - text: carries the state.
+    - generic [ref=f7e252]:
+      - banner [ref=f7e253]:
+        - heading "Input group / Join" [level=3] [ref=f7e254]
+        - generic [ref=f7e255]: ● HTML + CSS
+      - generic [ref=f7e256]:
+        - generic [ref=f7e257]:
+          - generic [ref=f7e258]: https://
+          - textbox "Domain" [ref=f7e259]:
+            - /placeholder: example.com
+          - button "Check" [ref=f7e260] [cursor=pointer]
+        - generic [ref=f7e261]:
+          - button "Day" [ref=f7e262] [cursor=pointer]
+          - button "Week" [ref=f7e263] [cursor=pointer]
+          - button "Month" [ref=f7e264] [cursor=pointer]
+      - paragraph [ref=f7e265]: One rule set collapses both input addons and button groups into a joined unit.
+    - generic [ref=f7e266]:
+      - banner [ref=f7e267]:
+        - heading "Validation states" [level=3] [ref=f7e268]
+        - generic [ref=f7e269]: ● :user-invalid
+      - generic [ref=f7e271]:
+        - generic [ref=f7e272]:
+          - generic [ref=f7e273]: Email (required)
+          - textbox "Email (required)" [ref=f7e274]:
+            - /placeholder: type, then leave the field
+          - generic [ref=f7e275]:
+            - text: "Turns red only after you interact: the platform's own"
+            - code [ref=f7e276]: :user-invalid
+            - text: ", zero JS."
+        - button "Subscribe" [ref=f7e277] [cursor=pointer]
+    - generic [ref=f7e278]:
+      - banner [ref=f7e279]:
+        - heading "Drawer / offcanvas" [level=3] [ref=f7e280]
+        - generic [ref=f7e281]: ● <dialog> + invoker
+      - generic [ref=f7e282]:
+        - button "Open drawer" [ref=f7e283] [cursor=pointer]
+        - button "Left" [ref=f7e284] [cursor=pointer]
+        - button "Right" [ref=f7e285] [cursor=pointer]
+        - button "Top" [ref=f7e286] [cursor=pointer]
+        - button "Bottom" [ref=f7e287] [cursor=pointer]
+      - paragraph [ref=f7e288]:
+        - text: "The modal's edge-docked variant: the same native"
+        - code [ref=f7e289]: <dialog>
+        - text: and invoker wiring.
+        - code [ref=f7e290]: data-side="start | end | top | bottom"
+        - text: picks the edge; clicking the backdrop closes it (
+        - code [ref=f7e291]: closedby="any"
+        - text: ", with a tiny fallback below)."

@@ -558,16 +558,17 @@ const boundListeners = new WeakMap()
 const modelListeners = new WeakMap()
 
 /* ---------------------------------------------------------------------------
- * Statement combinators — called INSIDE a handler body, which since v0.6.0 is
- * the one handler shape everywhere (templates, native inline handlers,
+ * Handler helpers — called INSIDE a handler body, which since v0.6.0 is the
+ * one handler shape everywhere (templates, native inline handlers,
  * addEventListener). They take the current `event`, so they work per-call with
  * no wrapper closure; state lives in a WeakMap keyed by element + event type
  * (+ delay), and removed elements take their state with them.
  *
  *   oninput="if (changed(event)) debounce(event, 300, () => search(this.value))"
  *   onkeydown="keys(event, { Enter: () => go(), 'Meta+k': () => palette() })"
+ *   oncommand="commands(event, { '--save': save, '--revert': revert })"
  *
- * In template expressions they're in scope bare; elsewhere they're `JST.fn.*`
+ * In template handler bodies they're in scope; elsewhere they're `JST.fn.*`
  * / module exports. preventDefault/stopPropagation need no helper — they're
  * native statements in the body: onclick="event.preventDefault(); save()".
  */
@@ -635,8 +636,22 @@ export function keys(event, map) {
   return handler && handler(event)
 }
 
-/** The combinator namespace published as JST.fn (and handed to templates). */
-const combinators = { changed, debounce, throttle, keys }
+/**
+ * Command dispatch for the Invoker Commands API: a `commandfor` target that
+ * handles several custom commands routes them without a hand-written switch.
+ *
+ *   oncommand="commands(event, { '--save': save, '--revert': revert })"
+ *
+ * Dispatches on event.command (the handler also receives the event, so
+ * event.source is the invoking button); commands with no entry are ignored.
+ */
+export function commands(event, map) {
+  const handler = map[event.command]
+  return handler && handler(event)
+}
+
+/** The helper namespace published as JST.fn (and handed to templates). */
+const combinators = { changed, debounce, throttle, keys, commands }
 
 function parseEventDescriptor(descriptor) {
   const [eventName, ...modifiers] = descriptor.split('.');
@@ -861,11 +876,12 @@ export function registerCustomElementFromTemplate(templateElement) {
       'url',
       'once',
       'trustedHTML',
-      // Statement combinators, in scope bare inside handler bodies.
+      // Handler helpers, in scope inside handler bodies.
       'changed',
       'debounce',
       'throttle',
       'keys',
+      'commands',
       renderFunction.functionBody,
     );
   } catch (error) {
@@ -1050,6 +1066,7 @@ function defineCustomElementFromRender({
           debounce,
           throttle,
           keys,
+          commands,
         );
 
         this.#slotObserver?.disconnect();

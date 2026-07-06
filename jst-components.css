@@ -11,6 +11,13 @@
  * (The CSS Zen Garden bet, applied to component frameworks.)
  * ==========================================================================*/
 
+/* JST's own look: the jst-layout defaults, no overrides. Lean radius, compact
+   controls, one accent. Selecting it in a theme switcher simply removes the
+   imitations. */
+[data-theme="jst"] {
+  --jst-ring: 0 0 0 2px oklch(from var(--jst-accent) l c h / 0.45);
+}
+
 /* Bootstrap-like: bright blue, medium radius, soft elevation. */
 [data-theme="bootstrap"] {
   --jst-accent: oklch(0.55 0.20 262);     /* ~#0d6efd */
@@ -95,11 +102,6 @@
   .jst-tag[data-tech="jst"]      { background: oklch(0.32 0.08 30);  color: oklch(0.86 0.10 30);  border-color: oklch(0.42 0.10 30); }
 }
 
-/* Shared fallbacks if a theme omits them. */
-:where([data-theme]) {
-  --jst-shadow: var(--jst-shadow, 0 0.25rem 0.75rem oklch(0 0 0 / 0.12));
-}
-
 /* Focus-visible ring driven by the theme token. */
 :where([data-theme]) :where(button, a, summary, input, [tabindex]):focus-visible {
   outline: none;
@@ -119,11 +121,13 @@
   color: var(--jst-fg);
   box-shadow: var(--jst-shadow);
 }
-.jst-modal::backdrop { background: oklch(0 0 0 / 0.45); }
-.jst-modal > header,
+:where(.jst-modal, .jst-drawer)::backdrop { background: var(--jst-backdrop); }
+/* Modal and drawer share their anatomy: one rule set for sections and header. */
+:where(.jst-modal, .jst-drawer) > header,
 .jst-modal > .jst-modal-body,
-.jst-modal > footer { padding: var(--jst-space-m) var(--jst-space-l); }
-.jst-modal > header {
+.jst-drawer > .jst-drawer-body,
+:where(.jst-modal, .jst-drawer) > footer { padding: var(--jst-space-s) var(--jst-space-m); }
+:where(.jst-modal, .jst-drawer) > header {
   display: flex; align-items: center; justify-content: space-between;
   gap: var(--jst-space-m);
   border-block-end: var(--jst-border-width) solid var(--jst-border);
@@ -133,11 +137,12 @@
   display: flex; justify-content: flex-end; gap: var(--jst-space-xs);
   border-block-start: var(--jst-border-width) solid var(--jst-border);
 }
-.jst-modal-close {
+/* The dismiss ×: one pattern for modal, drawer, and toast. */
+.jst-modal-close, jst-toaster .jst-toast > button {
   background: none; border: none; color: var(--jst-muted);
-  font-size: 1.25rem; line-height: 1; cursor: pointer; padding: 0.1em 0.3em;
+  font-size: 1.1em; line-height: 1; cursor: pointer; padding: 0.1em 0.3em;
 }
-.jst-modal-close:hover { color: var(--jst-fg); background: none; }
+.jst-modal-close:hover, jst-toaster .jst-toast > button:hover { color: var(--jst-fg); background: none; }
 
 /* Enter/leave animation via @starting-style + allow-discrete (Baseline 2024). */
 @supports (transition-behavior: allow-discrete) {
@@ -155,7 +160,7 @@
 .jst-accordion { border: var(--jst-border-width) solid var(--jst-border); border-radius: var(--jst-radius); overflow: clip; }
 .jst-accordion > details + details { border-block-start: var(--jst-border-width) solid var(--jst-border); }
 .jst-accordion summary {
-  cursor: pointer; padding: var(--jst-space-s) var(--jst-space-m);
+  cursor: pointer; padding: var(--jst-space-xs) var(--jst-space-s);
   font-weight: 600; list-style: none;
   display: flex; align-items: center; justify-content: space-between;
 }
@@ -163,19 +168,33 @@
 .jst-accordion summary::after { content: "▾"; color: var(--jst-muted); transition: transform 0.15s; }
 .jst-accordion details[open] summary::after { transform: rotate(180deg); }
 .jst-accordion summary:hover { background: var(--jst-surface); }
-.jst-accordion .jst-accordion-body { padding: 0 var(--jst-space-m) var(--jst-space-m); color: var(--jst-muted); }
+.jst-accordion .jst-accordion-body { padding: 0 var(--jst-space-s) var(--jst-space-s); color: var(--jst-muted); }
 
 /* ============================================================================
  * Dropdown menu - native [popover] + command="toggle-popover". The invoker is
  * the popover's implicit anchor, so no ids/anchor-names are needed to place it.
  * ==========================================================================*/
-.jst-menu[popover] {
-  margin: 0; padding: var(--jst-space-2xs);
-  inline-size: max-content; min-inline-size: 10rem;
+/* The floating-panel surface, shared by the dropdown menu, the combobox
+   listbox, and the command palette. Declared once. */
+.jst-menu[popover], jst-combobox [role="listbox"], .jst-palette {
+  padding: var(--jst-space-2xs);
   border: var(--jst-border-width) solid var(--jst-border);
   border-radius: var(--jst-radius);
   background: var(--jst-bg); color: var(--jst-fg);
   box-shadow: var(--jst-shadow);
+}
+/* Items inside a floating panel: same box, different activation cue (menu
+   items respond to hover, combobox options to data-active). */
+:where(.jst-menu, jst-combobox [role="listbox"], .jst-palette) :where(button, a, [role="option"]) {
+  display: flex; align-items: center; gap: var(--jst-space-xs);
+  inline-size: 100%; text-align: start;
+  padding: var(--jst-space-2xs) var(--jst-space-s);
+  background: none; border: none; border-radius: calc(var(--jst-radius) - 2px);
+  color: var(--jst-fg); font: inherit; text-decoration: none; cursor: pointer;
+}
+.jst-menu[popover] {
+  margin: 0;
+  inline-size: max-content; min-inline-size: 10rem;
 }
 @supports (position-area: bottom) {
   .jst-menu[popover] {
@@ -187,13 +206,6 @@
 @supports not (position-area: bottom) {
   /* Fallback: keep it in flow-ish near the trigger. */
   .jst-menu[popover] { position: fixed; inset: auto; }
-}
-.jst-menu button, .jst-menu a {
-  display: flex; align-items: center; gap: var(--jst-space-xs);
-  inline-size: 100%; text-align: start;
-  padding: var(--jst-space-2xs) var(--jst-space-s);
-  background: none; border: none; border-radius: calc(var(--jst-radius) - 2px);
-  color: var(--jst-fg); font: inherit; text-decoration: none; cursor: pointer;
 }
 .jst-menu button:hover, .jst-menu a:hover { background: var(--jst-surface); }
 .jst-menu hr { border: none; border-block-start: var(--jst-border-width) solid var(--jst-border); margin: var(--jst-space-2xs) 0; }
@@ -215,7 +227,7 @@ jst-tabs { display: block; }
 jst-tabs [role="tablist"] { display: flex; gap: var(--jst-space-2xs); border-block-end: var(--jst-border-width) solid var(--jst-border); }
 jst-tabs [role="tab"] {
   background: none; border: none; border-block-end: 2px solid transparent; border-radius: 0;
-  margin-block-end: -1px; padding: var(--jst-space-xs) var(--jst-space-m);
+  margin-block-end: -1px; padding: var(--jst-space-2xs) var(--jst-space-s);
   color: var(--jst-muted); cursor: pointer; font: inherit;
 }
 jst-tabs [role="tab"][aria-selected="true"] { color: var(--jst-fg); border-block-end-color: var(--jst-accent); font-weight: 600; }
@@ -230,17 +242,18 @@ jst-toaster {
   display: flex; flex-direction: column; gap: var(--jst-space-xs); z-index: 9999;
   pointer-events: none;
 }
+/* Corners and centers via data-position; end-bottom is the default above. */
+jst-toaster[data-position~="start"]  { inset-inline: var(--jst-space-l) auto; }
+jst-toaster[data-position~="top"]    { inset-block: var(--jst-space-l) auto; }
+jst-toaster[data-position~="center"] { inset-inline: 50% auto; translate: -50% 0; align-items: center; }
+/* What only the toast adds to the shared status surface: it floats. */
 jst-toaster .jst-toast {
   pointer-events: auto;
-  display: flex; align-items: center; gap: var(--jst-space-s);
-  padding: var(--jst-space-s) var(--jst-space-m);
-  border: var(--jst-border-width) solid var(--jst-border); border-radius: var(--jst-radius);
-  background: var(--jst-bg); color: var(--jst-fg); box-shadow: var(--jst-shadow);
-  min-inline-size: 15rem; animation: jst-toast-in 0.18s ease-out;
+  box-shadow: var(--jst-shadow);
+  min-inline-size: 11rem;
+  animation: jst-toast-in 0.18s ease-out;
 }
-jst-toaster .jst-toast[data-variant="success"] { border-inline-start: 4px solid oklch(0.62 0.15 150); }
-jst-toaster .jst-toast[data-variant="error"]   { border-inline-start: 4px solid oklch(0.55 0.20 25); }
-jst-toaster .jst-toast button { margin-inline-start: auto; background: none; border: none; color: var(--jst-muted); cursor: pointer; font-size: 1.1rem; line-height: 1; }
+jst-toaster .jst-toast > button { margin-inline-start: auto; }
 @keyframes jst-toast-in { from { opacity: 0; transform: translateY(0.5rem); } }
 
 /* ============================================================================
@@ -250,13 +263,7 @@ jst-combobox { display: block; position: relative; max-inline-size: 22rem; }
 jst-combobox input { inline-size: 100%; }
 jst-combobox [role="listbox"] {
   position: absolute; inset-inline: 0; z-index: 20; margin-block-start: var(--jst-space-2xs);
-  max-block-size: 14rem; overflow: auto;
-  padding: var(--jst-space-2xs); list-style: none;
-  border: var(--jst-border-width) solid var(--jst-border); border-radius: var(--jst-radius);
-  background: var(--jst-bg); box-shadow: var(--jst-shadow);
-}
-jst-combobox [role="option"] {
-  padding: var(--jst-space-2xs) var(--jst-space-s); border-radius: calc(var(--jst-radius) - 2px); cursor: pointer;
+  max-block-size: 14rem; overflow: auto; list-style: none;
 }
 jst-combobox [role="option"][data-active="true"] { background: var(--jst-accent); color: var(--jst-accent-fg); }
 jst-combobox .jst-empty { padding: var(--jst-space-s); color: var(--jst-muted); }
@@ -267,16 +274,16 @@ jst-combobox .jst-empty { padding: var(--jst-space-s); color: var(--jst-muted); 
 .jst-switch { display: inline-flex; align-items: center; gap: var(--jst-space-xs); cursor: pointer; }
 .jst-switch input { position: absolute; opacity: 0; inline-size: 0; block-size: 0; }
 .jst-switch > .track {
-  inline-size: 2.4em; block-size: 1.4em; padding: 0.15em; border-radius: 99px;
+  inline-size: 2.1em; block-size: 1.2em; padding: 0.15em; border-radius: 99px;
   background: var(--jst-border); transition: background 0.15s;
   display: inline-flex; align-items: center;
 }
 .jst-switch > .track::before {
-  content: ""; inline-size: 1.1em; block-size: 1.1em; border-radius: 50%;
+  content: ""; inline-size: 0.95em; block-size: 0.95em; border-radius: 50%;
   background: var(--jst-bg); transition: transform 0.15s; box-shadow: 0 1px 2px oklch(0 0 0 / 0.3);
 }
 .jst-switch input:checked + .track { background: var(--jst-accent); }
-.jst-switch input:checked + .track::before { transform: translateX(1em); }
+.jst-switch input:checked + .track::before { transform: translateX(0.9em); }
 .jst-switch input:focus-visible + .track { box-shadow: var(--jst-ring, 0 0 0 3px oklch(0.6 0.1 262 / 0.5)); }
 
 /* ============================================================================
@@ -295,15 +302,21 @@ jst-combobox .jst-empty { padding: var(--jst-space-s); color: var(--jst-muted); 
 /* ============================================================================
  * Alert / callout - CSS + HTML only. Variants via data-variant.
  * ==========================================================================*/
-.jst-alert {
-  display: flex; gap: var(--jst-space-s); align-items: flex-start;
-  padding: var(--jst-space-s) var(--jst-space-m); border-radius: var(--jst-radius);
+/* One rule set for the alert (in flow) and the toast (floating): the same
+   status surface, so they can only ever match. data-variant drives the edge
+   color from the status tokens; the toast merely adds float-ness below. */
+.jst-alert, jst-toaster .jst-toast {
+  display: flex; align-items: flex-start; gap: var(--jst-space-xs);
+  font-size: var(--jst-control-size);
+  padding: 0.45em 0.8em;
   border: var(--jst-border-width) solid var(--jst-border);
-  border-inline-start: 4px solid var(--jst-accent); background: var(--jst-surface);
+  border-inline-start: 3px solid var(--jst-accent);
+  border-radius: var(--jst-radius);
+  background: var(--jst-bg); color: var(--jst-fg);
 }
-.jst-alert[data-variant="success"] { border-inline-start-color: oklch(0.62 0.15 150); }
-.jst-alert[data-variant="warning"] { border-inline-start-color: oklch(0.75 0.15 80); }
-.jst-alert[data-variant="error"]   { border-inline-start-color: oklch(0.55 0.20 25); }
+.jst-alert[data-variant="success"], jst-toaster .jst-toast[data-variant="success"] { border-inline-start-color: var(--jst-ok); }
+.jst-alert[data-variant="warning"], jst-toaster .jst-toast[data-variant="warning"] { border-inline-start-color: var(--jst-warn); }
+.jst-alert[data-variant="error"],   jst-toaster .jst-toast[data-variant="error"]   { border-inline-start-color: var(--jst-error); }
 
 /* ============================================================================
  * Progress + spinner - native <progress> + a CSS spinner. CSS + HTML only.
@@ -321,15 +334,256 @@ progress.jst-progress { inline-size: 100%; block-size: 0.6rem; accent-color: var
  * ==========================================================================*/
 jst-table { display: block; overflow-x: auto; }
 jst-table table { inline-size: 100%; border-collapse: collapse; }
-jst-table th, jst-table td { text-align: start; padding: var(--jst-space-xs) var(--jst-space-s); border-block-end: var(--jst-border-width) solid var(--jst-border); }
+jst-table th, jst-table td { text-align: start; padding: var(--jst-space-2xs) var(--jst-space-s); border-block-end: var(--jst-border-width) solid var(--jst-border); }
 jst-table thead th { padding: 0; }
 jst-table thead button {
   inline-size: 100%; text-align: start; background: none; border: none; color: var(--jst-muted);
-  font: inherit; font-weight: 700; cursor: pointer; padding: var(--jst-space-xs) var(--jst-space-s);
+  font: inherit; font-weight: 700; cursor: pointer; padding: var(--jst-space-2xs) var(--jst-space-s);
 }
 jst-table thead button:hover { color: var(--jst-fg); }
 jst-table th[aria-sort="ascending"] button, jst-table th[aria-sort="descending"] button { color: var(--jst-fg); }
 jst-table tbody tr:hover { background: var(--jst-surface); }
+:where(jst-table[striped], table.jst-striped) tbody tr:nth-child(even) { background: color-mix(in oklch, var(--jst-surface) 55%, var(--jst-bg)); }
+
+/* ============================================================================
+ * Skeleton - a shimmering placeholder while content loads. Pairs with
+ * <jst-include>: put skeletons inside it as the pre-fetch content.
+ * ==========================================================================*/
+.jst-skeleton {
+  display: block;
+  block-size: 1em;
+  border-radius: calc(var(--jst-radius) / 2);
+  background: linear-gradient(90deg, var(--jst-surface) 25%, var(--jst-border) 37%, var(--jst-surface) 63%);
+  background-size: 400% 100%;
+  animation: jst-skeleton 1.4s ease infinite;
+  color: transparent;
+  user-select: none;
+}
+@keyframes jst-skeleton { from { background-position: 100% 50%; } to { background-position: 0 50%; } }
+@media (prefers-reduced-motion: reduce) { .jst-skeleton { animation: none; } }
+
+/* ============================================================================
+ * Badge - status chips. Variants via data-variant; accent by default.
+ * ==========================================================================*/
+.jst-badge {
+  display: inline-flex; align-items: center; gap: 0.35em;
+  font-size: 0.65rem; font-weight: 600; line-height: 1.4;
+  padding: 0.08em 0.55em; border-radius: 99px; white-space: nowrap;
+  background: var(--jst-accent); color: var(--jst-accent-fg);
+}
+.jst-badge[data-variant="muted"]   { background: var(--jst-surface); color: var(--jst-muted); border: var(--jst-border-width) solid var(--jst-border); }
+.jst-badge[data-variant="success"] { background: var(--jst-ok); color: white; }
+.jst-badge[data-variant="warning"] { background: var(--jst-warn); color: white; }
+.jst-badge[data-variant="error"]   { background: var(--jst-error); color: white; }
+
+/* ============================================================================
+ * Avatar - a circle with an image, or initials as the fallback. Size via
+ * --size; jst-frame already handles arbitrary-ratio crops.
+ * ==========================================================================*/
+.jst-avatar {
+  --size: 2.4rem;
+  display: inline-flex; align-items: center; justify-content: center;
+  inline-size: var(--size); block-size: var(--size);
+  border-radius: 50%; overflow: clip;
+  background: var(--jst-surface); color: var(--jst-muted);
+  font-weight: 600; font-size: calc(var(--size) * 0.38);
+  user-select: none;
+}
+.jst-avatar > img { inline-size: 100%; block-size: 100%; object-fit: cover; }
+
+/* ============================================================================
+ * Breadcrumb - nav > ol with CSS separators; current page via aria-current.
+ * ==========================================================================*/
+.jst-breadcrumb ol {
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--jst-space-2xs);
+  list-style: none; margin: 0; padding: 0; font-size: 0.9rem;
+}
+.jst-breadcrumb li { display: inline-flex; align-items: center; gap: var(--jst-space-2xs); }
+.jst-breadcrumb li + li::before { content: "/"; color: var(--jst-border); }
+.jst-breadcrumb a { color: var(--jst-muted); text-decoration: none; }
+.jst-breadcrumb a:hover { color: var(--jst-accent-600); text-decoration: underline; }
+.jst-breadcrumb [aria-current="page"] { color: var(--jst-fg); font-weight: 600; }
+
+/* ============================================================================
+ * Pagination - nav of links/buttons; the current page via aria-current.
+ * Server-rendered pages emit this constantly, so it is pure markup + CSS.
+ * ==========================================================================*/
+.jst-pagination { display: flex; flex-wrap: wrap; align-items: center; gap: 0.15em; font-size: var(--jst-control-size); font-variant-numeric: tabular-nums; }
+.jst-pagination :where(a, button, span) {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-inline-size: 1.7em; padding: 0.15em 0.4em;
+  border: none; border-radius: var(--jst-radius);
+  background: none; color: var(--jst-muted);
+  font: inherit; text-decoration: none; cursor: pointer;
+}
+.jst-pagination :where(a, button):hover { background: var(--jst-surface); color: var(--jst-fg); }
+.jst-pagination [aria-current="page"] { background: var(--jst-accent); color: var(--jst-accent-fg); font-weight: 600; }
+
+/* ============================================================================
+ * Drawer - the modal's edge-docked variant: same native <dialog>, same invoker
+ * wiring. data-side="end | start | top | bottom" picks the edge (end is the
+ * default). Add closedby="any" on the dialog for backdrop light dismiss
+ * (Baseline Newly; the demo ships a 3-line fallback for older engines).
+ * ==========================================================================*/
+.jst-drawer {
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: var(--jst-bg); color: var(--jst-fg);
+  box-shadow: var(--jst-shadow);
+}
+
+/* Edge placement: the dialog's auto margins do the docking. */
+.jst-drawer:not([data-side]), .jst-drawer[data-side="end"] {
+  margin-inline-start: auto;
+  inline-size: min(20rem, 90vw); block-size: 100dvb; max-block-size: 100dvb;
+  border-inline-start: var(--jst-border-width) solid var(--jst-border);
+}
+.jst-drawer[data-side="start"] {
+  margin-inline-end: auto;
+  inline-size: min(20rem, 90vw); block-size: 100dvb; max-block-size: 100dvb;
+  border-inline-end: var(--jst-border-width) solid var(--jst-border);
+}
+.jst-drawer[data-side="top"] {
+  margin-block-end: auto;
+  inline-size: 100vw; max-inline-size: 100vw; max-block-size: 80dvb;
+  border-block-end: var(--jst-border-width) solid var(--jst-border);
+}
+.jst-drawer[data-side="bottom"] {
+  margin-block-start: auto;
+  inline-size: 100vw; max-inline-size: 100vw; max-block-size: 80dvb;
+  border-block-start: var(--jst-border-width) solid var(--jst-border);
+}
+
+/* Slide in from the docked edge. */
+@supports (transition-behavior: allow-discrete) {
+  .jst-drawer {
+    opacity: 0;
+    transition: opacity 0.2s, transform 0.2s, overlay 0.2s allow-discrete, display 0.2s allow-discrete;
+  }
+  .jst-drawer:not([data-side]), .jst-drawer[data-side="end"] { transform: translateX(100%); }
+  .jst-drawer[data-side="start"]  { transform: translateX(-100%); }
+  .jst-drawer[data-side="top"]    { transform: translateY(-100%); }
+  .jst-drawer[data-side="bottom"] { transform: translateY(100%); }
+  .jst-drawer[open] { opacity: 1; transform: none; }
+  @starting-style {
+    .jst-drawer[open]:not([data-side]), .jst-drawer[data-side="end"][open] { opacity: 0; transform: translateX(100%); }
+    .jst-drawer[data-side="start"][open]  { opacity: 0; transform: translateX(-100%); }
+    .jst-drawer[data-side="top"][open]    { opacity: 0; transform: translateY(-100%); }
+    .jst-drawer[data-side="bottom"][open] { opacity: 0; transform: translateY(100%); }
+  }
+}
+
+/* ============================================================================
+ * Join - collapse a row of controls into one unit: input groups with
+ * prefix/suffix addons (.jst-addon), and button groups, with one rule set.
+ * ==========================================================================*/
+.jst-join { display: flex; align-items: stretch; }
+.jst-join > * { border-radius: 0; }
+.jst-join > * + * { margin-inline-start: calc(var(--jst-border-width) * -1); }
+.jst-join > :first-child { border-start-start-radius: var(--jst-radius); border-end-start-radius: var(--jst-radius); }
+.jst-join > :last-child { border-start-end-radius: var(--jst-radius); border-end-end-radius: var(--jst-radius); }
+.jst-join > :where(input, select) { min-inline-size: 0; flex: 1; }
+.jst-join > :focus-visible { z-index: 1; }
+.jst-join > .jst-addon {
+  display: inline-flex; align-items: center;
+  padding-inline: var(--jst-space-s);
+  border: var(--jst-border-width) solid var(--jst-border);
+  background: var(--jst-surface); color: var(--jst-muted);
+}
+/* Adjacent accent buttons need a visible seam: derive it from the accent. */
+.jst-join > button + button {
+  border-inline-start-color: oklch(from var(--jst-accent) calc(l - 0.14) c h);
+}
+
+/* Accordion open/close animation once the engine can animate to auto
+ * (interpolate-size); scoped so the opt-in doesn't leak. */
+.jst-accordion { interpolate-size: allow-keywords; }
+@supports (interpolate-size: allow-keywords) {
+  .jst-accordion details::details-content {
+    block-size: 0; overflow: clip;
+    transition: block-size 0.2s, content-visibility 0.2s allow-discrete;
+  }
+  .jst-accordion details[open]::details-content { block-size: auto; }
+}
+
+/* ============================================================================
+ * List - hairline-separated record rows: main content grows, anything marked
+ * data-actions trails. The list pattern every CRUD screen reinvents.
+ * ==========================================================================*/
+.jst-list { list-style: none; margin: 0; padding: 0; }
+.jst-list > * {
+  display: flex; align-items: center; gap: var(--jst-space-s);
+  padding: var(--jst-space-xs) var(--jst-space-2xs);
+}
+.jst-list > * + * { border-block-start: var(--jst-border-width) solid var(--jst-border); }
+.jst-list > *:hover { background: var(--jst-surface); }
+.jst-list [data-main] { flex: 1; min-inline-size: 0; }
+.jst-list [data-main] small { color: var(--jst-muted); }
+.jst-list [data-actions] { display: inline-flex; gap: var(--jst-space-2xs); flex: none; }
+
+/* ============================================================================
+ * Empty state - the muted placeholder where a list has nothing yet.
+ * ==========================================================================*/
+.jst-empty {
+  display: grid; place-items: center; gap: var(--jst-space-2xs);
+  padding: var(--jst-space-xl) var(--jst-space-m);
+  border: var(--jst-border-width) dashed var(--jst-border);
+  border-radius: var(--jst-radius);
+  color: var(--jst-muted); text-align: center;
+}
+
+/* ============================================================================
+ * Stat - a labelled figure. data-trend colors the value; compose a row of
+ * them with <jst-grid> or <jst-cluster>.
+ * ==========================================================================*/
+.jst-stat { display: flex; flex-direction: column; gap: 0.1em; }
+.jst-stat > .jst-stat-value { font-size: 1.3em; font-weight: 700; font-variant-numeric: tabular-nums; }
+.jst-stat[data-trend="up"] > .jst-stat-value { color: var(--jst-ok); }
+.jst-stat[data-trend="down"] > .jst-stat-value { color: var(--jst-error); }
+
+/* ============================================================================
+ * Page header - eyebrow / title / subtitle, with actions pushed to the end.
+ * ==========================================================================*/
+.jst-page-header {
+  display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--jst-space-s);
+}
+.jst-page-header > [data-main] { flex: 1; min-inline-size: 0; }
+.jst-page-header h1, .jst-page-header h2 { margin: 0; }
+.jst-page-header [data-actions] { display: inline-flex; gap: var(--jst-space-2xs); flex: none; }
+.jst-page-header .jst-sub { color: var(--jst-muted); font-size: var(--jst-font-small); margin: 0; }
+/* .jst-eyebrow shares the micro-label rule in jst-layout.css. */
+
+/* ============================================================================
+ * Command palette - a JST component: global shortcut, filter, keyboard run.
+ * The panel and options ride the shared floating-panel rules above.
+ * ==========================================================================*/
+jst-palette .jst-palette-overlay {
+  position: fixed; inset: 0; z-index: 10000;
+  background: var(--jst-backdrop);
+  display: flex; justify-content: center; align-items: flex-start;
+  padding-block-start: 12vb;
+}
+jst-palette .jst-palette {
+  inline-size: min(34rem, 92vw);
+  display: flex; flex-direction: column;
+  max-block-size: 60vb;
+}
+jst-palette .jst-palette > input {
+  font-size: 1rem;
+  border: none; border-block-end: var(--jst-border-width) solid var(--jst-border);
+  border-radius: 0; outline: none; box-shadow: none;
+  padding: 0.6em 0.8em;
+  background: transparent;
+}
+jst-palette .jst-palette > ul {
+  list-style: none; margin: 0; padding: var(--jst-space-2xs);
+  overflow: auto;
+}
+jst-palette .jst-palette [role="option"] { justify-content: space-between; cursor: pointer; }
+jst-palette .jst-palette [role="option"][data-active="true"] { background: var(--jst-accent); color: var(--jst-accent-fg); }
+jst-palette .jst-palette [role="option"][data-active="true"] kbd { border-color: transparent; background: oklch(from var(--jst-accent) calc(l - 0.1) c h); color: var(--jst-accent-fg); }
+jst-palette .jst-empty-line { padding: var(--jst-space-s); color: var(--jst-muted); }
 
 /* ---- More framework skins (#1): one token-block each. ---------------------- */
 

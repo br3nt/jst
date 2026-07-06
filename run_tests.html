@@ -1967,6 +1967,36 @@
             keys({ type: 'keydown', key: 'Enter', ctrlKey: false, altKey: false, metaKey: false, shiftKey: false, target: input, currentTarget: input }, { Enter: () => { pressed = 'enter'; } });
             keys({ type: 'keydown', key: 'k', ctrlKey: false, altKey: false, metaKey: true, shiftKey: false, target: input, currentTarget: input }, { 'Meta+k': () => { pressed = 'palette'; } });
             isEqual('palette', pressed, 'Expected keys() to dispatch on the normalized combo');
+
+            const { commands } = window.JST.fn;
+            let routed = '';
+            commands({ type: 'command', command: '--save', target: input, currentTarget: input }, { '--save': () => { routed = 'saved'; } });
+            commands({ type: 'command', command: '--nope', target: input, currentTarget: input }, { '--save': () => { routed = 'clobbered'; } });
+            isEqual('saved', routed, 'Expected commands() to dispatch on event.command and ignore unmatched commands');
+        });
+
+        await suite.testAsync("JST Combinators: commands() routes oncommand inside a template", async () => {
+            const componentName = nextName('x-commands');
+            registerCustomElementFromTemplate(createTemplate({
+                name: componentName,
+                attributes: [],
+                body: `<div class="target" oncommand="commands(event, { '--save': () => el.emit('routed', event.command) })">t</div>`,
+            }));
+            const element = document.createElement(componentName);
+            let routed = null;
+            element.addEventListener('routed', e => { routed = e.detail; });
+            document.body.appendChild(element);
+            await flushRender();
+            try {
+                // CommandEvent isn't in every engine yet; commands() only reads
+                // event.command, so a plain Event carrying it exercises the path.
+                const commandEvent = new Event('command');
+                commandEvent.command = '--save';
+                element.querySelector('.target').dispatchEvent(commandEvent);
+                isEqual('--save', routed, 'Expected commands() in template scope to route the matching command');
+            } finally {
+                element.remove();
+            }
         });
 
         await suite.testAsync("JST Runtime: handler body gets the native contract (event + this)", async () => {

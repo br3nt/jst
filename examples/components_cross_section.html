@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="../jst-layout.css">
   <link rel="stylesheet" href="../jst-components.css">
   <script type="module" src="../jst.js"></script>
+  <script type="module" src="../jst-behaviors.js"></script>
   <style>
     .toolbar {
       position: sticky; top: 0; z-index: 10;
@@ -20,10 +21,56 @@
       padding: var(--jst-space-l); background: var(--jst-bg);
     }
     .card > header { display: flex; align-items: center; justify-content: space-between; gap: var(--jst-space-m); margin-block-end: var(--jst-space-m); }
+    .card .note { color: var(--jst-muted); font-size: var(--jst-font-small); margin-block-start: var(--jst-space-s); }
     .card h3 { margin: 0; }
+    /* Container-query demo: the stats respond to their container's width. */
+    .cq-stats { display: flex; gap: var(--jst-space-l); }
+    @container (width < 24rem) {
+      .cq-stats { flex-direction: column; gap: var(--jst-space-xs); }
+    }
   </style>
 </head>
-<body data-theme="bootstrap">
+<body data-theme="jst">
+
+  <!-- Command palette: filter + keyboard + run, one template. The page owns
+       the command list and the global shortcut; the palette emits `run`. -->
+  <script type="jst" name="jst-palette" attributes="actions open query active">
+    $ const q = (query || '').toLowerCase();
+    $ const items = (actions || []).filter(a => !q || a.label.toLowerCase().includes(q));
+    $ const idx = Math.max(0, Math.min(active || 0, Math.max(items.length - 1, 0)));
+    $ const run = (c) => { el.open = false; el.query = ''; el.active = 0; el.emit('run', c.id); };
+    $ const onKey = (e) => keys(e, {
+    $   ArrowDown: () => { e.preventDefault(); el.active = Math.min(idx + 1, items.length - 1); },
+    $   ArrowUp:   () => { e.preventDefault(); el.active = Math.max(idx - 1, 0); },
+    $   Enter:     () => items[idx] && run(items[idx]),
+    $   Escape:    () => { el.open = false; },
+    $ });
+    $ if (open) {
+    $   queueMicrotask(() => { const i = el.querySelector('input'); if (i && document.activeElement !== i) i.focus(); });
+      <div class="jst-palette-overlay" onclick="if (event.target === this) el.open = false">
+        <div class="jst-palette" role="dialog" aria-label="Command palette">
+          <input placeholder="Type a command…" role="combobox" aria-expanded="true"
+                 .value="$(query || '')"
+                 oninput="el.query = event.target.value; el.active = 0"
+                 onkeydown="onKey(event)">
+          <ul role="listbox">
+            $ items.forEach((c, i) => {
+              <li role="option" jst-key="$(c.id)" aria-selected="$(i === idx)" data-active="$(i === idx)"
+                  onclick="run(c)" onmousemove="el.active = i">
+                <span>$(c.label)</span>
+                $ if (c.kbd) {
+                  <kbd>$(c.kbd)</kbd>
+                $ }
+              </li>
+            $ })
+            $ if (!items.length) {
+              <li class="jst-empty-line">No matching commands</li>
+            $ }
+          </ul>
+        </div>
+      </div>
+    $ }
+  </script>
 
   <!-- ===== Stage 2: genuine JST components (no native equivalent) ===== -->
 
@@ -48,18 +95,19 @@
   </script>
 
   <script type="jst" name="jst-toaster" attributes="toasts">
-    $ if (!el.__wired) {
-    $   el.__wired = true;
+    $ once('toaster-api', () => {
     $   el.dismiss = (id) => { el.toasts = (el.toasts || []).filter(t => t.id !== id); };
     $   el.push = (message, variant) => {
     $     const id = (el.__n = (el.__n || 0) + 1);
     $     el.toasts = [...(el.toasts || []), { id, message, variant: variant || 'default' }];
     $     setTimeout(() => el.dismiss(id), 4000);
     $   };
-    $   el.addEventListener('command', (e) => {
-    $     if (e.command === '--toast') el.push(e.source.dataset.message, e.source.dataset.variant);
+    $   const route = (event) => commands(event, {
+    $     '--toast': () => el.push(event.source.dataset.message, event.source.dataset.variant),
     $   });
-    $ }
+    $   el.addEventListener('command', route);
+    $   return () => el.removeEventListener('command', route);
+    $ });
     $ (toasts || []).forEach(t => {
       <div class="jst-toast" data-variant="$(t.variant)" jst-key="$(t.id)">
         <span>$(t.message)</span>
@@ -87,7 +135,7 @@
     $ if (isOpen) {
       <ul role="listbox">
         $ matches.forEach((o, i) => {
-          <li role="option" data-active="$(i === hi)" aria-selected="$(i === hi)" onmousedown="const e = event; e.preventDefault(); choose(o);">$(o)</li>
+          <li role="option" data-active="$(i === hi)" aria-selected="$(i === hi)" onmousedown="event.preventDefault(); choose(o);">$(o)</li>
         $ })
       </ul>
     $ }
@@ -125,6 +173,7 @@
   <div class="toolbar">
     <label for="theme">Re-skin as:</label>
     <select id="theme">
+      <option value="jst">JST (default)</option>
       <option value="bootstrap">Bootstrap</option>
       <option value="shadcn">shadcn/ui</option>
       <option value="shoelace">Shoelace / Web Awesome</option>
@@ -202,7 +251,7 @@
           <hr>
           <button style="color:oklch(0.55 0.20 25)">Delete</button>
         </div>
-        <p style="color:var(--jst-muted);font-size:0.85em;margin-block-start:var(--jst-space-s)">
+        <p class="note">
           <code>[popover]</code> + <code>command="toggle-popover"</code>. Outside-click and <kbd>Esc</kbd> dismissal are built in; the menu anchors to its button automatically.</p>
       </div>
 
@@ -225,7 +274,7 @@
           <button command="--toast" commandfor="toaster" data-variant="success" data-message="Changes saved.">Success toast</button>
           <button command="--toast" commandfor="toaster" data-variant="error" data-message="Something went wrong.">Error toast</button>
         </jst-cluster>
-        <p style="color:var(--jst-muted);font-size:0.85em;margin-block-start:var(--jst-space-s)">
+        <p class="note">
           A <code>&lt;jst-toaster&gt;</code> stack, fed by a custom <code>--toast</code> command; the message rides on the button's <code>data-*</code> (read from <code>event.source</code>). Auto-dismisses after 4s.</p>
       </div>
 
@@ -236,7 +285,7 @@
           <span class="jst-tag" data-tech="jst">JST component</span>
         </header>
         <jst-combobox options='["Apple","Apricot","Banana","Blackberry","Blueberry","Cherry","Date","Fig","Grape","Kiwi","Lemon","Lime","Mango","Melon","Orange","Peach","Pear","Plum","Raspberry","Strawberry"]'></jst-combobox>
-        <p style="color:var(--jst-muted);font-size:0.85em;margin-block-start:var(--jst-space-s)">
+        <p class="note">
           Type to filter; <kbd>↑</kbd><kbd>↓</kbd> to move, <kbd>Enter</kbd> to pick, <kbd>Esc</kbd> to close. ARIA <code>combobox</code>/<code>listbox</code> roles.</p>
       </div>
 
@@ -250,7 +299,7 @@
           <label class="jst-switch"><input type="checkbox" checked><span class="track"></span> Wi-Fi</label>
           <label class="jst-switch"><input type="checkbox"><span class="track"></span> Bluetooth</label>
         </jst-cluster>
-        <p style="color:var(--jst-muted);font-size:0.85em;margin-block-start:var(--jst-space-s)">A native <code>&lt;input type="checkbox"&gt;</code> styled into a toggle - real checkbox semantics, keyboard, and form participation for free.</p>
+        <p class="note">A native <code>&lt;input type="checkbox"&gt;</code> styled into a toggle - real checkbox semantics, keyboard, and form participation for free.</p>
       </div>
 
       <!-- TOOLTIP -->
@@ -285,7 +334,7 @@
           <progress class="jst-progress" value="0.66"></progress>
           <jst-cluster><span class="jst-spinner" role="status" aria-label="Loading"></span> Loading…</jst-cluster>
         </jst-stack>
-        <p style="color:var(--jst-muted);font-size:0.85em;margin-block-start:var(--jst-space-s)">Native <code>&lt;progress&gt;</code> + a CSS keyframe spinner.</p>
+        <p class="note">Native <code>&lt;progress&gt;</code> + a CSS keyframe spinner.</p>
       </div>
 
       <!-- SORTABLE TABLE -->
@@ -297,7 +346,290 @@
         <jst-table
           columns='[{"key":"name","label":"Name"},{"key":"role","label":"Role"},{"key":"commits","label":"Commits"}]'
           rows='[{"id":1,"name":"Ada","role":"Lead","commits":312},{"id":2,"name":"Linus","role":"Core","commits":987},{"id":3,"name":"Grace","role":"Core","commits":154},{"id":4,"name":"Alan","role":"Docs","commits":48}]'></jst-table>
-        <p style="color:var(--jst-muted);font-size:0.85em;margin-block-start:var(--jst-space-s)">Click a column header to sort; click again to reverse. <code>aria-sort</code> reflects state. Ties to the datasource proposal (#28).</p>
+        <p class="note">Click a column header to sort; click again to reverse. <code>aria-sort</code> reflects state. Ties to the datasource proposal (#28).</p>
+      </div>
+
+      <!-- LAZY REGION -->
+      <div class="card">
+        <header>
+          <h3>Lazy region</h3>
+          <span class="jst-tag" data-tech="jst">&lt;jst-include&gt;</span>
+        </header>
+        <jst-include src="fragments/team_stats.html" when="visible"></jst-include>
+        <p class="note">A region whose content lives at a URL (<code>jst-behaviors.js</code>). <code>when="visible"</code> defers the fetch until it scrolls into view, and the fragment carries its own component definition, which auto-registers on arrival.</p>
+      </div>
+
+      <!-- COMMAND PALETTE -->
+      <div class="card">
+        <header>
+          <h3>Command palette</h3>
+          <span class="jst-tag" data-tech="jst">JST component</span>
+        </header>
+        <jst-cluster>
+          <button type="button" data-variant="quiet" onclick="document.getElementById('palette').open = true">Open palette</button>
+          <span style="color:var(--jst-muted);font-size:var(--jst-font-small)">or press <kbd>⌘K</kbd> / <kbd>Ctrl+K</kbd> anywhere on this page</span>
+        </jst-cluster>
+        <p class="note">Composes the pieces on this page: the floating-panel surface, <code>keys()</code> for the shortcut and navigation, and a bubbling <code>run</code> event the page executes. None of the surveyed libraries ship one.</p>
+      </div>
+
+      <!-- CAROUSEL -->
+      <div class="card">
+        <header>
+          <h3>Carousel</h3>
+          <span class="jst-tag" data-tech="layout">jst-reel + CSS carousels</span>
+        </header>
+        <jst-reel data-carousel style="--space: 0">
+          <jst-frame style="--ratio: 21 / 9; background: var(--jst-accent); color: var(--jst-accent-fg)"><strong>Slide one</strong></jst-frame>
+          <jst-frame style="--ratio: 21 / 9; background: oklch(from var(--jst-accent) calc(l - 0.12) c h); color: var(--jst-accent-fg)"><strong>Slide two</strong></jst-frame>
+          <jst-frame style="--ratio: 21 / 9; background: oklch(from var(--jst-accent) calc(l - 0.24) c h); color: var(--jst-accent-fg)"><strong>Slide three</strong></jst-frame>
+        </jst-reel>
+        <p class="note">Scroll-snap does the sliding. Engines with CSS carousels add the arrows and clickable dot markers with zero JS; elsewhere it degrades to a snapping swipe.</p>
+      </div>
+
+      <!-- LAZY ACCORDION -->
+      <div class="card">
+        <header>
+          <h3>Lazy accordion</h3>
+          <span class="jst-tag" data-tech="jst">&lt;details&gt; + &lt;jst-include&gt;</span>
+        </header>
+        <div class="jst-accordion">
+          <details name="lazyfaq">
+            <summary>What does JST weigh?</summary>
+            <div class="jst-accordion-body">About 11.5 KB gzipped, 7 KB runtime-only. This panel is ordinary inline content.</div>
+          </details>
+          <details name="lazyfaq" id="lazy-faq">
+            <summary>Fetch this answer on open</summary>
+            <div class="jst-accordion-body"><jst-include src="fragments/faq_body.html" when="visible"><span class="jst-skeleton" style="inline-size: 70%"></span></jst-include></div>
+          </details>
+        </div>
+        <p class="note">Pure composition: a <code>&lt;jst-include when="visible"&gt;</code> inside a closed <code>&lt;details&gt;</code> is not rendered, so the fetch fires the moment you open the panel. The skeleton is the pre-fetch content.</p>
+      </div>
+
+      <!-- REVEAL ON SCROLL -->
+      <div class="card">
+        <header>
+          <h3>Reveal on scroll</h3>
+          <span class="jst-tag" data-tech="none">scroll-driven CSS</span>
+        </header>
+        <jst-stack style="--space: var(--jst-space-s)">
+          <jst-box class="jst-reveal">These boxes fade and rise as they enter the viewport.</jst-box>
+          <jst-box class="jst-reveal">Driven by <code>animation-timeline: view()</code>: no observers, no JS.</jst-box>
+          <jst-box class="jst-reveal">Disabled automatically for reduced-motion users.</jst-box>
+        </jst-stack>
+      </div>
+
+      <!-- CONTAINER QUERIES -->
+      <div class="card">
+        <header>
+          <h3>Container queries</h3>
+          <span class="jst-tag" data-tech="layout">data-container</span>
+        </header>
+        <div data-container style="resize: horizontal; overflow: auto; border: var(--jst-border-width) dashed var(--jst-border); border-radius: var(--jst-radius); padding: var(--jst-space-s); min-inline-size: 14rem; max-inline-size: 100%">
+          <div class="cq-stats">
+            <div class="jst-stat"><span class="jst-eyebrow">Income</span><span class="jst-stat-value">$8,120</span></div>
+            <div class="jst-stat" data-trend="down"><span class="jst-eyebrow">Spent</span><span class="jst-stat-value">$5,867</span></div>
+            <div class="jst-stat" data-trend="up"><span class="jst-eyebrow">Remaining</span><span class="jst-stat-value">$2,253</span></div>
+          </div>
+        </div>
+        <p class="note">Drag the corner handle. <code>[data-container]</code> makes the box a query container, so the stats respond to <em>its</em> width, not the viewport's: side by side when wide, stacked when narrow.</p>
+      </div>
+
+      <!-- BUTTON VARIANTS -->
+      <div class="card">
+        <header>
+          <h3>Button variants</h3>
+          <span class="jst-tag" data-tech="none">HTML + CSS</span>
+        </header>
+        <jst-cluster>
+          <button type="button">Save</button>
+          <button type="button" data-variant="quiet">Cancel</button>
+          <button type="button" data-variant="ghost">Skip</button>
+          <button type="button" data-variant="danger">Delete</button>
+          <button type="button" disabled>Disabled</button>
+        </jst-cluster>
+        <p class="note">One attribute re-roles a button: accent by default, <code>data-variant="quiet | ghost | danger"</code> for the rest.</p>
+      </div>
+
+      <!-- PAGE HEADER + STATS -->
+      <div class="card">
+        <header>
+          <h3>Page header &amp; Stats</h3>
+          <span class="jst-tag" data-tech="none">HTML + CSS</span>
+        </header>
+        <jst-stack>
+          <div class="jst-page-header">
+            <div data-main>
+              <span class="jst-eyebrow">Household</span>
+              <h2>March budget</h2>
+              <p class="jst-sub">Shared with 2 people</p>
+            </div>
+            <span data-actions>
+              <button type="button" data-variant="quiet">Export</button>
+              <button type="button">Add expense</button>
+            </span>
+          </div>
+          <jst-cluster style="--space: var(--jst-space-xl)">
+            <div class="jst-stat"><span class="jst-eyebrow">Income</span><span class="jst-stat-value" data-testid="stat-income">$8,120</span></div>
+            <div class="jst-stat" data-trend="down"><span class="jst-eyebrow">Spent</span><span class="jst-stat-value">$5,867</span></div>
+            <div class="jst-stat" data-trend="up"><span class="jst-eyebrow">Remaining</span><span class="jst-stat-value">$2,253</span></div>
+          </jst-cluster>
+        </jst-stack>
+      </div>
+
+      <!-- LIST + EMPTY STATE -->
+      <div class="card">
+        <header>
+          <h3>List &amp; Empty state</h3>
+          <span class="jst-tag" data-tech="none">HTML + CSS</span>
+        </header>
+        <jst-stack>
+          <ul class="jst-list">
+            <li>
+              <span class="jst-avatar" style="--size: 1.9rem">AL</span>
+              <span data-main><strong>Ada Lovelace</strong><br><small>ada@example.com</small></span>
+              <span class="jst-badge" data-variant="success">Owner</span>
+              <span data-actions><button type="button" data-variant="ghost">Edit</button><button type="button" data-variant="ghost">×</button></span>
+            </li>
+            <li>
+              <span class="jst-avatar" style="--size: 1.9rem">GH</span>
+              <span data-main><strong>Grace Hopper</strong><br><small>grace@example.com</small></span>
+              <span class="jst-badge" data-variant="muted">Member</span>
+              <span data-actions><button type="button" data-variant="ghost">Edit</button><button type="button" data-variant="ghost">×</button></span>
+            </li>
+          </ul>
+          <div class="jst-empty">
+            <strong>No invitations yet</strong>
+            <small>People you invite will show up here.</small>
+            <button type="button" data-variant="quiet">Invite someone</button>
+          </div>
+        </jst-stack>
+      </div>
+
+      <!-- BADGE + AVATAR -->
+      <div class="card">
+        <header>
+          <h3>Badge &amp; Avatar</h3>
+          <span class="jst-tag" data-tech="none">HTML + CSS</span>
+        </header>
+        <jst-cluster>
+          <span class="jst-badge">Accent</span>
+          <span class="jst-badge" data-variant="success">Paid</span>
+          <span class="jst-badge" data-variant="warning">Pending</span>
+          <span class="jst-badge" data-variant="error">Overdue</span>
+          <span class="jst-badge" data-variant="muted">Draft</span>
+          <span class="jst-avatar">AL</span>
+          <span class="jst-avatar" style="--size: 3.2rem">GH</span>
+        </jst-cluster>
+      </div>
+
+      <!-- SKELETON -->
+      <div class="card">
+        <header>
+          <h3>Skeleton</h3>
+          <span class="jst-tag" data-tech="none">HTML + CSS</span>
+        </header>
+        <jst-stack style="--space: var(--jst-space-xs)">
+          <span class="jst-skeleton" style="inline-size: 40%"></span>
+          <span class="jst-skeleton"></span>
+          <span class="jst-skeleton" style="inline-size: 85%"></span>
+        </jst-stack>
+        <p class="note">Put skeletons inside a <code>&lt;jst-include&gt;</code> as its pre-fetch content and the swap replaces them with the real thing.</p>
+      </div>
+
+      <!-- BREADCRUMB + PAGINATION -->
+      <div class="card">
+        <header>
+          <h3>Breadcrumb &amp; Pagination</h3>
+          <span class="jst-tag" data-tech="none">HTML + CSS</span>
+        </header>
+        <jst-stack>
+          <nav class="jst-breadcrumb" aria-label="Breadcrumb">
+            <ol>
+              <li><a href="#">Orders</a></li>
+              <li><a href="#">2026</a></li>
+              <li><span aria-current="page">#4471</span></li>
+            </ol>
+          </nav>
+          <nav class="jst-pagination" aria-label="Pagination">
+            <a href="#" aria-disabled="true">‹</a>
+            <a href="#">1</a>
+            <span aria-current="page">2</span>
+            <a href="#">3</a>
+            <a href="#">4</a>
+            <a href="#">›</a>
+          </nav>
+        </jst-stack>
+        <p class="note">Server-rendered pages emit these constantly: plain <code>nav</code> markup, <code>aria-current</code> carries the state.</p>
+      </div>
+
+      <!-- INPUT GROUP / JOIN -->
+      <div class="card">
+        <header>
+          <h3>Input group / Join</h3>
+          <span class="jst-tag" data-tech="none">HTML + CSS</span>
+        </header>
+        <jst-stack style="--space: var(--jst-space-s)">
+          <div class="jst-join">
+            <span class="jst-addon">https://</span>
+            <input placeholder="example.com" aria-label="Domain">
+            <button type="button">Check</button>
+          </div>
+          <div class="jst-join">
+            <button type="button">Day</button>
+            <button type="button">Week</button>
+            <button type="button">Month</button>
+          </div>
+        </jst-stack>
+        <p class="note">One rule set collapses both input addons and button groups into a joined unit.</p>
+      </div>
+
+      <!-- VALIDATION -->
+      <div class="card">
+        <header>
+          <h3>Validation states</h3>
+          <span class="jst-tag" data-tech="platform">:user-invalid</span>
+        </header>
+        <form onsubmit="event.preventDefault()">
+          <jst-form-row>
+            <jst-field>
+              <label for="val-email">Email (required)</label>
+              <input id="val-email" type="email" required placeholder="type, then leave the field">
+              <small>Turns red only after you interact: the platform's own <code>:user-invalid</code>, zero JS.</small>
+            </jst-field>
+            <button>Subscribe</button>
+          </jst-form-row>
+        </form>
+      </div>
+
+      <!-- DRAWER -->
+      <div class="card">
+        <header>
+          <h3>Drawer / offcanvas</h3>
+          <span class="jst-tag" data-tech="platform">&lt;dialog&gt; + invoker</span>
+        </header>
+        <jst-cluster>
+          <button command="show-modal" commandfor="demo-drawer">Open drawer</button>
+          <button data-variant="quiet" data-side="start" onclick="const d = document.getElementById('demo-drawer'); d.dataset.side = this.dataset.side; d.showModal()">Left</button>
+          <button data-variant="quiet" data-side="end" onclick="const d = document.getElementById('demo-drawer'); d.dataset.side = this.dataset.side; d.showModal()">Right</button>
+          <button data-variant="quiet" data-side="top" onclick="const d = document.getElementById('demo-drawer'); d.dataset.side = this.dataset.side; d.showModal()">Top</button>
+          <button data-variant="quiet" data-side="bottom" onclick="const d = document.getElementById('demo-drawer'); d.dataset.side = this.dataset.side; d.showModal()">Bottom</button>
+        </jst-cluster>
+        <dialog class="jst-drawer" id="demo-drawer" closedby="any">
+          <header>
+            <span>Filters</span>
+            <button class="jst-modal-close" command="close" commandfor="demo-drawer" aria-label="Close">×</button>
+          </header>
+          <div class="jst-drawer-body">
+            <jst-stack style="--space: var(--jst-space-s)">
+              <jst-field>
+                <label for="drawer-status">Status</label>
+                <select id="drawer-status"><option>Any</option><option>Open</option><option>Closed</option></select>
+              </jst-field>
+              <label class="jst-switch"><input type="checkbox"><span class="track"></span> Only mine</label>
+            </jst-stack>
+          </div>
+        </dialog>
+        <p class="note">The modal's edge-docked variant: the same native <code>&lt;dialog&gt;</code> and invoker wiring. <code>data-side="start | end | top | bottom"</code> picks the edge; clicking the backdrop closes it (<code>closedby="any"</code>, with a tiny fallback below).</p>
       </div>
 
     </jst-stack>
@@ -305,12 +637,42 @@
     <jst-toaster id="toaster"></jst-toaster>
   </jst-center>
 
+  <jst-palette id="palette" open="false" query="" active="0"></jst-palette>
+
   <script type="module">
+    import { keys } from '../jst.js';
+
     document.getElementById('theme').addEventListener('change', (e) => {
       document.body.dataset.theme = e.target.value;
     });
-    // Backdrop click closes the modal (fallback for engines without closedby="any").
-    document.querySelectorAll('dialog.jst-modal').forEach((d) => {
+
+    // Command palette: the page owns the commands; the palette just runs them.
+    const palette = document.getElementById('palette');
+    const themeSelect = document.getElementById('theme');
+    palette.actions = [
+      { id: 'toast', label: 'Show a success toast', kbd: 'T' },
+      { id: 'modal', label: 'Open the modal' },
+      { id: 'drawer', label: 'Open the drawer' },
+      { id: 'theme-shadcn', label: 'Re-skin as shadcn/ui' },
+      { id: 'theme-jst', label: 'Re-skin as JST (default)' },
+    ];
+    document.addEventListener('keydown', (e) => keys(e, {
+      'Meta+k': () => { e.preventDefault(); palette.open = true; },
+      'Ctrl+k': () => { e.preventDefault(); palette.open = true; },
+    }));
+    palette.addEventListener('run', (e) => {
+      const actions = {
+        toast: () => document.getElementById('toaster').push?.('Saved from the palette.', 'success'),
+        modal: () => document.querySelector('dialog.jst-modal').showModal(),
+        drawer: () => document.getElementById('demo-drawer').showModal(),
+        'theme-shadcn': () => { document.body.dataset.theme = 'shadcn'; themeSelect.value = 'shadcn'; },
+        'theme-jst': () => { document.body.dataset.theme = 'jst'; themeSelect.value = 'jst'; },
+      };
+      actions[e.detail]?.();
+    });
+    // Backdrop click closes modals and drawers (fallback for engines without
+    // closedby="any"; the padding-less dialogs make e.target === dialog reliable).
+    document.querySelectorAll('dialog.jst-modal, dialog.jst-drawer').forEach((d) => {
       d.addEventListener('click', (e) => { if (e.target === d) d.close(); });
     });
   </script>

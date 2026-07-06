@@ -1,7 +1,8 @@
 # Design: component library + the directive seam
 
-Status: **Layers 0 and 1 built** (`jst-layout.css`, all twelve primitives); Layer 2
-components not started. Tracks issue [#8](https://github.com/br3nt/jst/issues/8)
+Status: **built through Layer 2** (`jst-layout.css` + `jst-components.css`); the
+audit's coverage table below shows per-pattern verdicts. Packaging is the
+remaining step. Tracks issue [#8](https://github.com/br3nt/jst/issues/8)
 (layout primitives) and informs [#7](https://github.com/br3nt/jst/issues/7) /
 [#3](https://github.com/br3nt/jst/issues/3) (directives) and [#28](https://github.com/br3nt/jst/issues/28)
 (datasource).
@@ -51,6 +52,17 @@ A reset + element styling driven entirely by CSS custom properties. The
 deliverable is a **theming contract**: a documented `--jst-*` token set the user
 overrides at `:root`, and everything re-themes.
 
+Two Every Layout rules govern everything here. **Style globally**: size,
+density, and color live in tokens and element rules, never in per-instance
+utility classes; changing `--jst-space` or `--jst-control-size` once re-tunes
+the whole app. **Style composition**: rules describe how elements behave
+*next to each other* (controls inside a `.jst-join` collapse their borders, a
+button inside a `<jst-form-row>` sits on the control baseline, a
+`<jst-imposter>`'s parent becomes its positioning container), so bulk never
+gets re-fixed one instance at a time. JST's own defaults are lean (tight
+radius, compact controls); the padded, rounded framework looks are theme
+skins, not the baseline.
+
 One **modular space scale** (one ratio → derived steps), a **measure** (line
 length), **radius**, **border**, a **font scale**, and **color roles**. Dark mode
 falls out of `light-dark()` for free.
@@ -66,6 +78,20 @@ feature is Baseline-wide):
 | `contrast-color()` | auto-pick accessible foreground on a color | **not** Baseline (limited) | static `--jst-accent-fg` default, upgraded under `@supports` |
 | `oklch()` | perceptually-even color + shades | Baseline 2023 | `hsl()` |
 | Container queries | component-level responsiveness | Baseline 2023 | media queries |
+| `accent-color` | themed native checkbox/radio/range/progress | Baseline 2022 | (none needed: engines ignore it gracefully) |
+| `field-sizing: content` | textareas that grow with content | Baseline Newly 2026 (Firefox 152) | plain resizable textarea, gated by `@supports` |
+| `:has()` | imposter's parent becomes its positioning container | Baseline 2023 | author sets `position: relative` |
+| `cap` unit | icon sized to the text's capital height | Baseline 2024 | `0.75em` |
+| Scroll snap | opt-in reel snapping via `--snap` | Baseline 2022 | plain scrolling |
+
+Audited against 2026 CSS: `aspect-ratio` replaced the padded-box hack (frame),
+`gap` replaced owl selectors (stack/cluster), logical properties are used
+throughout, and `text-wrap: balance/pretty` handles headings and prose. Two
+recipes deliberately stay on the older technique: the **switcher** threshold
+keeps the flex-basis trick because a container-query condition cannot read a
+per-instance custom property, and the **imposter** keeps inset + transform
+centering because anchor positioning only reached Baseline Newly in 2026.
+Revisit both as Baseline moves.
 
 > **Gotcha (verified in the prototype):** relative-color shade tokens declared at
 > `:root` - `--jst-accent-600: oklch(from var(--jst-accent) …)` - are computed
@@ -113,8 +139,10 @@ loaded, from a reflected attribute.
 | `<jst-grid>` | `--min --space` | intrinsic `auto-fit minmax` grid |
 | `<jst-sidebar>` | `--side --side-width --content-min --space` | sidebar + content, no breakpoint |
 | `<jst-center>` | `--measure --gutters` | centered measure |
-| `<jst-switcher>` | `--threshold --space --limit` | N-up that flips to stacked |
+| `<jst-switcher>` | `--threshold --space`; `limit` attribute | N-up that flips to stacked |
 | `<jst-cover>` `<jst-frame>` `<jst-reel>` `<jst-box>` `<jst-imposter>` `<jst-icon>` | … | hero / aspect-ratio / scroller / padded box / overlay / inline icon |
+| `<jst-field>` | (none) | one labelled control: label + control + optional `<small>` hint/error |
+| `<jst-form-row>` | `--space --field-min` | single-line form: fields share the row and wrap, buttons keep natural size |
 
 **Naming:** `<jst-*>` prefix (matches `window.JST`), hyphen-valid (required for
 custom elements), collision-safe (unlike a bare `.stack` class), groups in
@@ -138,6 +166,79 @@ platform already does it, we ship nothing (or thin CSS), and the docs *say so*.
 This list **shrinks as the platform advances.** Track against Baseline; when a
 component's job becomes expressible in plain HTML + CSS, demote it to a "just use
 HTML + CSS" note.
+
+## Coverage audit vs popular libraries (2026-07)
+
+What Bootstrap 5.3, Web Awesome (Shoelace successor; P = Pro tier), Pico CSS v2,
+daisyUI 5, Open Props, and Radix primitives ship, against what the platform now
+does and what JST has. Open Props ships tokens only; its analogue is JST's
+Layer 0 token contract. Baseline statuses verified 2026-07.
+
+Legend: BS = Bootstrap, WA = Web Awesome, Pico = Pico CSS, dUI = daisyUI,
+OP = Open Props, Rx = Radix (behavioral spec only).
+
+| Pattern | Ships in | Platform-native answer (2026) | JST has | Verdict |
+| --- | --- | --- | --- | --- |
+| Modal dialog | BS, WA, Pico, dUI, Rx | `<dialog>` + `showModal()`; `command`/`commandfor` Baseline Newly (Safari 26.2 completed rollout) | `.jst-modal` dialog CSS + `@starting-style` transition | have it (platform, thin CSS) |
+| Drawer / offcanvas | BS, WA, dUI | `<dialog>` styled as side sheet, same invoker wiring | `.jst-drawer` (+ `data-side="start"`) | have it (platform, thin CSS) |
+| Tooltip | BS, WA, Pico, dUI, Rx | Popover API (Baseline Widely 2025) + anchor positioning (Baseline Newly 2026); `popover=hint` still Chromium-only | `.jst-tooltip` (CSS `::after`, hover/focus) | have it; revisit anchor-positioned version as Baseline widens |
+| Popover / hover card | BS, WA, Rx | `[popover]` + light dismiss + anchor positioning | `.jst-menu[popover]` + `position-area` under `@supports` | have it (platform, thin CSS) |
+| Dropdown menu | BS, WA, Pico, dUI, Rx | popover + invokers cover open/close/dismiss; menu keyboard semantics still not native | `.jst-menu[popover]` CSS | mostly have it; small keyboard/ARIA enhancement possible |
+| Context menu / menubar | Rx only | none declarative | nothing | skip (niche; document popover recipe) |
+| Accordion / disclosure | BS, WA, Pico, dUI, Rx | `<details>`/`<summary>`; `name` for exclusive groups (safe since 2025); `::details-content` (Baseline Newly 2025) for animation | `.jst-accordion` on `<details>`, incl. gated `::details-content` animation | have it |
+| Tabs | BS, WA, dUI, Rx | none native | `jst-tabs` component | have it |
+| Toast / notification stack | BS, WA (P), dUI, Rx | none native | `jst-toaster` component | have it |
+| Combobox / autocomplete | WA (P) | `<datalist>` (weak); customizable select is not editable | `jst-combobox` component | have it |
+| Styled `<select>` | BS, WA, Pico, dUI, Rx | `appearance: base-select` still Chromium-only, NOT Baseline | base select styling in classless layer | have it; progressive `@supports` block later |
+| Data table (styles) | BS, Pico, dUI | `<table>` + CSS | classless + `jst-table` | have it |
+| Sortable data table | none of the six | none native | `jst-table` component | have it (differentiator) |
+| Form validation states | BS, Pico, dUI | `:user-valid` / `:user-invalid` (Baseline Newly 2023) | `:user-invalid` border + `jst-field:has(:user-invalid)` label, `--jst-error` token | have it |
+| Input group / addons | BS, Pico, dUI | flex + border collapse, no element | `.jst-join` + `.jst-addon` | have it |
+| Floating labels | BS, dUI | `:placeholder-shown` + CSS | nothing | skip (fashion; label-above is clearer) |
+| Switch / checkbox / radio | BS, WA, Pico, dUI, Rx | `accent-color` (Baseline 2022); switch via styled checkbox | `accent-color` token + `.jst-switch` | have it |
+| Range / slider | BS, WA, Pico, dUI, Rx | `input[type=range]` + `accent-color`; multi-thumb not native | accent-color pickup | have it; multi-thumb: skip |
+| File input | BS, dUI, WA (P) | `::file-selector-button` (widely available) | classless `::file-selector-button` rules | have it |
+| Number / time / date inputs | WA, dUI | native inputs widely; styling limited | classless input styling | platform; date-picker component: skip |
+| OTP field | dUI, Rx | input + `autocomplete="one-time-code"` | nothing | skip (platform autocomplete does the real work) |
+| Progress bar | BS, WA, Pico, dUI, Rx | `<progress>` + `accent-color` | accent-color pickup | have it (platform) |
+| Progress ring | WA, dUI | conic-gradient recipe | nothing | skip (doc recipe if asked) |
+| Spinner | BS, WA, Pico, dUI | trivial CSS | `.jst-spinner` | have it |
+| Skeleton / placeholder | BS, WA, dUI | trivial CSS animation | `.jst-skeleton` (pairs with `jst-include` loading) | have it |
+| Badge / tag / chip | BS, WA, dUI | trivial CSS | `.jst-badge` variants (+ the specialized `.jst-tag`) | have it |
+| Avatar | WA, dUI, Rx | `img` + `border-radius` | `.jst-avatar` (image or initials, `--size`) | have it |
+| Card | BS, WA, Pico, dUI | `<article>` + box CSS | `<jst-box>` + tokens | have it |
+| Alert / callout | BS, WA, dUI | static CSS | `.jst-alert` | have it |
+| Breadcrumb | BS, WA, dUI | `nav > ol` + CSS separators | `.jst-breadcrumb` | have it |
+| Pagination | BS, dUI | `nav` + CSS | `.jst-pagination` (`aria-current` carries state) | have it |
+| Navbar | BS, Pico, dUI | flex CSS | `jst-cluster`/`jst-sidebar` recipes | have it (doc recipe) |
+| Button / toggle group | BS, WA, Rx | flex + border collapse | `.jst-join` | have it |
+| Carousel | BS, WA, dUI | scroll-snap (widely); `::scroll-button`/`::scroll-marker` Chromium-only, NOT Baseline | `jst-reel[data-carousel]`: snap everywhere, zero-JS arrows + dot markers where supported | have it (progressive) |
+| Command palette | none of the six | `<dialog>` + combobox pattern | `jst-palette`: global shortcut via `keys()`, filter, keyboard run, `run` event | have it (differentiator) |
+| Stepper / steps | dUI | ol + counters CSS | nothing | skip (doc recipe) |
+| Rating | WA, dUI | radio group + CSS | nothing | skip (niche) |
+| Tree view | WA | none native | nothing | skip (large a11y surface, small audience) |
+| Split panel | WA | none | nothing | skip (niche) |
+| Color picker | WA | `input[type=color]` | classless inputs | platform |
+| Scrollspy | BS | IntersectionObserver | `onreveal` synthetic event | have it (doc recipe) |
+| Custom scrollbars | Rx | `scrollbar-color`/`scrollbar-width` (Baseline 2024) | reel uses it | platform |
+| Divider / kbd / visually-hidden | BS, WA, dUI | `<hr>`, `<kbd>`, clip utility | classless `kbd` + `.jst-visually-hidden` | have it |
+| Theme switching | dUI | `light-dark()` + `color-scheme` | `--jst-*` tokens + `data-theme` skins | have it |
+| Design tokens | OP | CSS custom properties | Layer 0 `--jst-*` contract | have it |
+| Include / lazy fragment | WA | none | `jst-include` (+ `when="visible"`) | have it |
+
+### Ranked build list from the audit
+
+Everything on the list is built: the seven thin-CSS gaps (skeleton, badge,
+validation states, breadcrumb + pagination, drawer, join/input group, avatar),
+the file-input and kbd/visually-hidden freebies, and the command palette
+(`jst-palette`, the one JS-bearing item: none of the surveyed libraries ship
+one). The cross-section demo shows each.
+
+Notable non-gaps confirmed by the Baseline checks: accordion animation is now
+platform (`::details-content`), popovers and invokers are fully cross-browser,
+anchor positioning reached Baseline Newly 2026, and `field-sizing` reached
+Baseline in June 2026. Still not Baseline: customizable `<select>` and the CSS
+carousel pseudo-elements; both stay progressive-enhancement-only.
 
 ## The platform did most of our work: Invoker Commands + popovers (#29)
 
@@ -177,16 +278,17 @@ compiler path**. The handler gets `event.command` (`"--foo"`) and `event.source`
 > via JST's own `el.emit(name, detail)` (which *is* `bubbles: true, composed:
 > true`). This keeps the existing attributes-down / events-up mental model intact.
 
-The only code worth adding is a command **router** (so a target handling several
-`--commands` doesn't need a hand-written `switch`). Shaped like the `keys(event,
-map)` handler helper:
+The command **router** (so a target handling several `--commands` doesn't need
+a hand-written `switch`) is the `commands(event, map)` handler helper, shaped
+like `keys(event, map)`:
 
 ```html
 <my-thing oncommand="commands(event, { '--save': save, '--revert': revert })">
 ```
 
-It is a ~10-line function, so it belongs with the **handler helpers** (next to
-`keys`), not in a `jst-behaviors` module. Not yet built.
+It lives with the other handler helpers (in scope in template handler bodies;
+`JST.fn.commands` elsewhere). `examples/invoker_commands.html` uses it for the
+host-level command listener.
 
 ## Commands and ids: no synthetic id system
 

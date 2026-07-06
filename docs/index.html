@@ -568,6 +568,7 @@ node tools/precompile.mjs components.html <span class="tok-attr">--out</span> di
         <tr><td><code>throttle(event, ms)</code></td><td>Rate-limit: returns <code>true</code> at most once per <code>ms</code>. Guard scroll and resize work with <code>if (throttle(event, 500)) …</code>.</td></tr>
         <tr><td><code>changed(event)</code></td><td>Compares <code>event.target.value</code> with the value it saw on the previous event for that control, starting from the control's initial value. Returns <code>true</code> only when they differ, so events that edited nothing (arrow keys, Shift) are skipped in active search.</td></tr>
         <tr><td><code>keys(event, map)</code></td><td>Keyboard shortcuts: <code>keys(event, { Enter: () =&gt; save(), 'Meta+k': () =&gt; palette() })</code>.</td></tr>
+        <tr><td><code>commands(event, map)</code></td><td>Invoker Commands routing: <code>oncommand="commands(event, { '--save': save, '--revert': revert })"</code> dispatches on <code>event.command</code>; unmatched commands are ignored.</td></tr>
       </table>
       <p>Our helpers are ordinary functions, so you can add your own and use them the same way: define <code>typeahead</code> once in your app's JS, then call it from any attribute: <code>oninput="typeahead(event)"</code>.</p>
 

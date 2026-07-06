@@ -5,6 +5,58 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Added
+
+- **`commands(event, map)` handler helper.** The Invoker Commands router: a
+  `commandfor` target handling several custom commands routes them without a
+  hand-written `switch` - `oncommand="commands(event, { '--save': save,
+  '--revert': revert })"` dispatches on `event.command` and ignores unmatched
+  commands. In scope in template handler bodies, `JST.fn.commands` elsewhere,
+  and emitted by the precompiler. `examples/invoker_commands.html` uses it for
+  its host-level command listener.
+- **jst-components: the audit gaps, closed as thin CSS.** Skeleton
+  (`.jst-skeleton`), badges (`.jst-badge` variants), avatar (`.jst-avatar`),
+  breadcrumb (`.jst-breadcrumb`), pagination (`.jst-pagination`), drawer
+  (`.jst-drawer`, the modal's side-sheet variant), and join/input groups
+  (`.jst-join` + `.jst-addon`, covering button groups). Classless base gains
+  `:user-invalid` validation styling, `::file-selector-button`, `kbd`,
+  `.jst-visually-hidden`, and status tokens (`--jst-ok/--jst-warn/--jst-error`);
+  the accordion animates via `::details-content` where supported. Driven by a
+  coverage audit vs Bootstrap, Web Awesome, Pico, daisyUI, Open Props, and
+  Radix (see the design doc).
+- **jst-components: the patterns Brent's real apps kept hand-rolling.**
+  Mined from agent_app, budget_app, notes_app, and loops_app: button variants
+  (`data-variant="quiet | ghost | danger"` on any button), record lists
+  (`.jst-list` with `data-main`/`data-actions` rows), empty states
+  (`.jst-empty`), stat tiles (`.jst-stat` with `data-trend`), and page headers
+  (`.jst-page-header` + `.jst-eyebrow`).
+- **jst-layout: the modern-CSS showpieces.** `jst-reel[data-carousel]` (a
+  snapping carousel; engines with CSS carousels add zero-JS arrows and dot
+  markers), `.jst-reveal` (scroll-driven fade-in via
+  `animation-timeline: view()`, off under reduced motion), `[data-container]`
+  (opt-in container-query context), and the lazy accordion pattern: a
+  `<jst-include when="visible">` inside a closed `<details>` fetches only
+  when the panel opens - pure composition, smoke-tested.
+- **jst-components: command palette (`jst-palette`).** Global shortcut via
+  `keys()` (Cmd/Ctrl+K), type-to-filter, arrow/Enter/Escape keyboard model,
+  backdrop dismiss, and a bubbling `run` event the page executes. Composes
+  the shared floating-panel rules; none of the surveyed libraries ship one.
+- **jst-layout: the long-form and app-chrome misses.** `.jst-prose` (flow
+  rhythm for article content, since the reset zeroes margins for app
+  composition), `.jst-kv` key-value pairs, `[data-scheme]` manual dark-mode
+  toggle riding `light-dark()`, `.jst-skip-link`, toaster `data-position`
+  corners, and striped tables (`jst-table[striped]` / `table.jst-striped`).
+- **jst-include: symmetric reveal margin.** An include the user scrolls past
+  (now above the viewport) loads too; previously only the approach from below
+  triggered the fetch.
+- **jst-layout: the full Every Layout primitive set.** switcher, cover, frame,
+  reel, imposter, and icon join stack, cluster, grid, sidebar, center, and box
+  in `jst-layout.css` - all CSS-only. `examples/layout_primitives.html`
+  demonstrates each one, and the example smoke suite exercises both library
+  demo pages.
+
 ## 0.6.0 - 2026-07-05
 
 **Breaking.** One handler semantics everywhere, and jst-nav reduced to pure

@@ -2,8 +2,10 @@
  * jst-layout - CSS-first base + layout primitives for JST (opt-in, no runtime)
  * © Brent Jacobs · https://github.com/br3nt/jst · MIT
  *
- * PROTOTYPE / first slice. Loads with no JavaScript: the <jst-*> primitives are
- * styled purely as CSS selectors. See docs/design/component-library.md.
+ * Loads with no JavaScript: the <jst-*> primitives are styled purely as CSS
+ * selectors. Tokens + classless base + the full Every Layout primitive set;
+ * component patterns live in jst-components.css. Design rationale and the
+ * coverage audit: docs/design/component-library.md.
  *
  *   <link rel="stylesheet" href="jst-layout.css">
  *
@@ -17,8 +19,10 @@
 :root {
   color-scheme: light dark;
 
-  /* One modular space scale: one base + one ratio → derived steps. */
-  --jst-space: 1rem;
+  /* One modular space scale: one base + one ratio → derived steps. The base
+     is deliberately compact: surfaces read dense-but-calm, not padded out.
+     Loosen a whole app by raising --jst-space alone. */
+  --jst-space: 0.625rem;
   --jst-ratio: 1.5;
   --jst-space-3xs: calc(var(--jst-space) / var(--jst-ratio) / var(--jst-ratio) / var(--jst-ratio));
   --jst-space-2xs: calc(var(--jst-space) / var(--jst-ratio) / var(--jst-ratio));
@@ -29,13 +33,17 @@
   --jst-space-xl:  calc(var(--jst-space) * var(--jst-ratio) * var(--jst-ratio));
   --jst-space-2xl: calc(var(--jst-space) * var(--jst-ratio) * var(--jst-ratio) * var(--jst-ratio));
 
-  /* Measure (max line length), radius, border, fonts. */
+  /* Measure (max line length), radius, border, fonts. Radius is deliberately
+     tight; controls are compact. JST's own look is lean - the padded, rounded
+     framework looks live in the theme skins, not the defaults. */
   --jst-measure: 60ch;
-  --jst-radius: 0.5rem;
+  --jst-radius: 0.1875rem;
   --jst-border-width: 1px;
   --jst-font: system-ui, sans-serif;
   --jst-font-mono: ui-monospace, monospace;
-  --jst-line: 1.5;
+  --jst-font-size: 0.875rem;
+  --jst-line: 1.45;
+  --jst-control-size: 0.8rem;
 
   /* Color roles. light-dark() (Baseline 2024) gives free dark mode; the
      @media fallback below covers older engines. */
@@ -55,7 +63,24 @@
   /* Accessible foreground on the accent. Static fallback; upgraded to
      contrast-color() where supported (not yet Baseline). */
   --jst-accent-fg: white;
+
+  /* Status roles, used by validation, alerts, badges, and toasts. */
+  --jst-ok: oklch(0.62 0.15 150);
+  --jst-warn: oklch(0.75 0.15 80);
+  --jst-error: oklch(0.55 0.19 25);
+
+  /* Elevation and overlay dimming, shared by every floating surface. */
+  --jst-shadow: 0 0.25rem 0.75rem oklch(0 0 0 / 0.12);
+  --jst-backdrop: oklch(0 0 0 / 0.45);
+
+  /* Support text: hints, sublines, metadata under a control or heading. */
+  --jst-font-small: 0.8rem;
 }
+
+/* Manual scheme override: set data-scheme on <html> (or any subtree) and the
+   light-dark() tokens follow. This is the whole dark-mode toggle. */
+[data-scheme="light"] { color-scheme: light; }
+[data-scheme="dark"]  { color-scheme: dark; }
 
 @supports (color: contrast-color(red)) {
   :root { --jst-accent-fg: contrast-color(var(--jst-accent)); }
@@ -88,19 +113,29 @@ body {
   background: var(--jst-bg);
   color: var(--jst-fg);
   font-family: var(--jst-font);
+  font-size: var(--jst-font-size);
   line-height: var(--jst-line);
   -webkit-text-size-adjust: 100%;
+  /* Native checkboxes, radios, ranges, and progress bars pick up the accent
+     (Baseline 2022): themed form controls with zero component CSS. */
+  accent-color: var(--jst-accent);
 }
 
 h1, h2, h3, h4, p, ul, ol, figure, blockquote { margin-block: 0; }
 :where(h1, h2, h3, h4) { line-height: 1.15; text-wrap: balance; }
+h1 { font-size: 1.4rem; }
+h2 { font-size: 1.15rem; }
+h3 { font-size: 1rem; }
+h4 { font-size: 0.9rem; }
 p { max-inline-size: var(--jst-measure); text-wrap: pretty; }
 
 a { color: var(--jst-accent-600); }
 
 :where(button, .jst-button) {
   font: inherit;
-  padding: var(--jst-space-xs) var(--jst-space-s);
+  font-size: var(--jst-control-size);
+  line-height: 1.3;
+  padding: 0.25em 0.65em;
   border: var(--jst-border-width) solid transparent;
   border-radius: var(--jst-radius);
   background: var(--jst-accent);
@@ -112,13 +147,144 @@ a { color: var(--jst-accent-600); }
    relative-color gotcha in docs/design/component-library.md. */
 :where(button, .jst-button):hover { background: oklch(from var(--jst-accent) calc(l - 0.08) c h); }
 
+/* Button variants: the accent button is the default; everything else is a
+   data-variant, so one attribute re-roles a button without new classes.
+   quiet = bordered neutral, ghost = borderless, danger = destructive. */
+:where(button, .jst-button)[data-variant="quiet"] {
+  background: var(--jst-bg);
+  color: var(--jst-fg);
+  border-color: var(--jst-border);
+}
+:where(button, .jst-button)[data-variant="quiet"]:hover { background: var(--jst-surface); }
+:where(button, .jst-button)[data-variant="ghost"] {
+  background: transparent;
+  color: var(--jst-muted);
+}
+:where(button, .jst-button)[data-variant="ghost"]:hover { background: var(--jst-surface); color: var(--jst-fg); }
+:where(button, .jst-button)[data-variant="danger"] { background: var(--jst-error); color: white; }
+:where(button, .jst-button)[data-variant="danger"]:hover { background: oklch(from var(--jst-error) calc(l - 0.07) c h); }
+
 :where(input, textarea, select) {
   font: inherit;
-  padding: var(--jst-space-xs) var(--jst-space-s);
+  font-size: var(--jst-control-size);
+  line-height: 1.3;
+  padding: 0.25em 0.5em;
   border: var(--jst-border-width) solid var(--jst-border);
   border-radius: var(--jst-radius);
   background: var(--jst-bg);
   color: var(--jst-fg);
+}
+:where(button, .jst-button, a, summary, input, textarea, select, [tabindex]):focus-visible {
+  outline: 2px solid var(--jst-accent);
+  outline-offset: calc(var(--jst-border-width) * -1);
+}
+
+/* One disabled treatment everywhere. */
+:where(button, .jst-button, a, input, textarea, select)[disabled],
+:where([aria-disabled="true"]) {
+  opacity: 0.5;
+  cursor: default;
+  pointer-events: none;
+}
+
+/* Textareas grow with their content where the engine supports it (Baseline
+   Newly 2026); elsewhere they stay ordinary resizable textareas. */
+@supports (field-sizing: content) {
+  textarea {
+    field-sizing: content;
+    min-block-size: 2.4rem;
+    max-block-size: 60vb;
+  }
+}
+
+/* Validation, from the platform's own constraint state: only after the user
+   has interacted (:user-invalid, not :invalid), so pristine forms stay calm. */
+:where(input, textarea, select):user-invalid { border-color: var(--jst-error); }
+jst-field:has(:user-invalid) > label { color: var(--jst-error); }
+
+::file-selector-button {
+  font: inherit;
+  margin-inline-end: var(--jst-space-s);
+  padding: var(--jst-space-2xs) var(--jst-space-s);
+  border: var(--jst-border-width) solid var(--jst-border);
+  border-radius: var(--jst-radius);
+  background: var(--jst-surface);
+  color: var(--jst-fg);
+  cursor: pointer;
+}
+
+kbd {
+  font-family: var(--jst-font-mono);
+  font-size: 0.85em;
+  padding: 0.1em 0.4em;
+  border: var(--jst-border-width) solid var(--jst-border);
+  border-block-end-width: 2px;
+  border-radius: calc(var(--jst-radius) / 2);
+  background: var(--jst-surface);
+}
+
+/* Prose: long-form flow. The global reset zeroes margins because app UIs
+   space through <jst-stack>; inside .jst-prose, flowing text gets its rhythm
+   back (the Every Layout flow owl), with more air before headings. */
+.jst-prose > * + * { margin-block-start: var(--jst-space-m); }
+.jst-prose > :where(h1, h2, h3, h4) { margin-block-start: var(--jst-space-xl); }
+.jst-prose > :where(h1, h2, h3, h4) + * { margin-block-start: var(--jst-space-s); }
+.jst-prose :where(ul, ol) { padding-inline-start: 1.2em; }
+.jst-prose li + li { margin-block-start: var(--jst-space-3xs); }
+
+/* Key-value pairs: the metadata block every record screen needs. */
+.jst-kv {
+  display: grid; grid-template-columns: max-content 1fr;
+  gap: var(--jst-space-3xs) var(--jst-space-m);
+  margin: 0;
+}
+.jst-kv dt {
+  font-family: var(--jst-font-mono); font-size: 0.68rem; font-weight: 600;
+  letter-spacing: 0.04em; text-transform: uppercase; color: var(--jst-muted);
+  align-self: baseline;
+}
+.jst-kv dd { margin: 0; min-inline-size: 0; }
+
+/* Skip link: visually hidden until focused, then a floating button. */
+.jst-skip-link {
+  position: absolute; inset-block-start: var(--jst-space-s); inset-inline-start: var(--jst-space-s);
+  z-index: 100;
+  padding: 0.3em 0.75em; border-radius: var(--jst-radius);
+  background: var(--jst-accent); color: var(--jst-accent-fg); text-decoration: none;
+  translate: 0 calc(-100% - var(--jst-space-l));
+}
+.jst-skip-link:focus-visible { translate: 0; }
+
+/* Screen-reader-only content that stays in the accessibility tree. */
+.jst-visually-hidden {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Micro-label: the small mono uppercase label over a control. .jst-eyebrow
+   is the same voice used as a heading kicker. One rule. */
+:where(label, legend), .jst-eyebrow {
+  font-family: var(--jst-font-mono);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--jst-muted);
+}
+
+fieldset {
+  border: var(--jst-border-width) solid var(--jst-border);
+  border-radius: var(--jst-radius);
+  padding: var(--jst-space-s) var(--jst-space-m) var(--jst-space-m);
+  margin: 0;
+  min-inline-size: 0;
 }
 
 code, pre { font-family: var(--jst-font-mono); }
@@ -249,8 +415,10 @@ jst-reel {
   overflow-x: auto;
   overscroll-behavior-x: contain;
   scrollbar-color: var(--jst-muted) transparent;
+  /* Opt into snapping per instance: --snap: x mandatory (or x proximity). */
+  scroll-snap-type: var(--snap, none);
 }
-jst-reel > * { flex: 0 0 var(--item-width, auto); }
+jst-reel > * { flex: 0 0 var(--item-width, auto); scroll-snap-align: start; }
 jst-reel > img { block-size: 100%; flex-basis: auto; inline-size: auto; }
 
 /* Imposter: an element positioned over its nearest positioning container,
@@ -267,6 +435,78 @@ jst-imposter {
   overflow: auto;
 }
 jst-imposter[fixed] { position: fixed; }
+
+/* Field: one labelled control - label, control, then an optional <small>
+   hint or error line - spaced as a single unit. */
+jst-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--jst-space-3xs);
+}
+jst-field > small { color: var(--jst-muted); font-size: var(--jst-font-small); }
+jst-field > small[data-error] { color: var(--jst-error); }
+
+/* Form row: a single-line form. Fields share the row (each at least
+   --field-min wide) and wrap when tight; buttons and anything marked
+   data-actions keep their natural size, aligned to the control baseline. */
+jst-form-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space, var(--jst-space-s));
+  align-items: flex-end;
+}
+jst-form-row > * { flex: 1 1 var(--field-min, 9rem); min-inline-size: 0; }
+jst-form-row > :where(button, [data-actions]) { flex: 0 0 auto; }
+
+/* Carousel: a reel that snaps one child per view. Progressive: engines with
+   CSS carousels (Chromium) get scroll buttons and clickable markers with zero
+   JS; everywhere else it is a smooth snapping reel. */
+jst-reel[data-carousel] {
+  position: relative;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+}
+jst-reel[data-carousel] > * { flex: 0 0 100%; scroll-snap-align: center; }
+@supports selector(::scroll-marker) {
+  jst-reel[data-carousel] { scroll-marker-group: after; }
+  jst-reel[data-carousel]::scroll-marker-group {
+    display: flex; justify-content: center; gap: var(--jst-space-2xs);
+    padding-block: var(--jst-space-2xs);
+  }
+  jst-reel[data-carousel] > *::scroll-marker {
+    content: "";
+    inline-size: 0.5em; block-size: 0.5em; border-radius: 50%;
+    background: var(--jst-border); cursor: pointer;
+  }
+  jst-reel[data-carousel] > *::scroll-marker:target-current { background: var(--jst-accent); }
+  jst-reel[data-carousel]::scroll-button(left),
+  jst-reel[data-carousel]::scroll-button(right) {
+    position: absolute; align-self: center; z-index: 1;
+    border: var(--jst-border-width) solid var(--jst-border); border-radius: 50%;
+    inline-size: 1.8em; block-size: 1.8em;
+    background: var(--jst-bg); color: var(--jst-fg); cursor: pointer;
+  }
+  jst-reel[data-carousel]::scroll-button(left)  { content: "‹"; inset-inline-start: var(--jst-space-2xs); }
+  jst-reel[data-carousel]::scroll-button(right) { content: "›"; inset-inline-end: var(--jst-space-2xs); }
+  jst-reel[data-carousel]::scroll-button(*):disabled { opacity: 0.3; }
+}
+
+/* Opt-in container-query context: the subtree of any [data-container] element
+   can respond to ITS width with @container, not the viewport's. */
+[data-container] { container-type: inline-size; }
+
+/* Reveal-on-scroll: scroll-driven animation, zero JS. Progressive (Chromium;
+   Firefox behind a flag) and disabled for reduced-motion users. */
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .jst-reveal {
+      animation: jst-reveal both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 60%;
+    }
+    @keyframes jst-reveal { from { opacity: 0; translate: 0 1rem; } }
+  }
+}
 
 /* Icon: an inline icon sized and aligned to the surrounding text, with an
    even gap when a label follows. 1cap tracks the font's capital height where

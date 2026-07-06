@@ -90,6 +90,43 @@
         </jst-stack>
       </jst-box>
 
+      <!-- Field + Form row: labelled controls, stacked and single-line -->
+      <jst-box>
+        <jst-stack>
+          <h2>Field &amp; Form row</h2>
+          <p>A <code>&lt;jst-field&gt;</code> is one labelled control with an optional
+             hint. A <code>&lt;jst-form-row&gt;</code> is a single-line form: fields share
+             the row and wrap when tight, buttons keep their natural size.</p>
+          <form onsubmit="event.preventDefault()">
+            <jst-stack style="--space: var(--jst-space-s)">
+              <jst-field>
+                <label for="demo-name">Name</label>
+                <input id="demo-name" placeholder="Ada Lovelace">
+                <small>As it should appear on the invoice.</small>
+              </jst-field>
+              <jst-field>
+                <label for="demo-email">Email</label>
+                <input id="demo-email" type="email" placeholder="ada@example.com">
+                <small data-error>That address bounced last time.</small>
+              </jst-field>
+            </jst-stack>
+          </form>
+          <form onsubmit="event.preventDefault()">
+            <jst-form-row>
+              <jst-field>
+                <label for="demo-q">Search</label>
+                <input id="demo-q" type="search" placeholder="Invoices…">
+              </jst-field>
+              <jst-field>
+                <label for="demo-status">Status</label>
+                <select id="demo-status"><option>Any</option><option>Paid</option><option>Overdue</option></select>
+              </jst-field>
+              <button>Filter</button>
+            </jst-form-row>
+          </form>
+        </jst-stack>
+      </jst-box>
+
       <!-- Switcher: side by side, then all stacked below the threshold -->
       <jst-box>
         <jst-stack>

@@ -69,11 +69,12 @@ const reservedPropNames = new Set([
   'emit',
   '__esc',
   '__bind',
-  // statement combinators (in scope inside handler bodies)
+  // handler helpers (in scope inside handler bodies)
   'changed',
   'debounce',
   'throttle',
   'keys',
+  'commands',
 ])
 
 function parseAttributesDeclaration(value) {

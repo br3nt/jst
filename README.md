@@ -85,7 +85,8 @@ Inputs are declared in the case-preserving `attributes` attribute:
   scope, `this` = the element), compiled in render scope and attached with
   `addEventListener`. Pace behaviour with the handler helpers - in scope
   in every handler body: `oninput="if (changed(event)) debounce(event, 300,
-  () => search(this.value))"`, `onkeydown="keys(event, { Enter: () => go() })"`.
+  () => search(this.value))"`, `onkeydown="keys(event, { Enter: () => go() })"`,
+  `oncommand="commands(event, { '--save': save })"` (Invoker Commands routing).
   Dotted modifiers configure registration only: `.once`, `.capture`,
   `.passive`, `.outside`. The synthetic `onreveal` event fires when the element
   scrolls into view.

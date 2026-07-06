@@ -325,11 +325,50 @@ const checks = [
       await flush();
       const after = tabs.querySelector('[role=tabpanel]').textContent;
       const selected = tabs.querySelectorAll('[role=tab]')[1].getAttribute('aria-selected');
-      return { tabCount: tabs.querySelectorAll('[role=tab]').length, changed: before !== after, selected };
+
+      // The lazy region: scrolling the <jst-include when="visible"> into view
+      // fetches the fragment, whose component definition auto-registers.
+      const include = document.querySelector('#team-include, jst-include');
+      include.scrollIntoView();
+      const started = Date.now();
+      while (!document.querySelector('team-stats strong') && Date.now() - started < 3000) await flush();
+      const lazyStats = document.querySelectorAll('team-stats strong').length;
+
+      // The lazy accordion: a closed details must NOT fetch, opening it must.
+      const faq = document.getElementById('lazy-faq');
+      faq.scrollIntoView({ block: 'center' });
+      await flush(); await flush(); await flush();
+      const faqLoadedClosed = !!faq.querySelector('[data-testid="faq-loaded"]');
+      faq.open = true;
+      const t1 = Date.now();
+      while (!faq.querySelector('[data-testid="faq-loaded"]') && Date.now() - t1 < 3000) await flush();
+      const faqLoadedOpen = !!faq.querySelector('[data-testid="faq-loaded"]');
+
+      // Command palette: open via property, filter, run -> a toast lands.
+      const palette = document.getElementById('palette');
+      palette.open = true;
+      await flush();
+      const paletteOpened = !!palette.querySelector('input');
+      palette.query = 'toast';
+      await flush();
+      const paletteFiltered = palette.querySelectorAll('[role=option]').length;
+      palette.querySelector('[role=option]').click();
+      await flush(); await flush();
+      const paletteRan = !!document.querySelector('jst-toaster .jst-toast');
+      const paletteClosed = !palette.querySelector('input');
+
+      return { tabCount: tabs.querySelectorAll('[role=tab]').length, changed: before !== after, selected, lazyStats, faqLoadedClosed, faqLoadedOpen, paletteOpened, paletteFiltered, paletteRan, paletteClosed };
     })()`,
     assert: result => result.tabCount === 3
       && result.changed === true
-      && result.selected === 'true',
+      && result.selected === 'true'
+      && result.lazyStats === 3
+      && result.faqLoadedClosed === false
+      && result.faqLoadedOpen === true
+      && result.paletteOpened === true
+      && result.paletteFiltered === 1
+      && result.paletteRan === true
+      && result.paletteClosed === true,
   },
 ];
 

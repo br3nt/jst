@@ -79,12 +79,14 @@ class JstInclude extends HTMLElement {
 
   connectedCallback() {
     if (this.getAttribute('when') === 'visible' && typeof IntersectionObserver !== 'undefined') {
+      // Symmetric margin: an include the user scrolls PAST (now above the
+      // viewport) must still load, not just one approaching from below.
       this.#observer = new IntersectionObserver((entries) => {
         if (!entries.some(e => e.isIntersecting)) return;
         this.#observer.disconnect();
         this.#observer = null;
         this.#load();
-      }, { rootMargin: '0px 0px 200px 0px' });
+      }, { rootMargin: '200px 0px 200px 0px' });
       this.#observer.observe(this);
     } else {
       this.#load();
