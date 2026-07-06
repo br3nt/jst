@@ -51,6 +51,17 @@ A reset + element styling driven entirely by CSS custom properties. The
 deliverable is a **theming contract**: a documented `--jst-*` token set the user
 overrides at `:root`, and everything re-themes.
 
+Two Every Layout rules govern everything here. **Style globally**: size,
+density, and color live in tokens and element rules, never in per-instance
+utility classes; changing `--jst-space` or `--jst-control-size` once re-tunes
+the whole app. **Style composition**: rules describe how elements behave
+*next to each other* (controls inside a `.jst-join` collapse their borders, a
+button inside a `<jst-form-row>` sits on the control baseline, a
+`<jst-imposter>`'s parent becomes its positioning container), so bulk never
+gets re-fixed one instance at a time. JST's own defaults are lean (tight
+radius, compact controls); the padded, rounded framework looks are theme
+skins, not the baseline.
+
 One **modular space scale** (one ratio → derived steps), a **measure** (line
 length), **radius**, **border**, a **font scale**, and **color roles**. Dark mode
 falls out of `light-dark()` for free.

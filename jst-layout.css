@@ -31,13 +31,17 @@
   --jst-space-xl:  calc(var(--jst-space) * var(--jst-ratio) * var(--jst-ratio));
   --jst-space-2xl: calc(var(--jst-space) * var(--jst-ratio) * var(--jst-ratio) * var(--jst-ratio));
 
-  /* Measure (max line length), radius, border, fonts. */
+  /* Measure (max line length), radius, border, fonts. Radius is deliberately
+     tight; controls are compact. JST's own look is lean - the padded, rounded
+     framework looks live in the theme skins, not the defaults. */
   --jst-measure: 60ch;
-  --jst-radius: 0.375rem;
+  --jst-radius: 0.1875rem;
   --jst-border-width: 1px;
   --jst-font: system-ui, sans-serif;
   --jst-font-mono: ui-monospace, monospace;
+  --jst-font-size: 0.9375rem;
   --jst-line: 1.45;
+  --jst-control-size: 0.9rem;
 
   /* Color roles. light-dark() (Baseline 2024) gives free dark mode; the
      @media fallback below covers older engines. */
@@ -95,6 +99,7 @@ body {
   background: var(--jst-bg);
   color: var(--jst-fg);
   font-family: var(--jst-font);
+  font-size: var(--jst-font-size);
   line-height: var(--jst-line);
   -webkit-text-size-adjust: 100%;
   /* Native checkboxes, radios, ranges, and progress bars pick up the accent
@@ -110,7 +115,8 @@ a { color: var(--jst-accent-600); }
 
 :where(button, .jst-button) {
   font: inherit;
-  padding: var(--jst-space-xs) var(--jst-space-s);
+  font-size: var(--jst-control-size);
+  padding: var(--jst-space-2xs) var(--jst-space-s);
   border: var(--jst-border-width) solid transparent;
   border-radius: var(--jst-radius);
   background: var(--jst-accent);
@@ -124,7 +130,8 @@ a { color: var(--jst-accent-600); }
 
 :where(input, textarea, select) {
   font: inherit;
-  padding: var(--jst-space-xs) var(--jst-space-s);
+  font-size: var(--jst-control-size);
+  padding: var(--jst-space-2xs) var(--jst-space-s);
   border: var(--jst-border-width) solid var(--jst-border);
   border-radius: var(--jst-radius);
   background: var(--jst-bg);

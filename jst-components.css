@@ -11,6 +11,13 @@
  * (The CSS Zen Garden bet, applied to component frameworks.)
  * ==========================================================================*/
 
+/* JST's own look: the jst-layout defaults, no overrides. Lean radius, compact
+   controls, one accent. Selecting it in a theme switcher simply removes the
+   imitations. */
+[data-theme="jst"] {
+  --jst-ring: 0 0 0 2px oklch(from var(--jst-accent) l c h / 0.45);
+}
+
 /* Bootstrap-like: bright blue, medium radius, soft elevation. */
 [data-theme="bootstrap"] {
   --jst-accent: oklch(0.55 0.20 262);     /* ~#0d6efd */
@@ -394,10 +401,10 @@ jst-table tbody tr:hover { background: var(--jst-surface); }
  * Pagination - nav of links/buttons; the current page via aria-current.
  * Server-rendered pages emit this constantly, so it is pure markup + CSS.
  * ==========================================================================*/
-.jst-pagination { display: flex; flex-wrap: wrap; gap: var(--jst-space-2xs); }
+.jst-pagination { display: flex; flex-wrap: wrap; gap: var(--jst-space-2xs); font-size: var(--jst-control-size); }
 .jst-pagination :where(a, button, span) {
   display: inline-flex; align-items: center; justify-content: center;
-  min-inline-size: 2rem; padding: var(--jst-space-2xs) var(--jst-space-xs);
+  min-inline-size: 1.8em; padding: 0.15em 0.4em;
   border: var(--jst-border-width) solid var(--jst-border);
   border-radius: var(--jst-radius);
   background: var(--jst-bg); color: var(--jst-fg);
