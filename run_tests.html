@@ -2131,6 +2131,80 @@
             });
         });
 
+        await suite.testAsync("JST Nav: a swap that finds no target is a detectable miss, not a silent success", async () => {
+            await withNavZone(`
+                <div id="nav-miss-1"></div>
+                <a href="/page/9" jst-target="#nav-miss-1" jst-swap="outerHTML" jst-push-url>next</a>
+            `, async (zone, requests) => {
+                // Simulate the #57 race deterministically: something else replaces
+                // the target after the response is read but before the swap applies.
+                const events = [];
+                const track = (e) => events.push(e.type);
+                document.addEventListener('jst:swapped', track);
+                document.addEventListener('jst:swap-missed', track);
+                document.addEventListener('jst:before-swap', () => {
+                    zone.querySelector('#nav-miss-1').remove();
+                }, { once: true });
+                const urlBefore = location.href;
+                try {
+                    zone.querySelector('a').click();
+                    await sleep(40);
+                    isEqual(true, events.includes('jst:swap-missed'), 'Expected a bubbling jst:swap-missed');
+                    isEqual(false, events.includes('jst:swapped'), 'Expected NO jst:swapped for a missed swap');
+                    isEqual(urlBefore, location.href, 'Expected the history push to be skipped on a miss');
+                } finally {
+                    document.removeEventListener('jst:swapped', track);
+                    document.removeEventListener('jst:swap-missed', track);
+                }
+            });
+        });
+
+        await suite.testAsync("JST Nav: a fresh target appearing by write time wins the re-resolution", async () => {
+            await withNavZone(`
+                <div class="wrap-a"><div id="nav-fresh"></div></div>
+                <a href="/page/10" jst-target="#nav-fresh">next</a>
+            `, async (zone, requests) => {
+                // Replace the resolved node with a NEW node of the same id before
+                // the swap applies: the write must land in the fresh node.
+                document.addEventListener('jst:before-swap', () => {
+                    const old = zone.querySelector('#nav-fresh');
+                    const fresh = document.createElement('div');
+                    fresh.id = 'nav-fresh';
+                    fresh.className = 'fresh';
+                    old.replaceWith(fresh);
+                }, { once: true });
+                zone.querySelector('a').click();
+                await sleep(40);
+                isEqual('hit', zone.querySelector('#nav-fresh.fresh .hit')?.textContent, 'Expected the swap to land in the re-resolved fresh node');
+            });
+        });
+
+        await suite.testAsync("JST Nav: navigate() runs the full pipeline for programmatic navigation", async () => {
+            await withNavZone(`
+                <div id="nav-prog"></div>
+            `, async (zone, requests) => {
+                const seen = [];
+                const listener = (e) => seen.push({ type: e.type, navMode: e.detail?.el?.dataset?.navMode });
+                for (const t of ['jst:before-request', 'jst:before-swap', 'jst:swapped']) document.addEventListener(t, listener);
+                const urlBefore = location.href;
+                try {
+                    const res = await window.JST.nav.navigate('/orders?tag=x', {
+                        target: '#nav-prog', swap: 'innerHTML', replaceUrl: true,
+                        dataset: { navMode: 'replace' },
+                    });
+                    isEqual(200, res?.status, 'Expected navigate() to return the Response');
+                    isEqual('hit', zone.querySelector('#nav-prog .hit')?.textContent, 'Expected the swap to land');
+                    isEqual(['jst:before-request', 'jst:before-swap', 'jst:swapped'].join(','), seen.map(s => s.type).join(','), 'Expected the full lifecycle to bubble to document');
+                    isEqual('replace', seen[0].navMode, 'Expected the driver dataset to reach delegated listeners');
+                    isEqual(true, location.href.includes('/orders?tag=x'), 'Expected replaceUrl to update the URL');
+                    isEqual(null, document.querySelector('a[href="/orders?tag=x"]'), 'Expected the driver element to be removed');
+                } finally {
+                    for (const t of ['jst:before-request', 'jst:before-swap', 'jst:swapped']) document.removeEventListener(t, listener);
+                    history.replaceState({}, '', urlBefore);
+                }
+            });
+        });
+
         await suite.testAsync("JST Nav: removed attributes fail loud and do not fire", async () => {
             await withConsoleSpy('error', async (calls) => {
                 await withNavZone(`

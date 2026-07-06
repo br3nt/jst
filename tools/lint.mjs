@@ -88,6 +88,14 @@ const templateRules = [
 // Rules that apply to the WHOLE file (usage HTML outside jst blocks included).
 const usageRules = [
   {
+    id: 'button-nav-attr',
+    // A <button jst-get/jst-action> has no automatic story under enhance-only
+    // (#61): it must become one of two things, and only a human can pick.
+    find: () => /<button\b[^>]*\bjst-(get|action)\s*=\s*["']([^"']*)["'][^>]*>/gi,
+    message: m => `<button jst-${m[1]}="${m[2]}"> has no enhance-only equivalent - pick one: a navigation becomes a link (<a href="${m[2]}" jst-target="…">), an action becomes a one-button form (<form action="${m[2]}" method="post" jst-target="…"><button>…</button></form>)`,
+    at: m => m.index,
+  },
+  {
     id: 'removed-nav-attrs',
     find: () => /\bjst-(get|action|trigger|load|poll|on[a-z]+)\s*=/g,
     message: m => `removed jst-${m[1]} (v0.6.0) — jst-nav enhances links/forms only (native href/action/method + jst-target/jst-swap); self-filling regions are <jst-include src="…">; other causes call swap() from a handler or component (see CHANGELOG migration table)`,
@@ -134,26 +142,30 @@ function parseArgs(argv) {
   const files = [];
   const runtimes = [];
   let csp = false;
+  let jsStrings = false;
 
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     if (arg === '--runtime') runtimes.push(argv[++i]);
     else if (arg === '--csp') csp = true;
+    else if (arg === '--js-strings') jsStrings = true;
     else if (arg === '--help' || arg === '-h') usage(0);
     else if (arg.startsWith('--')) usage(1);
     else files.push(arg);
   }
 
   if (!files.length && !runtimes.length) usage(1);
-  return { files, runtimes, csp };
+  return { files, runtimes, csp, jsStrings };
 }
 
 function usage(code) {
   const out = code === 0 ? console.log : console.error;
-  out('Usage: node tools/lint.mjs <files...> [--runtime <jst.js>] [--csp]');
+  out('Usage: node tools/lint.mjs <files...> [--runtime <jst.js>] [--csp] [--js-strings]');
   out('  Scans <script type="jst"> blocks and usage HTML for removed JST syntax.');
   out('  --csp additionally flags native inline on<event>= handlers in usage HTML');
   out('        (evaluated by the browser; blocked under a strict CSP).');
+  out('  --js-strings additionally scans string/template literals in .js/.mjs/.ts');
+  out('        files for removed syntax (markup built in JS sails past the HTML scan).');
   process.exit(code);
 }
 
@@ -313,11 +325,44 @@ function scanRuntime(file, findings) {
   }
 }
 
+/**
+ * Opt-in --js-strings pass (#61): markup built in JS template literals or
+ * quoted strings never reaches the HTML scan. Extract every string/template
+ * literal and run the removed-syntax rules over its content; line numbers
+ * point into the JS source.
+ */
+const jsLiteralPattern = /`(?:[^`\\]|\\.)*`|"(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'/g;
+function scanJsStrings(file, findings) {
+  let source;
+  try {
+    source = fs.readFileSync(file, 'utf8');
+  } catch (error) {
+    console.error(`lint: cannot read ${file}: ${error.message}`);
+    process.exitCode = 1;
+    return;
+  }
+  let match;
+  while ((match = jsLiteralPattern.exec(source))) {
+    const literal = match[0].slice(1, -1);
+    if (!/[<>]|jst-/.test(literal)) continue;   // cheap gate: HTML-ish content only
+    const inner = [];
+    runRemovedSyntaxRules(file, literal, inner, ' [in JS string]');
+    for (const f of inner) {
+      // Re-locate against the whole file: the literal starts at match.index + 1.
+      const { line, col } = locate(source, match.index + 1);
+      findings.push({ ...f, line: line + f.line - 1, col: f.line === 1 ? col + f.col - 1 : f.col });
+    }
+  }
+}
+
 function main() {
-  const { files, runtimes, csp } = parseArgs(process.argv.slice(2));
+  const { files, runtimes, csp, jsStrings } = parseArgs(process.argv.slice(2));
   const findings = [];
 
-  for (const file of files) scanFile(file, findings, csp);
+  for (const file of files) {
+    if (jsStrings && /\.(js|mjs|ts)$/.test(file)) scanJsStrings(file, findings);
+    else scanFile(file, findings, csp);
+  }
   for (const runtime of runtimes) scanRuntime(runtime, findings);
 
   if (findings.length === 0) {
