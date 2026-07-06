@@ -92,6 +92,9 @@ body {
   font-family: var(--jst-font);
   line-height: var(--jst-line);
   -webkit-text-size-adjust: 100%;
+  /* Native checkboxes, radios, ranges, and progress bars pick up the accent
+     (Baseline 2022): themed form controls with zero component CSS. */
+  accent-color: var(--jst-accent);
 }
 
 h1, h2, h3, h4, p, ul, ol, figure, blockquote { margin-block: 0; }
@@ -125,6 +128,16 @@ a { color: var(--jst-accent-600); }
 :where(input, textarea, select):focus-visible {
   outline: 2px solid var(--jst-accent);
   outline-offset: calc(var(--jst-border-width) * -1);
+}
+
+/* Textareas grow with their content where the engine supports it (not yet
+   Baseline); elsewhere they stay ordinary resizable textareas. */
+@supports (field-sizing: content) {
+  textarea {
+    field-sizing: content;
+    min-block-size: 2.4rem;
+    max-block-size: 60vb;
+  }
 }
 
 /* Micro-label: the small mono uppercase label over a control. */
@@ -273,8 +286,10 @@ jst-reel {
   overflow-x: auto;
   overscroll-behavior-x: contain;
   scrollbar-color: var(--jst-muted) transparent;
+  /* Opt into snapping per instance: --snap: x mandatory (or x proximity). */
+  scroll-snap-type: var(--snap, none);
 }
-jst-reel > * { flex: 0 0 var(--item-width, auto); }
+jst-reel > * { flex: 0 0 var(--item-width, auto); scroll-snap-align: start; }
 jst-reel > img { block-size: 100%; flex-basis: auto; inline-size: auto; }
 
 /* Imposter: an element positioned over its nearest positioning container,

@@ -66,6 +66,20 @@ feature is Baseline-wide):
 | `contrast-color()` | auto-pick accessible foreground on a color | **not** Baseline (limited) | static `--jst-accent-fg` default, upgraded under `@supports` |
 | `oklch()` | perceptually-even color + shades | Baseline 2023 | `hsl()` |
 | Container queries | component-level responsiveness | Baseline 2023 | media queries |
+| `accent-color` | themed native checkbox/radio/range/progress | Baseline 2022 | (none needed: engines ignore it gracefully) |
+| `field-sizing: content` | textareas that grow with content | **not** Baseline (Chromium) | plain resizable textarea, gated by `@supports` |
+| `:has()` | imposter's parent becomes its positioning container | Baseline 2023 | author sets `position: relative` |
+| `cap` unit | icon sized to the text's capital height | Baseline 2024 | `0.75em` |
+| Scroll snap | opt-in reel snapping via `--snap` | Baseline 2022 | plain scrolling |
+
+Audited against 2026 CSS: `aspect-ratio` replaced the padded-box hack (frame),
+`gap` replaced owl selectors (stack/cluster), logical properties are used
+throughout, and `text-wrap: balance/pretty` handles headings and prose. Two
+recipes deliberately stay on the older technique: the **switcher** threshold
+keeps the flex-basis trick because a container-query condition cannot read a
+per-instance custom property, and the **imposter** keeps inset + transform
+centering because anchor positioning is not yet cross-engine. Revisit both as
+Baseline moves.
 
 > **Gotcha (verified in the prototype):** relative-color shade tokens declared at
 > `:root` - `--jst-accent-600: oklch(from var(--jst-accent) …)` - are computed
