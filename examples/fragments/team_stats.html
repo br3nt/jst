@@ -1,0 +1,16 @@
+<!-- A fragment fetched by <jst-include>. It carries BOTH a component
+     definition and the markup that uses it: the definition auto-registers on
+     arrival, then the element upgrades. This is the HATEOAS trick over a
+     plain static file. -->
+<script type="jst" name="team-stats" attributes="stats">
+  $ const items = stats || [];
+  <jst-cluster style="--space: var(--jst-space-xl)">
+    $ items.forEach(item => {
+      <div jst-key="$(item.label)">
+        <small style="color: var(--jst-muted)">$(item.label)</small><br>
+        <strong style="font-size: 1.4em">$(item.value)</strong>
+      </div>
+    $ })
+  </jst-cluster>
+</script>
+<team-stats stats='[{"label":"Layout primitives","value":14},{"label":"Frameworks matched","value":9},{"label":"Build steps","value":0}]'></team-stats>

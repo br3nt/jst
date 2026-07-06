@@ -325,11 +325,21 @@ const checks = [
       await flush();
       const after = tabs.querySelector('[role=tabpanel]').textContent;
       const selected = tabs.querySelectorAll('[role=tab]')[1].getAttribute('aria-selected');
-      return { tabCount: tabs.querySelectorAll('[role=tab]').length, changed: before !== after, selected };
+
+      // The lazy region: scrolling the <jst-include when="visible"> into view
+      // fetches the fragment, whose component definition auto-registers.
+      const include = document.querySelector('jst-include');
+      include.scrollIntoView();
+      const started = Date.now();
+      while (!document.querySelector('team-stats strong') && Date.now() - started < 3000) await flush();
+      const lazyStats = document.querySelectorAll('team-stats strong').length;
+
+      return { tabCount: tabs.querySelectorAll('[role=tab]').length, changed: before !== after, selected, lazyStats };
     })()`,
     assert: result => result.tabCount === 3
       && result.changed === true
-      && result.selected === 'true',
+      && result.selected === 'true'
+      && result.lazyStats === 3,
   },
 ];
 

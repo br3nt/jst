@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="../jst-layout.css">
   <link rel="stylesheet" href="../jst-components.css">
   <script type="module" src="../jst.js"></script>
+  <script type="module" src="../jst-behaviors.js"></script>
   <style>
     .toolbar {
       position: sticky; top: 0; z-index: 10;
@@ -298,6 +299,16 @@
           columns='[{"key":"name","label":"Name"},{"key":"role","label":"Role"},{"key":"commits","label":"Commits"}]'
           rows='[{"id":1,"name":"Ada","role":"Lead","commits":312},{"id":2,"name":"Linus","role":"Core","commits":987},{"id":3,"name":"Grace","role":"Core","commits":154},{"id":4,"name":"Alan","role":"Docs","commits":48}]'></jst-table>
         <p style="color:var(--jst-muted);font-size:0.85em;margin-block-start:var(--jst-space-s)">Click a column header to sort; click again to reverse. <code>aria-sort</code> reflects state. Ties to the datasource proposal (#28).</p>
+      </div>
+
+      <!-- LAZY REGION -->
+      <div class="card">
+        <header>
+          <h3>Lazy region</h3>
+          <span class="jst-tag" data-tech="jst">&lt;jst-include&gt;</span>
+        </header>
+        <jst-include src="fragments/team_stats.html" when="visible"></jst-include>
+        <p style="color:var(--jst-muted);font-size:0.85em;margin-block-start:var(--jst-space-s)">A region whose content lives at a URL (<code>jst-behaviors.js</code>). <code>when="visible"</code> defers the fetch until it scrolls into view, and the fragment carries its own component definition, which auto-registers on arrival.</p>
       </div>
 
     </jst-stack>
