@@ -487,8 +487,12 @@
         </header>
         <jst-cluster>
           <button command="show-modal" commandfor="demo-drawer">Open drawer</button>
+          <button data-variant="quiet" data-side="start" onclick="const d = document.getElementById('demo-drawer'); d.dataset.side = this.dataset.side; d.showModal()">Left</button>
+          <button data-variant="quiet" data-side="end" onclick="const d = document.getElementById('demo-drawer'); d.dataset.side = this.dataset.side; d.showModal()">Right</button>
+          <button data-variant="quiet" data-side="top" onclick="const d = document.getElementById('demo-drawer'); d.dataset.side = this.dataset.side; d.showModal()">Top</button>
+          <button data-variant="quiet" data-side="bottom" onclick="const d = document.getElementById('demo-drawer'); d.dataset.side = this.dataset.side; d.showModal()">Bottom</button>
         </jst-cluster>
-        <dialog class="jst-drawer" id="demo-drawer">
+        <dialog class="jst-drawer" id="demo-drawer" closedby="any">
           <header>
             <span>Filters</span>
             <button class="jst-modal-close" command="close" commandfor="demo-drawer" aria-label="Close">×</button>
@@ -503,7 +507,7 @@
             </jst-stack>
           </div>
         </dialog>
-        <p style="color:var(--jst-muted);font-size:0.85em;margin-block-start:var(--jst-space-s)">The modal's side-sheet variant: the same native <code>&lt;dialog&gt;</code> and invoker wiring, docked to an edge (<code>data-side="start"</code> for the other one).</p>
+        <p style="color:var(--jst-muted);font-size:0.85em;margin-block-start:var(--jst-space-s)">The modal's edge-docked variant: the same native <code>&lt;dialog&gt;</code> and invoker wiring. <code>data-side="start | end | top | bottom"</code> picks the edge; clicking the backdrop closes it (<code>closedby="any"</code>, with a tiny fallback below).</p>
       </div>
 
     </jst-stack>
@@ -515,8 +519,9 @@
     document.getElementById('theme').addEventListener('change', (e) => {
       document.body.dataset.theme = e.target.value;
     });
-    // Backdrop click closes the modal (fallback for engines without closedby="any").
-    document.querySelectorAll('dialog.jst-modal').forEach((d) => {
+    // Backdrop click closes modals and drawers (fallback for engines without
+    // closedby="any"; the padding-less dialogs make e.target === dialog reliable).
+    document.querySelectorAll('dialog.jst-modal, dialog.jst-drawer').forEach((d) => {
       d.addEventListener('click', (e) => { if (e.target === d) d.close(); });
     });
   </script>

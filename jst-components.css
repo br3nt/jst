@@ -129,7 +129,7 @@
 .jst-modal::backdrop { background: oklch(0 0 0 / 0.45); }
 .jst-modal > header,
 .jst-modal > .jst-modal-body,
-.jst-modal > footer { padding: var(--jst-space-m) var(--jst-space-l); }
+.jst-modal > footer { padding: var(--jst-space-s) var(--jst-space-m); }
 .jst-modal > header {
   display: flex; align-items: center; justify-content: space-between;
   gap: var(--jst-space-m);
@@ -162,7 +162,7 @@
 .jst-accordion { border: var(--jst-border-width) solid var(--jst-border); border-radius: var(--jst-radius); overflow: clip; }
 .jst-accordion > details + details { border-block-start: var(--jst-border-width) solid var(--jst-border); }
 .jst-accordion summary {
-  cursor: pointer; padding: var(--jst-space-s) var(--jst-space-m);
+  cursor: pointer; padding: var(--jst-space-xs) var(--jst-space-s);
   font-weight: 600; list-style: none;
   display: flex; align-items: center; justify-content: space-between;
 }
@@ -170,7 +170,7 @@
 .jst-accordion summary::after { content: "▾"; color: var(--jst-muted); transition: transform 0.15s; }
 .jst-accordion details[open] summary::after { transform: rotate(180deg); }
 .jst-accordion summary:hover { background: var(--jst-surface); }
-.jst-accordion .jst-accordion-body { padding: 0 var(--jst-space-m) var(--jst-space-m); color: var(--jst-muted); }
+.jst-accordion .jst-accordion-body { padding: 0 var(--jst-space-s) var(--jst-space-s); color: var(--jst-muted); }
 
 /* ============================================================================
  * Dropdown menu - native [popover] + command="toggle-popover". The invoker is
@@ -222,7 +222,7 @@ jst-tabs { display: block; }
 jst-tabs [role="tablist"] { display: flex; gap: var(--jst-space-2xs); border-block-end: var(--jst-border-width) solid var(--jst-border); }
 jst-tabs [role="tab"] {
   background: none; border: none; border-block-end: 2px solid transparent; border-radius: 0;
-  margin-block-end: -1px; padding: var(--jst-space-xs) var(--jst-space-m);
+  margin-block-end: -1px; padding: var(--jst-space-2xs) var(--jst-space-s);
   color: var(--jst-muted); cursor: pointer; font: inherit;
 }
 jst-tabs [role="tab"][aria-selected="true"] { color: var(--jst-fg); border-block-end-color: var(--jst-accent); font-weight: 600; }
@@ -240,10 +240,10 @@ jst-toaster {
 jst-toaster .jst-toast {
   pointer-events: auto;
   display: flex; align-items: center; gap: var(--jst-space-s);
-  padding: var(--jst-space-s) var(--jst-space-m);
+  padding: var(--jst-space-xs) var(--jst-space-s);
   border: var(--jst-border-width) solid var(--jst-border); border-radius: var(--jst-radius);
   background: var(--jst-bg); color: var(--jst-fg); box-shadow: var(--jst-shadow);
-  min-inline-size: 15rem; animation: jst-toast-in 0.18s ease-out;
+  min-inline-size: 13rem; animation: jst-toast-in 0.18s ease-out;
 }
 jst-toaster .jst-toast[data-variant="success"] { border-inline-start: 4px solid var(--jst-ok); }
 jst-toaster .jst-toast[data-variant="error"]   { border-inline-start: 4px solid var(--jst-error); }
@@ -328,11 +328,11 @@ progress.jst-progress { inline-size: 100%; block-size: 0.6rem; accent-color: var
  * ==========================================================================*/
 jst-table { display: block; overflow-x: auto; }
 jst-table table { inline-size: 100%; border-collapse: collapse; }
-jst-table th, jst-table td { text-align: start; padding: var(--jst-space-xs) var(--jst-space-s); border-block-end: var(--jst-border-width) solid var(--jst-border); }
+jst-table th, jst-table td { text-align: start; padding: var(--jst-space-2xs) var(--jst-space-s); border-block-end: var(--jst-border-width) solid var(--jst-border); }
 jst-table thead th { padding: 0; }
 jst-table thead button {
   inline-size: 100%; text-align: start; background: none; border: none; color: var(--jst-muted);
-  font: inherit; font-weight: 700; cursor: pointer; padding: var(--jst-space-xs) var(--jst-space-s);
+  font: inherit; font-weight: 700; cursor: pointer; padding: var(--jst-space-2xs) var(--jst-space-s);
 }
 jst-table thead button:hover { color: var(--jst-fg); }
 jst-table th[aria-sort="ascending"] button, jst-table th[aria-sort="descending"] button { color: var(--jst-fg); }
@@ -360,8 +360,8 @@ jst-table tbody tr:hover { background: var(--jst-surface); }
  * ==========================================================================*/
 .jst-badge {
   display: inline-flex; align-items: center; gap: 0.35em;
-  font-size: 0.72rem; font-weight: 600; line-height: 1.4;
-  padding: 0.1em 0.6em; border-radius: 99px; white-space: nowrap;
+  font-size: 0.68rem; font-weight: 600; line-height: 1.4;
+  padding: 0.08em 0.55em; border-radius: 99px; white-space: nowrap;
   background: var(--jst-accent); color: var(--jst-accent-fg);
 }
 .jst-badge[data-variant="muted"]   { background: var(--jst-surface); color: var(--jst-muted); border: var(--jst-border-width) solid var(--jst-border); }
@@ -415,41 +415,66 @@ jst-table tbody tr:hover { background: var(--jst-surface); }
 .jst-pagination [disabled], .jst-pagination [aria-disabled="true"] { opacity: 0.45; pointer-events: none; }
 
 /* ============================================================================
- * Drawer - the modal's side-sheet variant: same native <dialog>, same invoker
- * wiring, docked to an edge. data-side="start" docks it to the other side.
+ * Drawer - the modal's edge-docked variant: same native <dialog>, same invoker
+ * wiring. data-side="end | start | top | bottom" picks the edge (end is the
+ * default). Add closedby="any" on the dialog for backdrop light dismiss
+ * (Baseline Newly; the demo ships a 3-line fallback for older engines).
  * ==========================================================================*/
 .jst-drawer {
-  margin: 0; margin-inline-start: auto;
-  inline-size: min(22rem, 90vw);
-  block-size: 100dvb; max-block-size: 100dvb;
+  margin: 0;
   padding: 0;
-  border: none; border-inline-start: var(--jst-border-width) solid var(--jst-border);
+  border: none;
   background: var(--jst-bg); color: var(--jst-fg);
   box-shadow: var(--jst-shadow);
 }
+.jst-drawer::backdrop { background: oklch(0 0 0 / 0.45); }
+
+/* Edge placement: the dialog's auto margins do the docking. */
+.jst-drawer:not([data-side]), .jst-drawer[data-side="end"] {
+  margin-inline-start: auto;
+  inline-size: min(20rem, 90vw); block-size: 100dvb; max-block-size: 100dvb;
+  border-inline-start: var(--jst-border-width) solid var(--jst-border);
+}
 .jst-drawer[data-side="start"] {
-  margin-inline: 0 auto;
-  border-inline: none;
+  margin-inline-end: auto;
+  inline-size: min(20rem, 90vw); block-size: 100dvb; max-block-size: 100dvb;
   border-inline-end: var(--jst-border-width) solid var(--jst-border);
 }
-.jst-drawer::backdrop { background: oklch(0 0 0 / 0.45); }
+.jst-drawer[data-side="top"] {
+  margin-block-end: auto;
+  inline-size: 100vw; max-inline-size: 100vw; max-block-size: 80dvb;
+  border-block-end: var(--jst-border-width) solid var(--jst-border);
+}
+.jst-drawer[data-side="bottom"] {
+  margin-block-start: auto;
+  inline-size: 100vw; max-inline-size: 100vw; max-block-size: 80dvb;
+  border-block-start: var(--jst-border-width) solid var(--jst-border);
+}
+
 .jst-drawer > header,
 .jst-drawer > .jst-drawer-body,
-.jst-drawer > footer { padding: var(--jst-space-m) var(--jst-space-l); }
+.jst-drawer > footer { padding: var(--jst-space-s) var(--jst-space-m); }
 .jst-drawer > header {
   display: flex; align-items: center; justify-content: space-between; gap: var(--jst-space-m);
   border-block-end: var(--jst-border-width) solid var(--jst-border); font-weight: 700;
 }
+
+/* Slide in from the docked edge. */
 @supports (transition-behavior: allow-discrete) {
   .jst-drawer {
-    opacity: 0; transform: translateX(100%);
+    opacity: 0;
     transition: opacity 0.2s, transform 0.2s, overlay 0.2s allow-discrete, display 0.2s allow-discrete;
   }
-  .jst-drawer[data-side="start"] { transform: translateX(-100%); }
+  .jst-drawer:not([data-side]), .jst-drawer[data-side="end"] { transform: translateX(100%); }
+  .jst-drawer[data-side="start"]  { transform: translateX(-100%); }
+  .jst-drawer[data-side="top"]    { transform: translateY(-100%); }
+  .jst-drawer[data-side="bottom"] { transform: translateY(100%); }
   .jst-drawer[open] { opacity: 1; transform: none; }
   @starting-style {
-    .jst-drawer[open] { opacity: 0; transform: translateX(100%); }
-    .jst-drawer[data-side="start"][open] { transform: translateX(-100%); }
+    .jst-drawer[open]:not([data-side]), .jst-drawer[data-side="end"][open] { opacity: 0; transform: translateX(100%); }
+    .jst-drawer[data-side="start"][open]  { opacity: 0; transform: translateX(-100%); }
+    .jst-drawer[data-side="top"][open]    { opacity: 0; transform: translateY(-100%); }
+    .jst-drawer[data-side="bottom"][open] { opacity: 0; transform: translateY(100%); }
   }
 }
 
@@ -516,7 +541,7 @@ jst-table tbody tr:hover { background: var(--jst-surface); }
  * them with <jst-grid> or <jst-cluster>.
  * ==========================================================================*/
 .jst-stat { display: flex; flex-direction: column; gap: 0.1em; }
-.jst-stat > .jst-stat-value { font-size: 1.45em; font-weight: 700; font-variant-numeric: tabular-nums; }
+.jst-stat > .jst-stat-value { font-size: 1.3em; font-weight: 700; font-variant-numeric: tabular-nums; }
 .jst-stat[data-trend="up"] > .jst-stat-value { color: var(--jst-ok); }
 .jst-stat[data-trend="down"] > .jst-stat-value { color: var(--jst-error); }
 

@@ -20,7 +20,7 @@
   /* One modular space scale: one base + one ratio → derived steps. The base
      is deliberately compact: surfaces read dense-but-calm, not padded out.
      Loosen a whole app by raising --jst-space alone. */
-  --jst-space: 0.75rem;
+  --jst-space: 0.625rem;
   --jst-ratio: 1.5;
   --jst-space-3xs: calc(var(--jst-space) / var(--jst-ratio) / var(--jst-ratio) / var(--jst-ratio));
   --jst-space-2xs: calc(var(--jst-space) / var(--jst-ratio) / var(--jst-ratio));
@@ -39,9 +39,9 @@
   --jst-border-width: 1px;
   --jst-font: system-ui, sans-serif;
   --jst-font-mono: ui-monospace, monospace;
-  --jst-font-size: 0.9375rem;
+  --jst-font-size: 0.875rem;
   --jst-line: 1.45;
-  --jst-control-size: 0.9rem;
+  --jst-control-size: 0.85rem;
 
   /* Color roles. light-dark() (Baseline 2024) gives free dark mode; the
      @media fallback below covers older engines. */
@@ -109,6 +109,10 @@ body {
 
 h1, h2, h3, h4, p, ul, ol, figure, blockquote { margin-block: 0; }
 :where(h1, h2, h3, h4) { line-height: 1.15; text-wrap: balance; }
+h1 { font-size: 1.4rem; }
+h2 { font-size: 1.15rem; }
+h3 { font-size: 1rem; }
+h4 { font-size: 0.9rem; }
 p { max-inline-size: var(--jst-measure); text-wrap: pretty; }
 
 a { color: var(--jst-accent-600); }
@@ -116,7 +120,7 @@ a { color: var(--jst-accent-600); }
 :where(button, .jst-button) {
   font: inherit;
   font-size: var(--jst-control-size);
-  padding: var(--jst-space-2xs) var(--jst-space-s);
+  padding: 0.3em 0.75em;
   border: var(--jst-border-width) solid transparent;
   border-radius: var(--jst-radius);
   background: var(--jst-accent);
@@ -149,7 +153,7 @@ a { color: var(--jst-accent-600); }
 :where(input, textarea, select) {
   font: inherit;
   font-size: var(--jst-control-size);
-  padding: var(--jst-space-2xs) var(--jst-space-s);
+  padding: 0.3em 0.55em;
   border: var(--jst-border-width) solid var(--jst-border);
   border-radius: var(--jst-radius);
   background: var(--jst-bg);
@@ -212,7 +216,7 @@ kbd {
 /* Micro-label: the small mono uppercase label over a control. */
 :where(label, legend) {
   font-family: var(--jst-font-mono);
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
