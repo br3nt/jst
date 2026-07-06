@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!-- JST - JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
 <!--
   Source: https://lit.dev/docs/templates/lists/#the-repeat-directive
   Demonstrates: keyed list reconciliation. Lit's `repeat(items, item => item.id, tpl)`
   associates each rendered row with a key so that on reorder Lit MOVES existing DOM
-  nodes instead of re-creating them — preserving node-local state (focus, input values).
+  nodes instead of re-creating them - preserving node-local state (focus, input values).
   Maps from: Lit `repeat(items, keyFn, tpl)` ↔ JST `$ items.forEach` + `jst-key="$(item.id)"`.
-  JST status: ✓ exact — `jst-key` preserves DOM identity across reorders; the text typed
+  JST status: ✓ exact - `jst-key` preserves DOM identity across reorders; the text typed
   into each row's input survives a shuffle, proving nodes were moved, not rebuilt.
 -->
 <html lang="en">

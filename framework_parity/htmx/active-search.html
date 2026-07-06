@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!-- JST - JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
 <!--
   Source: https://htmx.org/examples/active-search/
   Demonstrates: a search box that queries the server as you type (debounced) and swaps the
   results table.
-  JST status: ✓ exact — oninput calls a named function; statement combinators
+  JST status: ✓ exact - oninput calls a named function; the handler helpers
   (changed + debounce) pace the fetch and swap() lands it. Behaviour is plain
-  JS a reader can step through — no trigger grammar.
+  JS a reader can step through - no trigger grammar.
 -->
 <html lang="en">
 <head>
@@ -28,7 +28,7 @@
 <div id="results"></div>
 
 <script type="module">
-  // Behaviour is a named function: statement combinators pace the fetch and
+  // Behaviour is a named function: the handler helpers pace the fetch and
   // swap() is jst-nav's imperative primitive. The attribute just calls it.
   import { changed, debounce } from '../../jst.js';
   import { swap } from '../../jst-nav.js';

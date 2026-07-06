@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!-- JST - JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
 <!--
   Source: https://htmx.org/examples/progress-bar/
   Demonstrates: start a job, poll for progress, update a bar until complete, then
   show a restart state.
-  JST status: ✓ exact — jst-nav polls declaratively with
-  a page-level setInterval that swap()s while a .poller row is present. The running response keeps
-  the polling element; the done response drops it, so the poll stops itself.
+  JST status: ✓ exact - polling is a page-level setInterval that swap()s
+  while a .poller row is present. The running response keeps the polling
+  element; the done response drops it, so the poll stops itself.
 -->
 <html lang="en">
 <head>
@@ -46,7 +46,7 @@
   };
 
   // Poll while a .poller is present: plain platform code driving swap().
-  // The DONE response carries no .poller, so the loop stops by itself —
+  // The DONE response carries no .poller, so the loop stops by itself -
   // the server still steers the cadence, just via markup instead of a grammar.
   setInterval(() => {
     if (document.querySelector('.poller')) JST.nav.swap('#job', '/api/job');

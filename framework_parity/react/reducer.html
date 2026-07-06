@@ -1,14 +1,14 @@
 <!DOCTYPE html>
-<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!-- JST - JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
 <!--
   Source: https://react.dev/learn/extracting-state-logic-into-a-reducer
-  Demonstrates: useReducer — state transitions consolidated into a single
+  Demonstrates: useReducer - state transitions consolidated into a single
   pure reducer(state, action), driven by dispatched actions (add/change/delete).
-  JST status: (i) partial — JST has no useReducer hook, but the pattern ports
+  JST status: (i) partial - JST has no useReducer hook, but the pattern ports
   cleanly to plain JS: a pure reducer function lives in the page, `dispatch`
   reassigns the page-owned state and re-broadcasts it to a dumb renderer. The
   component just emits actions up; it never holds task state. The only thing
-  "missing" is the hook ceremony — the architecture is identical, so the
+  "missing" is the hook ceremony - the architecture is identical, so the
   workaround is, in my opinion, a fully acceptable tradeoff.
 -->
 <html lang="en">
@@ -50,7 +50,7 @@
 <task-board id="board"></task-board>
 
 <script>
-  // The pure reducer — identical to what you'd pass to useReducer.
+  // The pure reducer - identical to what you'd pass to useReducer.
   let nextId = 3;
   function reducer(tasks, action) {
     switch (action.type) {

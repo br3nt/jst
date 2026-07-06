@@ -1,14 +1,14 @@
 <!DOCTYPE html>
-<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!-- JST - JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
 <!--
-  Source: https://github.com/bigskysoftware/fixi (README, commit d31fc1d) — fx-ignore
+  Source: https://github.com/bigskysoftware/fixi (README, commit d31fc1d) - fx-ignore
   Demonstrates: fx-ignore marks a region fixi must NOT process, so third-party widgets that own
   their own DOM are left alone during swaps.
-  JST status: ✓ exact — JST needs no "ignore" directive. You encapsulate the third-party widget in
+  JST status: ✓ exact - JST needs no "ignore" directive. You encapsulate the third-party widget in
   a component and project its DOM through a slot ($(slot())): projected nodes are MOVED, not
   re-rendered, so the host's morph never touches them. The component exposes a query/command
   interface over the widget. This is the idiomatic JST pattern (see docs/from-other-frameworks.md),
-  not a workaround — so the jst-ignore proposal (#6) is closed.
+  not a workaround - so the jst-ignore proposal (#6) is closed.
 -->
 <html lang="en">
 <head>
@@ -30,7 +30,7 @@
     <p>Host re-renders: <strong data-testid="renders">$(count || 0)</strong></p>
     <button data-testid="rerender" onclick="el.count = (el.count || 0) + 1">Re-render host</button>
     <div class="ignored">
-      <small>Uncontrolled region (projected slot — JST does not re-render this):</small>
+      <small>Uncontrolled region (projected slot - JST does not re-render this):</small>
       $(slot())
     </div>
   </section>

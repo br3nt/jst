@@ -1,23 +1,23 @@
 <!DOCTYPE html>
-<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!-- JST - JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
 <!--
   Source: https://lit.dev/docs/data/context/
-  Demonstrates: @lit/context provide/consume — a provider sets a value and any
+  Demonstrates: @lit/context provide/consume - a provider sets a value and any
   descendant consumer reads it directly, with NO intermediate component
   forwarding it.
-  JST status: (i) partial — JST has no context protocol. The honest equivalents:
+  JST status: (i) partial - JST has no context protocol. The honest equivalents:
   (a) prop-drill the value through every layer, and (b) keep it in a page-level
   store. This file does both: a page store holds `user`, it is drilled
   app -> nav -> avatar via .user="$(user)" bindings (a parent re-render
   cascades the change down), and components can also reach it via el.closest()
   for an imperative read. The gap: every intermediate MUST forward the prop, and
-  closest()-reads are NOT auto-reactive — that boilerplate is exactly what
+  closest()-reads are NOT auto-reactive - that boilerplate is exactly what
   @lit/context removes.
 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>JST — context (provide / consume)</title>
+<title>JST - context (provide / consume)</title>
 <script type="module" src="../../jst.js"></script>
 <style>
   body { font-family:system-ui, sans-serif; max-width:480px; margin:3rem auto; }
@@ -55,7 +55,7 @@
 <button id="switch">Switch user</button>
 
 <script>
-  // Page-level store — the closest JST has to a Provider.
+  // Page-level store - the closest JST has to a Provider.
   const userStore = { value: { name: 'Ada' } };
   const app = document.getElementById('app');
   app.user = userStore.value;            // provide

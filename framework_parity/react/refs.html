@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!-- JST - JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
 <!--
   Source: https://react.dev/learn/manipulating-the-dom-with-refs
-  Demonstrates: refs — (1) a DOM ref to focus an input imperatively, and
+  Demonstrates: refs - (1) a DOM ref to focus an input imperatively, and
   (2) a mutable ref value that survives across renders without causing one.
-  JST status: ✓ — both ref use-cases are covered cleanly. DOM ref:
+  JST status: ✓ - both ref use-cases are covered cleanly. DOM ref:
   el.querySelector('input').focus() after render. Mutable instance value:
-  stash it on the element (el._taps) — it persists and, because it is not a
+  stash it on the element (el._taps) - it persists and, because it is not a
   declared prop, mutating it does NOT trigger a re-render, exactly like
   useRef's .current. No dedicated ref object, but nothing is lost.
 -->
@@ -46,7 +46,7 @@
 <focus-field id="ff" count="0"></focus-field>
 
 <p style="color:#666; font-size:.9rem">
-  "Tap" bumps a plain property (el._taps) — like useRef's .current, it changes
+  "Tap" bumps a plain property (el._taps) - like useRef's .current, it changes
   silently. "Reveal" copies it into a prop, which is the moment it re-renders.
 </p>
 

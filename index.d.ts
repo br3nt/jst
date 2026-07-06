@@ -48,8 +48,8 @@ export function registerPrecompiledTemplate(
 export function initializeTemplates(): Map<string, unknown>;
 
 /**
- * Statement combinators — called inside a handler body with the current event.
- * State is keyed per element + event type (+ delay). In scope bare inside
+ * Handler helpers: called inside a handler body with the current event.
+ * State is keyed per element + event type (+ delay). In scope inside
  * template handler bodies; JST.fn.* elsewhere.
  */
 export function debounce(event: Event, ms: number, fn: () => unknown): void;

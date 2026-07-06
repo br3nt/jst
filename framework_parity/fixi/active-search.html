@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!-- JST - JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
 <!--
   Source: https://github.com/bigskysoftware/fixi (debounced active search)
   Demonstrates: a search box that queries as you type (debounced) and swaps results.
-  JST status: ✓ exact — oninput calls a named function; statement combinators
-  (changed + debounce) pace the fetch and swap() lands it — the debounced
+  JST status: ✓ exact - oninput calls a named function; the handler helpers
+  (changed + debounce) pace the fetch and swap() lands it - the debounced
   behaviour fixi-core omits, as plain JS.
 -->
 <html lang="en">
@@ -27,7 +27,7 @@
 <div id="results"></div>
 
 <script type="module">
-  // Behaviour is a named function: statement combinators pace the fetch and
+  // Behaviour is a named function: the handler helpers pace the fetch and
   // swap() is jst-nav's imperative primitive. The attribute just calls it.
   import { changed, debounce } from '../../jst.js';
   import { swap } from '../../jst-nav.js';

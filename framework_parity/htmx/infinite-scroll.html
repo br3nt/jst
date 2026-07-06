@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!-- JST - JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
 <!--
   Source: https://htmx.org/examples/infinite-scroll/
   Demonstrates: as the last row scrolls into view, the next page is fetched and appended.
-  JST status: ✓ exact — the sentinel row declares onreveal (JST's synthetic
+  JST status: ✓ exact - the sentinel row declares onreveal (JST's synthetic
   reveal event, opt-in for body HTML via unsafeInlineHandlers) and calls
   swap() to append the next page, then removes itself. No hand-rolled
   IntersectionObserver.
@@ -14,7 +14,7 @@
 <title>JST · infinite-scroll</title>
 <script type="module" src="../../jst-nav.js"></script>
 <script type="module">
-  // The sentinel row uses the synthetic onreveal event in plain body HTML —
+  // The sentinel row uses the synthetic onreveal event in plain body HTML -
   // opt-in, since JST must evaluate the attribute string to wire it.
   import { configure } from '../../jst.js';
   configure({ unsafeInlineHandlers: true });

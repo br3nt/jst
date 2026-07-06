@@ -20,7 +20,7 @@
 * [x] Dynamic light-DOM children are observed and projected into slots.
 * [x] `onDisconnect(fn)` provides teardown without a full hook system.
 * [x] Uniform handlers: `on<event>` values are plain function bodies (native
-      contract) everywhere; statement combinators (`changed`, `debounce`,
+      contract) everywhere; handler helpers (`changed`, `debounce`,
       `throttle`, `keys`) + registration-only modifiers (`.once .capture
       .passive .outside`); synthetic `onreveal` event (v0.6.0).
 * [x] `jst-transition` adds CSS-owned enter, leave, and move classes.

@@ -489,9 +489,9 @@ node tools/precompile.mjs components.html <span class="tok-attr">--out</span> di
       <p>A component is a <code>&lt;script type="jst"&gt;</code> block. JST registers it as a real custom element via <code>customElements.define()</code>: the template's <code>name</code> becomes the tag name, usable anywhere plain HTML works and inspectable in DevTools like any other element. The <code>attributes</code> list declares the values available inside the template.</p>
 
       <div class="code-example">
-        <pre><code><span class="tok-tag">&lt;script</span> <span class="tok-attr">type</span>=<span class="tok-string">"jst"</span> <span class="tok-attr ann" tabindex="0" data-label="Component name" data-detail="The name becomes the custom element tag. Custom element names must contain a hyphen, so hello-name is valid and hello is not.">name</span>=<span class="tok-string">"hello-name"</span> <span class="tok-attr ann" tabindex="0" data-label="Attributes" data-detail="Attributes are case-preserved JavaScript identifiers. Declaring name and count gives the template bare locals named name and count, and element properties el.name and el.count.">attributes</span>=<span class="tok-string">"name count"</span><span class="tok-tag">&gt;</span>
+        <pre><code><span class="tok-tag">&lt;script</span> <span class="tok-attr">type</span>=<span class="tok-string">"jst"</span> <span class="tok-attr ann" tabindex="0" data-label="Component name" data-detail="The name becomes the custom element tag. Custom element names must contain a hyphen, so hello-name is valid and hello is not.">name</span>=<span class="tok-string">"hello-name"</span> <span class="tok-attr ann" tabindex="0" data-label="Attributes" data-detail="Attributes are case-preserved JavaScript identifiers. Each one is usable two ways: as a variable inside the template (name, count) and as a property on the element (el.name, el.count).">attributes</span>=<span class="tok-string">"name count"</span><span class="tok-tag">&gt;</span>
   <span class="tok-tag">&lt;p&gt;</span>Hello, <span class="tok-tag">&lt;strong&gt;</span><span class="tok-jst ann" tabindex="0" data-label="$(name)" data-detail="$(expr) evaluates JavaScript and HTML-escapes the result before inserting it into the output.">$(name)</span><span class="tok-tag">&lt;/strong&gt;</span>.<span class="tok-tag">&lt;/p&gt;</span>
-  <span class="tok-tag">&lt;button</span> <span class="tok-event ann" tabindex="0" data-label="onclick" data-detail="on&lt;event&gt; values are plain function bodies - the same contract as a native inline handler: event is in scope, this is the element. JST compiles the body in render scope (so template params are live values) and attaches it with addEventListener. Nothing new to learn.">onclick</span>=<span class="tok-string">"el.count = (el.count || 0) + 1"</span><span class="tok-tag">&gt;</span>
+  <span class="tok-tag">&lt;button</span> <span class="tok-event ann" tabindex="0" data-label="onclick" data-detail="on&lt;event&gt; values are plain function bodies, the same contract as a native inline handler: event is in scope and this is the element. JST compiles the body in render scope (so template values stay live) and attaches it with addEventListener.">onclick</span>=<span class="tok-string">"el.count = (el.count || 0) + 1"</span><span class="tok-tag">&gt;</span>
     Clicked <span class="tok-jst ann" tabindex="0" data-label="$(count || 0)" data-detail="This is plain JavaScript. There is no second expression language; use the operators and functions you already know.">$(count || 0)</span> times
   <span class="tok-tag">&lt;/button&gt;</span>
 <span class="tok-tag">&lt;/script&gt;</span>
@@ -524,7 +524,7 @@ node tools/precompile.mjs components.html <span class="tok-attr">--out</span> di
         <tr><td><code class="chip js">$ statement</code></td><td>Run a JavaScript statement line.</td></tr>
         <tr><td><code class="chip js">${ ... }</code></td><td>Run a JavaScript block.</td></tr>
         <tr><td><code class="chip prop">.property="$(expr)"</code></td><td>Set a JavaScript property on a rendered element.</td></tr>
-        <tr><td><code class="chip event">on&lt;event&gt;="…statements…"</code></td><td>Add an event listener. The value is a plain function body - <code>event</code> in scope, <code>this</code> = the element - exactly like a native inline handler.</td></tr>
+        <tr><td><code class="chip event">on&lt;event&gt;="…statements…"</code></td><td>Add an event listener. The value is a plain function body (<code>event</code> in scope, <code>this</code> is the element), exactly like a native inline handler.</td></tr>
         <tr><td><code class="chip attr">jst-key="$(id)"</code></td><td>Preserve DOM identity in lists.</td></tr>
         <tr><td><code class="chip attr">jst-model="title"</code></td><td>Local form shorthand: read/write <code>el.title</code>.</td></tr>
         <tr><td><code class="chip jst">$(slot())</code></td><td>Project the component's original children.</td></tr>
@@ -553,11 +553,11 @@ node tools/precompile.mjs components.html <span class="tok-attr">--out</span> di
       <p>An <code>on&lt;event&gt;</code> attribute value is a <strong>function body</strong>, exactly like a native inline handler: <code>event</code> is in scope and <code>this</code> is the element. In plain body HTML the browser compiles it; in a JST template the JST compiler does, and template values (<code>item</code>, <code>el</code>, your declared attributes) stay usable inside the handler.</p>
 
       <div class="code-example">
-        <pre><code><span class="tok-tag">&lt;form</span> <span class="tok-event ann" tabindex="0" data-label="Native statements" data-detail="preventDefault and stopPropagation need no helper - they're plain statements in the body, like every other line of JavaScript you know.">onsubmit</span>=<span class="tok-string">"event.preventDefault(); save()"</span><span class="tok-tag">&gt;</span>
+        <pre><code><span class="tok-tag">&lt;form</span> <span class="tok-event ann" tabindex="0" data-label="Native statements" data-detail="preventDefault and stopPropagation need no helper. They're plain statements in the body, like every other line of JavaScript.">onsubmit</span>=<span class="tok-string">"event.preventDefault(); save()"</span><span class="tok-tag">&gt;</span>
 <span class="tok-tag">&lt;input</span> <span class="tok-event ann" tabindex="0" data-label="Handler helpers" data-detail="changed(event) compares event.target.value with the value it saw on the previous event for that control, so keystrokes that edited nothing are skipped. debounce(event, ms, fn) defers fn until the events go quiet. State is kept per element + event type + delay, so a 300ms validate and a 2s autosave on one input never collide.">oninput</span>=<span class="tok-string">"if (changed(event)) debounce(event, 300, () =&gt; search(this.value))"</span><span class="tok-tag">&gt;</span>
-<span class="tok-tag">&lt;div</span> <span class="tok-event ann" tabindex="0" data-label="keys()" data-detail="keys(event, map) dispatches on the normalized key combo - held modifiers prefix the key in Ctrl+Alt+Meta+Shift order.">onkeydown</span>=<span class="tok-string">"keys(event, { Enter: () =&gt; open(item), Escape: () =&gt; close() })"</span><span class="tok-tag">&gt;</span>
+<span class="tok-tag">&lt;div</span> <span class="tok-event ann" tabindex="0" data-label="keys()" data-detail="keys(event, map) dispatches on the normalized key combo: held modifiers prefix the key in Ctrl+Alt+Meta+Shift order.">onkeydown</span>=<span class="tok-string">"keys(event, { Enter: () =&gt; open(item), Escape: () =&gt; close() })"</span><span class="tok-tag">&gt;</span>
 <span class="tok-tag">&lt;p</span> <span class="tok-event ann" tabindex="0" data-label="onreveal (synthetic)" data-detail="reveal is a JST synthetic event: when a handler binds onreveal, JST watches the element with an IntersectionObserver and dispatches a real CustomEvent('reveal') each time it scrolls into view. Because it's a real event, addEventListener('reveal', …) works too.">onreveal</span>=<span class="tok-string">"el.emit('seen')"</span><span class="tok-tag">&gt;</span>lazy region<span class="tok-tag">&lt;/p&gt;</span>
-<span class="tok-tag">&lt;button</span> <span class="tok-event ann" tabindex="0" data-label="Registration modifiers" data-detail="The only dotted modifiers left configure how the listener is REGISTERED - .once .capture .passive (addEventListener options) and .outside (attach to document; fire only for events outside the element). Everything about when the handler runs is plain JS in the body.">onclick.outside</span>=<span class="tok-string">"el.open = false"</span><span class="tok-tag">&gt;</span>menu<span class="tok-tag">&lt;/button&gt;</span></code></pre>
+<span class="tok-tag">&lt;button</span> <span class="tok-event ann" tabindex="0" data-label="Registration modifiers" data-detail="Dotted modifiers configure how the listener is registered: .once, .capture, and .passive map to addEventListener options, and .outside attaches to document and fires only for events outside the element. Everything about when the handler runs is plain JS in the body.">onclick.outside</span>=<span class="tok-string">"el.open = false"</span><span class="tok-tag">&gt;</span>menu<span class="tok-tag">&lt;/button&gt;</span></code></pre>
         <div class="snippet-detail" aria-live="polite"><strong>Hover over the code</strong><span>Hover over parts of the code snippet to get a detailed explanation.</span></div>
       </div>
 
@@ -569,7 +569,7 @@ node tools/precompile.mjs components.html <span class="tok-attr">--out</span> di
         <tr><td><code>changed(event)</code></td><td>Compares <code>event.target.value</code> with the value it saw on the previous event for that control, starting from the control's initial value. Returns <code>true</code> only when they differ, so events that edited nothing (arrow keys, Shift) are skipped in active search.</td></tr>
         <tr><td><code>keys(event, map)</code></td><td>Keyboard shortcuts: <code>keys(event, { Enter: () =&gt; save(), 'Meta+k': () =&gt; palette() })</code>.</td></tr>
       </table>
-      <p>Our helpers are ordinary functions, so you can add your own and use them the same way: define <code>typeahead</code> once in your app's JS, then call it from any attribute - <code>oninput="typeahead(event)"</code>.</p>
+      <p>Our helpers are ordinary functions, so you can add your own and use them the same way: define <code>typeahead</code> once in your app's JS, then call it from any attribute: <code>oninput="typeahead(event)"</code>.</p>
 
       <div class="callout">
         <strong>One quirk worth knowing.</strong> In a native inline handler the browser resolves undotted names against the element itself, so writing <code>value</code> can silently mean <code>this.value</code>. JST handlers do not recreate that scope chain: always write <code>this.value</code>. This is deliberate: the element's hundreds of DOM properties would otherwise shadow your template values.
@@ -580,7 +580,7 @@ node tools/precompile.mjs components.html <span class="tok-attr">--out</span> di
 
     <section id="data-flow">
       <h2>Data Flow</h2>
-      <p>In raw top-level HTML, pass simple values as attributes and rich values with normal JavaScript property assignment. Inside a JST template, a dot-prefixed attribute assigns a JavaScript property (<code>.item="$(item)"</code>) and <code>on&lt;event&gt;</code> attaches a listener.</p>
+      <p>In raw top-level HTML, attributes carry the data (JSON arrays and objects included) and property assignment carries what JSON cannot: functions, class instances, DOM nodes. Inside a JST template, a dot-prefixed attribute assigns a JavaScript property (<code>.item="$(item)"</code>) and <code>on&lt;event&gt;</code> attaches a listener.</p>
       <div class="grid">
         <div>
           <h3>Raw HTML + page JavaScript</h3>
@@ -615,13 +615,13 @@ node tools/precompile.mjs components.html <span class="tok-attr">--out</span> di
           </div>
         </div>
       </div>
-      <div class="callout">Dot-prefixed attributes are JST template syntax (a single <code>$(...)</code> expression, compiled only inside <code>&lt;script type="jst"&gt;</code>). <code>on&lt;event&gt;</code> means the same thing everywhere - a function body - the difference is who compiles it: the JST compiler inside a template (render scope, strict-CSP safe), the browser in raw top-level HTML (native inline handler, relaxed CSP). A <code>$(...)</code> form inside a handler body is a compile error.</div>
+      <div class="callout">Dot-prefixed attributes are JST template syntax (a single <code>$(...)</code> expression, compiled only inside <code>&lt;script type="jst"&gt;</code>). <code>on&lt;event&gt;</code> means the same thing everywhere: a function body. What varies is who compiles it: the JST compiler inside a template (render scope, strict-CSP safe), or the browser in raw top-level HTML (native inline handler, relaxed CSP). A <code>$(...)</code> form inside a handler body is a compile error.</div>
     </section>
 
     <section id="state-and-forms">
       <h2>State, Forms, Lists</h2>
       <h3>State Updates</h3>
-      <p>Assigning a declared prop property publishes component state. Objects and arrays render even when the reference is the same, because assigning the same reference is treated as an explicit publish signal.</p>
+      <p>Assigning a declared property publishes component state. Objects and arrays render even when the reference is the same, because assigning the same reference is treated as an explicit publish signal.</p>
       <div class="code-example">
         <pre><code><span class="tok-js">counter.count = counter.count + 1;</span>
 
@@ -680,12 +680,12 @@ node tools/precompile.mjs components.html <span class="tok-attr">--out</span> di
       </div>
       <p>Use ordinary links and forms for whole-resource navigation: <code>GET /orders/4471</code>, <code>GET /orders/4471/edit</code>, <code>POST /orders/4471/items</code>, <code>PATCH /orders/4471/items/8</code>. Fragment swaps are an enhancement for places where partial updates are worth the extra moving parts.</p>
 
-      <h3 id="jst-nav">jst-nav - enhance links and forms</h3>
-      <p>The opt-in <code>jst-nav.js</code> library does exactly one thing: it upgrades elements that <em>already act</em> - a link navigates, a form submits - so their native action fetches a fragment instead of loading a whole page. The URL and verb come from the element's own <code>href</code> / <code>action</code> / <code>method</code>; adding any effect attribute opts it in, and it degrades to normal navigation with JS off.</p>
+      <h3 id="jst-nav">jst-nav: enhance links and forms</h3>
+      <p>The opt-in <code>jst-nav.js</code> library does exactly one thing: it upgrades elements that <em>already act</em> (a link navigates, a form submits) so their native action fetches a fragment instead of loading a whole page. The URL and verb come from the element's own <code>href</code> / <code>action</code> / <code>method</code>; adding any effect attribute opts it in, and it degrades to normal navigation with JS off.</p>
 
       <div class="code-example">
-        <pre><code><span class="tok-tag">&lt;a</span> <span class="tok-attr">href</span>=<span class="tok-string">"/page/2"</span> <span class="tok-attr ann" tabindex="0" data-label="jst-target" data-detail="Where the response lands - 100% CSS selectors: a bare selector, this, closest &lt;sel&gt;, find &lt;sel&gt;, or any :scope selector. Presence of any effect attribute opts the element in.">jst-target</span>=<span class="tok-string">"#list"</span><span class="tok-tag">&gt;</span>next<span class="tok-tag">&lt;/a&gt;</span>
-<span class="tok-tag">&lt;form</span> <span class="tok-attr ann" tabindex="0" data-label="Native attributes" data-detail="The URL comes from action and the verb from method - the platform's own spelling. Unsafe same-origin requests automatically carry the CSRF token from &lt;meta name=&quot;csrf-token&quot;&gt;.">action</span>=<span class="tok-string">"/orders"</span> <span class="tok-attr">method</span>=<span class="tok-string">"post"</span> <span class="tok-attr">jst-target</span>=<span class="tok-string">"#list"</span> <span class="tok-attr ann" tabindex="0" data-label="jst-swap" data-detail="How the response lands: innerHTML (default), outerHTML, beforebegin/afterbegin/beforeend/afterend, delete, none, morph, or transition (View Transition API).">jst-swap</span>=<span class="tok-string">"beforeend"</span><span class="tok-tag">&gt;</span>…<span class="tok-tag">&lt;/form&gt;</span>
+        <pre><code><span class="tok-tag">&lt;a</span> <span class="tok-attr">href</span>=<span class="tok-string">"/page/2"</span> <span class="tok-attr ann" tabindex="0" data-label="jst-target" data-detail="Where the response lands. Every target is a CSS selector: a plain selector, this, closest &lt;sel&gt;, find &lt;sel&gt;, or any :scope selector. The presence of any effect attribute opts the element in.">jst-target</span>=<span class="tok-string">"#list"</span><span class="tok-tag">&gt;</span>next<span class="tok-tag">&lt;/a&gt;</span>
+<span class="tok-tag">&lt;form</span> <span class="tok-attr ann" tabindex="0" data-label="Native attributes" data-detail="The URL comes from action and the verb from method: the platform's own spelling. Unsafe same-origin requests automatically carry the CSRF token from &lt;meta name=&quot;csrf-token&quot;&gt;.">action</span>=<span class="tok-string">"/orders"</span> <span class="tok-attr">method</span>=<span class="tok-string">"post"</span> <span class="tok-attr">jst-target</span>=<span class="tok-string">"#list"</span> <span class="tok-attr ann" tabindex="0" data-label="jst-swap" data-detail="How the response lands: innerHTML (default), outerHTML, beforebegin/afterbegin/beforeend/afterend, delete, none, morph, or transition (View Transition API).">jst-swap</span>=<span class="tok-string">"beforeend"</span><span class="tok-tag">&gt;</span>…<span class="tok-tag">&lt;/form&gt;</span>
 
 <span class="tok-comment">&lt;!-- A region whose content lives at a URL is a COMPONENT, not a decorated div --&gt;</span>
 <span class="tok-tag">&lt;jst-include</span> <span class="tok-attr ann" tabindex="0" data-label="jst-include" data-detail="From jst-behaviors.js: src for an HTML fragment, like &lt;img src&gt;. Eager by default; when=&quot;visible&quot; defers the fetch until it scrolls into view. Fires jst:included when the fragment lands.">src</span>=<span class="tok-string">"/comments"</span> <span class="tok-attr">when</span>=<span class="tok-string">"visible"</span><span class="tok-tag">&gt;&lt;/jst-include&gt;</span></code></pre>
@@ -694,7 +694,7 @@ node tools/precompile.mjs components.html <span class="tok-attr">--out</span> di
 
       <p>Other effect attributes: <code>jst-select</code> (pull a subtree out of a full-page response), <code>jst-push-url</code> / <code>jst-replace-url</code> (history), <code>jst-confirm</code>, <code>jst-boost</code> (boost every descendant link/form of a container), <code>jst-target-4xx/5xx/error</code> (route error responses), plus out-of-band swaps via <code>jst-swap-oob</code> in the response. Cancelable lifecycle events (<code>jst:before-request</code>, <code>jst:before-swap</code>) bubble from the element.</p>
 
-      <p>Every other cause - keystrokes, reveal, polling, websockets - is plain JS calling the same pipeline through <strong><code>swap(target, url, options)</code></strong>, the imperative primitive:</p>
+      <p>Every other cause (keystrokes, reveal, polling, websockets) is plain JavaScript calling <strong><code>swap(target, url, options)</code></strong>, the same pipeline the attributes use:</p>
 
       <div class="code-example">
         <pre><code><span class="tok-js">import</span> { swap } <span class="tok-js">from</span> <span class="tok-string">'./jst-nav.js'</span>;
@@ -705,12 +705,12 @@ node tools/precompile.mjs components.html <span class="tok-attr">--out</span> di
   <span class="tok-attr ann" tabindex="0" data-label="debounce + swap" data-detail="swap() runs the same pipeline as the declarative attributes (JST-Request + CSRF headers, select, out-of-band swaps, re-scan) minus the element-centric parts. Returns the Response.">debounce</span>(event, 300, () =&gt; swap(<span class="tok-string">'#results'</span>, <span class="tok-string">'/search?q='</span> + event.target.value));
 };
 
-<span class="tok-comment">// polling is an interval; a websocket push is a listener - no grammar</span>
+<span class="tok-comment">// polling is an interval; a websocket push is a listener</span>
 setInterval(() =&gt; swap(<span class="tok-string">'#status'</span>, <span class="tok-string">'/job/42'</span>), 2000);</code></pre>
         <div class="snippet-detail" aria-live="polite"><strong>Hover over the code</strong><span>Hover over parts of the code snippet to get a detailed explanation.</span></div>
       </div>
 
-      <div class="callout"><strong>The line that keeps this small:</strong> jst-nav decorates elements that already act; it never invents behaviour on inert elements (that's a component's job, like <code>&lt;jst-include&gt;</code>) and never evaluates attribute strings (values are inert URLs/selectors, so server HTML can't smuggle code). There is no trigger grammar to learn - causes are events, timers, and components: things JavaScript already has.</div>
+      <div class="callout"><strong>The line that keeps this small:</strong> jst-nav decorates elements that already act; it never invents behaviour on inert elements (that's a component's job, like <code>&lt;jst-include&gt;</code>) and never evaluates attribute strings (values are inert URLs/selectors, so server HTML can't smuggle code). There is no trigger grammar to learn. Causes are events, timers, and components: things JavaScript already has.</div>
     </section>
 
     <section id="server-side-rendering">
@@ -792,18 +792,18 @@ setInterval(() =&gt; swap(<span class="tok-string">'#status'</span>, <span class
         <div class="snippet-detail" aria-live="polite"><strong>Hover over the code</strong><span>Hover over parts of the code snippet to get a detailed explanation.</span></div>
       </div>
       <h3>Names, never code (the script-gadget rule)</h3>
-      <p>jst-nav and jst-behaviors read attribute values from the <em>live</em> DOM - including server-rendered and swapped-in HTML - so their values are only ever inert strings: URLs, CSS selectors, names. This is a hard line, not a style choice: a framework that evaluates DOM attribute strings becomes a <strong>script gadget</strong> - on a site that deployed strict CSP precisely to neutralise injected <code>onclick=</code> handlers, an attacker who achieves HTML injection could ride the framework around the policy. JST refuses to be that gadget.</p>
+      <p>jst-nav and jst-behaviors read attribute values from the <em>live</em> DOM, including server-rendered and swapped-in HTML, so their values are only ever inert strings: URLs, CSS selectors, names. This is a hard line, not a style choice. A framework that evaluates DOM attribute strings becomes a <strong>script gadget</strong>: on a site that deployed strict CSP precisely to neutralise injected <code>onclick=</code> handlers, an attacker who achieves HTML injection could ride the framework around the policy. JST refuses to be that gadget.</p>
 
       <h3 id="csp">Handlers and CSP</h3>
-      <p>In plain body HTML, native <code>oninput="typeahead(event)"</code> is evaluated by the <em>browser</em> - plain platform code that needs a relaxed CSP. Under a strict CSP, the same behaviour moves into a template (where handlers compile to <code>addEventListener</code> - no nonce, no <code>unsafe-inline</code>) or a script. <code>jst-lint --csp</code> lists every native inline handler when you're ready to make that move.</p>
+      <p>In plain body HTML, native <code>oninput="typeahead(event)"</code> is evaluated by the <em>browser</em>: plain platform code that needs a relaxed CSP. Under a strict CSP, the same behaviour moves into a template (where handlers compile to <code>addEventListener</code>, with no nonce and no <code>unsafe-inline</code>) or a script. <code>jst-lint --csp</code> lists every native inline handler when you're ready to make that move.</p>
       <p><strong>Component events and synthetic events in body HTML</strong> (an <code>onitem-selected</code> or <code>onreveal</code> attribute outside a template) require JST to evaluate the attribute string, because the browser only wires its own event names. So they're opt-in and loudly named:</p>
       <div class="code-example">
-        <pre><code>configure({ <span class="tok-attr ann" tabindex="0" data-label="unsafeInlineHandlers" data-detail="Default off. With no CSP, the platform already evaluates inline handlers, so this adds little new surface - but never enable it on pages that interpolate untrusted data into HTML, and it is deliberately NOT coupled to dev mode (a flag that changes security semantics between dev and prod is a footgun).">unsafeInlineHandlers</span>: true });</code></pre>
+        <pre><code>configure({ <span class="tok-attr ann" tabindex="0" data-label="unsafeInlineHandlers" data-detail="Default off. With no CSP the platform already evaluates inline handlers, so this adds little new surface. Never enable it on pages that interpolate untrusted data into HTML. It is deliberately not coupled to dev mode: a flag that changes security semantics between dev and prod is a footgun.">unsafeInlineHandlers</span>: true });</code></pre>
         <div class="snippet-detail" aria-live="polite"><strong>Hover over the code</strong><span>Hover over parts of the code snippet to get a detailed explanation.</span></div>
       </div>
 
       <h3>How far to take strict CSP</h3>
-      <p>The strict-CSP ladder: plain pages need nothing special → interactive regions become components (islands), precompiled for no <code>unsafe-eval</code> → and at the extreme, the whole page becomes one root component. <strong>Know when you've overcorrected:</strong> a single app-shell template is a SPA - you lose native cross-document view transitions and simple server-rendered pages for a constraint you may not actually have. If your CSP isn't strict, you don't need any of this; put the ladder down at the rung your policy requires and no further.</p>
+      <p>The strict-CSP ladder: plain pages need nothing special; interactive regions become precompiled components, removing <code>unsafe-eval</code>; at the extreme, the whole page becomes one root component. <strong>Know when you've overcorrected:</strong> a single app-shell template is a SPA. You lose native cross-document view transitions and simple server-rendered pages for a constraint you may not actually have. If your CSP isn't strict, you don't need any of this; stop at the rung your policy requires and no further.</p>
 
       <h3>Configuration</h3>
       <div class="code-example">
@@ -821,7 +821,7 @@ configure({
       </div>
 
       <h3>Testing &amp; TypeScript</h3>
-      <p><strong>Testing:</strong> components are real custom elements in light DOM - render them into a DOM (jsdom with custom elements, or Playwright against a served page), set attributes/properties, dispatch events, and assert on <code>innerHTML</code>. No special test renderer. <strong>TypeScript:</strong> the npm package ships hand-written <code>.d.ts</code> for the runtime API, <code>window.JST</code>, <code>JST.nav</code>, and the handler helpers - typed consumption without a build step (typed template <em>expressions</em> are a known gap).</p>
+      <p><strong>Testing:</strong> components are real custom elements in light DOM. Render them into a DOM (jsdom with custom elements, or Playwright against a served page), set attributes and properties, dispatch events, and assert on <code>innerHTML</code>. No special test renderer. <strong>TypeScript:</strong> the repo ships hand-written <code>.d.ts</code> files for the runtime API, <code>window.JST</code>, <code>JST.nav</code>, and the handler helpers, so consumption is typed without a build step. Typed template <em>expressions</em> are a known gap.</p>
     </section>
 
     <section id="browser-support">
@@ -834,16 +834,16 @@ configure({
       <h2>Known Gaps</h2>
       <ul>
         <li><strong>Formatter / tree-sitter / typed expressions:</strong> planned. VS Code diagnostics and highlighting exist now.</li>
-        <li><strong>Keyed reconciliation:</strong> shipped and tested, but still a high-risk area that should keep gaining adversarial tests.</li>
-        <li><strong>Transitions:</strong> CSS-driven v1 shipped for keyed enter/leave; richer move/FLIP behavior may grow later.</li>
+        <li><strong>Keyed reconciliation:</strong> tested, but the most intricate part of the runtime; it should keep gaining adversarial tests.</li>
+        <li><strong>Transitions:</strong> CSS-driven enter/leave works for keyed lists; richer move/FLIP behavior may come later.</li>
         <li><strong>Light DOM:</strong> deliberate. There is no style or id encapsulation, so prefer classes and derive ids from attributes.</li>
-        <li><strong>Handler bodies and $-forms:</strong> a handler body cannot contain <code>$(…)</code>/<code>$</code>-forms or lines starting with <code>$ </code> - use a named function for complex handlers.</li>
+        <li><strong>Handler bodies and $-forms:</strong> a handler body cannot contain <code>$(…)</code> forms or lines starting with <code>$ </code>. Use a named function for complex handlers.</li>
       </ul>
     </section>
 
     <section id="tooling">
       <h2>Tooling</h2>
-      <p>The VS Code extension under <code>tooling/</code> already provides syntax highlighting, diagnostics, and a language server. The next tooling path is marketplace packaging, formatter support, typed expression checking, and a tree-sitter grammar.</p>
+      <p>The VS Code extension under <code>tooling/</code> provides syntax highlighting, diagnostics, and a language server. Planned next: marketplace packaging, formatter support, typed expression checking, and a tree-sitter grammar.</p>
       <div class="callout">Tooling should support the same simple model as runtime JST: attributes are declared explicitly, template expressions are JavaScript, invalid bindings fail loudly, and rich values move through properties rather than string attributes.</div>
     </section>
   </main>

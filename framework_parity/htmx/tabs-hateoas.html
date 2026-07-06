@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!-- JST - JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
 <!--
   Source: https://htmx.org/examples/tabs-hateoas/
-  Demonstrates: HATEOAS tabs — clicking a tab fetches a server fragment that contains BOTH
+  Demonstrates: HATEOAS tabs - clicking a tab fetches a server fragment that contains BOTH
   the tab strip (with the active tab marked) and the tab body, and swaps the whole thing.
   JST status: ✓ exact match. Each tab click fetches a fragment that ships a fresh
   <script type="jst"> definition + markup; it's injected into the mount and JST's
@@ -36,7 +36,7 @@
     3: 'The IBM PC is the first computer released in the IBM PC model line.',
   };
   // Each request returns a self-contained fragment: a fresh component def + usage,
-  // marking the active tab — pure HATEOAS.
+  // marking the active tab - pure HATEOAS.
   JSTMock.route('GET /api/tab/:id', req => {
     const id = req.params.id;
     const buttons = Object.entries(TABS).map(([k, label]) =>

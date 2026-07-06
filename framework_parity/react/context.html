@@ -1,16 +1,16 @@
 <!DOCTYPE html>
-<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!-- JST - JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
 <!--
   Source: https://react.dev/learn/passing-data-deeply-with-context
-  Demonstrates: useContext — passing a "theme" deep into a tree without every
+  Demonstrates: useContext - passing a "theme" deep into a tree without every
   intermediate component needing to know about it.
-  JST status: (i) partial — JST has NO context API. The two honest options are
+  JST status: (i) partial - JST has NO context API. The two honest options are
   (a) prop-drill the value through every layer, or (b) keep it in a page-level
   store. This file shows BOTH: the theme is drilled top -> toolbar -> button
   via .theme="$(theme)" bindings (a parent re-render re-applies the binding so
   the change cascades down), AND it is mirrored in a page-level store object so
   components that the page can reach are kept in sync. Neither gives React's
-  zero-boilerplate "any descendant just reads the context" — intermediate
+  zero-boilerplate "any descendant just reads the context" - intermediate
   components MUST forward the prop. That forwarding is the gap context removes.
 -->
 <html lang="en">
@@ -34,7 +34,7 @@
 <script type="jst" name="themed-button" attributes="theme label">
   <button class="$(theme)" data-testid="deep-button"
           onclick="el.emit('toggle-theme')">
-    $(label) — theme is $(theme) (click to flip)
+    $(label) - theme is $(theme) (click to flip)
   </button>
 </script>
 
@@ -54,7 +54,7 @@
 <themed-app id="app" theme="light"></themed-app>
 
 <script>
-  // Page-level store — the (b) approach, the closest JST has to a Provider.
+  // Page-level store - the (b) approach, the closest JST has to a Provider.
   const themeStore = { value: 'light' };
   const app = document.getElementById('app');
   app.theme = themeStore.value;

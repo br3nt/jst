@@ -5,7 +5,7 @@
     "source": "https://htmx.org/examples/click-to-edit/",
     "status": "exact",
     "file": "htmx/click-to-edit.html",
-    "note": "View\u2194edit on an `editing` flag; PUT persists; props re-render."
+    "note": "View↔edit on an `editing` flag; PUT persists; props re-render."
   },
   {
     "framework": "HTMX",
@@ -61,7 +61,7 @@
     "source": "https://htmx.org/examples/infinite-scroll/",
     "status": "exact",
     "file": "htmx/infinite-scroll.html",
-    "note": "jst-nav jst-trigger=\"revealed\" + a sentinel carrying the next trigger. No hand-rolled IntersectionObserver."
+    "note": "Sentinel row binds the synthetic `onreveal` and calls `swap()` to append the next page; the fragment carries the next sentinel."
   },
   {
     "framework": "HTMX",
@@ -69,7 +69,7 @@
     "source": "https://htmx.org/examples/active-search/",
     "status": "exact",
     "file": "htmx/active-search.html",
-    "note": "jst-nav jst-trigger=\"keyup changed delay:300ms\"; triggering input value sent; in-flight requests abort."
+    "note": "`oninput` paces the fetch with `changed()` + `debounce()`; `swap()` lands the results."
   },
   {
     "framework": "HTMX",
@@ -77,7 +77,7 @@
     "source": "https://htmx.org/examples/progress-bar/",
     "status": "exact",
     "file": "htmx/progress-bar.html",
-    "note": "jst-nav jst-trigger=\"every 200ms\" + jst-swap=\"outerHTML\"; done response drops the poller so it self-stops."
+    "note": "A `setInterval` calls `swap()` while the job runs; the done response drops the poller row, so the poll stops itself."
   },
   {
     "framework": "HTMX",
@@ -93,7 +93,7 @@
     "source": "https://htmx.org/examples/tabs-hateoas/",
     "status": "exact",
     "file": "htmx/tabs-hateoas.html",
-    "note": "Each tab fetch returns a fresh component def + markup; auto-upgraded. Pure HATEOAS \u2014 JST's core strength."
+    "note": "Each tab fetch returns a fresh component def + markup; auto-upgraded. Pure HATEOAS: JST's core strength."
   },
   {
     "framework": "HTMX",
@@ -117,7 +117,7 @@
     "source": "https://htmx.org/examples/keyboard-shortcuts/",
     "status": "exact",
     "file": "htmx/keyboard-shortcuts.html",
-    "note": "jst-nav jst-trigger=\"keydown[Shift+D] from:body\"; body-level key-filtered triggers."
+    "note": "A body-level keydown listener: `keys(event, {...})` dispatches on the combo and `swap()` fetches the fragment."
   },
   {
     "framework": "HTMX",
@@ -125,7 +125,7 @@
     "source": "https://htmx.org/examples/update-other-content/",
     "status": "exact",
     "file": "htmx/polling.html",
-    "note": "jst-nav jst-trigger=\"every 500ms\" + jst-swap=\"none\"; one response updates two regions via jst-swap-oob."
+    "note": "`setInterval` + `swap(null, url, { swap: 'none' })`; one response updates two regions via `jst-swap-oob`."
   },
   {
     "framework": "Alpine.js",
@@ -165,7 +165,7 @@
     "source": "https://alpinejs.dev/directives/on",
     "status": "exact",
     "file": "alpine/on.html",
-    "note": "`on<event>` covers listeners plus `.enter`, `.prevent`, `.stop`, `.outside`, and debounce modifiers."
+    "note": "`on<event>` covers listeners; behaviour is plain statements in the body (`event.preventDefault()`, `keys()`, `debounce()`) and `.outside` handles click-away."
   },
   {
     "framework": "Alpine.js",
@@ -189,7 +189,7 @@
     "source": "https://alpinejs.dev/directives/if",
     "status": "exact",
     "file": "alpine/if.html",
-    "note": "`$ if (cond) { \u2026 }` includes/excludes from render."
+    "note": "`$ if (cond) { … }` includes/excludes from render."
   },
   {
     "framework": "Alpine.js",
@@ -253,7 +253,7 @@
     "source": "https://alpinejs.dev/magics/watch",
     "status": "partial",
     "file": "alpine/watch.html",
-    "note": "No watch; funnel mutations through one setter that captures old\u2192new."
+    "note": "No watch; funnel mutations through one setter that captures old→new."
   },
   {
     "framework": "Alpine.js",
@@ -261,7 +261,7 @@
     "source": "https://alpinejs.dev/directives/cloak",
     "status": "exact",
     "file": "alpine/cloak.html",
-    "note": "**Better:** custom-element `:not(:defined){display:none}` \u2014 zero JS."
+    "note": "**Better:** custom-element `:not(:defined){display:none}`, zero JS."
   },
   {
     "framework": "Alpine.js",
@@ -565,7 +565,7 @@
     "source": "https://github.com/bigskysoftware/fixi",
     "status": "exact",
     "file": "fixi/click-to-edit.html",
-    "note": "`<contact-card>` toggles view\u2194edit on an `editing` flag; PUT persists. fixi's declarative `fx-action`/`fx-target` swap is a 4-line handler."
+    "note": "`<contact-card>` toggles view↔edit on an `editing` flag; PUT persists. fixi's declarative `fx-action`/`fx-target` swap is a 4-line handler."
   },
   {
     "framework": "fixi",
@@ -581,7 +581,7 @@
     "source": "https://github.com/bigskysoftware/fixi",
     "status": "exact",
     "file": "fixi/confirm-delete.html",
-    "note": "jst-confirm=\"\u2026\" gates the DELETE; jst-swap=\"delete\" removes the row."
+    "note": "jst-confirm=\"…\" gates the DELETE; jst-swap=\"delete\" removes the row."
   },
   {
     "framework": "fixi",
@@ -605,7 +605,7 @@
     "source": "https://github.com/bigskysoftware/fixi",
     "status": "exact",
     "file": "fixi/infinite-scroll.html",
-    "note": "jst-trigger=\"revealed\" + a sentinel carrying the next trigger."
+    "note": "Sentinel binds the synthetic `onreveal` and calls `swap()`; the fragment carries the next sentinel."
   },
   {
     "framework": "fixi",
@@ -613,7 +613,7 @@
     "source": "https://github.com/bigskysoftware/fixi",
     "status": "exact",
     "file": "fixi/active-search.html",
-    "note": "jst-trigger=\"keyup changed delay:300ms\"; value sent; requests abort."
+    "note": "`oninput` paces the fetch with `changed()` + `debounce()`; `swap()` lands the results."
   },
   {
     "framework": "fixi",
@@ -677,7 +677,7 @@
     "source": "https://github.com/bigskysoftware/fixi",
     "status": "exact",
     "file": "fixi/polling.html",
-    "note": "jst-trigger=\"every 500ms\"; removing the element stops it."
+    "note": "`setInterval` calls `swap()` every 500ms; a Stop button clears the interval (fixi-core has no polling trigger either)."
   },
   {
     "framework": "fixi",
@@ -709,7 +709,7 @@
     "source": "https://lit.dev/docs/components/overview/",
     "status": "exact",
     "file": "lit/hello-world.html",
-    "note": "`LitElement` + `render()` \u2194 a `<script type=\"jst\">` that compiles to a real, inspectable custom element."
+    "note": "`LitElement` + `render()` ↔ a `<script type=\"jst\">` that compiles to a real, inspectable custom element."
   },
   {
     "framework": "Lit",
@@ -717,7 +717,7 @@
     "source": "https://lit.dev/docs/components/properties/",
     "status": "exact",
     "file": "lit/reactive-properties.html",
-    "note": "`@property name` \u2194 `props=\"name\"`; `el.name = '\u2026'` re-renders, identical to a reactive property."
+    "note": "`@property name` ↔ `props=\"name\"`; `el.name = '…'` re-renders, identical to a reactive property."
   },
   {
     "framework": "Lit",
@@ -725,7 +725,7 @@
     "source": "https://lit.dev/docs/components/properties/#attributes",
     "status": "exact",
     "file": "lit/attribute-vs-property.html",
-    "note": "Lit's attribute converter (`count=\"3\"`\u2192Number) \u2194 JST's JSON-parsed attribute; rich objects via `.data=\"$(obj)\"`."
+    "note": "Lit's attribute converter (`count=\"3\"`→Number) ↔ JST's JSON-parsed attribute; rich objects via `.data=\"$(obj)\"`."
   },
   {
     "framework": "Lit",
@@ -733,7 +733,7 @@
     "source": "https://lit.dev/docs/templates/expressions/#boolean-attribute-expressions",
     "status": "exact",
     "file": "lit/boolean-attribute.html",
-    "note": "Lit `?hidden=${!show}` \u2194 JST `.hidden=\"$(!show)\"`, which genuinely adds/removes the boolean attribute."
+    "note": "Lit `?hidden=${!show}` ↔ JST `.hidden=\"$(!show)\"`, which genuinely adds/removes the boolean attribute."
   },
   {
     "framework": "Lit",
@@ -741,7 +741,7 @@
     "source": "https://lit.dev/docs/templates/expressions/#property-expressions",
     "status": "exact",
     "file": "lit/property-expression.html",
-    "note": "Lit `.items=${this.items}` \u2194 JST `.items=\"$(arr)\"` passing an array to a child."
+    "note": "Lit `.items=${this.items}` ↔ JST `.items=\"$(arr)\"` passing an array to a child."
   },
   {
     "framework": "Lit",
@@ -749,7 +749,7 @@
     "source": "https://lit.dev/docs/components/events/",
     "status": "exact",
     "file": "lit/events.html",
-    "note": "Lit `@click=${this._handleClick}` \u2194 JST `onclick=\"$(fn)\"` mutating a local prop."
+    "note": "Lit `@click=${this._handleClick}` ↔ JST `onclick=\"$(fn)\"` mutating a local prop."
   },
   {
     "framework": "Lit",
@@ -757,7 +757,7 @@
     "source": "https://lit.dev/docs/components/events/#dispatching-events",
     "status": "exact",
     "file": "lit/child-to-parent-events.html",
-    "note": "Lit `dispatchEvent(new CustomEvent(\u2026,{bubbles,composed}))` \u2194 JST `el.emit('item-selected', detail)`; parent binds `onitem-selected`."
+    "note": "Lit `dispatchEvent(new CustomEvent(…,{bubbles,composed}))` ↔ JST `el.emit('item-selected', detail)`; parent binds `onitem-selected`."
   },
   {
     "framework": "Lit",
@@ -765,7 +765,7 @@
     "source": "https://lit.dev/docs/templates/conditionals/",
     "status": "exact",
     "file": "lit/conditional-rendering.html",
-    "note": "Lit `when(cond, a, b)` \u2194 JST `$ if (user) {\u2026} $ else {\u2026}` (signed-in/out toggle)."
+    "note": "Lit `when(cond, a, b)` ↔ JST `$ if (user) {…} $ else {…}` (signed-in/out toggle)."
   },
   {
     "framework": "Lit",
@@ -773,7 +773,7 @@
     "source": "https://lit.dev/docs/templates/lists/",
     "status": "exact",
     "file": "lit/list-rendering.html",
-    "note": "Lit `map(items, i => html\\`<li>${i}</li>\\`)` \u2194 JST `$ items.forEach`."
+    "note": "Lit `map(items, i => html\\`<li>${i}</li>\\`)` ↔ JST `$ items.forEach`."
   },
   {
     "framework": "Lit",
@@ -781,7 +781,7 @@
     "source": "https://lit.dev/docs/templates/lists/#the-repeat-directive",
     "status": "exact",
     "file": "lit/repeat-keyed.html",
-    "note": "Lit `repeat(items, i => i.id, tpl)` \u2194 JST `forEach` + `jst-key`; reorder preserves node identity and a typed input value."
+    "note": "Lit `repeat(items, i => i.id, tpl)` ↔ JST `forEach` + `jst-key`; reorder preserves node identity and a typed input value."
   },
   {
     "framework": "Lit",
@@ -789,7 +789,7 @@
     "source": "https://lit.dev/docs/components/styles/",
     "status": "partial",
     "file": "lit/styles.html",
-    "note": "Lit's `static styles = css\\`\u2026\\`` is Shadow-DOM-scoped; JST is light-DOM, so styling is ordinary global CSS \u2014 the encapsulation is the genuine gap."
+    "note": "Lit's `static styles = css\\`…\\`` is Shadow-DOM-scoped; JST is light-DOM, so styling is ordinary global CSS; the encapsulation is the genuine gap."
   },
   {
     "framework": "Lit",
@@ -797,7 +797,7 @@
     "source": "https://lit.dev/docs/templates/directives/#classmap",
     "status": "exact",
     "file": "lit/classmap-stylemap.html",
-    "note": "`classMap`/`styleMap` objects \u2194 expression-built class/style strings. No object sugar, but covers every case."
+    "note": "`classMap`/`styleMap` objects ↔ expression-built class/style strings. No object sugar, but covers every case."
   },
   {
     "framework": "Lit",
@@ -805,7 +805,7 @@
     "source": "https://lit.dev/docs/templates/directives/#ifdefined",
     "status": "exact",
     "file": "lit/ifdefined.html",
-    "note": "`ifDefined(x)` \u2194 a conditional attribute emitted only when the value is defined, so the attribute appears/disappears."
+    "note": "`ifDefined(x)` ↔ a conditional attribute emitted only when the value is defined, so the attribute appears/disappears."
   },
   {
     "framework": "Lit",
@@ -813,7 +813,7 @@
     "source": "https://lit.dev/docs/templates/directives/#live",
     "status": "exact",
     "file": "lit/forms-live.html",
-    "note": "`live(x)` \u2194 `jst-model`: the prop is the source of truth and property-aware morphing preserves caret/focus while external writes flow back."
+    "note": "`live(x)` ↔ `jst-model`: the prop is the source of truth and property-aware morphing preserves caret/focus while external writes flow back."
   },
   {
     "framework": "Lit",
@@ -821,7 +821,7 @@
     "source": "https://lit.dev/docs/templates/directives/#ref",
     "status": "partial",
     "file": "lit/ref-directive.html",
-    "note": "`ref(createRef())` \u2194 `el.querySelector(...)` after render \u2014 reaches the node to `.focus()`, but it's a manual lookup, not an auto-populated ref."
+    "note": "`ref(createRef())` ↔ `el.querySelector(...)` after render: reaches the node to `.focus()`, but it's a manual lookup, not an auto-populated ref."
   },
   {
     "framework": "Lit",
@@ -829,7 +829,7 @@
     "source": "https://lit.dev/docs/components/lifecycle/",
     "status": "exact",
     "file": "lit/lifecycle.html",
-    "note": "`connectedCallback`/`firstUpdated`/`disconnectedCallback` \u2194 `once()` (returns cleanup) + `onDisconnect()`; a Remove button proves teardown fires."
+    "note": "`connectedCallback`/`firstUpdated`/`disconnectedCallback` ↔ `once()` (returns cleanup) + `onDisconnect()`; a Remove button proves teardown fires."
   },
   {
     "framework": "Lit",
@@ -837,7 +837,7 @@
     "source": "https://lit.dev/docs/components/lifecycle/#willupdate",
     "status": "exact",
     "file": "lit/will-update.html",
-    "note": "`willUpdate()` \u2194 a `$ const fullName = \u2026` derive line in the template, run before render."
+    "note": "`willUpdate()` ↔ a `$ const fullName = …` derive line in the template, run before render."
   },
   {
     "framework": "Lit",
@@ -845,7 +845,7 @@
     "source": "https://lit.dev/docs/templates/directives/#until",
     "status": "partial",
     "file": "lit/async-until.html",
-    "note": "`until(promise, placeholder)` \u2194 a `once()`-driven fetch that sets `loading`/`result` props plus a guarded `$ if`; no `until` primitive, async wiring is explicit."
+    "note": "`until(promise, placeholder)` ↔ a `once()`-driven fetch that sets `loading`/`result` props plus a guarded `$ if`; no `until` primitive, async wiring is explicit."
   },
   {
     "framework": "Lit",
@@ -853,7 +853,7 @@
     "source": "https://lit.dev/docs/data/context/",
     "status": "partial",
     "file": "lit/context.html",
-    "note": "`@lit/context` provide/consume \u2194 prop-drill through a page-level store; intermediates must forward and reads aren't auto-reactive."
+    "note": "`@lit/context` provide/consume ↔ prop-drill through a page-level store; intermediates must forward and reads aren't auto-reactive."
   },
   {
     "framework": "Lit",
@@ -861,7 +861,7 @@
     "source": "https://lit.dev/docs/data/task/",
     "status": "partial",
     "file": "lit/async-task.html",
-    "note": "`@lit/task` \u2194 a hand-written controller: a `productId` change runs a guarded fetch walking a `status` prop through pending\u2192complete\u2192error."
+    "note": "`@lit/task` ↔ a hand-written controller: a `productId` change runs a guarded fetch walking a `status` prop through pending→complete→error."
   },
   {
     "framework": "Svelte",
@@ -981,7 +981,7 @@
     "source": "https://angular.dev/guide/templates",
     "status": "exact",
     "file": "angular/event-binding.html",
-    "note": "onclick=\"$(fn)\" is (click)."
+    "note": "`onclick=\"fn(event)\"` is `(click)`."
   },
   {
     "framework": "Angular",

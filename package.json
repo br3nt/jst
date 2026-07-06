@@ -76,7 +76,7 @@
     "lint": "node tools/lint.mjs",
     "test:browser": "node run_browser_tests.mjs",
     "test:examples": "node run_example_smoke.mjs",
-    "test:parity": "node framework_parity/verify.mjs framework_parity/htmx/*.html framework_parity/alpine/*.html framework_parity/vue/*.html framework_parity/react/*.html framework_parity/svelte/*.html framework_parity/solid/*.html framework_parity/angular/*.html",
+    "test:parity": "node framework_parity/verify.mjs framework_parity/htmx/*.html framework_parity/alpine/*.html framework_parity/vue/*.html framework_parity/react/*.html framework_parity/fixi/*.html framework_parity/lit/*.html framework_parity/svelte/*.html framework_parity/solid/*.html framework_parity/angular/*.html",
     "test:agentic": "node agentic_feed/run_feed_smoke.mjs",
     "test:vscode": "npm --prefix tooling/vscode-jst test",
     "precompile": "node tools/precompile.mjs"

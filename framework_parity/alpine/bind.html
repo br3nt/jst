@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!-- JST - JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
 <!--
   Source: https://alpinejs.dev/directives/bind
-  Demonstrates: Alpine x-bind / :class and :attribute — bind class lists and
+  Demonstrates: Alpine x-bind / :class and :attribute - bind class lists and
   arbitrary attributes (disabled, aria-pressed, href) to expressions.
-  JST status: ✓ exact — interpolation works inside attribute values
+  JST status: ✓ exact - interpolation works inside attribute values
   (class="$(...)", disabled="$(...)"), covering x-bind's class & attribute use.
 -->
 <html lang="en">
@@ -23,12 +23,12 @@
 
 <script type="jst" name="x-bind-demo" attributes="on">
   <div>
-    <!-- :class — class string driven by state -->
+    <!-- :class - class string driven by state -->
     <span class="pill $(on ? 'active' : '')" data-testid="pill"
           aria-pressed="$(on ? 'true' : 'false')"
           onclick="el.on = !el.on">Toggle me</span>
 
-    <!-- :attribute — bind disabled -->
+    <!-- :attribute - bind disabled -->
     <button data-testid="btn" $(on ? '' : 'disabled') onclick="alert('clicked')">
       Enabled only when toggled on
     </button>

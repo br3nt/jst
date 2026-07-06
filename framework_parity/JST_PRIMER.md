@@ -14,17 +14,17 @@ done, that's a finding - mark it `(i)` or `x`. Do not "fix" it by editing the fr
 <script type="jst" name="my-counter" attributes="count label">
   <div>
     <strong>$(label)</strong>: $(count)
-    <button onclick="$(() => el.count = (el.count || 0) + 1)">+</button>
+    <button onclick="el.count = (el.count || 0) + 1">+</button>
   </div>
 </script>
 
 <my-counter count="0" label="Clicks"></my-counter>
 ```
 
-- `attributes="count label"` declares case-preserved **props** available as bare
-  locals inside the template.
-- Each prop is also a **property**: `el.count = 5` updates and re-renders.
-- External multi-word HTML attributes use kebab-case and map to camelCase props:
+- `attributes="count label"` declares case-preserved attributes, available by
+  name inside the template.
+- Each declared attribute is also a **property**: `el.count = 5` updates and re-renders.
+- External multi-word HTML attributes use kebab-case and map to camelCase properties:
   `on-toggle` -> `onToggle`.
 
 ## Template syntax
@@ -38,14 +38,14 @@ done, that's a finding - mark it `(i)` or `x`. Do not "fix" it by editing the fr
 | `${ ... }` | A block of JS |
 | `$$` | A literal `$` |
 | `.prop="$(expr)"` | Set a **JS property** on the child element to expr's value (pass rich data/objects) |
-| `on<event>="…body…"` | The value is a plain **function body** (native contract: `event` in scope, `this` = the element), compiled in render scope and attached with `addEventListener`. Statement combinators in scope: `if (changed(event)) …`, `debounce(event, 300, () => …)`, `keys(event, { Enter: () => … })`. Registration-only dotted modifiers: `.once .capture .passive .outside` |
+| `on<event>="…body…"` | The value is a plain **function body** (native contract: `event` in scope, `this` = the element), compiled in render scope and attached with `addEventListener`. Handler helpers in scope: `if (changed(event)) …`, `debounce(event, 300, () => …)`, `keys(event, { Enter: () => … })`. Registration-only dotted modifiers: `.once .capture .passive .outside` |
 | `jst-model="prop"` | Local form shorthand: read from `prop`, update `el[prop]` on user input |
 | `jst-key="$(id)"` | Preserve DOM identity during list inserts/reorders |
 | `$(slot())` | Project the component's original child nodes (default slot) |
 | `$(slot('name', 'fallback'))` | Project children marked `slot="name"`, else fallback |
 | `onDisconnect(fn)` | Register teardown when the component disconnects |
 
-Inside a template you can use the props by name plus these globals:
+Inside a template you can use the declared attributes by name plus these globals:
 - `el` - the component element instance. `el.emit(name, detail)`, `el.querySelector(...)`, `el.count = ...`.
 - `trustedHTML(value)` - wrap a trusted string so it is NOT escaped.
 - `slot(name?, fallback?)` - slot projection (see above).
@@ -69,7 +69,7 @@ Inside a template you can use the props by name plus these globals:
 
 ## The data model - this is the important part
 
-**Props down, events up.** Components are renderers.
+**Attributes down, events up.** Components are renderers.
 
 - **Data IN, two ways:**
   - *Attributes* - strings, JSON-parsed for primitives: `count="0"` -> number `0`,
@@ -78,8 +78,8 @@ Inside a template you can use the props by name plus these globals:
     template, pass rich data to a child with `.items="$(theArray)"`.
 - **Data OUT:** `el.emit('change', detail)` dispatches a **bubbling** `CustomEvent`.
   Parents/pages listen with `addEventListener('change', e => ... e.detail ...)`.
-- **Local state:** a component can update *its own* props:
-  `onclick="$(() => el.count = (el.count || 0) + 1)"` re-renders it.
+- **Local state:** a component can update *its own* properties:
+  `onclick="el.count = (el.count || 0) + 1"` re-renders it.
   This is how you build self-contained interactive widgets (Alpine/Vue style).
 - **Shared/app state:** keep it in the page (a plain JS object/array); pass down via
   properties, mutate on events, reassign to re-render.
@@ -112,13 +112,13 @@ Handler return value:
 - `{ status, body, headers }` -> full control.
 `req` = `{ method, url, params, query, form, raw }`.
 
-## Known gaps to expect (classify honestly)
+## Known gaps to expect (classify accurately)
 
 These are likely `(i)` (workaround) or `x`. Don't paper over them.
 - **Transitions are CSS-owned:** use `jst-transition` on keyed nodes for
   coordinated enter/leave/move classes.
 - **No computed/watch primitives**: compute with `$ const ... =` in the template; "watch" by acting in the event that changes state.
-- **Coarse re-render**: setting any prop re-renders the whole component (fine for these examples).
+- **Coarse re-render**: setting any property re-renders the whole component (fine for these examples).
 - **No router, no scoped styles** (light DOM; use normal CSS).
 
 ## House style for examples

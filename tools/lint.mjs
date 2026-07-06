@@ -269,7 +269,13 @@ function scanFile(file, findings, csp) {
   // stays raw-only because display snippets legitimately teach native
   // handlers). Lines match the source; columns may shift left of entities.
   if (source.includes('&lt;')) {
-    runRemovedSyntaxRules(file, decodeEntities(source), findings, ' [in entity-escaped example code]');
+    // Strip syntax-highlighter <span> wrappers too: they sit between an
+    // attribute name and its value in display snippets, hiding removed syntax
+    // from the rules. Strip BEFORE decoding — raw span attributes hold only
+    // entity-escaped quotes/angle brackets, so the tag boundary is exact.
+    // Spans contain no newlines, so line numbers still match.
+    const decoded = decodeEntities(source.replace(/<\/?span[^>]*>/g, ''));
+    runRemovedSyntaxRules(file, decoded, findings, ' [in entity-escaped example code]');
   }
 
   if (csp) {
