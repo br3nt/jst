@@ -168,38 +168,38 @@ OP = Open Props, Rx = Radix (behavioral spec only).
 | Pattern | Ships in | Platform-native answer (2026) | JST has | Verdict |
 | --- | --- | --- | --- | --- |
 | Modal dialog | BS, WA, Pico, dUI, Rx | `<dialog>` + `showModal()`; `command`/`commandfor` Baseline Newly (Safari 26.2 completed rollout) | `.jst-modal` dialog CSS + `@starting-style` transition | have it (platform, thin CSS) |
-| Drawer / offcanvas | BS, WA, dUI | `<dialog>` styled as side sheet, same invoker wiring | nothing (jst-sidebar is layout, not an overlay) | genuine gap: build (thin CSS variant of `.jst-modal`) |
+| Drawer / offcanvas | BS, WA, dUI | `<dialog>` styled as side sheet, same invoker wiring | `.jst-drawer` (+ `data-side="start"`) | have it (platform, thin CSS) |
 | Tooltip | BS, WA, Pico, dUI, Rx | Popover API (Baseline Widely 2025) + anchor positioning (Baseline Newly 2026); `popover=hint` still Chromium-only | `.jst-tooltip` (CSS `::after`, hover/focus) | have it; revisit anchor-positioned version as Baseline widens |
 | Popover / hover card | BS, WA, Rx | `[popover]` + light dismiss + anchor positioning | `.jst-menu[popover]` + `position-area` under `@supports` | have it (platform, thin CSS) |
 | Dropdown menu | BS, WA, Pico, dUI, Rx | popover + invokers cover open/close/dismiss; menu keyboard semantics still not native | `.jst-menu[popover]` CSS | mostly have it; small keyboard/ARIA enhancement possible |
 | Context menu / menubar | Rx only | none declarative | nothing | skip (niche; document popover recipe) |
-| Accordion / disclosure | BS, WA, Pico, dUI, Rx | `<details>`/`<summary>`; `name` for exclusive groups (safe since 2025); `::details-content` (Baseline Newly 2025) for animation | `.jst-accordion` on `<details>` | have it; add `name` + `::details-content` animation |
+| Accordion / disclosure | BS, WA, Pico, dUI, Rx | `<details>`/`<summary>`; `name` for exclusive groups (safe since 2025); `::details-content` (Baseline Newly 2025) for animation | `.jst-accordion` on `<details>`, incl. gated `::details-content` animation | have it |
 | Tabs | BS, WA, dUI, Rx | none native | `jst-tabs` component | have it |
 | Toast / notification stack | BS, WA (P), dUI, Rx | none native | `jst-toaster` component | have it |
 | Combobox / autocomplete | WA (P) | `<datalist>` (weak); customizable select is not editable | `jst-combobox` component | have it |
 | Styled `<select>` | BS, WA, Pico, dUI, Rx | `appearance: base-select` still Chromium-only, NOT Baseline | base select styling in classless layer | have it; progressive `@supports` block later |
 | Data table (styles) | BS, Pico, dUI | `<table>` + CSS | classless + `jst-table` | have it |
 | Sortable data table | none of the six | none native | `jst-table` component | have it (differentiator) |
-| Form validation states | BS, Pico, dUI | `:user-valid` / `:user-invalid` (Baseline Newly 2023) | `<jst-field>` hint/error slot; no `:user-invalid` CSS yet | genuine gap: build (a few classless rules) |
-| Input group / addons | BS, Pico, dUI | flex + border collapse, no element | `<jst-form-row>` layout only, no prefix/suffix addons | genuine gap: build (thin CSS) |
+| Form validation states | BS, Pico, dUI | `:user-valid` / `:user-invalid` (Baseline Newly 2023) | `:user-invalid` border + `jst-field:has(:user-invalid)` label, `--jst-error` token | have it |
+| Input group / addons | BS, Pico, dUI | flex + border collapse, no element | `.jst-join` + `.jst-addon` | have it |
 | Floating labels | BS, dUI | `:placeholder-shown` + CSS | nothing | skip (fashion; label-above is clearer) |
 | Switch / checkbox / radio | BS, WA, Pico, dUI, Rx | `accent-color` (Baseline 2022); switch via styled checkbox | `accent-color` token + `.jst-switch` | have it |
 | Range / slider | BS, WA, Pico, dUI, Rx | `input[type=range]` + `accent-color`; multi-thumb not native | accent-color pickup | have it; multi-thumb: skip |
-| File input | BS, dUI, WA (P) | `::file-selector-button` (widely available) | nothing | genuine gap: build (2-3 classless rules) |
+| File input | BS, dUI, WA (P) | `::file-selector-button` (widely available) | classless `::file-selector-button` rules | have it |
 | Number / time / date inputs | WA, dUI | native inputs widely; styling limited | classless input styling | platform; date-picker component: skip |
 | OTP field | dUI, Rx | input + `autocomplete="one-time-code"` | nothing | skip (platform autocomplete does the real work) |
 | Progress bar | BS, WA, Pico, dUI, Rx | `<progress>` + `accent-color` | accent-color pickup | have it (platform) |
 | Progress ring | WA, dUI | conic-gradient recipe | nothing | skip (doc recipe if asked) |
 | Spinner | BS, WA, Pico, dUI | trivial CSS | `.jst-spinner` | have it |
-| Skeleton / placeholder | BS, WA, dUI | trivial CSS animation | nothing | genuine gap: build (pairs with `jst-include` loading) |
-| Badge / tag / chip | BS, WA, dUI | trivial CSS | `.jst-tag` (specialized to tech labels) | genuine gap: build (generalize) |
-| Avatar | WA, dUI, Rx | `img` + `border-radius` | `jst-frame` covers the crop | genuine gap: build (circle, sizes, initials fallback) |
+| Skeleton / placeholder | BS, WA, dUI | trivial CSS animation | `.jst-skeleton` (pairs with `jst-include` loading) | have it |
+| Badge / tag / chip | BS, WA, dUI | trivial CSS | `.jst-badge` variants (+ the specialized `.jst-tag`) | have it |
+| Avatar | WA, dUI, Rx | `img` + `border-radius` | `.jst-avatar` (image or initials, `--size`) | have it |
 | Card | BS, WA, Pico, dUI | `<article>` + box CSS | `<jst-box>` + tokens | have it |
 | Alert / callout | BS, WA, dUI | static CSS | `.jst-alert` | have it |
-| Breadcrumb | BS, WA, dUI | `nav > ol` + CSS separators | nothing | genuine gap: build (thin CSS) |
-| Pagination | BS, dUI | `nav` + CSS | nothing | genuine gap: build (server-rendered pages emit these constantly) |
+| Breadcrumb | BS, WA, dUI | `nav > ol` + CSS separators | `.jst-breadcrumb` | have it |
+| Pagination | BS, dUI | `nav` + CSS | `.jst-pagination` (`aria-current` carries state) | have it |
 | Navbar | BS, Pico, dUI | flex CSS | `jst-cluster`/`jst-sidebar` recipes | have it (doc recipe) |
-| Button / toggle group | BS, WA, Rx | flex + border collapse | `jst-cluster` | folds into the input-group CSS |
+| Button / toggle group | BS, WA, Rx | flex + border collapse | `.jst-join` | have it |
 | Carousel | BS, WA, dUI | scroll-snap (widely); `::scroll-button`/`::scroll-marker` Chromium-only, NOT Baseline | `jst-reel` (+ `--snap`) | have most; add scroll-marker CSS when Baseline |
 | Command palette | none of the six | `<dialog>` + combobox pattern | nothing | genuine gap: build (compose `.jst-modal` + `jst-combobox`; differentiator) |
 | Stepper / steps | dUI | ol + counters CSS | nothing | skip (doc recipe) |
@@ -209,21 +209,21 @@ OP = Open Props, Rx = Radix (behavioral spec only).
 | Color picker | WA | `input[type=color]` | classless inputs | platform |
 | Scrollspy | BS | IntersectionObserver | `onreveal` synthetic event | have it (doc recipe) |
 | Custom scrollbars | Rx | `scrollbar-color`/`scrollbar-width` (Baseline 2024) | reel uses it | platform |
-| Divider / kbd / visually-hidden | BS, WA, dUI | `<hr>`, `<kbd>`, clip utility | partial | add `.jst-visually-hidden` + `<kbd>` to classless base |
+| Divider / kbd / visually-hidden | BS, WA, dUI | `<hr>`, `<kbd>`, clip utility | classless `kbd` + `.jst-visually-hidden` | have it |
 | Theme switching | dUI | `light-dark()` + `color-scheme` | `--jst-*` tokens + `data-theme` skins | have it |
 | Design tokens | OP | CSS custom properties | Layer 0 `--jst-*` contract | have it |
 | Include / lazy fragment | WA | none | `jst-include` (+ `when="visible"`) | have it |
 
 ### Ranked build list from the audit
 
-1. **Skeleton/placeholder**: ~15 lines of CSS, pairs directly with `jst-include` loading states.
-2. **Badge**: generalize `.jst-tag`; every app needs status chips.
-3. **Form validation states**: `:user-invalid`/`:user-valid` rules + `<jst-field>` error styling, zero JS.
-4. **Breadcrumb + pagination**: server-rendered apps emit these on almost every page; pure `nav`+`ol` CSS.
-5. **Drawer/offcanvas**: a side-sheet style variant of the existing `.jst-modal` `<dialog>`.
-6. **Input group / join addons**: prefix/suffix and joined controls; the same border CSS covers button groups.
-7. **Avatar**: circle, sizes, initials fallback on top of `jst-frame`.
-8. **Command palette**: composes `.jst-modal` + `jst-combobox`; none of the surveyed libraries ship one (the one JS-bearing item).
+Items 1-7 (skeleton, badge, validation states, breadcrumb + pagination,
+drawer, join/input group, avatar) plus the file-input and kbd/visually-hidden
+freebies were built from this audit as thin CSS; the cross-section demo shows
+each one. What remains:
+
+1. **Command palette**: composes `.jst-modal` + `jst-combobox`; none of the
+   surveyed libraries ship one, making it a differentiator rather than
+   catch-up (the one JS-bearing item).
 
 Notable non-gaps confirmed by the Baseline checks: accordion animation is now
 platform (`::details-content`), popovers and invokers are fully cross-browser,

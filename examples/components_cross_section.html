@@ -311,6 +311,129 @@
         <p style="color:var(--jst-muted);font-size:0.85em;margin-block-start:var(--jst-space-s)">A region whose content lives at a URL (<code>jst-behaviors.js</code>). <code>when="visible"</code> defers the fetch until it scrolls into view, and the fragment carries its own component definition, which auto-registers on arrival.</p>
       </div>
 
+      <!-- BADGE + AVATAR -->
+      <div class="card">
+        <header>
+          <h3>Badge &amp; Avatar</h3>
+          <span class="jst-tag" data-tech="none">HTML + CSS</span>
+        </header>
+        <jst-cluster>
+          <span class="jst-badge">Accent</span>
+          <span class="jst-badge" data-variant="success">Paid</span>
+          <span class="jst-badge" data-variant="warning">Pending</span>
+          <span class="jst-badge" data-variant="error">Overdue</span>
+          <span class="jst-badge" data-variant="muted">Draft</span>
+          <span class="jst-avatar">AL</span>
+          <span class="jst-avatar" style="--size: 3.2rem">GH</span>
+        </jst-cluster>
+      </div>
+
+      <!-- SKELETON -->
+      <div class="card">
+        <header>
+          <h3>Skeleton</h3>
+          <span class="jst-tag" data-tech="none">HTML + CSS</span>
+        </header>
+        <jst-stack style="--space: var(--jst-space-xs)">
+          <span class="jst-skeleton" style="inline-size: 40%"></span>
+          <span class="jst-skeleton"></span>
+          <span class="jst-skeleton" style="inline-size: 85%"></span>
+        </jst-stack>
+        <p style="color:var(--jst-muted);font-size:0.85em;margin-block-start:var(--jst-space-s)">Put skeletons inside a <code>&lt;jst-include&gt;</code> as its pre-fetch content and the swap replaces them with the real thing.</p>
+      </div>
+
+      <!-- BREADCRUMB + PAGINATION -->
+      <div class="card">
+        <header>
+          <h3>Breadcrumb &amp; Pagination</h3>
+          <span class="jst-tag" data-tech="none">HTML + CSS</span>
+        </header>
+        <jst-stack>
+          <nav class="jst-breadcrumb" aria-label="Breadcrumb">
+            <ol>
+              <li><a href="#">Orders</a></li>
+              <li><a href="#">2026</a></li>
+              <li><span aria-current="page">#4471</span></li>
+            </ol>
+          </nav>
+          <nav class="jst-pagination" aria-label="Pagination">
+            <a href="#" aria-disabled="true">‹</a>
+            <a href="#">1</a>
+            <span aria-current="page">2</span>
+            <a href="#">3</a>
+            <a href="#">4</a>
+            <a href="#">›</a>
+          </nav>
+        </jst-stack>
+        <p style="color:var(--jst-muted);font-size:0.85em;margin-block-start:var(--jst-space-s)">Server-rendered pages emit these constantly: plain <code>nav</code> markup, <code>aria-current</code> carries the state.</p>
+      </div>
+
+      <!-- INPUT GROUP / JOIN -->
+      <div class="card">
+        <header>
+          <h3>Input group / Join</h3>
+          <span class="jst-tag" data-tech="none">HTML + CSS</span>
+        </header>
+        <jst-stack style="--space: var(--jst-space-s)">
+          <div class="jst-join">
+            <span class="jst-addon">https://</span>
+            <input placeholder="example.com" aria-label="Domain">
+            <button type="button">Check</button>
+          </div>
+          <div class="jst-join">
+            <button type="button">Day</button>
+            <button type="button">Week</button>
+            <button type="button">Month</button>
+          </div>
+        </jst-stack>
+        <p style="color:var(--jst-muted);font-size:0.85em;margin-block-start:var(--jst-space-s)">One rule set collapses both input addons and button groups into a joined unit.</p>
+      </div>
+
+      <!-- VALIDATION -->
+      <div class="card">
+        <header>
+          <h3>Validation states</h3>
+          <span class="jst-tag" data-tech="platform">:user-invalid</span>
+        </header>
+        <form onsubmit="event.preventDefault()">
+          <jst-form-row>
+            <jst-field>
+              <label for="val-email">Email (required)</label>
+              <input id="val-email" type="email" required placeholder="type, then leave the field">
+              <small>Turns red only after you interact: the platform's own <code>:user-invalid</code>, zero JS.</small>
+            </jst-field>
+            <button>Subscribe</button>
+          </jst-form-row>
+        </form>
+      </div>
+
+      <!-- DRAWER -->
+      <div class="card">
+        <header>
+          <h3>Drawer / offcanvas</h3>
+          <span class="jst-tag" data-tech="platform">&lt;dialog&gt; + invoker</span>
+        </header>
+        <jst-cluster>
+          <button command="show-modal" commandfor="demo-drawer">Open drawer</button>
+        </jst-cluster>
+        <dialog class="jst-drawer" id="demo-drawer">
+          <header>
+            <span>Filters</span>
+            <button class="jst-modal-close" command="close" commandfor="demo-drawer" aria-label="Close">×</button>
+          </header>
+          <div class="jst-drawer-body">
+            <jst-stack style="--space: var(--jst-space-s)">
+              <jst-field>
+                <label for="drawer-status">Status</label>
+                <select id="drawer-status"><option>Any</option><option>Open</option><option>Closed</option></select>
+              </jst-field>
+              <label class="jst-switch"><input type="checkbox"><span class="track"></span> Only mine</label>
+            </jst-stack>
+          </div>
+        </dialog>
+        <p style="color:var(--jst-muted);font-size:0.85em;margin-block-start:var(--jst-space-s)">The modal's side-sheet variant: the same native <code>&lt;dialog&gt;</code> and invoker wiring, docked to an edge (<code>data-side="start"</code> for the other one).</p>
+      </div>
+
     </jst-stack>
 
     <jst-toaster id="toaster"></jst-toaster>

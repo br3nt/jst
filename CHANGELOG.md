@@ -16,6 +16,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   commands. In scope in template handler bodies, `JST.fn.commands` elsewhere,
   and emitted by the precompiler. `examples/invoker_commands.html` uses it for
   its host-level command listener.
+- **jst-components: the audit gaps, closed as thin CSS.** Skeleton
+  (`.jst-skeleton`), badges (`.jst-badge` variants), avatar (`.jst-avatar`),
+  breadcrumb (`.jst-breadcrumb`), pagination (`.jst-pagination`), drawer
+  (`.jst-drawer`, the modal's side-sheet variant), and join/input groups
+  (`.jst-join` + `.jst-addon`, covering button groups). Classless base gains
+  `:user-invalid` validation styling, `::file-selector-button`, `kbd`,
+  `.jst-visually-hidden`, and status tokens (`--jst-ok/--jst-warn/--jst-error`);
+  the accordion animates via `::details-content` where supported. Driven by a
+  coverage audit vs Bootstrap, Web Awesome, Pico, daisyUI, Open Props, and
+  Radix (see the design doc).
+- **jst-include: symmetric reveal margin.** An include the user scrolls past
+  (now above the viewport) loads too; previously only the approach from below
+  triggered the fetch.
 - **jst-layout: the full Every Layout primitive set.** switcher, cover, frame,
   reel, imposter, and icon join stack, cluster, grid, sidebar, center, and box
   in `jst-layout.css` - all CSS-only. `examples/layout_primitives.html`

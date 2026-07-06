@@ -57,6 +57,11 @@
   /* Accessible foreground on the accent. Static fallback; upgraded to
      contrast-color() where supported (not yet Baseline). */
   --jst-accent-fg: white;
+
+  /* Status roles, used by validation, alerts, badges, and toasts. */
+  --jst-ok: oklch(0.62 0.15 150);
+  --jst-warn: oklch(0.75 0.15 80);
+  --jst-error: oklch(0.55 0.19 25);
 }
 
 @supports (color: contrast-color(red)) {
@@ -130,14 +135,53 @@ a { color: var(--jst-accent-600); }
   outline-offset: calc(var(--jst-border-width) * -1);
 }
 
-/* Textareas grow with their content where the engine supports it (not yet
-   Baseline); elsewhere they stay ordinary resizable textareas. */
+/* Textareas grow with their content where the engine supports it (Baseline
+   Newly 2026); elsewhere they stay ordinary resizable textareas. */
 @supports (field-sizing: content) {
   textarea {
     field-sizing: content;
     min-block-size: 2.4rem;
     max-block-size: 60vb;
   }
+}
+
+/* Validation, from the platform's own constraint state: only after the user
+   has interacted (:user-invalid, not :invalid), so pristine forms stay calm. */
+:where(input, textarea, select):user-invalid { border-color: var(--jst-error); }
+jst-field:has(:user-invalid) > label { color: var(--jst-error); }
+
+::file-selector-button {
+  font: inherit;
+  margin-inline-end: var(--jst-space-s);
+  padding: var(--jst-space-2xs) var(--jst-space-s);
+  border: var(--jst-border-width) solid var(--jst-border);
+  border-radius: var(--jst-radius);
+  background: var(--jst-surface);
+  color: var(--jst-fg);
+  cursor: pointer;
+}
+
+kbd {
+  font-family: var(--jst-font-mono);
+  font-size: 0.85em;
+  padding: 0.1em 0.4em;
+  border: var(--jst-border-width) solid var(--jst-border);
+  border-block-end-width: 2px;
+  border-radius: calc(var(--jst-radius) / 2);
+  background: var(--jst-surface);
+}
+
+/* Screen-reader-only content that stays in the accessibility tree. */
+.jst-visually-hidden {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
 }
 
 /* Micro-label: the small mono uppercase label over a control. */
@@ -315,7 +359,7 @@ jst-field {
   gap: var(--jst-space-3xs);
 }
 jst-field > small { color: var(--jst-muted); font-size: 0.8rem; }
-jst-field > small[data-error] { color: oklch(0.55 0.19 25); }
+jst-field > small[data-error] { color: var(--jst-error); }
 
 /* Form row: a single-line form. Fields share the row (each at least
    --field-min wide) and wrap when tight; buttons and anything marked

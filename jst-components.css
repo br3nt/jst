@@ -238,8 +238,8 @@ jst-toaster .jst-toast {
   background: var(--jst-bg); color: var(--jst-fg); box-shadow: var(--jst-shadow);
   min-inline-size: 15rem; animation: jst-toast-in 0.18s ease-out;
 }
-jst-toaster .jst-toast[data-variant="success"] { border-inline-start: 4px solid oklch(0.62 0.15 150); }
-jst-toaster .jst-toast[data-variant="error"]   { border-inline-start: 4px solid oklch(0.55 0.20 25); }
+jst-toaster .jst-toast[data-variant="success"] { border-inline-start: 4px solid var(--jst-ok); }
+jst-toaster .jst-toast[data-variant="error"]   { border-inline-start: 4px solid var(--jst-error); }
 jst-toaster .jst-toast button { margin-inline-start: auto; background: none; border: none; color: var(--jst-muted); cursor: pointer; font-size: 1.1rem; line-height: 1; }
 @keyframes jst-toast-in { from { opacity: 0; transform: translateY(0.5rem); } }
 
@@ -301,9 +301,9 @@ jst-combobox .jst-empty { padding: var(--jst-space-s); color: var(--jst-muted); 
   border: var(--jst-border-width) solid var(--jst-border);
   border-inline-start: 4px solid var(--jst-accent); background: var(--jst-surface);
 }
-.jst-alert[data-variant="success"] { border-inline-start-color: oklch(0.62 0.15 150); }
-.jst-alert[data-variant="warning"] { border-inline-start-color: oklch(0.75 0.15 80); }
-.jst-alert[data-variant="error"]   { border-inline-start-color: oklch(0.55 0.20 25); }
+.jst-alert[data-variant="success"] { border-inline-start-color: var(--jst-ok); }
+.jst-alert[data-variant="warning"] { border-inline-start-color: var(--jst-warn); }
+.jst-alert[data-variant="error"]   { border-inline-start-color: var(--jst-error); }
 
 /* ============================================================================
  * Progress + spinner - native <progress> + a CSS spinner. CSS + HTML only.
@@ -330,6 +330,154 @@ jst-table thead button {
 jst-table thead button:hover { color: var(--jst-fg); }
 jst-table th[aria-sort="ascending"] button, jst-table th[aria-sort="descending"] button { color: var(--jst-fg); }
 jst-table tbody tr:hover { background: var(--jst-surface); }
+
+/* ============================================================================
+ * Skeleton - a shimmering placeholder while content loads. Pairs with
+ * <jst-include>: put skeletons inside it as the pre-fetch content.
+ * ==========================================================================*/
+.jst-skeleton {
+  display: block;
+  block-size: 1em;
+  border-radius: calc(var(--jst-radius) / 2);
+  background: linear-gradient(90deg, var(--jst-surface) 25%, var(--jst-border) 37%, var(--jst-surface) 63%);
+  background-size: 400% 100%;
+  animation: jst-skeleton 1.4s ease infinite;
+  color: transparent;
+  user-select: none;
+}
+@keyframes jst-skeleton { from { background-position: 100% 50%; } to { background-position: 0 50%; } }
+@media (prefers-reduced-motion: reduce) { .jst-skeleton { animation: none; } }
+
+/* ============================================================================
+ * Badge - status chips. Variants via data-variant; accent by default.
+ * ==========================================================================*/
+.jst-badge {
+  display: inline-flex; align-items: center; gap: 0.35em;
+  font-size: 0.72rem; font-weight: 600; line-height: 1.4;
+  padding: 0.1em 0.6em; border-radius: 99px; white-space: nowrap;
+  background: var(--jst-accent); color: var(--jst-accent-fg);
+}
+.jst-badge[data-variant="muted"]   { background: var(--jst-surface); color: var(--jst-muted); border: var(--jst-border-width) solid var(--jst-border); }
+.jst-badge[data-variant="success"] { background: var(--jst-ok); color: white; }
+.jst-badge[data-variant="warning"] { background: var(--jst-warn); color: white; }
+.jst-badge[data-variant="error"]   { background: var(--jst-error); color: white; }
+
+/* ============================================================================
+ * Avatar - a circle with an image, or initials as the fallback. Size via
+ * --size; jst-frame already handles arbitrary-ratio crops.
+ * ==========================================================================*/
+.jst-avatar {
+  --size: 2.4rem;
+  display: inline-flex; align-items: center; justify-content: center;
+  inline-size: var(--size); block-size: var(--size);
+  border-radius: 50%; overflow: clip;
+  background: var(--jst-surface); color: var(--jst-muted);
+  font-weight: 600; font-size: calc(var(--size) * 0.38);
+  user-select: none;
+}
+.jst-avatar > img { inline-size: 100%; block-size: 100%; object-fit: cover; }
+
+/* ============================================================================
+ * Breadcrumb - nav > ol with CSS separators; current page via aria-current.
+ * ==========================================================================*/
+.jst-breadcrumb ol {
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--jst-space-2xs);
+  list-style: none; margin: 0; padding: 0; font-size: 0.9rem;
+}
+.jst-breadcrumb li { display: inline-flex; align-items: center; gap: var(--jst-space-2xs); }
+.jst-breadcrumb li + li::before { content: "/"; color: var(--jst-border); }
+.jst-breadcrumb a { color: var(--jst-muted); text-decoration: none; }
+.jst-breadcrumb a:hover { color: var(--jst-accent-600); text-decoration: underline; }
+.jst-breadcrumb [aria-current="page"] { color: var(--jst-fg); font-weight: 600; }
+
+/* ============================================================================
+ * Pagination - nav of links/buttons; the current page via aria-current.
+ * Server-rendered pages emit this constantly, so it is pure markup + CSS.
+ * ==========================================================================*/
+.jst-pagination { display: flex; flex-wrap: wrap; gap: var(--jst-space-2xs); }
+.jst-pagination :where(a, button, span) {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-inline-size: 2rem; padding: var(--jst-space-2xs) var(--jst-space-xs);
+  border: var(--jst-border-width) solid var(--jst-border);
+  border-radius: var(--jst-radius);
+  background: var(--jst-bg); color: var(--jst-fg);
+  font: inherit; text-decoration: none; cursor: pointer;
+}
+.jst-pagination :where(a, button):hover { background: var(--jst-surface); }
+.jst-pagination [aria-current="page"] { background: var(--jst-accent); border-color: var(--jst-accent); color: var(--jst-accent-fg); }
+.jst-pagination [disabled], .jst-pagination [aria-disabled="true"] { opacity: 0.45; pointer-events: none; }
+
+/* ============================================================================
+ * Drawer - the modal's side-sheet variant: same native <dialog>, same invoker
+ * wiring, docked to an edge. data-side="start" docks it to the other side.
+ * ==========================================================================*/
+.jst-drawer {
+  margin: 0; margin-inline-start: auto;
+  inline-size: min(22rem, 90vw);
+  block-size: 100dvb; max-block-size: 100dvb;
+  padding: 0;
+  border: none; border-inline-start: var(--jst-border-width) solid var(--jst-border);
+  background: var(--jst-bg); color: var(--jst-fg);
+  box-shadow: var(--jst-shadow);
+}
+.jst-drawer[data-side="start"] {
+  margin-inline: 0 auto;
+  border-inline: none;
+  border-inline-end: var(--jst-border-width) solid var(--jst-border);
+}
+.jst-drawer::backdrop { background: oklch(0 0 0 / 0.45); }
+.jst-drawer > header,
+.jst-drawer > .jst-drawer-body,
+.jst-drawer > footer { padding: var(--jst-space-m) var(--jst-space-l); }
+.jst-drawer > header {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--jst-space-m);
+  border-block-end: var(--jst-border-width) solid var(--jst-border); font-weight: 700;
+}
+@supports (transition-behavior: allow-discrete) {
+  .jst-drawer {
+    opacity: 0; transform: translateX(100%);
+    transition: opacity 0.2s, transform 0.2s, overlay 0.2s allow-discrete, display 0.2s allow-discrete;
+  }
+  .jst-drawer[data-side="start"] { transform: translateX(-100%); }
+  .jst-drawer[open] { opacity: 1; transform: none; }
+  @starting-style {
+    .jst-drawer[open] { opacity: 0; transform: translateX(100%); }
+    .jst-drawer[data-side="start"][open] { transform: translateX(-100%); }
+  }
+}
+
+/* ============================================================================
+ * Join - collapse a row of controls into one unit: input groups with
+ * prefix/suffix addons (.jst-addon), and button groups, with one rule set.
+ * ==========================================================================*/
+.jst-join { display: flex; align-items: stretch; }
+.jst-join > * { border-radius: 0; }
+.jst-join > * + * { margin-inline-start: calc(var(--jst-border-width) * -1); }
+.jst-join > :first-child { border-start-start-radius: var(--jst-radius); border-end-start-radius: var(--jst-radius); }
+.jst-join > :last-child { border-start-end-radius: var(--jst-radius); border-end-end-radius: var(--jst-radius); }
+.jst-join > :where(input, select) { min-inline-size: 0; flex: 1; }
+.jst-join > :focus-visible { z-index: 1; }
+.jst-join > .jst-addon {
+  display: inline-flex; align-items: center;
+  padding-inline: var(--jst-space-s);
+  border: var(--jst-border-width) solid var(--jst-border);
+  background: var(--jst-surface); color: var(--jst-muted);
+}
+/* Adjacent accent buttons need a visible seam: derive it from the accent. */
+.jst-join > button + button {
+  border-inline-start-color: oklch(from var(--jst-accent) calc(l - 0.14) c h);
+}
+
+/* Accordion open/close animation once the engine can animate to auto
+ * (interpolate-size); scoped so the opt-in doesn't leak. */
+.jst-accordion { interpolate-size: allow-keywords; }
+@supports (interpolate-size: allow-keywords) {
+  .jst-accordion details::details-content {
+    block-size: 0; overflow: clip;
+    transition: block-size 0.2s, content-visibility 0.2s allow-discrete;
+  }
+  .jst-accordion details[open]::details-content { block-size: auto; }
+}
 
 /* ---- More framework skins (#1): one token-block each. ---------------------- */
 
