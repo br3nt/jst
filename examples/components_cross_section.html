@@ -83,7 +83,7 @@
     $   else if (e.key === 'Enter') { e.preventDefault(); if (isOpen && matches[hi] != null) choose(matches[hi]); }
     $   else if (e.key === 'Escape') { el.open = false; }
     $ };
-    <input type="text" role="combobox" aria-expanded="$(isOpen)" placeholder="Search fruit…" .value="$(query || '')" oninput="const e = event; el.query = e.target.value; el.open = true; el.highlighted = 0;" onkeydown="onKey(event)" onfocus="el.open = true" onblur="debounce(event, 150, () => { el.open = false })">
+    <input type="text" role="combobox" aria-expanded="$(isOpen)" placeholder="Search fruit…" .value="$(query || '')" oninput="el.query = event.target.value; el.open = true; el.highlighted = 0;" onkeydown="onKey(event)" onfocus="el.open = true" onblur="debounce(event, 150, () => { el.open = false })">
     $ if (isOpen) {
       <ul role="listbox">
         $ matches.forEach((o, i) => {
@@ -145,7 +145,7 @@
       <jst-stack>
         <h1>One component, every framework's look</h1>
         <p>Each card is built <strong>once</strong> in JST and re-skinned by the
-           selector above. The badge says which JST technology it actually needed —
+           selector above. The badge says which JST technology it actually needed -
            often <em>none</em>.</p>
       </jst-stack>
 
@@ -158,7 +158,7 @@
         <button command="show-modal" commandfor="demo-modal">Open modal</button>
         <dialog class="jst-modal" id="demo-modal" closedby="any">
           <header>Confirm action <button class="jst-modal-close" command="close" commandfor="demo-modal" aria-label="Close">×</button></header>
-          <div class="jst-modal-body"><p style="margin:0">Native <code>&lt;dialog&gt;</code> with focus trap, <kbd>Esc</kbd>, and backdrop — opened and closed entirely by <code>command</code>/<code>commandfor</code>. Zero JavaScript.</p></div>
+          <div class="jst-modal-body"><p style="margin:0">Native <code>&lt;dialog&gt;</code> with focus trap, <kbd>Esc</kbd>, and backdrop - opened and closed entirely by <code>command</code>/<code>commandfor</code>. Zero JavaScript.</p></div>
           <footer>
             <button command="close" commandfor="demo-modal" style="background:var(--jst-surface);color:var(--jst-fg)">Cancel</button>
             <button command="close" commandfor="demo-modal">Confirm</button>
@@ -175,7 +175,7 @@
         <div class="jst-accordion">
           <details name="acc" open>
             <summary>What is it?</summary>
-            <div class="jst-accordion-body">Three <code>&lt;details name="acc"&gt;</code> — the shared <code>name</code> makes them mutually exclusive (Baseline). No script, no component.</div>
+            <div class="jst-accordion-body">Three <code>&lt;details name="acc"&gt;</code> - the shared <code>name</code> makes them mutually exclusive (Baseline). No script, no component.</div>
           </details>
           <details name="acc">
             <summary>How does it animate?</summary>
@@ -183,7 +183,7 @@
           </details>
           <details name="acc">
             <summary>What did JST add?</summary>
-            <div class="jst-accordion-body">Nothing. This is the "just use HTML + CSS" outcome — and that's a win.</div>
+            <div class="jst-accordion-body">Nothing. This is the "just use HTML + CSS" outcome - and that's a win.</div>
           </details>
         </div>
       </div>
@@ -212,7 +212,7 @@
           <h3>Tabs</h3>
           <span class="jst-tag" data-tech="jst">JST component</span>
         </header>
-        <jst-tabs active="0" tabs='[{"label":"Overview","body":"There is no native tabs element, so this is a real JST custom element — roving tabindex, aria-selected, and ArrowLeft/Right navigation."},{"label":"Behavior","body":"Click a tab or focus one and use the arrow keys. The selected tab is the only one in the tab order."},{"label":"Theming","body":"It re-skins with the theme selector like every other component on this page."}]'></jst-tabs>
+        <jst-tabs active="0" tabs='[{"label":"Overview","body":"There is no native tabs element, so this is a real JST custom element - roving tabindex, aria-selected, and ArrowLeft/Right navigation."},{"label":"Behavior","body":"Click a tab or focus one and use the arrow keys. The selected tab is the only one in the tab order."},{"label":"Theming","body":"It re-skins with the theme selector like every other component on this page."}]'></jst-tabs>
       </div>
 
       <!-- TOAST -->
@@ -250,7 +250,7 @@
           <label class="jst-switch"><input type="checkbox" checked><span class="track"></span> Wi-Fi</label>
           <label class="jst-switch"><input type="checkbox"><span class="track"></span> Bluetooth</label>
         </jst-cluster>
-        <p style="color:var(--jst-muted);font-size:0.85em;margin-block-start:var(--jst-space-s)">A native <code>&lt;input type="checkbox"&gt;</code> styled into a toggle — real checkbox semantics, keyboard, and form participation for free.</p>
+        <p style="color:var(--jst-muted);font-size:0.85em;margin-block-start:var(--jst-space-s)">A native <code>&lt;input type="checkbox"&gt;</code> styled into a toggle - real checkbox semantics, keyboard, and form participation for free.</p>
       </div>
 
       <!-- TOOLTIP -->
@@ -259,7 +259,7 @@
           <h3>Tooltip</h3>
           <span class="jst-tag" data-tech="none">CSS + HTML only</span>
         </header>
-        <p>Hover or focus <span class="jst-tooltip" tabindex="0" data-tip="Rendered with CSS ::after — no JavaScript, no component.">this term</span> to see the tip.</p>
+        <p>Hover or focus <span class="jst-tooltip" tabindex="0" data-tip="Rendered with CSS ::after - no JavaScript, no component.">this term</span> to see the tip.</p>
       </div>
 
       <!-- ALERT -->

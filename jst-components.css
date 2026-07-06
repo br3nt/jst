@@ -1,5 +1,5 @@
 /*!
- * jst-components — component styles on top of jst-layout, CSS-first.
+ * jst-components - component styles on top of jst-layout, CSS-first.
  * Loads after jst-layout.css. Each component is plain HTML + native platform
  * primitives (dialog, popover, details, Invoker Commands) styled by tokens, so
  * the SAME markup re-skins to any framework's look by swapping a theme that
@@ -7,7 +7,7 @@
  */
 
 /* ============================================================================
- * Theme skins — each overrides only tokens. Same components, different look.
+ * Theme skins - each overrides only tokens. Same components, different look.
  * (The CSS Zen Garden bet, applied to component frameworks.)
  * ==========================================================================*/
 
@@ -67,7 +67,7 @@
 }
 
 /* ============================================================================
- * The "which JST tech?" badge — the headline of the whole comparison.
+ * The "which JST tech?" badge - the headline of the whole comparison.
  * Greener = less JST (more platform); blue = a real JST component.
  * ==========================================================================*/
 .jst-tag {
@@ -77,7 +77,7 @@
   border: 1px solid transparent;
 }
 .jst-tag::before { content: "●"; font-size: 0.8em; }
-/* No JST at all — the best outcome. */
+/* No JST at all - the best outcome. */
 .jst-tag[data-tech="none"]     { background: oklch(0.95 0.05 150); color: oklch(0.40 0.12 150); border-color: oklch(0.85 0.08 150); }
 /* A single native platform primitive (dialog / popover / details / progress). */
 .jst-tag[data-tech="platform"] { background: oklch(0.95 0.04 170); color: oklch(0.42 0.10 170); border-color: oklch(0.86 0.06 170); }
@@ -107,7 +107,7 @@
 }
 
 /* ============================================================================
- * Modal — native <dialog> + Invoker Commands (command="show-modal"/"close").
+ * Modal - native <dialog> + Invoker Commands (command="show-modal"/"close").
  * ==========================================================================*/
 .jst-modal {
   margin: auto;
@@ -150,7 +150,7 @@
 }
 
 /* ============================================================================
- * Accordion — native <details>/<summary>. Exclusive via the shared name attr.
+ * Accordion - native <details>/<summary>. Exclusive via the shared name attr.
  * ==========================================================================*/
 .jst-accordion { border: var(--jst-border-width) solid var(--jst-border); border-radius: var(--jst-radius); overflow: clip; }
 .jst-accordion > details + details { border-block-start: var(--jst-border-width) solid var(--jst-border); }
@@ -166,7 +166,7 @@
 .jst-accordion .jst-accordion-body { padding: 0 var(--jst-space-m) var(--jst-space-m); color: var(--jst-muted); }
 
 /* ============================================================================
- * Dropdown menu — native [popover] + command="toggle-popover". The invoker is
+ * Dropdown menu - native [popover] + command="toggle-popover". The invoker is
  * the popover's implicit anchor, so no ids/anchor-names are needed to place it.
  * ==========================================================================*/
 .jst-menu[popover] {
@@ -209,7 +209,7 @@
 }
 
 /* ============================================================================
- * Tabs — a JST component (no native equivalent): roving tabindex + ARIA.
+ * Tabs - a JST component (no native equivalent): roving tabindex + ARIA.
  * ==========================================================================*/
 jst-tabs { display: block; }
 jst-tabs [role="tablist"] { display: flex; gap: var(--jst-space-2xs); border-block-end: var(--jst-border-width) solid var(--jst-border); }
@@ -223,7 +223,7 @@ jst-tabs [role="tab"]:hover { color: var(--jst-fg); }
 jst-tabs [role="tabpanel"] { padding-block: var(--jst-space-m); color: var(--jst-muted); }
 
 /* ============================================================================
- * Toaster — a JST component: a fixed stack, pushed via a custom command.
+ * Toaster - a JST component: a fixed stack, pushed via a custom command.
  * ==========================================================================*/
 jst-toaster {
   position: fixed; inset-block-end: var(--jst-space-l); inset-inline-end: var(--jst-space-l);
@@ -244,7 +244,7 @@ jst-toaster .jst-toast button { margin-inline-start: auto; background: none; bor
 @keyframes jst-toast-in { from { opacity: 0; transform: translateY(0.5rem); } }
 
 /* ============================================================================
- * Combobox — a JST component: filter + keyboard + ARIA listbox.
+ * Combobox - a JST component: filter + keyboard + ARIA listbox.
  * ==========================================================================*/
 jst-combobox { display: block; position: relative; max-inline-size: 22rem; }
 jst-combobox input { inline-size: 100%; }
@@ -262,7 +262,7 @@ jst-combobox [role="option"][data-active="true"] { background: var(--jst-accent)
 jst-combobox .jst-empty { padding: var(--jst-space-s); color: var(--jst-muted); }
 
 /* ============================================================================
- * Switch — a styled native checkbox. CSS + HTML only.
+ * Switch - a styled native checkbox. CSS + HTML only.
  * ==========================================================================*/
 .jst-switch { display: inline-flex; align-items: center; gap: var(--jst-space-xs); cursor: pointer; }
 .jst-switch input { position: absolute; opacity: 0; inline-size: 0; block-size: 0; }
@@ -280,7 +280,7 @@ jst-combobox .jst-empty { padding: var(--jst-space-s); color: var(--jst-muted); 
 .jst-switch input:focus-visible + .track { box-shadow: var(--jst-ring, 0 0 0 3px oklch(0.6 0.1 262 / 0.5)); }
 
 /* ============================================================================
- * Tooltip — CSS + HTML only (data-tip + ::after on hover/focus).
+ * Tooltip - CSS + HTML only (data-tip + ::after on hover/focus).
  * ==========================================================================*/
 .jst-tooltip { position: relative; border-block-end: 1px dotted var(--jst-muted); cursor: help; }
 .jst-tooltip::after {
@@ -293,7 +293,7 @@ jst-combobox .jst-empty { padding: var(--jst-space-s); color: var(--jst-muted); 
 .jst-tooltip:hover::after, .jst-tooltip:focus-visible::after { opacity: 1; }
 
 /* ============================================================================
- * Alert / callout — CSS + HTML only. Variants via data-variant.
+ * Alert / callout - CSS + HTML only. Variants via data-variant.
  * ==========================================================================*/
 .jst-alert {
   display: flex; gap: var(--jst-space-s); align-items: flex-start;
@@ -306,7 +306,7 @@ jst-combobox .jst-empty { padding: var(--jst-space-s); color: var(--jst-muted); 
 .jst-alert[data-variant="error"]   { border-inline-start-color: oklch(0.55 0.20 25); }
 
 /* ============================================================================
- * Progress + spinner — native <progress> + a CSS spinner. CSS + HTML only.
+ * Progress + spinner - native <progress> + a CSS spinner. CSS + HTML only.
  * ==========================================================================*/
 progress.jst-progress { inline-size: 100%; block-size: 0.6rem; accent-color: var(--jst-accent); border-radius: 99px; }
 .jst-spinner {
@@ -317,7 +317,7 @@ progress.jst-progress { inline-size: 100%; block-size: 0.6rem; accent-color: var
 @keyframes jst-spin { to { transform: rotate(360deg); } }
 
 /* ============================================================================
- * Data table (sortable) — a JST component. Header buttons toggle sort.
+ * Data table (sortable) - a JST component. Header buttons toggle sort.
  * ==========================================================================*/
 jst-table { display: block; overflow-x: auto; }
 jst-table table { inline-size: 100%; border-collapse: collapse; }
