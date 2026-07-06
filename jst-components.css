@@ -127,10 +127,12 @@
   box-shadow: var(--jst-shadow);
 }
 .jst-modal::backdrop { background: oklch(0 0 0 / 0.45); }
-.jst-modal > header,
+/* Modal and drawer share their anatomy: one rule set for sections and header. */
+:where(.jst-modal, .jst-drawer) > header,
 .jst-modal > .jst-modal-body,
-.jst-modal > footer { padding: var(--jst-space-s) var(--jst-space-m); }
-.jst-modal > header {
+.jst-drawer > .jst-drawer-body,
+:where(.jst-modal, .jst-drawer) > footer { padding: var(--jst-space-s) var(--jst-space-m); }
+:where(.jst-modal, .jst-drawer) > header {
   display: flex; align-items: center; justify-content: space-between;
   gap: var(--jst-space-m);
   border-block-end: var(--jst-border-width) solid var(--jst-border);
@@ -237,17 +239,13 @@ jst-toaster {
   display: flex; flex-direction: column; gap: var(--jst-space-xs); z-index: 9999;
   pointer-events: none;
 }
+/* What only the toast adds to the shared status surface: it floats. */
 jst-toaster .jst-toast {
   pointer-events: auto;
-  display: flex; align-items: center; gap: var(--jst-space-xs);
-  font-size: var(--jst-control-size);
-  padding: 0.35em 0.7em;
-  border: var(--jst-border-width) solid var(--jst-border); border-radius: var(--jst-radius);
-  background: var(--jst-bg); color: var(--jst-fg); box-shadow: var(--jst-shadow);
-  min-inline-size: 11rem; animation: jst-toast-in 0.18s ease-out;
+  box-shadow: var(--jst-shadow);
+  min-inline-size: 11rem;
+  animation: jst-toast-in 0.18s ease-out;
 }
-jst-toaster .jst-toast[data-variant="success"] { border-inline-start: 3px solid var(--jst-ok); }
-jst-toaster .jst-toast[data-variant="error"]   { border-inline-start: 3px solid var(--jst-error); }
 jst-toaster .jst-toast button { margin-inline-start: auto; background: none; border: none; color: var(--jst-muted); cursor: pointer; font-size: 1em; line-height: 1; padding: 0 0.2em; }
 @keyframes jst-toast-in { from { opacity: 0; transform: translateY(0.5rem); } }
 
@@ -303,15 +301,21 @@ jst-combobox .jst-empty { padding: var(--jst-space-s); color: var(--jst-muted); 
 /* ============================================================================
  * Alert / callout - CSS + HTML only. Variants via data-variant.
  * ==========================================================================*/
-.jst-alert {
-  display: flex; gap: var(--jst-space-s); align-items: flex-start;
-  padding: var(--jst-space-s) var(--jst-space-m); border-radius: var(--jst-radius);
+/* One rule set for the alert (in flow) and the toast (floating): the same
+   status surface, so they can only ever match. data-variant drives the edge
+   color from the status tokens; the toast merely adds float-ness below. */
+.jst-alert, jst-toaster .jst-toast {
+  display: flex; align-items: flex-start; gap: var(--jst-space-xs);
+  font-size: var(--jst-control-size);
+  padding: 0.45em 0.8em;
   border: var(--jst-border-width) solid var(--jst-border);
-  border-inline-start: 4px solid var(--jst-accent); background: var(--jst-surface);
+  border-inline-start: 3px solid var(--jst-accent);
+  border-radius: var(--jst-radius);
+  background: var(--jst-bg); color: var(--jst-fg);
 }
-.jst-alert[data-variant="success"] { border-inline-start-color: var(--jst-ok); }
-.jst-alert[data-variant="warning"] { border-inline-start-color: var(--jst-warn); }
-.jst-alert[data-variant="error"]   { border-inline-start-color: var(--jst-error); }
+.jst-alert[data-variant="success"], jst-toaster .jst-toast[data-variant="success"] { border-inline-start-color: var(--jst-ok); }
+.jst-alert[data-variant="warning"], jst-toaster .jst-toast[data-variant="warning"] { border-inline-start-color: var(--jst-warn); }
+.jst-alert[data-variant="error"],   jst-toaster .jst-toast[data-variant="error"]   { border-inline-start-color: var(--jst-error); }
 
 /* ============================================================================
  * Progress + spinner - native <progress> + a CSS spinner. CSS + HTML only.
@@ -449,14 +453,6 @@ jst-table tbody tr:hover { background: var(--jst-surface); }
   margin-block-start: auto;
   inline-size: 100vw; max-inline-size: 100vw; max-block-size: 80dvb;
   border-block-start: var(--jst-border-width) solid var(--jst-border);
-}
-
-.jst-drawer > header,
-.jst-drawer > .jst-drawer-body,
-.jst-drawer > footer { padding: var(--jst-space-s) var(--jst-space-m); }
-.jst-drawer > header {
-  display: flex; align-items: center; justify-content: space-between; gap: var(--jst-space-m);
-  border-block-end: var(--jst-border-width) solid var(--jst-border); font-weight: 700;
 }
 
 /* Slide in from the docked edge. */
