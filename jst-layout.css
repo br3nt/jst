@@ -128,6 +128,24 @@ a { color: var(--jst-accent-600); }
    relative-color gotcha in docs/design/component-library.md. */
 :where(button, .jst-button):hover { background: oklch(from var(--jst-accent) calc(l - 0.08) c h); }
 
+/* Button variants: the accent button is the default; everything else is a
+   data-variant, so one attribute re-roles a button without new classes.
+   quiet = bordered neutral, ghost = borderless, danger = destructive. */
+:where(button, .jst-button)[data-variant="quiet"] {
+  background: var(--jst-bg);
+  color: var(--jst-fg);
+  border-color: var(--jst-border);
+}
+:where(button, .jst-button)[data-variant="quiet"]:hover { background: var(--jst-surface); }
+:where(button, .jst-button)[data-variant="ghost"] {
+  background: transparent;
+  color: var(--jst-muted);
+}
+:where(button, .jst-button)[data-variant="ghost"]:hover { background: var(--jst-surface); color: var(--jst-fg); }
+:where(button, .jst-button)[data-variant="danger"] { background: var(--jst-error); color: white; }
+:where(button, .jst-button)[data-variant="danger"]:hover { background: oklch(from var(--jst-error) calc(l - 0.07) c h); }
+:where(button, .jst-button):disabled { opacity: 0.5; cursor: default; }
+
 :where(input, textarea, select) {
   font: inherit;
   font-size: var(--jst-control-size);

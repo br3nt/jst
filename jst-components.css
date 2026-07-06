@@ -486,6 +486,56 @@ jst-table tbody tr:hover { background: var(--jst-surface); }
   .jst-accordion details[open]::details-content { block-size: auto; }
 }
 
+/* ============================================================================
+ * List - hairline-separated record rows: main content grows, anything marked
+ * data-actions trails. The list pattern every CRUD screen reinvents.
+ * ==========================================================================*/
+.jst-list { list-style: none; margin: 0; padding: 0; }
+.jst-list > * {
+  display: flex; align-items: center; gap: var(--jst-space-s);
+  padding: var(--jst-space-xs) var(--jst-space-2xs);
+}
+.jst-list > * + * { border-block-start: var(--jst-border-width) solid var(--jst-border); }
+.jst-list > *:hover { background: var(--jst-surface); }
+.jst-list [data-main] { flex: 1; min-inline-size: 0; }
+.jst-list [data-actions] { display: inline-flex; gap: var(--jst-space-2xs); flex: none; }
+
+/* ============================================================================
+ * Empty state - the muted placeholder where a list has nothing yet.
+ * ==========================================================================*/
+.jst-empty {
+  display: grid; place-items: center; gap: var(--jst-space-2xs);
+  padding: var(--jst-space-xl) var(--jst-space-m);
+  border: var(--jst-border-width) dashed var(--jst-border);
+  border-radius: var(--jst-radius);
+  color: var(--jst-muted); text-align: center;
+}
+
+/* ============================================================================
+ * Stat - a labelled figure. data-trend colors the value; compose a row of
+ * them with <jst-grid> or <jst-cluster>.
+ * ==========================================================================*/
+.jst-stat { display: flex; flex-direction: column; gap: 0.1em; }
+.jst-stat > .jst-stat-value { font-size: 1.45em; font-weight: 700; font-variant-numeric: tabular-nums; }
+.jst-stat[data-trend="up"] > .jst-stat-value { color: var(--jst-ok); }
+.jst-stat[data-trend="down"] > .jst-stat-value { color: var(--jst-error); }
+
+/* ============================================================================
+ * Page header - eyebrow / title / subtitle, with actions pushed to the end.
+ * ==========================================================================*/
+.jst-page-header {
+  display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--jst-space-s);
+}
+.jst-page-header > [data-main] { flex: 1; min-inline-size: 0; }
+.jst-page-header h1, .jst-page-header h2 { margin: 0; }
+.jst-page-header [data-actions] { display: inline-flex; gap: var(--jst-space-2xs); flex: none; }
+.jst-page-header .jst-sub { color: var(--jst-muted); font-size: 0.9rem; margin: 0; }
+/* Eyebrow: the mono micro-label, as a heading kicker. */
+.jst-eyebrow {
+  font-family: var(--jst-font-mono); font-size: 0.72rem; font-weight: 600;
+  letter-spacing: 0.04em; text-transform: uppercase; color: var(--jst-muted);
+}
+
 /* ---- More framework skins (#1): one token-block each. ---------------------- */
 
 /* Material Design 3-like: purple primary, large radius, layered elevation. */

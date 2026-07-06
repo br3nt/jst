@@ -26,6 +26,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the accordion animates via `::details-content` where supported. Driven by a
   coverage audit vs Bootstrap, Web Awesome, Pico, daisyUI, Open Props, and
   Radix (see the design doc).
+- **jst-components: the patterns Brent's real apps kept hand-rolling.**
+  Mined from agent_app, budget_app, notes_app, and loops_app: button variants
+  (`data-variant="quiet | ghost | danger"` on any button), record lists
+  (`.jst-list` with `data-main`/`data-actions` rows), empty states
+  (`.jst-empty`), stat tiles (`.jst-stat` with `data-trend`), and page headers
+  (`.jst-page-header` + `.jst-eyebrow`).
 - **jst-include: symmetric reveal margin.** An include the user scrolls past
   (now above the viewport) loads too; previously only the approach from below
   triggered the fetch.

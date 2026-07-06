@@ -312,6 +312,77 @@
         <p style="color:var(--jst-muted);font-size:0.85em;margin-block-start:var(--jst-space-s)">A region whose content lives at a URL (<code>jst-behaviors.js</code>). <code>when="visible"</code> defers the fetch until it scrolls into view, and the fragment carries its own component definition, which auto-registers on arrival.</p>
       </div>
 
+      <!-- BUTTON VARIANTS -->
+      <div class="card">
+        <header>
+          <h3>Button variants</h3>
+          <span class="jst-tag" data-tech="none">HTML + CSS</span>
+        </header>
+        <jst-cluster>
+          <button type="button">Save</button>
+          <button type="button" data-variant="quiet">Cancel</button>
+          <button type="button" data-variant="ghost">Skip</button>
+          <button type="button" data-variant="danger">Delete</button>
+          <button type="button" disabled>Disabled</button>
+        </jst-cluster>
+        <p style="color:var(--jst-muted);font-size:0.85em;margin-block-start:var(--jst-space-s)">One attribute re-roles a button: accent by default, <code>data-variant="quiet | ghost | danger"</code> for the rest.</p>
+      </div>
+
+      <!-- PAGE HEADER + STATS -->
+      <div class="card">
+        <header>
+          <h3>Page header &amp; Stats</h3>
+          <span class="jst-tag" data-tech="none">HTML + CSS</span>
+        </header>
+        <jst-stack>
+          <div class="jst-page-header">
+            <div data-main>
+              <span class="jst-eyebrow">Household</span>
+              <h2>March budget</h2>
+              <p class="jst-sub">Shared with 2 people</p>
+            </div>
+            <span data-actions>
+              <button type="button" data-variant="quiet">Export</button>
+              <button type="button">Add expense</button>
+            </span>
+          </div>
+          <jst-cluster style="--space: var(--jst-space-xl)">
+            <div class="jst-stat"><span class="jst-eyebrow">Income</span><span class="jst-stat-value" data-testid="stat-income">$8,120</span></div>
+            <div class="jst-stat" data-trend="down"><span class="jst-eyebrow">Spent</span><span class="jst-stat-value">$5,867</span></div>
+            <div class="jst-stat" data-trend="up"><span class="jst-eyebrow">Remaining</span><span class="jst-stat-value">$2,253</span></div>
+          </jst-cluster>
+        </jst-stack>
+      </div>
+
+      <!-- LIST + EMPTY STATE -->
+      <div class="card">
+        <header>
+          <h3>List &amp; Empty state</h3>
+          <span class="jst-tag" data-tech="none">HTML + CSS</span>
+        </header>
+        <jst-stack>
+          <ul class="jst-list">
+            <li>
+              <span class="jst-avatar" style="--size: 1.9rem">AL</span>
+              <span data-main><strong>Ada Lovelace</strong><br><small style="color:var(--jst-muted)">ada@example.com</small></span>
+              <span class="jst-badge" data-variant="success">Owner</span>
+              <span data-actions><button type="button" data-variant="ghost">Edit</button><button type="button" data-variant="ghost">×</button></span>
+            </li>
+            <li>
+              <span class="jst-avatar" style="--size: 1.9rem">GH</span>
+              <span data-main><strong>Grace Hopper</strong><br><small style="color:var(--jst-muted)">grace@example.com</small></span>
+              <span class="jst-badge" data-variant="muted">Member</span>
+              <span data-actions><button type="button" data-variant="ghost">Edit</button><button type="button" data-variant="ghost">×</button></span>
+            </li>
+          </ul>
+          <div class="jst-empty">
+            <strong>No invitations yet</strong>
+            <small>People you invite will show up here.</small>
+            <button type="button" data-variant="quiet">Invite someone</button>
+          </div>
+        </jst-stack>
+      </div>
+
       <!-- BADGE + AVATAR -->
       <div class="card">
         <header>
