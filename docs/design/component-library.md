@@ -115,6 +115,8 @@ loaded, from a reflected attribute.
 | `<jst-center>` | `--measure --gutters` | centered measure |
 | `<jst-switcher>` | `--threshold --space --limit` | N-up that flips to stacked |
 | `<jst-cover>` `<jst-frame>` `<jst-reel>` `<jst-box>` `<jst-imposter>` `<jst-icon>` | … | hero / aspect-ratio / scroller / padded box / overlay / inline icon |
+| `<jst-field>` | (none) | one labelled control: label + control + optional `<small>` hint/error |
+| `<jst-form-row>` | `--space --field-min` | single-line form: fields share the row and wrap, buttons keep natural size |
 
 **Naming:** `<jst-*>` prefix (matches `window.JST`), hyphen-valid (required for
 custom elements), collision-safe (unlike a bare `.stack` class), groups in

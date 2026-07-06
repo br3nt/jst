@@ -17,8 +17,10 @@
 :root {
   color-scheme: light dark;
 
-  /* One modular space scale: one base + one ratio → derived steps. */
-  --jst-space: 1rem;
+  /* One modular space scale: one base + one ratio → derived steps. The base
+     is deliberately compact: surfaces read dense-but-calm, not padded out.
+     Loosen a whole app by raising --jst-space alone. */
+  --jst-space: 0.75rem;
   --jst-ratio: 1.5;
   --jst-space-3xs: calc(var(--jst-space) / var(--jst-ratio) / var(--jst-ratio) / var(--jst-ratio));
   --jst-space-2xs: calc(var(--jst-space) / var(--jst-ratio) / var(--jst-ratio));
@@ -31,11 +33,11 @@
 
   /* Measure (max line length), radius, border, fonts. */
   --jst-measure: 60ch;
-  --jst-radius: 0.5rem;
+  --jst-radius: 0.375rem;
   --jst-border-width: 1px;
   --jst-font: system-ui, sans-serif;
   --jst-font-mono: ui-monospace, monospace;
-  --jst-line: 1.5;
+  --jst-line: 1.45;
 
   /* Color roles. light-dark() (Baseline 2024) gives free dark mode; the
      @media fallback below covers older engines. */
@@ -119,6 +121,28 @@ a { color: var(--jst-accent-600); }
   border-radius: var(--jst-radius);
   background: var(--jst-bg);
   color: var(--jst-fg);
+}
+:where(input, textarea, select):focus-visible {
+  outline: 2px solid var(--jst-accent);
+  outline-offset: calc(var(--jst-border-width) * -1);
+}
+
+/* Micro-label: the small mono uppercase label over a control. */
+:where(label, legend) {
+  font-family: var(--jst-font-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--jst-muted);
+}
+
+fieldset {
+  border: var(--jst-border-width) solid var(--jst-border);
+  border-radius: var(--jst-radius);
+  padding: var(--jst-space-s) var(--jst-space-m) var(--jst-space-m);
+  margin: 0;
+  min-inline-size: 0;
 }
 
 code, pre { font-family: var(--jst-font-mono); }
@@ -267,6 +291,28 @@ jst-imposter {
   overflow: auto;
 }
 jst-imposter[fixed] { position: fixed; }
+
+/* Field: one labelled control - label, control, then an optional <small>
+   hint or error line - spaced as a single unit. */
+jst-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--jst-space-3xs);
+}
+jst-field > small { color: var(--jst-muted); font-size: 0.8rem; }
+jst-field > small[data-error] { color: oklch(0.55 0.19 25); }
+
+/* Form row: a single-line form. Fields share the row (each at least
+   --field-min wide) and wrap when tight; buttons and anything marked
+   data-actions keep their natural size, aligned to the control baseline. */
+jst-form-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space, var(--jst-space-s));
+  align-items: flex-end;
+}
+jst-form-row > * { flex: 1 1 var(--field-min, 9rem); min-inline-size: 0; }
+jst-form-row > :where(button, [data-actions]) { flex: 0 0 auto; }
 
 /* Icon: an inline icon sized and aligned to the surrounding text, with an
    even gap when a label follows. 1cap tracks the font's capital height where
