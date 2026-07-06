@@ -2,8 +2,10 @@
  * jst-layout - CSS-first base + layout primitives for JST (opt-in, no runtime)
  * © Brent Jacobs · https://github.com/br3nt/jst · MIT
  *
- * PROTOTYPE / first slice. Loads with no JavaScript: the <jst-*> primitives are
- * styled purely as CSS selectors. See docs/design/component-library.md.
+ * Loads with no JavaScript: the <jst-*> primitives are styled purely as CSS
+ * selectors. Tokens + classless base + the full Every Layout primitive set;
+ * component patterns live in jst-components.css. Design rationale and the
+ * coverage audit: docs/design/component-library.md.
  *
  *   <link rel="stylesheet" href="jst-layout.css">
  *

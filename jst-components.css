@@ -519,6 +519,7 @@ jst-table tbody tr:hover { background: var(--jst-surface); }
 .jst-list > * + * { border-block-start: var(--jst-border-width) solid var(--jst-border); }
 .jst-list > *:hover { background: var(--jst-surface); }
 .jst-list [data-main] { flex: 1; min-inline-size: 0; }
+.jst-list [data-main] small { color: var(--jst-muted); }
 .jst-list [data-actions] { display: inline-flex; gap: var(--jst-space-2xs); flex: none; }
 
 /* ============================================================================
