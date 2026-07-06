@@ -239,15 +239,16 @@ jst-toaster {
 }
 jst-toaster .jst-toast {
   pointer-events: auto;
-  display: flex; align-items: center; gap: var(--jst-space-s);
-  padding: var(--jst-space-xs) var(--jst-space-s);
+  display: flex; align-items: center; gap: var(--jst-space-xs);
+  font-size: var(--jst-control-size);
+  padding: 0.35em 0.7em;
   border: var(--jst-border-width) solid var(--jst-border); border-radius: var(--jst-radius);
   background: var(--jst-bg); color: var(--jst-fg); box-shadow: var(--jst-shadow);
-  min-inline-size: 13rem; animation: jst-toast-in 0.18s ease-out;
+  min-inline-size: 11rem; animation: jst-toast-in 0.18s ease-out;
 }
-jst-toaster .jst-toast[data-variant="success"] { border-inline-start: 4px solid var(--jst-ok); }
-jst-toaster .jst-toast[data-variant="error"]   { border-inline-start: 4px solid var(--jst-error); }
-jst-toaster .jst-toast button { margin-inline-start: auto; background: none; border: none; color: var(--jst-muted); cursor: pointer; font-size: 1.1rem; line-height: 1; }
+jst-toaster .jst-toast[data-variant="success"] { border-inline-start: 3px solid var(--jst-ok); }
+jst-toaster .jst-toast[data-variant="error"]   { border-inline-start: 3px solid var(--jst-error); }
+jst-toaster .jst-toast button { margin-inline-start: auto; background: none; border: none; color: var(--jst-muted); cursor: pointer; font-size: 1em; line-height: 1; padding: 0 0.2em; }
 @keyframes jst-toast-in { from { opacity: 0; transform: translateY(0.5rem); } }
 
 /* ============================================================================
@@ -401,18 +402,17 @@ jst-table tbody tr:hover { background: var(--jst-surface); }
  * Pagination - nav of links/buttons; the current page via aria-current.
  * Server-rendered pages emit this constantly, so it is pure markup + CSS.
  * ==========================================================================*/
-.jst-pagination { display: flex; flex-wrap: wrap; gap: var(--jst-space-2xs); font-size: var(--jst-control-size); }
+.jst-pagination { display: flex; flex-wrap: wrap; align-items: center; gap: 0.15em; font-size: var(--jst-control-size); font-variant-numeric: tabular-nums; }
 .jst-pagination :where(a, button, span) {
   display: inline-flex; align-items: center; justify-content: center;
-  min-inline-size: 1.6em; padding: 0.1em 0.35em;
-  border: var(--jst-border-width) solid var(--jst-border);
-  border-radius: var(--jst-radius);
-  background: var(--jst-bg); color: var(--jst-fg);
+  min-inline-size: 1.7em; padding: 0.15em 0.4em;
+  border: none; border-radius: var(--jst-radius);
+  background: none; color: var(--jst-muted);
   font: inherit; text-decoration: none; cursor: pointer;
 }
-.jst-pagination :where(a, button):hover { background: var(--jst-surface); }
-.jst-pagination [aria-current="page"] { background: var(--jst-accent); border-color: var(--jst-accent); color: var(--jst-accent-fg); }
-.jst-pagination [disabled], .jst-pagination [aria-disabled="true"] { opacity: 0.45; pointer-events: none; }
+.jst-pagination :where(a, button):hover { background: var(--jst-surface); color: var(--jst-fg); }
+.jst-pagination [aria-current="page"] { background: var(--jst-accent); color: var(--jst-accent-fg); font-weight: 600; }
+.jst-pagination [disabled], .jst-pagination [aria-disabled="true"] { opacity: 0.4; pointer-events: none; }
 
 /* ============================================================================
  * Drawer - the modal's edge-docked variant: same native <dialog>, same invoker
