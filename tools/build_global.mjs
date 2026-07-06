@@ -52,6 +52,12 @@ const DIRECTIVE_LIBS = [
   [path.join(repoRoot, 'jst-behaviors.js'), path.join(repoRoot, 'jst-behaviors.min.js')],
 ];
 
+// The component library stylesheets (.min derived with esbuild's CSS loader).
+const CSS_LIBS = [
+  [path.join(repoRoot, 'jst-layout.css'), path.join(repoRoot, 'jst-layout.min.css')],
+  [path.join(repoRoot, 'jst-components.css'), path.join(repoRoot, 'jst-components.min.css')],
+];
+
 // jst.js imports the compiler in exactly one place (used only by
 // registerCustomElementFromTemplate, which compiles inline <script type="jst">).
 // The runtime-only builds omit the whole compile pipeline and replace that
@@ -240,6 +246,15 @@ async function main() {
   for (const [src, out] of DIRECTIVE_LIBS) {
     if (!fs.existsSync(src)) continue;
     const min = await minify(fs.readFileSync(src, 'utf8'));
+    fs.writeFileSync(out, min);
+    directiveNote += `, ${path.basename(out)} (${(min.length / 1024).toFixed(1)}kb)`;
+  }
+
+  // Minify the component-library stylesheets.
+  const esbuild = await import('esbuild');
+  for (const [src, out] of CSS_LIBS) {
+    if (!fs.existsSync(src)) continue;
+    const min = (await esbuild.transform(fs.readFileSync(src, 'utf8'), { loader: 'css', minify: true })).code;
     fs.writeFileSync(out, min);
     directiveNote += `, ${path.basename(out)} (${(min.length / 1024).toFixed(1)}kb)`;
   }

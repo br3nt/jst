@@ -5,9 +5,23 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.7.0 - 2026-07-07
+
+The component library becomes consumable: one fragment of component
+definitions plus two stylesheets, loadable at runtime or precompiled.
 
 ### Added
+
+- **`jst-components.html`: the consumable component fragment.** The five JST
+  components (`jst-palette`, `jst-tabs`, `jst-toaster`, `jst-combobox`,
+  `jst-table`) ship as one fragment. Runtime consumption:
+  `<jst-include src="/jst-components.html">` and the definitions
+  auto-register on arrival (properties set before the upgrade are
+  preserved). Strict CSP: `tools/precompile.mjs jst-components.html`
+  compiles all five. The cross-section demo consumes the fragment the same
+  way an app would.
+- **Minified stylesheets.** `jst-layout.min.css` and `jst-components.min.css`
+  are built (and size-reported) by `npm run build` alongside the JS bundles.
 
 - **`commands(event, map)` handler helper.** The Invoker Commands router: a
   `commandfor` target handling several custom commands routes them without a

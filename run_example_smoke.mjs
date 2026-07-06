@@ -318,6 +318,9 @@ const checks = [
     page: '/examples/components_cross_section.html',
     script: `(async () => {
       ${flushSnippet}
+      // The component definitions arrive via <jst-include> from the consumable
+      // fragment, exactly as an app would load them: wait for the upgrade.
+      await Promise.all(['jst-tabs', 'jst-palette', 'jst-toaster'].map(n => customElements.whenDefined(n)));
       await flush();
       const tabs = document.querySelector('jst-tabs');
       const before = tabs.querySelector('[role=tabpanel]').textContent;
@@ -328,7 +331,7 @@ const checks = [
 
       // The lazy region: scrolling the <jst-include when="visible"> into view
       // fetches the fragment, whose component definition auto-registers.
-      const include = document.querySelector('#team-include, jst-include');
+      const include = document.getElementById('team-include');
       include.scrollIntoView();
       const started = Date.now();
       while (!document.querySelector('team-stats strong') && Date.now() - started < 3000) await flush();
