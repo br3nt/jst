@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!-- JST - JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
 <!--
-  Source: https://github.com/bigskysoftware/fixi (README, commit d31fc1d) — fx-swap as a PROPERTY
+  Source: https://github.com/bigskysoftware/fixi (README, commit d31fc1d) - fx-swap as a PROPERTY
   Demonstrates: fixi's distinctive fx-swap can name ANY element property (e.g. value, className),
   not just innerHTML/outerHTML. The response text is assigned to that property.
   JST status: ✓ exact. JST's model IS properties: a fetched value is written straight into a
-  component property — el.value (the field text) and el.tone (its className) — which re-renders.
+  component property - el.value (the field text) and el.tone (its className) - which re-renders.
   Mapping: fixi fx-swap="value"  ≡  JST `el.value = responseText`.
 -->
 <html lang="en">
@@ -44,8 +44,8 @@
   const field = document.getElementById('field');
   document.getElementById('fetch').addEventListener('click', async () => {
     const r = await (await fetch('/api/suggestion')).json();
-    field.value = r.value;   // fx-swap="value"      — response → input.value
-    field.tone = r.tone;     // fx-swap="className"  — response → element.className
+    field.value = r.value;   // fx-swap="value"      - response → input.value
+    field.tone = r.tone;     // fx-swap="className"  - response → element.className
   });
 
   window.__parityTest = async () => {

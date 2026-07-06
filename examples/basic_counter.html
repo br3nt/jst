@@ -28,7 +28,7 @@
     <div class="card">
         <h2>Counter Example</h2>
         <div class="count">$(count)</div>
-        <button onclick="$(() => el.emit('increment'))">+ Click to Count</button>
+        <button onclick="el.emit('increment')">+ Click to Count</button>
 
         <div class="status $(running ? 'active' : 'inactive')">
             The counter is currently $(running ? 'RUNNING' : 'STOPPED')

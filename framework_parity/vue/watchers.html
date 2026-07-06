@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!-- JST - JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
 <!--
   Source: https://vuejs.org/guide/essentials/watchers
   Demonstrates: watching a reactive value (the question) and running an async side
   effect (fetch an answer) with debounce when it changes.
-  JST status: (i) partial — JST has no `watch`. The "watcher" is reproduced by acting
+  JST status: (i) partial - JST has no `watch`. The "watcher" is reproduced by acting
   inside the @input handler that mutates the state: debounce, then fetch. This is the
   documented JST pattern ("watch by acting in the event that changes state"). The
   tradeoff: the side effect lives at every mutation site rather than centrally; for a
@@ -14,7 +14,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>JST — Watchers</title>
+<title>JST - Watchers</title>
 <script type="module" src="../../jst.js"></script>
 <script src="../../framework_parity/lib/mock-fetch.js"></script>
 <script>
@@ -37,7 +37,7 @@
   $   }, 300);
   $ };
   <p>Ask a yes/no question:
-    <input id="question" .value="$(question || '')" oninput="$(onInput)"></p>
+    <input id="question" .value="$(question || '')" oninput="onInput(event)"></p>
   <p id="answer">$(answer || '')</p>
 </script>
 

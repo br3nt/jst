@@ -8,7 +8,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JST framework-parity — examples</title>
+<title>JST framework parity: examples</title>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
 <script type="module" src="../jst.js"></script>
 <style>
@@ -110,22 +110,22 @@
     <aside class="sidebar">
       <div class="sidebar-head">
         <a class="home" href="../index.html">← JST home</a>
-        <h1>Framework parity — $(all.length) examples</h1>
+        <h1>Framework parity: $(all.length) examples</h1>
         <div class="tally">$(all.filter(i => i.status==='exact').length) exact · $(all.filter(i => i.status==='partial').length) partial · $(all.length) total</div>
-        <input class="filter" placeholder="Filter examples…" oninput="$(e => el.query = e.target.value)">
+        <input class="filter" placeholder="Filter examples…" oninput="el.query = event.target.value">
         <div class="status-filters">
-          <button class="$(sf==='all'?'active':'')" onclick="$(() => el.status = 'all')">All</button>
-          <button class="$(sf==='exact'?'active':'')" onclick="$(() => el.status = 'exact')">✓</button>
-          <button class="$(sf==='partial'?'active':'')" onclick="$(() => el.status = 'partial')">(i)</button>
+          <button class="$(sf==='all'?'active':'')" onclick="el.status = 'all'">All</button>
+          <button class="$(sf==='exact'?'active':'')" onclick="el.status = 'exact'">✓</button>
+          <button class="$(sf==='partial'?'active':'')" onclick="el.status = 'partial'">(i)</button>
         </div>
       </div>
       <div class="list">
         $ frameworks.forEach(fw => {
           $ const group = shown.filter(it => it.framework === fw);
           $ if (group.length) {
-            <div class="group-title">$(fw) — $(count(fw,'exact'))✓ $(count(fw,'partial'))i</div>
+            <div class="group-title">$(fw) · $(count(fw,'exact'))✓ $(count(fw,'partial'))i</div>
             $ group.forEach(it => {
-              <button class="item $(cur && it.file===cur.file ? 'active' : '')" onclick="$(() => el.emit('go', it.file))">
+              <button class="item $(cur && it.file===cur.file ? 'active' : '')" onclick="el.emit('go', it.file)">
                 <span class="badge $(it.status)">$(badge(it.status))</span>
                 <span class="name">$(it.name)</span>
               </button>
@@ -141,15 +141,15 @@
           <span class="pill $(cur.status)">$(badge(cur.status))</span>
           <span class="title">$(cur.framework): $(cur.name)</span>
           <span class="views">
-            <button class="vbtn $(vw==='preview'?'active':'')" onclick="$(() => el.emit('setview', 'preview'))">Preview</button>
-            <button class="vbtn $(vw==='jst'?'active':'')" onclick="$(() => el.emit('setview', 'jst'))">JST source</button>
-            <button class="vbtn $(vw==='original'?'active':'')" onclick="$(() => el.emit('setview', 'original'))">$(cur.framework) source</button>
+            <button class="vbtn $(vw==='preview'?'active':'')" onclick="el.emit('setview', 'preview')">Preview</button>
+            <button class="vbtn $(vw==='jst'?'active':'')" onclick="el.emit('setview', 'jst')">JST source</button>
+            <button class="vbtn $(vw==='original'?'active':'')" onclick="el.emit('setview', 'original')">$(cur.framework) source</button>
           </span>
           <span class="note" title="$(cur.note)">$(cur.note)</span>
           <a class="src" href="$(cur.source)" target="_blank" rel="noopener">docs ↗</a>
           <a class="src" href="../framework_parity/$(cur.file)" target="_blank" rel="noopener">open ↗</a>
-          <button class="nav-btn" $(prev ? '' : 'disabled') onclick="$(() => prev && el.emit('go', prev.file))">‹</button>
-          <button class="nav-btn" $(next ? '' : 'disabled') onclick="$(() => next && el.emit('go', next.file))">›</button>
+          <button class="nav-btn" $(prev ? '' : 'disabled') onclick="prev && el.emit('go', prev.file)">‹</button>
+          <button class="nav-btn" $(next ? '' : 'disabled') onclick="next && el.emit('go', next.file)">›</button>
         </div>
 
         $ if (vw === 'jst') {

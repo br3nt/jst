@@ -1,5 +1,5 @@
 /*!
- * jst-layout — CSS-first base + layout primitives for JST (opt-in, no runtime)
+ * jst-layout - CSS-first base + layout primitives for JST (opt-in, no runtime)
  * © Brent Jacobs · https://github.com/br3nt/jst · MIT
  *
  * PROTOTYPE / first slice. Loads with no JavaScript: the <jst-*> primitives are
@@ -12,7 +12,7 @@
  */
 
 /* ============================================================================
- * Layer 0 — design tokens (the theming contract)
+ * Layer 0 - design tokens (the theming contract)
  * ==========================================================================*/
 :root {
   color-scheme: light dark;
@@ -78,7 +78,7 @@
 }
 
 /* ============================================================================
- * Layer 0 — classless base (style elements directly, Pico-style)
+ * Layer 0 - classless base (style elements directly, Pico-style)
  * ==========================================================================*/
 *, *::before, *::after { box-sizing: border-box; }
 
@@ -124,7 +124,7 @@ a { color: var(--jst-accent-600); }
 code, pre { font-family: var(--jst-font-mono); }
 
 /* ============================================================================
- * Layer 1 — layout primitives (Every Layout recipes, CSS-only)
+ * Layer 1 - layout primitives (Every Layout recipes, CSS-only)
  * Set per-instance values with an inline custom property, e.g.
  *   <jst-stack style="--space: var(--jst-space-l)">
  * ==========================================================================*/
@@ -146,7 +146,7 @@ jst-cluster {
   align-items: var(--align, center);
 }
 
-/* Grid: intrinsic responsive grid — as many --min-wide columns as fit, no
+/* Grid: intrinsic responsive grid - as many --min-wide columns as fit, no
    media queries. min() keeps a single column from overflowing on narrow screens. */
 jst-grid {
   display: grid;
@@ -187,4 +187,101 @@ jst-box {
   border: var(--jst-border-width) solid var(--jst-border);
   border-radius: var(--jst-radius);
   background: var(--surface, var(--jst-surface));
+}
+
+/* Switcher: children sit side by side sharing the row equally, and ALL flip to
+   stacked once the container is narrower than --threshold. The flex-basis
+   trick: (threshold - 100%) is negative when the container is wider than the
+   threshold (basis clamps to 0, so flex-grow shares the row) and hugely
+   positive when narrower (each child fills the row). */
+jst-switcher {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space, var(--jst-space-m));
+}
+jst-switcher > * {
+  flex-grow: 1;
+  flex-basis: calc((var(--threshold, 30rem) - 100%) * 999);
+}
+/* Optional limit: cap items per row; overflow wraps to full-width rows.
+   A custom property can't drive a selector, so the cap is an attribute. */
+jst-switcher[limit="2"] > :nth-last-child(n + 3),
+jst-switcher[limit="2"] > :nth-last-child(n + 3) ~ *,
+jst-switcher[limit="3"] > :nth-last-child(n + 4),
+jst-switcher[limit="3"] > :nth-last-child(n + 4) ~ *,
+jst-switcher[limit="4"] > :nth-last-child(n + 5),
+jst-switcher[limit="4"] > :nth-last-child(n + 5) ~ * {
+  flex-basis: 100%;
+}
+
+/* Cover: a block at least --min-height tall whose principal child (marked
+   data-principal) is vertically centered; anything before/after it is pushed
+   to the edges, like a hero with a header and footer. */
+jst-cover {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space, var(--jst-space-m));
+  min-block-size: var(--min-height, 100vh);
+  padding: var(--space, var(--jst-space-m));
+}
+jst-cover > [data-principal] { margin-block: auto; }
+
+/* Frame: crop media (or center anything else) to a fixed aspect ratio. */
+jst-frame {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  aspect-ratio: var(--ratio, 16 / 9);
+  overflow: hidden;
+}
+jst-frame > :where(img, video) {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+}
+
+/* Reel: a horizontal scroller for overflowing content (cards, thumbnails).
+   Children keep their intrinsic or --item-width size instead of shrinking. */
+jst-reel {
+  display: flex;
+  gap: var(--space, var(--jst-space-m));
+  block-size: var(--height, auto);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-color: var(--jst-muted) transparent;
+}
+jst-reel > * { flex: 0 0 var(--item-width, auto); }
+jst-reel > img { block-size: 100%; flex-basis: auto; inline-size: auto; }
+
+/* Imposter: an element positioned over its nearest positioning container,
+   centered by default. The :has() rule makes the direct parent that container
+   automatically; content larger than the container scrolls inside. */
+:where(:has(> jst-imposter)) { position: relative; }
+jst-imposter {
+  position: absolute;
+  inset-block-start: var(--block, 50%);
+  inset-inline-start: var(--inline, 50%);
+  transform: translate(-50%, -50%);
+  max-inline-size: calc(100% - (var(--margin, 0px) * 2));
+  max-block-size: calc(100% - (var(--margin, 0px) * 2));
+  overflow: auto;
+}
+jst-imposter[fixed] { position: fixed; }
+
+/* Icon: an inline icon sized and aligned to the surrounding text, with an
+   even gap when a label follows. 1cap tracks the font's capital height where
+   supported; the em fallback is close enough elsewhere. */
+jst-icon {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space, var(--jst-space-3xs));
+}
+jst-icon > svg {
+  align-self: center;
+  block-size: 0.75em;
+  inline-size: auto;
+  fill: currentColor;
+}
+@supports (block-size: 1cap) {
+  jst-icon > svg { block-size: 1cap; }
 }

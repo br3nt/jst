@@ -1,15 +1,15 @@
 <!DOCTYPE html>
-<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!-- JST - JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
 <!--
   Source: https://vuejs.org/examples/#handling-input
   Demonstrates: methods bound to events; reactive text updated by a method.
-  JST status: ✓ exact — Vue "methods" are just functions called from @click handlers;
+  JST status: ✓ exact - Vue "methods" are just functions called from @click handlers;
   reactive text via local state is idiomatic JST.
 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>JST — Handling Input</title>
+<title>JST - Handling Input</title>
 <script type="module" src="../../jst.js"></script>
 </head>
 <body>
@@ -18,8 +18,8 @@
   $ const reverse = () => el.message = message.split('').reverse().join('');
   $ const notify  = () => alert('navigated!');
   <h1 id="message">$(message)</h1>
-  <button id="reverse" onclick="$(reverse)">Reverse Message</button>
-  <a href="#" id="notify" onclick="$(e => { e.preventDefault(); notify(); })">Notify</a>
+  <button id="reverse" onclick="reverse(event)">Reverse Message</button>
+  <a href="#" id="notify" onclick="const e = event; e.preventDefault(); notify();">Notify</a>
 </script>
 
 <handling-input id="app" message="Hello World!"></handling-input>

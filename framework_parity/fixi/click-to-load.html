@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!-- JST - JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
 <!--
   Source: https://github.com/bigskysoftware/fixi#readme  (Click To Load example)
   Demonstrates: a "Load More" button whose row fetches the next page and appends it,
@@ -33,7 +33,7 @@
     </tbody>
   </table>
   $ if (more) {
-    <button data-testid="load-more" .disabled="$(loading)" onclick="$(() => el.emit('load'))">
+    <button data-testid="load-more" .disabled="$(loading)" onclick="el.emit('load')">
       $(loading ? 'Loading…' : 'Load More Agents…')
     </button>
   $ }

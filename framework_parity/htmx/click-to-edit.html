@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!-- JST - JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
 <!--
   Source: https://htmx.org/examples/click-to-edit/
   Demonstrates: an inline "view -> edit form -> save -> view" round-trip against a
   (mocked) server that persists the change with PUT and returns the updated record.
   JST status: ✓ exact match. A single <contact-card> renders either the view or the
   edit form from an `editing` flag; page owns the contact, fetch persists, props re-render.
-  The only thing JST lacks vs HTMX is a declarative hx-put — the PUT is a 4-line handler.
+  The only thing JST lacks vs HTMX is a declarative hx-put - the PUT is a 4-line handler.
 -->
 <html lang="en">
 <head>
@@ -31,22 +31,20 @@
       <div class="row"><label>First Name</label>: <span data-testid="firstName">$(c.firstName)</span></div>
       <div class="row"><label>Last Name</label>: <span data-testid="lastName">$(c.lastName)</span></div>
       <div class="row"><label>Email</label>: <span data-testid="email">$(c.email)</span></div>
-      <button data-testid="edit-btn" onclick="$(() => el.emit('edit'))">Click To Edit</button>
+      <button data-testid="edit-btn" onclick="el.emit('edit')">Click To Edit</button>
     </div>
   $ } else {
-    <form data-testid="form" onsubmit="$(e => {
-      e.preventDefault();
+    <form data-testid="form" onsubmit="const e = event; e.preventDefault();
       el.emit('save', {
         firstName: el.querySelector('[name=firstName]').value,
         lastName:  el.querySelector('[name=lastName]').value,
         email:     el.querySelector('[name=email]').value,
-      });
-    })">
+      });">
       <div class="row"><label>First Name</label><br><input name="firstName" .value="$(c.firstName || '')"></div>
       <div class="row"><label>Last Name</label><br><input name="lastName" .value="$(c.lastName || '')"></div>
       <div class="row"><label>Email</label><br><input name="email" .value="$(c.email || '')"></div>
       <button type="submit" data-testid="save-btn">Save</button>
-      <button type="button" data-testid="cancel-btn" onclick="$(() => el.emit('cancel'))">Cancel</button>
+      <button type="button" data-testid="cancel-btn" onclick="el.emit('cancel')">Cancel</button>
     </form>
   $ }
 </script>

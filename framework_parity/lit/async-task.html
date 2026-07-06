@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!-- JST - JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
 <!--
   Source: https://lit.dev/docs/data/task/
-  Demonstrates: @lit/task's Task — a reactive async controller that re-runs when
+  Demonstrates: @lit/task's Task - a reactive async controller that re-runs when
   its arguments change and exposes pending / complete / error states to render.
-  JST status: (i) partial — JST has NO Task primitive. You hand-write the
+  JST status: (i) partial - JST has NO Task primitive. You hand-write the
   controller: a prop change (productId) triggers a guarded fetch that walks a
   `status` prop through pending -> complete | error, and the template renders one
   branch per state. Same three-state UX, but the orchestration (run-on-change,
@@ -13,7 +13,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>JST — async task (pending/complete/error)</title>
+<title>JST - async task (pending/complete/error)</title>
 <script type="module" src="../../jst.js"></script>
 <script src="../../framework_parity/lib/mock-fetch.js"></script>
 <style>
@@ -61,7 +61,7 @@
     <p class="error" data-testid="error">Could not load product $(productId): $(error)</p>
   $ } else if (status === 'complete') {
     <div class="card" data-testid="product">
-      <strong>$(product.name)</strong> — $$$(product.price)
+      <strong>$(product.name)</strong> - $$$(product.price)
     </div>
   $ }
 </script>

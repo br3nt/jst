@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!-- JST - JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
 <!--
   Source: https://svelte.dev/tutorial/svelte/state
   Demonstrates: reactive state ($state / a plain `let count`). Clicking updates
   the value and the DOM re-renders.
-  JST status: ✓ exact — a JST attribute IS reactive local state. `el.count = …`
+  JST status: ✓ exact - a JST attribute IS reactive local state. `el.count = …`
   reassigns and re-renders, exactly like Svelte's assignment-driven reactivity.
 -->
 <html lang="en"><head><meta charset="UTF-8"><title>JST · Svelte reactivity</title>
@@ -13,10 +13,10 @@
 </head><body>
 <h1>Reactivity</h1>
 <script type="jst" name="sv-counter" attributes="count">
-  <button onclick="$(() => el.count = (el.count || 0) + 1)">count is $(count || 0)</button>
+  <button onclick="el.count = (el.count || 0) + 1">count is $(count || 0)</button>
 </script>
 <sv-counter data-testid="counter" count="0"></sv-counter>
-<p>A reassigned attribute re-renders — Svelte's core reactivity lesson.</p>
+<p>A reassigned attribute re-renders - Svelte's core reactivity lesson.</p>
 <script>
 window.__exampleReady = true;
 window.__parityTest = async () => { const b=document.querySelector('sv-counter button'); b.click(); await new Promise(r=>setTimeout(r,0)); return { ok: b.textContent.includes('count is 1'), detail: 'click increments reactive state' }; };

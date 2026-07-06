@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!-- JST - JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
 <!--
-  Source: https://github.com/bigskysoftware/fixi (README, commit d31fc1d) — "Mocking" (cfg.fetch)
+  Source: https://github.com/bigskysoftware/fixi (README, commit d31fc1d) - "Mocking" (cfg.fetch)
   Demonstrates: fixi's README mocks the backend by replacing cfg.fetch, serving a <template>'s
   content as the response so a request swaps in canned markup with no server.
   JST status: ✓ exact. JST's mock-fetch IS the same idea as fixi's cfg.fetch override: it
-  intercepts fetch and returns a fragment. Here the fragment is a full <template>-style chunk —
+  intercepts fetch and returns a fragment. Here the fragment is a full <template>-style chunk -
   it even carries its OWN component definition, which JST auto-registers on insertion.
   Mapping: fixi cfg.fetch returns template HTML  ≡  JSTMock.route returns an HTML fragment.
 -->

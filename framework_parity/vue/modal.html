@@ -1,15 +1,15 @@
 <!DOCTYPE html>
-<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!-- JST - JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
 <!--
   Source: https://vuejs.org/examples/#modal
   Demonstrates: a modal dialog with a fade/scale transition on open and close.
-  JST status: ✓ exact — conditional rendering plus `jst-transition` coordinates
+  JST status: ✓ exact - conditional rendering plus `jst-transition` coordinates
   mount/unmount with CSS-owned enter and leave animations.
 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>JST — Modal with Transition</title>
+<title>JST - Modal with Transition</title>
 <script type="module" src="../../jst.js"></script>
 <style>
   body{font-family:sans-serif}
@@ -27,14 +27,14 @@
 <body>
 
 <script type="jst" name="modal-demo" attributes="open">
-  <button id="show" onclick="$(() => el.open = true)">Show Modal</button>
+  <button id="show" onclick="el.open = true">Show Modal</button>
   $ if (open) {
     <div class="mask" jst-key="$('modal')" jst-transition="modal-fade"
-         onclick="$(e => { if (e.target === e.currentTarget) el.open = false; })">
+         onclick="const e = event; if (e.target === e.currentTarget) el.open = false;">
       <div class="modal">
         <h3 id="modal-title">Hello from a JST modal!</h3>
         <p>This modal animates in and out with CSS transitions.</p>
-        <button id="close" onclick="$(() => el.open = false)">Close</button>
+        <button id="close" onclick="el.open = false">Close</button>
       </div>
     </div>
   $ }
@@ -53,7 +53,7 @@
     document.getElementById('close').click();
     // Drive the leave transition to completion deterministically. The leave listener
     // (transitionend + fallback) is registered inside a double-rAF, which a throttled
-    // headless renderer can delay past a single dispatch — so re-dispatch transitionend
+    // headless renderer can delay past a single dispatch - so re-dispatch transitionend
     // on the current leave-active node every ~25ms until the modal is fully gone or we
     // hit the deadline. This cannot miss a not-yet-registered listener (issue #18).
     timeout = Date.now() + 1000;

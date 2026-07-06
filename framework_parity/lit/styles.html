@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!-- JST - JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
 <!--
   Source: https://lit.dev/docs/components/styles/
   Demonstrates: Lit's scoped component styling via `static styles = css`...``,
   which the Shadow DOM encapsulates so selectors never leak in or out.
-  JST status: (i) partial — JST renders to LIGHT DOM, so there is no Shadow-DOM
+  JST status: (i) partial - JST renders to LIGHT DOM, so there is no Shadow-DOM
   style scoping. You style a JST component with ordinary global CSS (here keyed
   on the custom-element tag name). This visibly styles the component, but the
   rules are global: a `p` rule inside the component would hit every `p` on the
@@ -14,7 +14,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>JST — Styles (light DOM)</title>
+<title>JST - Styles (light DOM)</title>
 <script type="module" src="../../jst.js"></script>
 <style>
   /* In Lit these would live in `static styles` and be shadow-scoped.

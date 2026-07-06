@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!-- JST - JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
 <!--
   Source: https://svelte.dev/tutorial/svelte/if-blocks
   Demonstrates: conditional rendering with {#if}/{:else}, toggled by a flag.
-  JST status: ✓ exact — `$ if (…) { … } else { … }` around template lines.
+  JST status: ✓ exact - `$ if (…) { … } else { … }` around template lines.
 -->
 <html lang="en"><head><meta charset="UTF-8"><title>JST · Svelte if</title>
 <script type="module" src="../../jst.js"></script>
@@ -11,7 +11,7 @@
 </head><body>
 <h1>If blocks</h1>
 <script type="jst" name="sv-toggle" attributes="on">
-  <button onclick="$(() => el.on = !el.on)">
+  <button onclick="el.on = !el.on">
     $ if (on) {
       Log out
     $ } else {

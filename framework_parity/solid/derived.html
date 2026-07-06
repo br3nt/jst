@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!-- JST - JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
 <!--
   Source: https://www.solidjs.com/tutorial/introduction_derived
-  Demonstrates: createMemo — a derived signal computed from another.
-  JST status: ✓ exact — a `$` const at the top recomputes each render.
+  Demonstrates: createMemo - a derived signal computed from another.
+  JST status: ✓ exact - a `$` const at the top recomputes each render.
 -->
 <html lang="en"><head><meta charset="UTF-8"><title>JST · Solid derived</title>
 <script type="module" src="../../jst.js"></script>
@@ -12,7 +12,7 @@
 <h1>Derived signals</h1>
 <script type="jst" name="so-doubler" attributes="count">
   $ const doubled = (count || 0) * 2;
-  <button onclick="$(() => el.count = (el.count || 0) + 1)">Count: $(count || 0)</button>
+  <button onclick="el.count = (el.count || 0) + 1">Count: $(count || 0)</button>
   <p data-testid="out">Doubled: $(doubled)</p>
 </script>
 <so-doubler data-testid="counter" count="0"></so-doubler>

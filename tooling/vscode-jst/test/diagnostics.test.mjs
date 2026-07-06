@@ -99,24 +99,24 @@ test('malformed property bindings are diagnostics', () => {
   assert.ok(diagnostics.some(d => /exactly one/.test(d.message)));
 });
 
-test('raw inline JavaScript in an on* handler is flagged', () => {
-  // the runtime rejects on*="..." values that are not a single $(…) expression
-  const text = wrap('name="x-on"', '<button onclick="alert(1)">x</button>');
+test('a $() expression in an on* handler is flagged (removed v0.5 syntax)', () => {
+  // handlers are plain function bodies now; $() inside one is the removed syntax
+  const text = wrap('name="x-on" attributes="handler"', '<button onclick="$(handler)">x</button>');
   const diagnostics = computeDiagnostics(text);
   const error = diagnostics.find(d => d.severity === 1);
-  assert.ok(error, 'expected a compile error for raw inline JS in an on* handler');
-  assert.match(error.message, /\$\(/);
+  assert.ok(error, 'expected a compile error for a $() expression handler');
+  assert.match(error.message, /function bodies now/);
 });
 
-test('an on* handler wrapping a single $(…) expression is accepted', () => {
-  const text = wrap('name="x-on" attributes="handler"', '<button onclick="$(handler)">x</button>');
+test('a plain function body in an on* handler is accepted', () => {
+  const text = wrap('name="x-on" attributes="handler"', '<button onclick="handler(event)">x</button>');
   assert.deepEqual(computeDiagnostics(text), []);
 });
 
 test('an on* handler whose event name does not start with a letter is flagged', () => {
   // the runtime rejects on<event> names that do not start with a letter, so the
   // editor surfaces it too (diagnostics run the real compiler)
-  const text = wrap('name="x-on" attributes="handler"', '<x on3d-ready="$(handler)"></x>');
+  const text = wrap('name="x-on" attributes="handler"', '<x on3d-ready="handler(event)"></x>');
   const diagnostics = computeDiagnostics(text);
   const error = diagnostics.find(d => d.severity === 1);
   assert.ok(error, 'expected a compile error for an invalid on<event> handler name');

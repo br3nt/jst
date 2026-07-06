@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!-- JST - JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
 <!--
   Source: https://alpinejs.dev/globals/alpine-store
-  Demonstrates: Alpine $store — global reactive state shared across components.
+  Demonstrates: Alpine $store - global reactive state shared across components.
   Two independent components read/write one shared counter and stay in sync.
-  JST status: (i) partial — JST has no built-in store. The primer's model is to
+  JST status: (i) partial - JST has no built-in store. The primer's model is to
   keep shared state as a plain page object, pass it down via properties, and on
   each change re-assign it to every subscriber to re-render. Reproduces the
   behaviour but you wire the propagation yourself (no automatic reactivity).
@@ -24,7 +24,7 @@
   <div class="card">
     <h3>$(label)</h3>
     <p>shared count: <strong class="count">$(s.count)</strong></p>
-    <button onclick="$(() => el.emit('inc'))">+1 from here</button>
+    <button onclick="el.emit('inc')">+1 from here</button>
   </div>
 </script>
 

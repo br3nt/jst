@@ -44,15 +44,16 @@ const SAMPLE = `<style>@media (max-width: 600px){ .x{color:red} }</style>
 </script>
 `;
 
-test('codemod migrates @event inside jst blocks, converting modifiers to combinators', async () => {
+test('codemod migrates @event inside jst blocks to v0.6 function bodies', async () => {
   await withTempFile('view.erb', SAMPLE, async (file) => {
     const { code, stdout } = await run('node', [codemod, file]);
     assert.equal(code, 0);
-    assert.match(stdout, /3 changes/);
+    assert.match(stdout, /5 changes/);
 
     const out = fs.readFileSync(file, 'utf8');
-    assert.match(out, /<button onclick="\$\(open\)">/);
-    assert.match(out, /<button onitem-selected="\$\(stop\(pick\)\)">/);
+    assert.match(out, /<button onclick="open\(event\)">/);
+    assert.match(out, /<p onclick="ok\(event\)">already migrated<\/p>/);
+    assert.match(out, /<button onitem-selected="event\.stopPropagation\(\); pick\(event\)">/);
     // Untouched outside jst blocks:
     assert.match(out, /@media \(max-width/);
     assert.match(out, /mailto:foo@bar\.com/);
@@ -62,26 +63,29 @@ test('codemod migrates @event inside jst blocks, converting modifiers to combina
   });
 });
 
-test('codemod migrates behaviour modifiers to combinators, keeping registration mods', async () => {
+test('codemod migrates v0.4 modifiers and v0.5 wrappers to body statements', async () => {
   const sample = [
     '<script type="jst" name="x-mods">',
     '  <form onsubmit.prevent="$(() => el.emit(\'save\'))"></form>',
     '  <input oninput.debounce.300="$(e => search(e.target.value))">',
     '  <input onkeydown.enter.prevent="$(go)">',
     '  <button onclick.outside.once="$(close)">x</button>',
+    '  <input oninput="$(changed(debounce(300, e => go(e.target.value))))">',
     '</script>',
   ].join('\n');
   await withTempFile('mods.html', sample, async (file) => {
     const { code, stdout } = await run('node', [codemod, file]);
     assert.equal(code, 0);
-    assert.match(stdout, /3 changes/);
+    assert.match(stdout, /5 changes/);
 
     const out = fs.readFileSync(file, 'utf8');
-    assert.match(out, /<form onsubmit="\$\(prevent\(\(\) => el\.emit\('save'\)\)\)">/);
-    assert.match(out, /<input oninput="\$\(debounce\(300, e => search\(e\.target\.value\)\)\)">/);
-    assert.match(out, /<input onkeydown="\$\(keys\(\{ Enter: prevent\(go\) \}\)\)">/);
-    // Registration-only tail is valid v0.5.0 syntax — untouched:
-    assert.match(out, /<button onclick\.outside\.once="\$\(close\)">/);
+    assert.match(out, /<form onsubmit="event\.preventDefault\(\); el\.emit\('save'\)">/);
+    assert.match(out, /<input oninput="debounce\(event, 300, \(\) => \{ const e = event; search\(e\.target\.value\) \}\)">/);
+    assert.match(out, /<input onkeydown="if \(event\.key !== 'Enter'\) return; event\.preventDefault\(\); go\(event\)">/);
+    // Registration-only tail survives on the attribute name:
+    assert.match(out, /<button onclick\.outside\.once="close\(event\)">/);
+    // v0.5 wrapper combinators become guard + statement form:
+    assert.match(out, /<input oninput="if \(!changed\(event\)\) return; debounce\(event, 300, \(\) => \{ const e = event; go\(e\.target\.value\) \}\)">/);
   });
 });
 
@@ -125,11 +129,12 @@ test('lint flags removed syntax inside jst blocks only, with file:line:col', asy
     assert.match(stderr, /removed @item-selected\.stop binding/);
     assert.match(stderr, /removed raw\(\) helper/);
     assert.match(stderr, /removed unsafeHTML\(\) helper/);
+    assert.match(stderr, /removed on<event>="\$\(…\)" expression handler/);
     assert.match(stderr, /:5:11:/); // @click is on line 5
     // Must NOT flag the Alpine @click or @media outside the jst block:
     assert.doesNotMatch(stderr, /:1:/);
     assert.doesNotMatch(stderr, /:3:/);
-    assert.match(stderr, /4 issues found/);
+    assert.match(stderr, /5 issues found/);
   });
 });
 
@@ -158,16 +163,16 @@ test('lint flags the removed attrs= shorthand on a jst open tag', async () => {
 test('lint flags removed behaviour modifiers but not registration modifiers', async () => {
   const stale = [
     '<script type="jst" name="x-mods">',
-    '  <form onsubmit.prevent="$(save)"></form>',
-    '  <input oninput.debounce.300="$(search)">',
-    '  <button onclick.outside.once="$(close)">x</button>',
+    '  <form onsubmit.prevent="save()"></form>',
+    '  <input oninput.debounce.300="search()">',
+    '  <button onclick.outside.once="close(event)">x</button>',
     '</script>',
   ].join('\n');
   await withTempFile('stale-mods.html', stale, async (file) => {
     const { code, stderr } = await run('node', [lint, file]);
     assert.equal(code, 1);
-    assert.match(stderr, /removed \.prevent event modifier.*prevent\(fn\)/);
-    assert.match(stderr, /removed \.debounce event modifier.*debounce\(300, fn\)/);
+    assert.match(stderr, /removed \.prevent event modifier.*preventDefault/);
+    assert.match(stderr, /removed \.debounce event modifier.*debounce\(event, 300/);
     assert.doesNotMatch(stderr, /:4:/); // .outside.once is registration-only — clean
     assert.match(stderr, /2 issues found/);
   });
@@ -178,14 +183,14 @@ test('lint flags removed jst-trigger in usage HTML (no jst block required)', asy
   await withTempFile('stale-trigger.html', stale, async (file) => {
     const { code, stderr } = await run('node', [lint, file]);
     assert.equal(code, 1);
-    assert.match(stderr, /removed jst-trigger \(v0\.5\.0\).*jst-on<event>/);
+    assert.match(stderr, /removed jst-trigger \(v0\.6\.0\).*enhances links\/forms only/);
   });
 });
 
 test('lint --csp flags native inline handlers in usage HTML but not template handlers', async () => {
   const page = [
     '<script type="jst" name="x-ok">',
-    '  <button onclick="$(fn)">in-template — exempt</button>',
+    '  <button onclick="fn(event)">in-template — exempt</button>',
     '</script>',
     '<button onclick="doThing(event)">native</button>',
   ].join('\n');
@@ -201,8 +206,26 @@ test('lint --csp flags native inline handlers in usage HTML but not template han
   });
 });
 
+test('lint scans entity-escaped example code in docs pages', async () => {
+  // Display snippets in docs are entity-escaped inside <pre>, invisible to the
+  // raw scan — stale examples rot there. The decoded pass catches them.
+  const page = [
+    '<h1>docs</h1>',
+    '<pre><code>&lt;script type="jst" name="x-doc"&gt;',
+    '  &lt;button onclick="$(fn)"&gt;x&lt;/button&gt;',
+    '&lt;/script&gt;</code></pre>',
+    '<pre><code>&lt;div jst-get="/x" jst-target="#out"&gt;&lt;/div&gt;</code></pre>',
+  ].join('\n');
+  await withTempFile('docs-page.html', page, async (file) => {
+    const { code, stderr } = await run('node', [lint, file]);
+    assert.equal(code, 1);
+    assert.match(stderr, /expression handler.*\[in entity-escaped example code\]/);
+    assert.match(stderr, /removed jst-get.*\[in entity-escaped example code\]/);
+  });
+});
+
 test('lint passes a clean jst file', async () => {
-  const clean = `<script type="jst" name="ok" attributes="x"><button onclick="$(go)">$(x)</button></script>`;
+  const clean = `<script type="jst" name="ok" attributes="x"><button onclick="go(event)">$(x)</button></script>`;
   await withTempFile('clean.html', clean, async (file) => {
     const { code, stdout } = await run('node', [lint, file]);
     assert.equal(code, 0);

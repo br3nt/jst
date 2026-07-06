@@ -37,6 +37,7 @@
             version,
         } from './jst.js';
         import './jst-nav.js';
+        import './jst-behaviors.js';
 
         const resultsContainer = document.getElementById('test-results');
         const summaryElement = document.getElementById('browser-test-summary');
@@ -164,23 +165,23 @@
                 isEqual(false, body.includes('.data='), "Should strip the .prop= source from output HTML");
             });
 
-            t.case("Compiles on<event>= to an event binding", () => {
-                const script = '<button onclick="$(handler)">go</button>';
+            t.case("Compiles on<event>= to a function-body event binding", () => {
+                const script = '<button onclick="handler(event)">go</button>';
                 const program = parseTemplateScript(script);
                 const body = interpretTemplateTokens(program.tokens);
 
-                isEqual(true, body.includes('__bind("event", "click", (handler))'), "Should emit an event binding with the on prefix stripped");
+                isEqual(true, body.includes('__bind("event", "click", function (event) { handler(event) })'), "Should emit a function-body event binding with the on prefix stripped");
             });
 
-            t.case("Rejects raw inline JavaScript in on* handlers", () => {
+            t.case("Rejects $() expressions in on* handler bodies", () => {
                 let threw = false;
                 try {
-                    const program = parseTemplateScript('<button onclick="alert(1)">go</button>');
+                    const program = parseTemplateScript('<button onclick="$(handler)">go</button>');
                     interpretTemplateTokens(program.tokens);
                 } catch (error) {
-                    threw = /Raw inline JavaScript/.test(error.message);
+                    threw = /function bodies now/.test(error.message);
                 }
-                isEqual(true, threw, "Should reject a raw inline on* handler");
+                isEqual(true, threw, "Should reject the removed $() expression-handler syntax");
             });
         });
 
@@ -652,7 +653,7 @@
             registerCustomElementFromTemplate(createTemplate({
                 name: componentName,
                 attributes: [{ name: 'attributes', value: 'count' }],
-                body: `<button class="btn" onclick="$(() => el.emit('poke', { count }))">go</button>`,
+                body: `<button class="btn" onclick="el.emit('poke', { count })">go</button>`,
             }));
 
             const element = document.createElement(componentName);
@@ -677,10 +678,10 @@
             registerCustomElementFromTemplate(createTemplate({
                 name: componentName,
                 attributes: [],
-                body: `<form class="form" onsubmit="$(prevent(() => el.emit('saved')))">
-                         <input class="key" onkeydown="$(keys({ Enter: event => el.emit('commit', event.key) }))">
-                         <button class="inside" type="button" onclick.outside="$(() => el.emit('outside'))">inside</button>
-                         <button class="once" type="button" onclick.once="$(() => el.emit('once-fired'))">once</button>
+                body: `<form class="form" onsubmit="event.preventDefault(); el.emit('saved')">
+                         <input class="key" onkeydown="keys(event, { Enter: () => el.emit('commit', event.key) })">
+                         <button class="inside" type="button" onclick.outside="el.emit('outside')">inside</button>
+                         <button class="once" type="button" onclick.once="el.emit('once-fired')">once</button>
                        </form>`,
             }));
 
@@ -724,7 +725,7 @@
             registerCustomElementFromTemplate(createTemplate({
                 name: componentName,
                 attributes: [],
-                body: `<button class="inside" type="button" onclick.outside="$(() => el.emit('outside-after-remove'))">inside</button>`,
+                body: `<button class="inside" type="button" onclick.outside="el.emit('outside-after-remove')">inside</button>`,
             }));
 
             const element = document.createElement(componentName);
@@ -822,7 +823,7 @@
             registerCustomElementFromTemplate(createTemplate({
                 name: componentName,
                 attributes: [{ name: 'attributes', value: 'count' }],
-                body: `<div>$(count)<button class="btn" onclick="$(() => el.emit('fired'))">go</button></div>`,
+                body: `<div>$(count)<button class="btn" onclick="el.emit('fired')">go</button></div>`,
             }));
 
             const element = document.createElement(componentName);
@@ -1897,7 +1898,7 @@
             registerCustomElementFromTemplate(createTemplate({
                 name: childName,
                 attributes: [{ name: 'attributes', value: 'count' }],
-                body: `<button class="inc" onclick="$(() => el.count = (el.count || 0) + 1)">$(count || 0)</button>`,
+                body: `<button class="inc" onclick="el.count = (el.count || 0) + 1">$(count || 0)</button>`,
             }));
 
             registerCustomElementFromTemplate(createTemplate({
@@ -1930,40 +1931,117 @@
 
         const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
-        await suite.testAsync("JST Combinators: debounce / throttle / changed / self / bare prevent", async () => {
-            const { debounce, throttle, changed, self, prevent } = window.JST.fn;
+        await suite.testAsync("JST Combinators: statement forms keyed per element/event/delay", async () => {
+            const { debounce, throttle, changed, keys } = window.JST.fn;
+            const input = document.createElement('input');
+            const mkEvent = (type) => ({ type, currentTarget: input, target: input });
 
-            let debounced = 0;
-            const burst = debounce(30, () => debounced++);
-            burst({}); burst({}); burst({});
+            let fast = 0, slow = 0;
+            debounce(mkEvent('input'), 30, () => fast++);
+            debounce(mkEvent('input'), 30, () => fast++);   // same delay — collapses
+            debounce(mkEvent('input'), 120, () => slow++);  // different delay — separate timer
             await sleep(70);
-            isEqual(1, debounced, 'Expected debounce to collapse a burst into one call');
+            isEqual(1, fast, 'Expected same-delay debounce calls to collapse into one');
+            isEqual(0, slow, 'Expected the longer delay to still be pending');
+            await sleep(100);
+            isEqual(1, slow, 'Expected the per-ms key to keep a separate timer');
 
             let throttled = 0;
-            const capped = throttle(50, () => throttled++);
-            capped({}); capped({}); capped({});
-            isEqual(1, throttled, 'Expected throttle to fire on the leading edge only');
+            if (throttle(mkEvent('scroll'), 50)) throttled++;
+            if (throttle(mkEvent('scroll'), 50)) throttled++;
+            isEqual(1, throttled, 'Expected the throttle guard to pass only the leading edge');
             await sleep(70);
-            capped({});
-            isEqual(2, throttled, 'Expected throttle to fire again after the window');
+            if (throttle(mkEvent('scroll'), 50)) throttled++;
+            isEqual(2, throttled, 'Expected the guard to pass again after the window');
 
             let changes = 0;
-            const input = document.createElement('input');
-            const onChange = changed(() => changes++);
-            onChange({ target: input });                       // '' matches the default value — no fire
-            input.value = 'a'; onChange({ target: input });    // differs — fire
-            onChange({ target: input });                       // unchanged — no fire
-            isEqual(1, changes, 'Expected changed() to fire only when the value differs');
+            if (changed(mkEvent('input'))) changes++;       // '' matches default value — no pass
+            input.value = 'a';
+            const editEvent = mkEvent('input');
+            if (changed(editEvent)) changes++;
+            if (changed(mkEvent('input'))) changes++;       // unchanged — no pass
+            isEqual(1, changes, 'Expected the changed guard to pass only when the value differs');
+            isEqual(true, changed(editEvent), 'Expected changed() to answer the same for the same event');
 
-            let selfCount = 0;
-            const onSelf = self(() => selfCount++);
-            onSelf({ target: input, currentTarget: document.body });
-            onSelf({ target: input, currentTarget: input });
-            isEqual(1, selfCount, 'Expected self() to require target === currentTarget');
+            let pressed = '';
+            keys({ type: 'keydown', key: 'Enter', ctrlKey: false, altKey: false, metaKey: false, shiftKey: false, target: input, currentTarget: input }, { Enter: () => { pressed = 'enter'; } });
+            keys({ type: 'keydown', key: 'k', ctrlKey: false, altKey: false, metaKey: true, shiftKey: false, target: input, currentTarget: input }, { 'Meta+k': () => { pressed = 'palette'; } });
+            isEqual('palette', pressed, 'Expected keys() to dispatch on the normalized combo');
+        });
 
-            const submitEvent = new Event('submit', { cancelable: true });
-            prevent()(submitEvent);
-            isEqual(true, submitEvent.defaultPrevented, 'Expected bare prevent() to preventDefault');
+        await suite.testAsync("JST Runtime: handler body gets the native contract (event + this)", async () => {
+            const componentName = nextName('x-contract');
+            registerCustomElementFromTemplate(createTemplate({
+                name: componentName,
+                attributes: [],
+                body: `<button class="btn" onclick="el.emit('probe', { isButton: this === event.currentTarget, hasEvent: !!event })">go</button>`,
+            }));
+            const element = document.createElement(componentName);
+            let detail = null;
+            element.addEventListener('probe', e => { detail = e.detail; });
+            document.body.appendChild(element);
+            await flushRender();
+            try {
+                element.querySelector('.btn').click();
+                isEqual(true, detail?.hasEvent, 'Expected event in scope in the handler body');
+                isEqual(true, detail?.isButton, 'Expected this to be the element the listener is on');
+            } finally {
+                element.remove();
+            }
+        });
+
+        await suite.testAsync("JST Runtime: synthetic onreveal fires when the element scrolls into view", async () => {
+            const componentName = nextName('x-reveal');
+            registerCustomElementFromTemplate(createTemplate({
+                name: componentName,
+                attributes: [],
+                body: `<div class="spacer" style="height:120vh"></div><p class="lazy" onreveal="el.emit('revealed')">lazy</p>`,
+            }));
+            const element = document.createElement(componentName);
+            let revealed = 0;
+            element.addEventListener('revealed', () => { revealed++; });
+            document.body.appendChild(element);
+            await flushRender();
+            try {
+                element.querySelector('.lazy').scrollIntoView();
+                await sleep(120);
+                isEqual(true, revealed >= 1, 'Expected the reveal CustomEvent to fire on scroll into view');
+            } finally {
+                element.remove();
+                window.scrollTo(0, 0);
+            }
+        });
+
+        await suite.testAsync("JST Runtime: unsafeInlineHandlers wires non-platform body handlers (opt-in)", async () => {
+            configure({ unsafeInlineHandlers: true });
+            const zone = document.createElement('div');
+            zone.innerHTML = `
+                <div style="height:120vh"></div>
+                <p id="lazy-body" onreveal="window.__bodyRevealed = (window.__bodyRevealed || 0) + 1">lazy</p>
+                <div id="custom-body" onitem-selected="window.__bodyCustom = (window.__bodyCustom || 0) + 1; window.__bodyCustomThis = (this === event.currentTarget)"></div>
+                <button id="native-body" onclick="window.__bodyNative = (window.__bodyNative || 0) + 1">n</button>
+            `;
+            document.body.appendChild(zone);
+            await sleep(30);   // inline wiring rides a MutationObserver
+            try {
+                // Custom component event: platform ignores onitem-selected; JST wires it.
+                zone.querySelector('#custom-body').dispatchEvent(new CustomEvent('item-selected'));
+                isEqual(1, window.__bodyCustom, 'Expected the custom-event inline body to run');
+                isEqual(true, window.__bodyCustomThis, 'Expected this to be the element (native contract)');
+
+                // Platform event: browser owns onclick; JST must NOT double-wire it.
+                zone.querySelector('#native-body').click();
+                isEqual(1, window.__bodyNative, 'Expected the native handler to fire exactly once (no double wiring)');
+
+                zone.querySelector('#lazy-body').scrollIntoView();
+                await sleep(120);
+                isEqual(true, (window.__bodyRevealed || 0) >= 1, 'Expected the inline onreveal body to run');
+            } finally {
+                configure({ unsafeInlineHandlers: false });
+                delete window.__bodyRevealed; delete window.__bodyCustom; delete window.__bodyCustomThis; delete window.__bodyNative;
+                zone.remove();
+                window.scrollTo(0, 0);
+            }
         });
 
         const withNavZone = async (innerHTML, testFn) => {
@@ -1985,83 +2063,71 @@
             }
         };
 
-        await suite.testAsync("JST Nav: default cause fires the declared request", async () => {
+        await suite.testAsync("JST Nav: an enhanced link fetches its href on its native activation", async () => {
             await withNavZone(`
                 <div id="nav-out-1"></div>
-                <button jst-get="/default-cause" jst-target="#nav-out-1">go</button>
+                <a href="/page/2" jst-target="#nav-out-1">next</a>
             `, async (zone, requests) => {
-                zone.querySelector('button').click();
+                zone.querySelector('a').click();
                 await sleep(30);
-                isEqual(1, requests.length, 'Expected the default click cause to fire the request');
+                isEqual(1, requests.length, 'Expected the native click to fire the request');
+                isEqual(true, requests[0].url.includes('/page/2'), 'Expected the URL to come from href');
                 isEqual('hit', zone.querySelector('#nav-out-1 .hit')?.textContent, 'Expected the response to swap into the target');
             });
         });
 
-        await suite.testAsync("JST Nav: jst-on<event>=\"shaper\" gates the firing", async () => {
-            window.JST.nav.shape('test-typeahead', fire => window.JST.fn.changed(window.JST.fn.debounce(30, fire)));
+        await suite.testAsync("JST Nav: an enhanced form posts its action with its params", async () => {
             await withNavZone(`
                 <div id="nav-out-2"></div>
-                <input name="q" jst-get="/search" jst-target="#nav-out-2" jst-oninput="test-typeahead">
+                <form action="/orders" method="post" jst-target="#nav-out-2">
+                    <input name="q" value="abc"><button type="submit">go</button>
+                </form>
             `, async (zone, requests) => {
-                const input = zone.querySelector('input');
-                input.value = 'a'; input.dispatchEvent(new Event('input', { bubbles: true }));
-                input.value = 'ab'; input.dispatchEvent(new Event('input', { bubbles: true }));
-                await sleep(80);
-                isEqual(1, requests.length, 'Expected the debounced burst to collapse into one request');
-                isEqual(true, requests[0].url.includes('q=ab'), 'Expected the request to carry the settled value');
+                zone.querySelector('form').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+                await sleep(30);
+                isEqual(1, requests.length, 'Expected submit to fire the request');
+                isEqual('POST', requests[0].method, 'Expected the native method attribute to set the verb');
             });
         });
 
-        await suite.testAsync("JST Nav: a late shape() registration heals unwired elements", async () => {
-            await withConsoleSpy('error', async (calls) => {
-                await withNavZone(`
-                    <div id="nav-out-3"></div>
-                    <button jst-get="/late" jst-target="#nav-out-3" jst-onclick="late-shaper">go</button>
-                `, async (zone, requests) => {
-                    const button = zone.querySelector('button');
-                    button.click();
-                    await sleep(30);
-                    isEqual(0, requests.length, 'Expected the element to stay unwired while the shaper is unknown');
-                    isEqual(true, calls.some(args => /unknown shaper "late-shaper"/.test(String(args[0]))), 'Expected a loud unknown-shaper error');
-
-                    window.JST.nav.shape('late-shaper', fire => fire);
-                    button.click();
-                    await sleep(30);
-                    isEqual(1, requests.length, 'Expected shape() to heal the pending element');
-                });
-            });
-        });
-
-        await suite.testAsync("JST Nav: jst-load and jst-poll causes", async () => {
+        await suite.testAsync("JST Nav: swap() is the imperative primitive", async () => {
             await withNavZone(`
-                <div id="nav-out-4"></div>
-                <div jst-get="/immediate" jst-target="#nav-out-4" jst-load></div>
-                <div jst-get="/poll" jst-swap="none" jst-poll="40ms"></div>
+                <div id="nav-out-3"></div>
             `, async (zone, requests) => {
-                await sleep(130);
-                isEqual(1, requests.filter(r => r.url === '/immediate').length, 'Expected jst-load to fire once on wire');
-                isEqual(true, requests.filter(r => r.url === '/poll').length >= 2, 'Expected jst-poll to fire repeatedly');
-                zone.remove();
-                const pollsAtRemoval = requests.filter(r => r.url === '/poll').length;
-                await sleep(100);
-                isEqual(pollsAtRemoval, requests.filter(r => r.url === '/poll').length, 'Expected polling to stop when the element is removed');
+                await window.JST.nav.swap('#nav-out-3', '/feed', { method: 'POST' });
+                isEqual(1, requests.length, 'Expected swap() to fetch');
+                isEqual('POST', requests[0].method, 'Expected fetch options to pass through');
+                isEqual('hit', zone.querySelector('#nav-out-3 .hit')?.textContent, 'Expected the response to land in the target');
             });
         });
 
-        await suite.testAsync("JST Nav: leftover jst-trigger fails loud and falls back to the default cause", async () => {
+        await suite.testAsync("JST Nav: removed attributes fail loud and do not fire", async () => {
             await withConsoleSpy('error', async (calls) => {
-                // The attribute name is split so tools/lint.mjs (which scans this
-                // file) doesn't flag the deliberately-legacy markup.
                 await withNavZone(`
-                    <div id="nav-out-5"></div>
-                    <button jst-get="/legacy" jst-target="#nav-out-5" ${'jst-trig' + 'ger'}="keyup changed delay:300ms">go</button>
+                    <div id="nav-out-4"></div>
+                    <button ${'jst-g' + 'et'}="/legacy" jst-target="#nav-out-4">go</button>
                 `, async (zone, requests) => {
-                    isEqual(true, calls.some(args => /jst-trigger was removed in v0\.5\.0/.test(String(args[0]))), 'Expected a loud jst-trigger migration error');
+                    isEqual(true, calls.some(args => /removed in v0\.6\.0/.test(String(args[0]))), 'Expected a loud removed-attribute error');
                     zone.querySelector('button').click();
                     await sleep(30);
-                    isEqual(1, requests.length, 'Expected the element to fall back to the default cause');
+                    isEqual(0, requests.length, 'Expected no request: buttons are not enhanceable and jst-get is gone');
                 });
             });
+        });
+
+        await suite.testAsync("JST Behaviors: jst-include fills itself from src", async () => {
+            const originalFetch = window.fetch;
+            window.fetch = async (url) => new Response(`<p class="inc">from ${url}</p>`, { status: 200, headers: { 'Content-Type': 'text/html' } });
+            const zone = document.createElement('div');
+            zone.innerHTML = `<jst-include src="/banner"></jst-include>`;
+            document.body.appendChild(zone);
+            try {
+                await sleep(30);
+                isEqual('from /banner', zone.querySelector('.inc')?.textContent, 'Expected the eager include to fill itself');
+            } finally {
+                window.fetch = originalFetch;
+                zone.remove();
+            }
         });
         };
 

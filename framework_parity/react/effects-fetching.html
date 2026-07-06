@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!-- JST - JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
 <!--
   Source: https://react.dev/learn/synchronizing-with-effects
   Demonstrates: useEffect for data fetching that re-runs when a dependency
   (the selected person id) changes, with the classic "ignore stale response"
   race guard.
-  JST status: (i) partial — there is no useEffect dependency model. We approximate
+  JST status: (i) partial - there is no useEffect dependency model. We approximate
   an effect by running a guarded side-effect inside a ${} render block: it compares
   the current dep to the last one (el._lastId) and fires the fetch only when it
   changes. `onDisconnect` handles teardown for in-flight requests on unmount.

@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!-- JST - JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
 <!--
   Source: https://vuejs.org/guide/essentials/computed
   Demonstrates: a computed property derived from reactive state (publishedBooksMessage).
-  JST status: (i) partial — JST has no `computed` primitive. Derived values are
+  JST status: (i) partial - JST has no `computed` primitive. Derived values are
   recomputed inline in the template with `$ const ...`. There is no memoization, but
   since the whole component re-renders on any change the derivation runs exactly when
   needed; functionally equivalent for this use. Acceptable tradeoff.
@@ -11,7 +11,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>JST — Computed Property</title>
+<title>JST - Computed Property</title>
 <script type="module" src="../../jst.js"></script>
 </head>
 <body>
@@ -26,10 +26,10 @@
   <ul id="books">
     $ a.books.forEach(b => { <li>$(b)</li> $ })
   </ul>
-  <button id="add" onclick="$(() => el.author = { ...a, books: [...a.books, 'New Book ' + (a.books.length+1)] })">
+  <button id="add" onclick="el.author = { ...a, books: [...a.books, 'New Book ' + (a.books.length+1)] }">
     Add a book
   </button>
-  <button id="clear" onclick="$(() => el.author = { ...a, books: [] })">Clear books</button>
+  <button id="clear" onclick="el.author = { ...a, books: [] }">Clear books</button>
 </script>
 
 <computed-demo id="app"></computed-demo>

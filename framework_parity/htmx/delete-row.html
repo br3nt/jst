@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!-- JST - JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
 <!--
   Source: https://htmx.org/examples/delete-row/
   Demonstrates: deleting a table row via DELETE, with the row fading out before removal.
@@ -31,7 +31,7 @@
       $ (rows || []).forEach(r => {
         <tr data-testid="row-$(r.id)" jst-key="$(r.id)" jst-transition="row">
           <td>$(r.name)</td><td>$(r.email)</td><td>$(r.status)</td>
-          <td><button data-testid="del-$(r.id)" onclick="$(() => el.emit('remove', r.id))">Delete</button></td>
+          <td><button data-testid="del-$(r.id)" onclick="el.emit('remove', r.id)">Delete</button></td>
         </tr>
       $ })
     </tbody>

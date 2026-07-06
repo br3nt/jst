@@ -1,16 +1,16 @@
 <!DOCTYPE html>
-<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!-- JST - JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
 <!--
   Source: https://vuejs.org/examples/#grid
   Demonstrates: a data grid with text search and click-to-sort columns (toggle asc/desc).
-  JST status: ✓ exact — search text and sort key/direction are local state; the
+  JST status: ✓ exact - search text and sort key/direction are local state; the
   filtered+sorted rows are derived inline in the template (JST's "computed" pattern).
   No JST limitation hit.
 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>JST — Grid</title>
+<title>JST - Grid</title>
 <script type="module" src="../../jst.js"></script>
 <style>
   body{font-family:sans-serif;max-width:640px;margin:2rem auto}
@@ -41,12 +41,12 @@
   $ };
 
   <p>Search: <input id="search" .value="$(query || '')"
-       oninput="$(e => el.query = e.target.value)"></p>
+       oninput="const e = event; el.query = e.target.value"></p>
   <table>
     <thead>
       <tr>
         $ cols.forEach(c => {
-          <th class="col-$(c)" onclick="$(() => setSort(c))">
+          <th class="col-$(c)" onclick="setSort(c)">
             $(c.charAt(0).toUpperCase() + c.slice(1))
             $ if (key === c) {
               <span class="arrow $(asc ? 'asc' : 'dsc')"></span>

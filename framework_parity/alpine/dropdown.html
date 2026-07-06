@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!-- JST - JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
 <!--
   Source: https://alpinejs.dev/component/dropdown
   Demonstrates: a dropdown that toggles open and closes when you click outside it
   (Alpine: @click + @click.outside).
-  JST status: ✓ exact — open/close is local state and `@click.outside` closes
+  JST status: ✓ exact - open/close is local state and `@click.outside` closes
   when the click target is outside the dropdown.
 -->
 <html lang="en">
@@ -22,14 +22,14 @@
 <body>
 
 <script type="jst" name="dropdown-menu" attributes="open choice">
-  <div style="position:relative; display:inline-block;" onclick.outside="$(() => el.open = false)">
-    <button data-testid="toggle" onclick="$(() => el.open = !el.open)">
+  <div style="position:relative; display:inline-block;" onclick.outside="el.open = false">
+    <button data-testid="toggle" onclick="el.open = !el.open">
       $(choice || 'Choose…') ▾
     </button>
     $ if (open) {
       <div class="menu" data-testid="menu">
         $ ['Edit', 'Duplicate', 'Delete'].forEach(item => {
-          <button onclick="$(() => { el.choice = item; el.open = false; })">$(item)</button>
+          <button onclick="el.choice = item; el.open = false;">$(item)</button>
         $ })
       </div>
     $ }

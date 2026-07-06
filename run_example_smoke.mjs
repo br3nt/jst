@@ -35,6 +35,7 @@ function createStaticServer(rootDir) {
         '.html': 'text/html; charset=utf-8',
         '.js': 'text/javascript; charset=utf-8',
         '.mjs': 'text/javascript; charset=utf-8',
+        '.css': 'text/css; charset=utf-8',
       })[path.extname(filePath)] || 'application/octet-stream';
 
       res.writeHead(200, { 'Content-Type': contentType });
@@ -291,6 +292,44 @@ const checks = [
       && result.listProjected === 2
       && result.customFooter.startsWith('A custom footer')
       && result.fallbackFooter === 'No footer provided',
+  },
+  {
+    // jst-layout is CSS-only: assert the stylesheet actually styles the
+    // primitives, including the :has() positioning-container rule.
+    page: '/examples/layout_primitives.html',
+    script: `(async () => {
+      ${flushSnippet}
+      await flush();
+      const switcher = getComputedStyle(document.querySelector('jst-switcher'));
+      const imposter = document.querySelector('jst-imposter');
+      return {
+        primitives: document.querySelectorAll('jst-stack, jst-cluster, jst-grid, jst-sidebar, jst-center, jst-box, jst-switcher, jst-cover, jst-frame, jst-reel, jst-imposter, jst-icon').length,
+        switcherFlex: switcher.display === 'flex',
+        imposterAbsolute: getComputedStyle(imposter).position === 'absolute',
+        containerPositioned: getComputedStyle(imposter.parentElement).position === 'relative',
+      };
+    })()`,
+    assert: result => result.primitives >= 30
+      && result.switcherFlex === true
+      && result.imposterAbsolute === true
+      && result.containerPositioned === true,
+  },
+  {
+    page: '/examples/components_cross_section.html',
+    script: `(async () => {
+      ${flushSnippet}
+      await flush();
+      const tabs = document.querySelector('jst-tabs');
+      const before = tabs.querySelector('[role=tabpanel]').textContent;
+      tabs.querySelectorAll('[role=tab]')[1].click();
+      await flush();
+      const after = tabs.querySelector('[role=tabpanel]').textContent;
+      const selected = tabs.querySelectorAll('[role=tab]')[1].getAttribute('aria-selected');
+      return { tabCount: tabs.querySelectorAll('[role=tab]').length, changed: before !== after, selected };
+    })()`,
+    assert: result => result.tabCount === 3
+      && result.changed === true
+      && result.selected === 'true',
   },
 ];
 

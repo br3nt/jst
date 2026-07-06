@@ -1,15 +1,15 @@
 <!DOCTYPE html>
-<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!-- JST - JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
 <!--
   Source: https://vuejs.org/guide/components/events
   Demonstrates: a child component emitting an event ($emit) that the parent handles.
-  JST status: ✓ exact — el.emit('name', detail) dispatches a bubbling CustomEvent;
+  JST status: ✓ exact - el.emit('name', detail) dispatches a bubbling CustomEvent;
   the parent listens with addEventListener. This is JST's core "events up" model.
 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>JST — Component Events</title>
+<title>JST - Component Events</title>
 <script type="module" src="../../jst.js"></script>
 </head>
 <body>
@@ -18,14 +18,14 @@
 <script type="jst" name="blog-post" attributes="title">
   <div class="blog-post">
     <h4>$(title)</h4>
-    <button onclick="$(() => el.emit('enlarge-text'))">Enlarge text</button>
+    <button onclick="el.emit('enlarge-text')">Enlarge text</button>
   </div>
 </script>
 
 <!-- Parent owns fontSize, listens for the event, re-renders. -->
 <script type="jst" name="blog-app" attributes="posts fontsize">
   $ const size = fontsize || 1;
-  <div id="blog" style="font-size: $(size)em" onenlarge-text="$(() => el.fontsize = (el.fontsize || 1) + 0.1)">
+  <div id="blog" style="font-size: $(size)em" onenlarge-text="el.fontsize = (el.fontsize || 1) + 0.1">
     $ (posts || []).forEach(post => {
       <blog-post title="$(post.title)"></blog-post>
     $ })

@@ -269,7 +269,7 @@
 
   <script type="jst" name="concern-parent-field" attributes="value">
     <label>Parent value
-      <input .value="$(value || '')" oninput="$(event => el.emit('value-change', event.target.value))">
+      <input .value="$(value || '')" oninput="el.emit('value-change', event.target.value)">
     </label>
     <p>Prop from parent: <strong>$(value || '')</strong></p>
   </script>
@@ -292,10 +292,10 @@
 
   <script type="jst" name="concern-stale-counter" attributes="count">
     <p>Count: <strong>$(count || 0)</strong></p>
-    <button onclick="$(() => { el.count = (count || 0) + 1; el.count = (count || 0) + 1; })">
+    <button onclick="el.count = (count || 0) + 1; el.count = (count || 0) + 1;">
       Add twice using render value
     </button>
-    <button class="primary" onclick="$(() => { el.count = (el.count || 0) + 1; el.count = (el.count || 0) + 1; })">
+    <button class="primary" onclick="el.count = (el.count || 0) + 1; el.count = (el.count || 0) + 1;">
       Add twice using el.count
     </button>
   </script>

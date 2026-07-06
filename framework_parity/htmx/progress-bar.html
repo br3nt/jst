@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!-- JST - JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
 <!--
   Source: https://htmx.org/examples/progress-bar/
   Demonstrates: start a job, poll for progress, update a bar until complete, then
   show a restart state.
-  JST status: ✓ exact — jst-nav polls declaratively with
-  `jst-poll="200ms"` + `jst-swap="outerHTML"`. The running response keeps
-  the polling element; the done response drops it, so the poll stops itself.
+  JST status: ✓ exact - polling is a page-level setInterval that swap()s
+  while a .poller row is present. The running response keeps the polling
+  element; the done response drops it, so the poll stops itself.
 -->
 <html lang="en">
 <head>
@@ -24,14 +24,14 @@
 
 <h1>Progress Bar</h1>
 <div id="job">
-  <button data-testid="start" jst-action="/api/job" method="post" jst-target="#job" jst-swap="innerHTML">Start Job</button>
+  <form action="/api/job" method="post" jst-target="#job" jst-swap="innerHTML"><button data-testid="start">Start Job</button></form>
 </div>
 
 <script>
   let serverProgress = 0;
   const track = (p) => `<div role="progressbar" aria-valuenow="${p}" class="track"><div class="bar" data-testid="bar" style="width:${p}%"></div></div>`;
-  const running = (p) => `<div class="poller" jst-get="/api/job" jst-poll="200ms" jst-target="this" jst-swap="outerHTML">${track(p)}<p data-testid="running">Running… ${p}%</p></div>`;
-  const done = () => `<div>${track(100)}<p data-testid="done">Complete!</p><button data-testid="restart" jst-action="/api/job" method="post" jst-target="#job" jst-swap="innerHTML">Restart Job</button></div>`;
+  const running = (p) => `<div class="poller">${track(p)}<p data-testid="running">Running… ${p}%</p></div>`;
+  const done = () => `<div>${track(100)}<p data-testid="done">Complete!</p><form action="/api/job" method="post" jst-target="#job" jst-swap="innerHTML"><button data-testid="restart">Restart Job</button></form></div>`;
 
   const origFetch = window.fetch.bind(window);
   window.fetch = async (url, opts) => {
@@ -45,17 +45,18 @@
     return origFetch(url, opts);
   };
 
+  // Poll while a .poller is present: plain platform code driving swap().
+  // The DONE response carries no .poller, so the loop stops by itself -
+  // the server still steers the cadence, just via markup instead of a grammar.
+  setInterval(() => {
+    if (document.querySelector('.poller')) JST.nav.swap('#job', '/api/job');
+  }, 200);
+
   window.__exampleReady = true;
   window.__parityTest = async () => {
-    await window.JST.nav.performRequest(document.querySelector('[data-testid="start"]'));
-    await new Promise(r => setTimeout(r, 80));
-    for (let i = 0; i < 6; i++) {
-      const poller = document.querySelector('.poller');
-      if (!poller) break;
-      await window.JST.nav.performRequest(poller);
-      await new Promise(r => setTimeout(r, 60));
-    }
-    return { ok: !!document.querySelector('[data-testid="done"]'), detail: 'polled to completion via the every-Ns trigger, then stopped' };
+    document.querySelector('[data-testid="start"]').click();
+    await new Promise(r => setTimeout(r, 1400));
+    return { ok: !!document.querySelector('[data-testid="done"]'), detail: 'polled to completion via setInterval + swap(), stopped by the done markup' };
   };
 </script>
 </body>

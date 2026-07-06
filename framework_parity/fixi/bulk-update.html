@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!-- JST - JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
 <!--
   Source: https://github.com/bigskysoftware/fixi#readme  (Bulk Update)
   Demonstrates: a "toggle all" plus per-row checkboxes stage a draft of changes, then one
@@ -34,7 +34,7 @@
     <thead><tr>
       <th>Name</th><th>Email</th>
       <th><label><input type="checkbox" data-testid="toggle-all" .checked="$(allOn)"
-                 onchange="$(e => el.emit('toggle-all', { active: e.target.checked }))"> Active</label></th>
+                 onchange="const e = event; el.emit('toggle-all', { active: e.target.checked })"> Active</label></th>
     </tr></thead>
     <tbody>
       $ list.forEach(u => {
@@ -43,12 +43,12 @@
           <td>$(u.email)</td>
           <td><input type="checkbox" data-testid="cb-$(u.id)"
                      .checked="$(effective(u))"
-                     onchange="$(e => el.emit('toggle', { id: u.id, active: e.target.checked }))"></td>
+                     onchange="const e = event; el.emit('toggle', { id: u.id, active: e.target.checked })"></td>
         </tr>
       $ })
     </tbody>
   </table>
-  <button data-testid="apply" onclick="$(() => el.emit('apply'))">Apply Changes</button>
+  <button data-testid="apply" onclick="el.emit('apply')">Apply Changes</button>
 </script>
 
 <h1>Bulk Update</h1>

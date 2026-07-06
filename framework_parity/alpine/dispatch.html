@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!-- JST - JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
 <!--
   Source: https://alpinejs.dev/magics/dispatch
-  Demonstrates: Alpine $dispatch — fire a custom DOM event (bubbling) that an
+  Demonstrates: Alpine $dispatch - fire a custom DOM event (bubbling) that an
   ancestor listens for. Here a child notifies the page of a "notify" event.
-  JST status: ✓ exact — this IS JST's core "events up" model. `el.emit(name, detail)`
+  JST status: ✓ exact - this IS JST's core "events up" model. `el.emit(name, detail)`
   dispatches a bubbling, composed CustomEvent; the page listens with addEventListener.
 -->
 <html lang="en">
@@ -19,7 +19,7 @@
 <script type="jst" name="dispatch-demo">
   <div>
     <!-- Alpine's dispatch('notify', {...}) equivalent -->
-    <button data-testid="fire" onclick="$(() => el.emit('notify', { msg: 'Hello from child' }))">
+    <button data-testid="fire" onclick="el.emit('notify', { msg: 'Hello from child' })">
       Dispatch custom event
     </button>
   </div>

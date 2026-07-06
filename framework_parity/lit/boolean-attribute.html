@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!-- JST - JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
 <!--
   Source: https://lit.dev/docs/templates/expressions/#boolean-attribute-expressions
   Demonstrates: a boolean attribute expression. Lit's `?hidden=${!this.show}` adds the
@@ -7,7 +7,7 @@
   Maps from: Lit `?attr=${bool}` ↔ JST property binding `.hidden="$(bool)"`, which sets
   the element's boolean `hidden` IDL property (reflected to/from the attribute) so the
   attribute is genuinely added and removed.
-  JST status: ✓ exact — `.hidden="$(!show)"` adds/removes the boolean attribute, like Lit.
+  JST status: ✓ exact - `.hidden="$(!show)"` adds/removes the boolean attribute, like Lit.
 -->
 <html lang="en">
 <head>
@@ -29,7 +29,7 @@
     <p class="panel" id="panel" data-testid="panel" .hidden="$(!show)">
       You can see me when <code>show</code> is true.
     </p>
-    <button id="toggle" onclick="$(() => el.show = !el.show)">
+    <button id="toggle" onclick="el.show = !el.show">
       $(show ? 'Hide' : 'Show') panel
     </button>
   </div>

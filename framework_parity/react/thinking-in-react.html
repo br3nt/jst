@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!-- JST - JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
 <!--
   Source: https://react.dev/learn/thinking-in-react
-  Demonstrates: the filterable product table — a SearchBar (text + checkbox)
+  Demonstrates: the filterable product table - a SearchBar (text + checkbox)
   and a ProductTable, with the filter state lifted to their common parent and
   the table derived from it. Combines lifting state + controlled inputs +
   conditional/list rendering.
-  JST status: ✓ exact — the page owns filterText/inStockOnly, search-bar emits,
+  JST status: ✓ exact - the page owns filterText/inStockOnly, search-bar emits,
   product-table renders, and property-aware morphing keeps controlled inputs
   stable.
 -->
@@ -32,11 +32,11 @@
   <div>
     <input type="text" data-testid="search" placeholder="Search…"
            .value="$(filterText || '')"
-           oninput="$(e => el.emit('search', e.target.value))">
+           oninput="const e = event; el.emit('search', e.target.value)">
     <label>
       <input type="checkbox" data-testid="instock"
              .checked="$(!!inStock)"
-             onchange="$(e => el.emit('stock', e.target.checked))">
+             onchange="const e = event; el.emit('stock', e.target.checked)">
       Only show products in stock
     </label>
   </div>

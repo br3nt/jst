@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!-- JST - JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
 <!--
   Source: https://lit.dev/docs/components/events/#dispatching-events
   Demonstrates: dispatching a custom event from a child up to a parent. Lit fires
@@ -7,7 +7,7 @@
   and the parent listens with `@item-selected` / addEventListener, reading `e.detail`.
   Maps from: Lit `dispatchEvent(CustomEvent(..., {bubbles, composed}))` ↔ JST
   `el.emit('item-selected', detail)` (a bubbling CustomEvent); parent binds `@item-selected`.
-  JST status: ✓ exact — `el.emit` is JST's "events up" primitive and bubbles to the parent.
+  JST status: ✓ exact - `el.emit` is JST's "events up" primitive and bubbles to the parent.
 -->
 <html lang="en">
 <head>
@@ -25,12 +25,12 @@
 
 <!-- Child emits a bubbling 'item-selected' event carrying the chosen item as detail. -->
 <script type="jst" name="menu-item" attributes="label">
-  <button onclick="$(() => el.emit('item-selected', { label }))">$(label)</button>
+  <button onclick="el.emit('item-selected', { label })">$(label)</button>
 </script>
 
 <!-- Parent listens for 'item-selected' and records detail.label as its own state. -->
 <script type="jst" name="menu-board" attributes="items selected">
-  <div onitem-selected="$(e => el.selected = e.detail.label)">
+  <div onitem-selected="const e = event; el.selected = e.detail.label">
     $ (items || []).forEach(label => {
       <menu-item label="$(label)"></menu-item>
     $ })

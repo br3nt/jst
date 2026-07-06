@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!-- JST - JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
 <!--
   Source: https://github.com/bigskysoftware/fixi (polling is an extension)
   Demonstrates: a region that refreshes itself on an interval.
-  JST status: ✓ exact — jst-nav's `jst-poll="500ms"` polls the region
-  declaratively (fixi-core has no polling trigger); removing the element stops it.
+  JST status: ✓ exact - polling is setInterval + jst-nav's swap() primitive
+  (fixi-core has no polling trigger either); a Stop button clears the interval.
 -->
 <html lang="en">
 <head>
@@ -20,7 +20,7 @@
 <body>
 
 <h1>Live region (polling)</h1>
-<div id="clock" data-testid="clock" jst-get="/api/tick" jst-poll="500ms" jst-target="#clock" jst-swap="innerHTML">—</div>
+<div id="clock" data-testid="clock">—</div>
 <button id="stop" data-testid="stop">Stop</button>
 
 <script>
@@ -31,15 +31,15 @@
     if (u.pathname === '/api/tick') { tick++; return new Response(String(100 + tick), { headers: { 'Content-Type': 'text/html' } }); }
     return origFetch(url, opts);
   };
-  // Stop polling by removing the element (its interval self-clears on disconnect).
-  document.getElementById('stop').addEventListener('click', () => document.getElementById('clock').remove());
+  // Polling is plain platform code: an interval calling jst-nav's swap().
+  const poll = setInterval(() => JST.nav.swap('#clock', '/api/tick'), 500);
+  document.getElementById('stop').addEventListener('click', () => clearInterval(poll));
   window.__exampleReady = true;
   window.__parityTest = async () => {
-    const clock = document.getElementById('clock');
-    await window.JST.nav.performRequest(clock);
+    await window.JST.nav.swap('#clock', '/api/tick');
     await new Promise(r => setTimeout(r, 150));
     const after = document.querySelector('[data-testid="clock"]').textContent.trim();
-    return { ok: /^\d+$/.test(after) && Number(after) > 100, detail: `every-Ns trigger refreshed the region to ${after}` };
+    return { ok: /^\d+$/.test(after) && Number(after) > 100, detail: `setInterval + swap() refreshed the region to ${after}` };
   };
 </script>
 </body>

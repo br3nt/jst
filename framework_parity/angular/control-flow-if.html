@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!-- JST - JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
 <!--
   Source: https://angular.dev/guide/templates/control-flow
   Demonstrates: @if / @else control flow.
-  JST status: ✓ exact — `$ if (…) { … } else { … }`.
+  JST status: ✓ exact - `$ if (…) { … } else { … }`.
 -->
 <html lang="en"><head><meta charset="UTF-8"><title>JST · Angular @if</title>
 <script type="module" src="../../jst.js"></script>
@@ -11,7 +11,7 @@
 </head><body>
 <h1>@if control flow</h1>
 <script type="jst" name="ng-if" attributes="loggedIn">
-  <button onclick="$(() => el.loggedIn = !el.loggedIn)">Toggle</button>
+  <button onclick="el.loggedIn = !el.loggedIn">Toggle</button>
   $ if (loggedIn) {
     <p data-testid="out">Welcome, user</p>
   $ } else {

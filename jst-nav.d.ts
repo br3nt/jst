@@ -1,4 +1,4 @@
-import type { JSTGlobal, JSTNavShaper } from './index';
+import type { JSTGlobal, JSTNavSwapOptions } from './index';
 
 export interface JSTNavCsrfConfig {
   metaName: string;
@@ -6,10 +6,8 @@ export interface JSTNavCsrfConfig {
 }
 
 export function configure(root?: Document | Element): void;
-/** Fire the element's declared request now (the escape hatch for exotic causes). */
-export function performRequest(element: Element, sourceEvent?: Event): Promise<void>;
-/** Register a named shaper for jst-on<event>="name" attributes. */
-export function shape(name: string, shaper: JSTNavShaper): void;
+/** Fetch url and swap the response into target — the imperative primitive. */
+export function swap(target: Element | string | null, url: string, options?: JSTNavSwapOptions): Promise<Response>;
 
 declare global {
   interface Window {

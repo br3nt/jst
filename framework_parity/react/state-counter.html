@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!-- JST - JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
 <!--
   Source: https://react.dev/learn/state-a-components-memory
-  Demonstrates: useState — a component's private memory. Two independent
+  Demonstrates: useState - a component's private memory. Two independent
   counters each keep their own count; clicking one does not affect the other.
-  JST status: ✓ exact — a JST prop IS local state. `el.count = el.count + 1`
+  JST status: ✓ exact - a JST property IS local state. `el.count = el.count + 1`
   mutates the component's own prop and re-renders, just like a setState call,
   and each element instance has its own #params (isolated memory).
 -->
@@ -24,7 +24,7 @@
 
 <!-- count is declared as a prop; it doubles as this component's local state. -->
 <script type="jst" name="my-counter" attributes="count">
-  <button onclick="$(() => el.count = (el.count || 0) + 1)">
+  <button onclick="el.count = (el.count || 0) + 1">
     Clicked $(count || 0) times
   </button>
 </script>
@@ -34,7 +34,7 @@
   <my-counter id="counter-b" data-testid="counter-b" count="0"></my-counter>
 </div>
 
-<p>Each counter has independent state — React's core useState lesson.</p>
+<p>Each counter has independent state - React's core useState lesson.</p>
 
 <script>
   window.__exampleReady = true;

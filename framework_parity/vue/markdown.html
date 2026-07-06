@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!-- JST - JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
 <!--
   Source: https://vuejs.org/examples/#markdown
-  Demonstrates: a live markdown editor — textarea input rendered to HTML preview,
+  Demonstrates: a live markdown editor - textarea input rendered to HTML preview,
   debounced. (Vue's own example loads `marked` from a CDN; we mirror that.)
-  JST status: (i) partial — markdown rendering itself is exact. Two notes:
+  JST status: (i) partial - markdown rendering itself is exact. Two notes:
    1) Binding the <textarea> to state and re-rendering per keystroke would reset the
-      caret (JST re-renders the whole component; morph rewrites the text node — the
+      caret (JST re-renders the whole component; morph rewrites the text node - the
       v-model gap), so the preview is updated imperatively from @input instead.
    2) The render helper lives in a plain <script>, not a template JS line, because the
       JST template lexer mis-tokenises `$` inside regex literals (e.g. /...$/). Moving
@@ -16,7 +16,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>JST — Markdown Editor</title>
+<title>JST - Markdown Editor</title>
 <script type="module" src="../../jst.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <style>
@@ -53,7 +53,7 @@
   $   el.__t = setTimeout(() => { el.querySelector('#preview').innerHTML = renderMarkdown(v); }, 100);
   $ };
   <div class="editor">
-    <textarea id="src" oninput="$(onInput)">$(input)</textarea>
+    <textarea id="src" oninput="onInput(event)">$(input)</textarea>
     <div class="preview" id="preview"></div>
   </div>
 </script>

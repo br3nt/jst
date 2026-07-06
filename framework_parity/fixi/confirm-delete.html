@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!-- JST - JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
 <!--
   Source: https://github.com/bigskysoftware/fixi (cfg.confirm)
   Demonstrates: a guarded DELETE.
-  JST status: ✓ exact — jst-nav's `jst-confirm="…"` gates the request (htmx's
+  JST status: ✓ exact - jst-nav's `jst-confirm="…"` gates the request (htmx's
   hx-confirm); declining skips it, accepting fires the DELETE and `jst-swap="delete"`
   removes the row. (fixi-core has no confirm attribute.)
 -->
@@ -24,9 +24,9 @@
 
 <h1>Confirm before delete</h1>
 <ul data-testid="list">
-  <li data-testid="item-1"><span class="name">Draft proposal</span><button data-testid="del-1" jst-action="/api/item/1" method="delete" jst-confirm="Delete this item?" jst-target="closest li" jst-swap="delete">Delete</button></li>
-  <li data-testid="item-2"><span class="name">Old screenshot</span><button data-testid="del-2" jst-action="/api/item/2" method="delete" jst-confirm="Delete this item?" jst-target="closest li" jst-swap="delete">Delete</button></li>
-  <li data-testid="item-3"><span class="name">Temp export</span><button data-testid="del-3" jst-action="/api/item/3" method="delete" jst-confirm="Delete this item?" jst-target="closest li" jst-swap="delete">Delete</button></li>
+  <li data-testid="item-1"><span class="name">Draft proposal</span><form style="display:inline" action="/api/item/1" method="delete" jst-confirm="Delete this item?" jst-target="closest li" jst-swap="delete"><button data-testid="del-1">Delete</button></form></li>
+  <li data-testid="item-2"><span class="name">Old screenshot</span><form style="display:inline" action="/api/item/2" method="delete" jst-confirm="Delete this item?" jst-target="closest li" jst-swap="delete"><button data-testid="del-2">Delete</button></form></li>
+  <li data-testid="item-3"><span class="name">Temp export</span><form style="display:inline" action="/api/item/3" method="delete" jst-confirm="Delete this item?" jst-target="closest li" jst-swap="delete"><button data-testid="del-3">Delete</button></form></li>
 </ul>
 
 <script>

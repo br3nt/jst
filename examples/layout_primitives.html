@@ -3,13 +3,13 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>jst-layout — primitives (no runtime)</title>
+  <title>jst-layout: primitives (no runtime)</title>
   <!-- Opt-in layout CSS. No <script> on this page: the <jst-*> primitives are
        pure CSS selectors, so this runs with zero JavaScript, even from file://. -->
   <link rel="stylesheet" href="../jst-layout.css">
   <style>
     /* Demo-only: a second region re-themed by overriding ONE token. Structure
-       below is identical to the first region — only --jst-accent changes. */
+       below is identical to the first region - only --jst-accent changes. */
     .reskin { --jst-accent: oklch(0.62 0.17 25); }
     .swatch { inline-size: var(--jst-space-l); aspect-ratio: 1; border-radius: var(--jst-radius); }
     [data-side] { background: var(--jst-surface); border-radius: var(--jst-radius); padding: var(--jst-space-m); }
@@ -23,7 +23,7 @@
         <h1>jst-layout primitives</h1>
         <p>
           Every primitive below is a <code>&lt;jst-*&gt;</code> element styled by
-          CSS alone — there is no script on this page. Per-instance values are set
+          CSS alone; there is no script on this page. Per-instance values are set
           with an inline custom property like <code>--space</code>.
         </p>
       </jst-stack>
@@ -60,7 +60,7 @@
       <jst-box>
         <jst-stack>
           <h2>Grid</h2>
-          <p>As many <code>--min</code>-wide columns as fit. Resize to see it reflow — no media queries.</p>
+          <p>As many <code>--min</code>-wide columns as fit. Resize to see it reflow; no media queries.</p>
           <jst-grid style="--min: 8rem">
             <jst-box><strong>One</strong></jst-box>
             <jst-box><strong>Two</strong></jst-box>
@@ -90,6 +90,98 @@
         </jst-stack>
       </jst-box>
 
+      <!-- Switcher: side by side, then all stacked below the threshold -->
+      <jst-box>
+        <jst-stack>
+          <h2>Switcher</h2>
+          <p>Children share the row equally until the container is narrower than
+             <code>--threshold</code>, then all of them stack. The <code>limit</code>
+             attribute caps items per row.</p>
+          <jst-switcher style="--threshold: 34rem">
+            <jst-box><strong>Plan</strong><p>Starter</p></jst-box>
+            <jst-box><strong>Plan</strong><p>Team</p></jst-box>
+            <jst-box><strong>Plan</strong><p>Enterprise</p></jst-box>
+          </jst-switcher>
+        </jst-stack>
+      </jst-box>
+
+      <!-- Cover: principal child vertically centered, edges pushed out -->
+      <jst-box>
+        <jst-stack>
+          <h2>Cover</h2>
+          <p>The <code>data-principal</code> child centers vertically inside
+             <code>--min-height</code>; anything before or after it sits at the edges.</p>
+          <jst-cover style="--min-height: 14rem; background: var(--jst-surface); border-radius: var(--jst-radius)">
+            <p><em>Eyebrow text</em></p>
+            <h3 data-principal>A centered hero heading</h3>
+            <p>Footer line</p>
+          </jst-cover>
+        </jst-stack>
+      </jst-box>
+
+      <!-- Frame: media cropped to an aspect ratio -->
+      <jst-box>
+        <jst-stack>
+          <h2>Frame</h2>
+          <p>Crops media (or centers anything else) to <code>--ratio</code>.</p>
+          <jst-frame style="--ratio: 21 / 9; background: var(--jst-accent); color: var(--jst-accent-fg)">
+            <strong>21 / 9</strong>
+          </jst-frame>
+        </jst-stack>
+      </jst-box>
+
+      <!-- Reel: horizontal scroller -->
+      <jst-box>
+        <jst-stack>
+          <h2>Reel</h2>
+          <p>Overflowing children scroll horizontally at <code>--item-width</code>
+             instead of shrinking.</p>
+          <jst-reel style="--item-width: 9rem">
+            <jst-box>Card one</jst-box>
+            <jst-box>Card two</jst-box>
+            <jst-box>Card three</jst-box>
+            <jst-box>Card four</jst-box>
+            <jst-box>Card five</jst-box>
+            <jst-box>Card six</jst-box>
+          </jst-reel>
+        </jst-stack>
+      </jst-box>
+
+      <!-- Imposter: centered overlay; the parent becomes the positioning
+           container automatically via :has() -->
+      <jst-box>
+        <jst-stack>
+          <h2>Imposter</h2>
+          <p>Positions over its parent, centered by default. The parent needs no
+             class: any element with a <code>&lt;jst-imposter&gt;</code> child becomes
+             the positioning container.</p>
+          <jst-frame style="--ratio: 4 / 1; background: var(--jst-surface)">
+            <p>Content underneath underneath underneath</p>
+            <jst-imposter>
+              <jst-box style="--surface: var(--jst-bg)"><strong>On top</strong></jst-box>
+            </jst-imposter>
+          </jst-frame>
+        </jst-stack>
+      </jst-box>
+
+      <!-- Icon: inline icon sized to the text -->
+      <jst-box>
+        <jst-stack>
+          <h2>Icon</h2>
+          <p>
+            Inline SVG sized to the capital height of the surrounding text:
+            <jst-icon>
+              <svg viewBox="0 0 10 10" aria-hidden="true"><path d="M1 5l3 3 5-6" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+              <span>with a label</span>
+            </jst-icon>
+            and it scales with the font, even in a
+            <strong style="font-size: 1.5em">bigger
+              <jst-icon><svg viewBox="0 0 10 10" aria-hidden="true"><path d="M1 5l3 3 5-6" fill="none" stroke="currentColor" stroke-width="2"/></svg></jst-icon>
+            </strong> setting.
+          </p>
+        </jst-stack>
+      </jst-box>
+
       <!-- Theming: identical markup, one token overridden -->
       <jst-box class="reskin">
         <jst-stack>
@@ -98,7 +190,7 @@
              foreground re-derive automatically.</p>
           <!-- Shades derived at use-site from --jst-accent, so they re-theme with
                the subtree override. (The :root --jst-accent-NNN tokens would stay
-               frozen to the root accent — see the gotcha in the design doc.) -->
+               frozen to the root accent - see the gotcha in the design doc.) -->
           <jst-cluster>
             <div class="swatch" style="background: oklch(from var(--jst-accent) calc(l + 0.10) c h)"></div>
             <div class="swatch" style="background: var(--jst-accent)"></div>

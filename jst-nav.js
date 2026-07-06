@@ -2,45 +2,38 @@
  * jst-nav — declarative server-driven navigation for JST (opt-in, no build).
  * © Brent Jacobs · https://github.com/br3nt/jst · MIT
  *
- * Directives that live on USAGE HTML (not inside <script type="jst">
- * templates). Values are plain, inert strings — URLs, CSS selectors, names —
- * never executable expressions, so server-rendered HTML stays inside JST's
- * safe-by-default model (and jst-nav can never become a CSP-bypass gadget).
+ * ENHANCEMENT ONLY (v0.6.0): jst-nav upgrades elements that already act — a
+ * link navigates, a form submits — so their native action fetches a fragment
+ * and swaps it in instead of loading a whole page. It never invents behaviour
+ * on inert elements (that's a component's job — see <jst-include> in
+ * jst-behaviors.js) and never evaluates attribute strings (values are inert
+ * URLs/CSS selectors, so server HTML can't smuggle code — no script gadget).
  *
  *   <script type="module" src="jst-nav.js"></script>
  *
- * Every element is a cause → request → effect sentence:
+ *   <a href="/page/2" jst-target="#list">next</a>
+ *   <form action="/orders" method="post" jst-target="#list">…</form>
  *
- *   WHEN  (cause)   jst-on<event>[="shaper"] | jst-load[="lazy"] | jst-poll="2s"
- *                   default: form→submit, input/select/textarea→change, else click
- *   DO    (request) jst-get="/url" | jst-action="/url" + method="post|put|…"
- *   PUT   (effect)  jst-target="<css>" jst-swap="<how>" jst-select="<css>"
+ * The URL and verb come from the element's NATIVE attributes (href / action /
+ * method). The presence of any jst-nav effect attribute opts the element in;
+ * it fires on the element's native activation (link click, form submit) and
+ * degrades to normal navigation with JS off.
  *
- * Causes:
- *   jst-on<event>             fire the request on this DOM event instead of the default
- *   jst-on<event>="name"      …gated/paced by the SHAPER registered under that name:
- *                             JST.nav.shape('name', fire => handler). A shaper decides
- *                             WHEN to call fire (debounce, key filter, …); it can never
- *                             change what firing does. Unknown names fail loud.
- *   jst-load                  fire as soon as the element is wired
- *   jst-load="lazy"           fire when scrolled into view (like loading="lazy")
- *   jst-poll="2s"             fire on an interval (stops when the element is removed)
- *   Exotic causes (global shortcuts, listeners on other elements): wire them
- *   yourself — addEventListener + JST.nav.request(el). In templates skip all of
- *   this and use a normal handler: oninput="$(debounce(300, e => JST.nav.request(…)))".
- *
- * Request + effect:
- *   jst-get="/url"            GET + swap (shorthand)
- *   jst-action="/url"         request URL (pair with method= for the verb)
- *   method="post|put|…"       native attribute, reused as the verb (GET default)
+ * Effect attributes (on <a> and <form>):
  *   jst-target="<css>"        where the response lands (querySelector / closest / :scope / this)
  *   jst-swap="<how>"          innerHTML(default) outerHTML beforeend afterbegin
  *                             beforebegin afterend delete none morph transition
  *   jst-select="<css>"        pick a subtree out of the response
  *   jst-push-url[="/url"]     push history (back/forward + restore)
  *   jst-replace-url[="/url"]  replace the current history entry (filters/in-place)
- *   jst-boost                 on a container: boost descendant <a>/<form>
+ *   jst-confirm="msg"         gate the request behind a confirm
  *   jst-target-4xx/5xx/error  route error responses elsewhere
+ *   jst-boost                 on a container: boost every descendant <a>/<form>
+ *
+ * The imperative primitive (same pipeline, callable from any handler):
+ *   import { swap } from './jst-nav.js';
+ *   swap('#results', '/search?q=' + this.value);
+ *   swap('#list', '/orders', { method: 'POST', body });
  *
  * Unsafe (non-GET) same-origin requests carry the server's CSRF token from
  * <meta name="csrf-token"> as X-CSRF-Token (configurable via JST.nav.csrf).
@@ -51,8 +44,12 @@
  */
 
 const WIRED = Symbol('jstNavWired');
-// [jst-trigger] is retained ONLY so leftover 0.4.x markup fails loud (see setupCauses).
-const REQUESTABLE = '[jst-get],[jst-action],[jst-trigger]';
+
+// Enhancement is opt-in per element: any effect attribute on a link or form.
+const NAV_ATTRS = ['jst-target', 'jst-swap', 'jst-select', 'jst-push-url', 'jst-replace-url', 'jst-confirm'];
+const ENHANCEABLE = NAV_ATTRS.flatMap(attr => [`a[${attr}]`, `form[${attr}]`]).join(',');
+// Removed-in-v0.6.0 attributes: detected only to fail loud with the rewrite.
+const LEGACY = '[jst-get],[jst-action],[jst-trigger],[jst-load],[jst-poll]';
 
 /* ------------------------------------------------------------------ targets */
 
@@ -180,16 +177,16 @@ function buildHeaders(method, url) {
   return headers;
 }
 
+// The URL and verb come from the element's NATIVE attributes: href (links),
+// action + method (forms; `method` is also honoured on links for non-GET
+// actions expressed as anchors).
 function requestParts(el) {
-  const url = el.getAttribute('jst-get') || el.getAttribute('jst-action') ||
-              el.getAttribute('href') || el.getAttribute('action') || '';
-  const explicitGet = el.hasAttribute('jst-get');
-  const method = (explicitGet ? 'GET'
-    : (el.getAttribute('jst-method') || el.getAttribute('method') || 'GET')).toUpperCase();
+  const url = el.getAttribute('href') || el.getAttribute('action') || '';
+  const method = (el.getAttribute('method') || 'GET').toUpperCase();
   return { url, method };
 }
 
-export async function performRequest(el, sourceEvent) {
+async function performRequest(el, sourceEvent) {
   let { url, method } = requestParts(el);
   if (!url) return;
 
@@ -198,13 +195,9 @@ export async function performRequest(el, sourceEvent) {
 
   const form = el.matches('form') ? el : el.closest('form');
   let body = null;
-  // Collect params from the form, or — for a standalone named control (e.g. a
-  // search input) — from the triggering element's own name/value, like htmx.
   const params = new URLSearchParams();
   if (form) {
     for (const [k, v] of new FormData(form)) params.append(k, v);
-  } else if (el.name && 'value' in el) {
-    params.append(el.name, el.value);
   }
   if (method === 'GET' || method === 'DELETE') {
     const qs = params.toString();
@@ -304,116 +297,29 @@ function scrollParent(node) {
   return document.scrollingElement || document.documentElement;
 }
 
-/* ------------------------------------------------------------------- causes */
+/* ------------------------------------------------------------ enhancement */
 
-// Shapers: named JS functions referenced (inertly) from jst-on<event>="name".
-// A shaper receives `fire` — "do this element's declared request now" — and
-// returns the event handler to install. It gates or paces fire; it has no way
-// to change what firing does (the request + effect stay declared on the HTML).
-const shapers = {};
-// Elements whose named shaper wasn't registered yet at wire time: healed by
-// shape() when the registration arrives (script-order forgiveness), and the
-// console.error below stays visible if it never does.
-const pendingShapes = [];
-
-export function shape(name, shaper) {
-  shapers[name] = shaper;
-  for (let i = pendingShapes.length - 1; i >= 0; i--) {
-    if (pendingShapes[i].name !== name) continue;
-    const { el, event } = pendingShapes.splice(i, 1)[0];
-    if (el.isConnected) attachCause(el, event, shaper);
-  }
-}
-
-function ms(s) {
-  const m = /^([\d.]+)(ms|s)?$/.exec((s || '').trim());
-  if (!m) return 0;
-  return parseFloat(m[1]) * (m[2] === 's' ? 1000 : 1);
-}
-
-let revealObserver = null;
-function observeReveal(el) {
-  if (typeof IntersectionObserver === 'undefined') { performRequest(el); return; }
-  if (!revealObserver) {
-    revealObserver = new IntersectionObserver((entries) => {
-      entries.forEach((e) => {
-        if (e.isIntersecting) {
-          const node = e.target;
-          revealObserver.unobserve(node);
-          performRequest(node);
-        }
-      });
-    }, { rootMargin: '0px 0px 200px 0px' });
-  }
-  revealObserver.observe(el);
-}
-
-function attachCause(el, event, shaper) {
-  const fire = (ev) => performRequest(el, ev);
-  let handler = fire;
-  if (shaper) {
-    handler = shaper(fire);
-    if (typeof handler !== 'function') {
-      console.error(`JST nav: shaper for jst-on${event} on <${el.tagName.toLowerCase()}> did not return a handler function. A shaper is fire => handler, e.g. JST.nav.shape('typeahead', fire => changed(debounce(300, fire))).`);
-      return;
-    }
-  }
+// Upgrade a link/form so its NATIVE activation fetches a fragment instead of
+// loading a page. That's the entire trigger model: links fire on click, forms
+// on submit. Anything else — reveal, polling, keystrokes, websockets — is a
+// handler or a component calling swap(), not a jst-nav attribute.
+function enhance(el) {
+  const event = el.matches('form') ? 'submit' : 'click';
   el.addEventListener(event, (ev) => {
-    // Keep the browser's default navigation/submit out of the way synchronously,
-    // even when the shaper defers the actual firing (debounce et al.).
-    if (event === 'submit' || el.matches('a')) ev.preventDefault();
-    handler(ev);
+    if (ev.defaultPrevented) return;   // someone else claimed this activation
+    ev.preventDefault();
+    performRequest(el, ev);
   });
 }
 
-function wireCause(el, event, shaperName) {
-  if (!shaperName) { attachCause(el, event, null); return; }
-  const shaper = shapers[shaperName];
-  if (!shaper) {
-    const pending = { el, event, name: shaperName };
-    pendingShapes.push(pending);
-    // jst-nav usually evaluates before the app module that registers the shaper
-    // (it scans immediately, while import graphs are still fetching), so give
-    // same-page-load registrations until window load before failing loud.
-    const report = () => {
-      if (!pendingShapes.includes(pending)) return;   // healed by shape()
-      console.error(`JST nav: unknown shaper "${shaperName}" in jst-on${event} on <${el.tagName.toLowerCase()}>. Register it — JST.nav.shape('${shaperName}', fire => handler) — the element stays unwired until then.`);
-    };
-    if (document.readyState === 'complete') setTimeout(report, 0);
-    else window.addEventListener('load', () => setTimeout(report, 0), { once: true });
-    return;
-  }
-  attachCause(el, event, shaper);
-}
-
-function defaultCause(el) {
-  if (el.matches('form')) return 'submit';
-  if (el.matches('input,select,textarea')) return 'change';
-  return 'click';
-}
-
-function setupCauses(el) {
-  if (el.hasAttribute('jst-trigger')) {
-    console.error(`JST nav: jst-trigger was removed in v0.5.0 (value ${JSON.stringify(el.getAttribute('jst-trigger'))}). Declare the cause with jst-on<event>[="shaper"], jst-load[="lazy"], or jst-poll="2s" — see the CHANGELOG migration table. Falling back to the default cause.`);
-  }
-
-  let wired = false;
-  for (const name of el.getAttributeNames()) {
-    if (!name.startsWith('jst-on') || name.length <= 'jst-on'.length) continue;
-    wireCause(el, name.slice('jst-on'.length), el.getAttribute(name) || null);
-    wired = true;
-  }
-  if (el.hasAttribute('jst-load')) {
-    if (el.getAttribute('jst-load') === 'lazy') observeReveal(el);
-    else performRequest(el);
-    wired = true;
-  }
-  const poll = el.getAttribute('jst-poll');
-  if (poll !== null) {
-    const id = setInterval(() => { if (el.isConnected) performRequest(el); else clearInterval(id); }, ms(poll) || 1000);
-    wired = true;
-  }
-  if (!wired) attachCause(el, defaultCause(el), null);
+// Removed-in-v0.6.0 attributes fail loud with the rewrite instead of silently
+// doing nothing.
+function reportLegacyAttributes(el) {
+  const legacy = el.getAttributeNames().filter(name =>
+    name === 'jst-get' || name === 'jst-action' || name === 'jst-trigger'
+    || name === 'jst-load' || name === 'jst-poll' || name.startsWith('jst-on'));
+  if (!legacy.length) return;
+  console.error(`JST nav: ${legacy.map(n => `${n}=`).join(' ')} removed in v0.6.0. jst-nav enhances links and forms only (native href/action/method + jst-target/jst-swap). Self-filling regions → <jst-include src="…"> (jst-behaviors.js); polling/reveal/keystroke causes → a handler or component calling swap(). See the CHANGELOG migration table.`, el);
 }
 
 /* -------------------------------------------------------------------- boost */
@@ -424,15 +330,15 @@ function wireBoost(container) {
   container.addEventListener('click', (e) => {
     const a = e.target.closest('a[href]');
     if (!a || !container.contains(a)) return;
-    if (a.hasAttribute('jst-get') || a.hasAttribute('jst-action')) return; // handled directly
+    if (a.matches(ENHANCEABLE)) return;   // enhanced directly
     if (a.target === '_blank' || a.getAttribute('jst-boost') === 'false') return;
     if (a.origin && a.origin !== location.origin) return;
     e.preventDefault();
-    const proxy = a;
-    proxy.setAttribute('jst-get', a.getAttribute('href'));
-    if (!proxy.getAttribute('jst-target')) proxy.setAttribute('jst-target', container.getAttribute('jst-target') || 'body');
-    if (proxy.getAttribute('jst-push-url') === null) proxy.setAttribute('jst-push-url', a.getAttribute('href'));
-    performRequest(proxy);
+    // The anchor already carries its URL natively (href); give it the
+    // container's effect defaults and run the shared pipeline.
+    if (!a.getAttribute('jst-target')) a.setAttribute('jst-target', container.getAttribute('jst-target') || 'body');
+    if (a.getAttribute('jst-push-url') === null) a.setAttribute('jst-push-url', a.getAttribute('href'));
+    performRequest(a);
   });
 }
 
@@ -441,13 +347,22 @@ function wireBoost(container) {
 function wire(el) {
   if (el[WIRED]) return;
   el[WIRED] = true;
-  setupCauses(el);
+  enhance(el);
+}
+
+const legacyReported = new WeakSet();
+function warnLegacy(el) {
+  if (legacyReported.has(el)) return;
+  legacyReported.add(el);
+  reportLegacyAttributes(el);
 }
 
 function scan(root) {
   if (!root || typeof root.querySelectorAll !== 'function') return;
-  if (root.matches && root.matches(REQUESTABLE)) wire(root);
-  root.querySelectorAll(REQUESTABLE).forEach(wire);
+  if (root.matches && root.matches(ENHANCEABLE)) wire(root);
+  root.querySelectorAll(ENHANCEABLE).forEach(wire);
+  if (root.matches && root.matches(LEGACY)) warnLegacy(root);
+  root.querySelectorAll(LEGACY).forEach(warnLegacy);
   if (root.matches && root.matches('[jst-boost]')) wireBoost(root);
   root.querySelectorAll('[jst-boost]').forEach(wireBoost);
 }
@@ -468,14 +383,41 @@ function onPopState() {
   const boost = document.querySelector('[jst-boost]');
   if (!boost) return;
   const proxy = document.createElement('a');
-  proxy.setAttribute('jst-get', location.pathname + location.search);
+  proxy.setAttribute('href', location.pathname + location.search);
   proxy.setAttribute('jst-target', boost.getAttribute('jst-target') || 'body');
   performRequest(proxy);
 }
 
 /* --------------------------------------------------------------------- init */
 
-export { performRequest as request };
+/* ---------------------------------------------------------------- swap() */
+
+/**
+ * The imperative primitive: fetch `url` and swap the response into `target`.
+ * Same pipeline as the declarative attributes (JST-Request + CSRF headers,
+ * jst-select via options.select, out-of-band swaps, re-scan) minus the
+ * element-centric parts (events, history) — you're in JS; compose those
+ * yourself. `target` is an Element or CSS selector; `options` is fetch init
+ * plus { swap: '<how>', select: '<css>' }. Returns the Response.
+ *
+ *   oninput="if (changed(event)) debounce(event, 300, () => swap('#results', '/search?q=' + this.value))"
+ */
+export async function swap(target, url, options = {}) {
+  const { swap: how = 'innerHTML', select = null, ...init } = options;
+  const method = (init.method || 'GET').toUpperCase();
+  const headers = { ...buildHeaders(method, url), ...(init.headers || {}) };
+  const res = await fetch(url, { ...init, method, headers });
+  let html = '';
+  try { html = await res.text(); } catch {}
+  if (!res.ok) return res;
+  if (select) html = selectFrom(html, select);
+  html = applyOob(html);
+  const element = typeof target === 'string' ? document.querySelector(target) : target;
+  const parent = element ? element.parentNode : null;
+  await swapContent(element, html, how);
+  scan((element && element.parentNode) || parent || document);
+  return res;
+}
 
 export function configure(root = document) {
   scan(root.documentElement || root);
@@ -489,11 +431,5 @@ if (typeof document !== 'undefined') {
   } else {
     configure(document);
   }
-  (window.JST = window.JST || {}).nav = {
-    configure,
-    request: performRequest,   // blessed name: fire an element's declared request now
-    performRequest,            // 0.4.x alias
-    shape,
-    csrf,
-  };
+  (window.JST = window.JST || {}).nav = { configure, swap, csrf };
 }

@@ -1,13 +1,13 @@
 <!DOCTYPE html>
-<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!-- JST - JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
 <!--
   Source: https://lit.dev/docs/templates/conditionals/
   Demonstrates: conditional rendering. Lit picks a branch with a ternary or the
-  `when(cond, () => trueTpl, () => falseTpl)` directive — here, showing the signed-in
+  `when(cond, () => trueTpl, () => falseTpl)` directive - here, showing the signed-in
   user vs a "Sign In" button.
   Maps from: Lit `when(cond, a, b)` / ternary ↔ JST `$ if (user) { … } $ else { … }`,
   the native control-flow form.
-  JST status: ✓ exact — `$ if/else` chooses which markup to render, like Lit's `when`.
+  JST status: ✓ exact - `$ if/else` chooses which markup to render, like Lit's `when`.
 -->
 <html lang="en">
 <head>
@@ -28,10 +28,10 @@
   <div>
     $ if (user) {
       <p class="user" data-testid="status">User: $(user.name)</p>
-      <button id="action" onclick="$(() => el.user = null)">Sign Out</button>
+      <button id="action" onclick="el.user = null">Sign Out</button>
     $ } else {
       <p data-testid="status">You are signed out.</p>
-      <button id="action" onclick="$(() => el.user = { name: 'Ada' })">Sign In</button>
+      <button id="action" onclick="el.user = { name: 'Ada' }">Sign In</button>
     $ }
   </div>
 </script>

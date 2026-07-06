@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!-- JST - JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
 <!--
   Source: https://htmx.org/examples/modal-custom/
   Demonstrates: a button fetches modal content from the server; the modal fades IN over a
@@ -32,11 +32,11 @@
 <script type="jst" name="modal-dialog" attributes="open title body">
   $ if (open) {
     <div class="backdrop" jst-transition="modal-fade" data-testid="backdrop"
-         onclick="$(e => { if (e.target === e.currentTarget) el.emit('close'); })">
+         onclick="const e = event; if (e.target === e.currentTarget) el.emit('close');">
       <div class="modal">
         <h2 data-testid="title">$(title)</h2>
         <p data-testid="body">$(body)</p>
-        <button data-testid="close" onclick="$(() => el.emit('close'))">Close</button>
+        <button data-testid="close" onclick="el.emit('close')">Close</button>
       </div>
     </div>
   $ }

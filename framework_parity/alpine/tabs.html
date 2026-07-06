@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!-- JST - JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
 <!--
   Source: https://alpinejs.dev/start-here (Alpine UI tabs pattern)
-  Demonstrates: a tabs component — click a tab to switch the active panel.
-  JST status: ✓ exact — the active tab is plain local state (`el.active = id`),
+  Demonstrates: a tabs component - click a tab to switch the active panel.
+  JST status: ✓ exact - the active tab is plain local state (`el.active = id`),
   tab buttons get an active class via interpolation, and `$ if` picks the panel.
   No framework gap; this is idiomatic JST.
 -->
@@ -30,7 +30,7 @@
       $ list.forEach(t => {
         <button role="tab" data-testid="tab-$(t.id)"
                 class="$(t.id === current ? 'active' : '')"
-                onclick="$(() => el.active = t.id)">$(t.label)</button>
+                onclick="el.active = t.id">$(t.label)</button>
       $ })
     </div>
     $ const sel = list.find(t => t.id === current);

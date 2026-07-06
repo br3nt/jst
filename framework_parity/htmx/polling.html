@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!-- JST - JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
 <!--
   Source: https://htmx.org/examples/update-other-content/ (load-polling / value-added polling)
   Demonstrates: content that refreshes on an interval, and a single response that
   updates MORE than one region of the page ("update other content").
-  JST status: ✓ exact — jst-nav polls with `jst-poll="500ms"` and the
+  JST status: ✓ exact - setInterval + swap(null, url, { swap: 'none' }); the
   one response updates two separate regions via out-of-band swaps
   (`jst-swap-oob`), with `jst-swap="none"` on the poller itself.
 -->
@@ -27,9 +27,8 @@
    System: <span id="status" class="badge" data-testid="status">…</span></p>
 <button id="stop" data-testid="stop">Stop polling</button>
 
-<!-- A poller with jst-swap="none": the response carries OOB spans that update the
-     two regions above. Removing this element stops the poll (interval self-clears). -->
-<div id="poller" hidden jst-get="/api/metrics" jst-poll="500ms" jst-swap="none"></div>
+<!-- The response carries OOB spans that update the two regions above; the poll
+     itself is plain platform code (setInterval + swap with swap:'none'). -->
 
 <script>
   let tick = 0;
@@ -47,11 +46,12 @@
     return origFetch(url, opts);
   };
 
-  document.getElementById('stop').addEventListener('click', () => document.getElementById('poller').remove());
+  const poll = setInterval(() => JST.nav.swap(null, '/api/metrics', { swap: 'none' }), 500);
+  document.getElementById('stop').addEventListener('click', () => clearInterval(poll));
 
   window.__exampleReady = true;
   window.__parityTest = async () => {
-    await window.JST.nav.performRequest(document.getElementById('poller')); // one poll
+    await window.JST.nav.swap(null, '/api/metrics', { swap: 'none' }); // one poll
     await new Promise(r => setTimeout(r, 150));
     const v = document.querySelector('[data-testid="value"]').textContent;
     const s = document.querySelector('[data-testid="status"]').textContent;

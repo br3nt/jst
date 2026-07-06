@@ -3,8 +3,8 @@
 **JavaScript Templates (JST)** - reactive web components in plain HTML, with
 **JavaScript itself as the templating language**. **No build step.**
 
-**JST builds on Web Components.** Its runtime/compiler — 10 KB gzipped
-(33 KB minified), or 6 KB gzipped runtime-only with precompiled templates — turns a
+**JST builds on Web Components.** Its runtime/compiler - 11.5 KB gzipped
+(37 KB minified), or 7 KB gzipped runtime-only with precompiled templates - turns a
 `<script type="jst">` tag into a class and registers it with
 `customElements.define()`, so every JST component is a genuine custom element:
 inspectable in DevTools, scriptable with plain properties and
@@ -15,7 +15,7 @@ inspectable in DevTools, scriptable with plain properties and
 
 <script type="jst" name="hello-name" attributes="name">
   <p>Hello, <strong>$(name)</strong>!</p>
-  <button onclick="$(() => el.name = 'world')">reset</button>
+  <button onclick="el.name = 'world'">reset</button>
 </script>
 
 <hello-name name="JST"></hello-name>
@@ -24,7 +24,7 @@ inspectable in DevTools, scriptable with plain properties and
 ## What hole it fills
 
 - **HTMX** is strongest when server round-trips drive UI changes; JST targets fragments that also define reusable client-side component behavior.
-- **Alpine** is strongest for behavior attached to existing markup; JST additionally gives streamed component definitions custom-element identity and a props/events boundary.
+- **Alpine** is strongest for behavior attached to existing markup; JST additionally gives streamed component definitions custom-element identity and an attributes-in, events-out boundary.
 - **React/Vue** are powerful, but usually bring a build step, a runtime model, and a client-owned render pipeline.
 
 JST targets HATEOAS-style apps where the backend and frontend should be able to
@@ -40,18 +40,18 @@ be interactive once it lands in the browser. A fetched fragment can include both
 4. **Attributes down, events up** - components are controlled renderers; state lives in the page, parent, or server.
 5. **No store, no proxies, no hidden graph** - use plain JavaScript objects, properties, and events.
 6. **Safe interpolation by default** - `$(expr)` escapes HTML; `url()` guards URL attributes; `trustedHTML()` is the explicit trusted-HTML escape.
-7. **Fail loud** - invalid prop declarations, malformed bindings, and render errors should be visible during development.
+7. **Fail loud** - invalid attribute declarations, malformed bindings, and render errors should be visible during development.
 
 ## Component API
 
-For a practical walkthrough, see [docs/writing-jst.md](docs/writing-jst.md).
+For the full onboarding walkthrough, open [the docs](https://br3nt.github.io/jst/docs/) ([docs/index.html](docs/index.html) locally) - one page, ordered to teach, with annotated examples.
 
 Inputs are declared in the case-preserving `attributes` attribute:
 
 ```html
 <script type="jst" name="todo-item" attributes="item">
   <li jst-key="$(item.id)">
-    <button onclick="$(stop(() => el.emit('toggle', item)))">Done</button>
+    <button onclick="event.stopPropagation(); el.emit('toggle', item)">Done</button>
     $(item.text)
   </li>
 </script>
@@ -65,26 +65,30 @@ Inputs are declared in the case-preserving `attributes` attribute:
 </script>
 ```
 
-- `attributes="item"` declares the bare locals available in the template.
-- Each prop is also a property on the element: `el.item` here, or `el.onToggle`
-  when `onToggle` is declared.
+- `attributes="item"` declares the values available by name in the template.
+- Each declared attribute is also a JavaScript property on the element: `el.item`
+  here, or `el.onToggle` when `onToggle` is declared.
 - External HTML attributes use platform casing rules, so multi-word call sites
   use kebab-case: `on-toggle` maps to `onToggle`.
-- Plain attributes pass JSON-ish primitives (`count="1"`, `open="true"`).
-- Directly assigning a mutable prop reference republishes it: mutate an array,
+- Plain attributes carry JSON values (`count="1"`, `open="true"`,
+  `items='[{"id":1}]'`), so a server can render data straight into the tag.
+- Directly assigning a mutable object or array republishes it: mutate an array,
   then assign `el.items = el.items` to render. Identical primitive assignments
   stay quiet.
 - When the next value depends on the current value inside an event handler, read
   the live element property: `el.count = (el.count || 0) + 1`.
 - In ordinary HTML, use normal JavaScript property assignment and
-  `addEventListener`. Inside a JST template, `.prop="$(expr)"` passes rich
+  `addEventListener`. Inside a JST template, `.property="$(expr)"` passes rich
   JavaScript values without stringifying.
-- Inside a JST template, `on<event>="$(fn)"` attaches listeners. Shape *when*
-  the handler runs with plain-function combinators — `prevent`, `stop`, `self`,
-  `changed`, `debounce`, `throttle`, `keys` — in scope in every template
-  expression: `onsubmit="$(prevent(fn))"`, `oninput="$(debounce(300, fn))"`,
-  `onkeydown="$(keys({ Enter: fn }))"`. Dotted modifiers configure registration
-  only: `.once`, `.capture`, `.passive`, `.outside`.
+- Inside a JST template, `on<event>="…"` attaches a listener whose value is a
+  plain **function body** - the native inline-handler contract (`event` in
+  scope, `this` = the element), compiled in render scope and attached with
+  `addEventListener`. Pace behaviour with the handler helpers - in scope
+  in every handler body: `oninput="if (changed(event)) debounce(event, 300,
+  () => search(this.value))"`, `onkeydown="keys(event, { Enter: () => go() })"`.
+  Dotted modifiers configure registration only: `.once`, `.capture`,
+  `.passive`, `.outside`. The synthetic `onreveal` event fires when the element
+  scrolls into view.
 - `jst-model="title"` is local form shorthand: read from `title` and update
   `el.title` when the user changes it.
 - `jst-key="$(id)"` preserves DOM identity during list inserts and reorders.
@@ -106,23 +110,23 @@ JST has two modes:
   server-streamed trusted components.
 - Runtime templates are executable JavaScript. Only auto-register or resolve
   templates from sources you trust; interpolated data remains escaped by default.
-- **Global build**: load `jst.global.js` — the whole runtime as one classic
+- **Global build**: load `jst.global.js` - the whole runtime as one classic
   (non-module) script that exposes `window.JST` and runs from `file://` with no
   server. For prototypes, copied/generated single files, and CDN drop-ins
   (`jst.global.min.js` is minified). See
-  [docs/install.md](docs/install.md#global-build-no-modules-or-server).
+  the [docs Install section](docs/index.html).
 - **Precompiled mode**: run `tools/precompile.mjs` and load the generated module.
   This avoids runtime template compilation and is the path for strict CSP apps
   that cannot allow `unsafe-eval`. Pair it with the **runtime-only** build
   `jst.runtime.js` (or classic `jst.runtime.global.js`), which omits the compiler
-  entirely — ~40% smaller. See
-  [docs/install.md](docs/install.md#precompiled-and-the-runtime-only-builds).
+  entirely - ~40% smaller. See
+  the [docs Install section](docs/index.html).
 
 ```sh
 node tools/precompile.mjs index.html --out dist/templates.js --runtime ../jst.js
 ```
 
-See [docs/production.md](docs/production.md) and [SECURITY.md](SECURITY.md).
+See the [docs Security section](docs/index.html) and [SECURITY.md](SECURITY.md).
 
 ## Runtime Configuration
 
@@ -144,7 +148,7 @@ configure({
   logs the runtime version (`JST x.y.z`) once on load.
 - `autoRegister: false` disables MutationObserver registration of arriving templates.
 - `autoRegisterRoot` scopes automatic registration to a known container.
-- `resolveTemplate(name)` lazily fetches missing component definitions — including
+- `resolveTemplate(name)` lazily fetches missing component definitions - including
   components already present in the initial server-rendered HTML.
 
 The loaded runtime version is available as `import { version }` and on
@@ -153,11 +157,11 @@ The loaded runtime version is available as `import { version }` and on
 ## Upgrading across breaking releases
 
 Per-version migrations (with before → after tables) live in the
-[CHANGELOG](CHANGELOG.md). To apply them safely — removed/renamed template syntax
-only errors when a component renders in the browser — run `node tools/lint.mjs`
-to find leftovers (wire it into CI) and `node tools/codemod.mjs` for the
-mechanical `@event` → `on<event>` and `attrs` → `attributes` rewrites. Full guidance:
-[docs/install.md](docs/install.md#upgrading-across-breaking-releases).
+[CHANGELOG](CHANGELOG.md). Removed or renamed template syntax only errors when a
+component renders in the browser, so run `node tools/lint.mjs` to find leftovers
+(wire it into CI) and `node tools/codemod.mjs` for the mechanical rewrites
+(`@event` → `on<event>`, `attrs` → `attributes`, expression handlers → function
+bodies).
 
 ## Try it
 
@@ -177,11 +181,11 @@ python3 -m http.server 8000
 | `jst.js` + `compiler.js` / `interpreter.js` / `lexer.js` / ... | the framework, zero runtime dependencies |
 | `index.html` | landing page |
 | `examples/` | kanban, todo, slots, counters |
-| `framework_parity/` | HTMX/Alpine/Vue/React examples rebuilt in JST |
+| `framework_parity/` | 126 examples from HTMX, Alpine, Vue, React, fixi, Lit, Svelte, Solid, and Angular rebuilt in JST |
 | `tools/` | `precompile.mjs` (CSP build), `codemod.mjs` + `lint.mjs` (migration) |
 | `tooling/vscode-jst/` | VS Code syntax highlighting, diagnostics, and language server |
 | `agentic_feed/` | a HATEOAS-feed prototype |
-| `docs/` | practical authoring guide, decision guide, production notes |
+| `docs/index.html` | the docs: one onboarding page with annotated examples |
 | `run_tests.html` / `runtime_tests.mjs` | test suites |
 
 ## Tests
@@ -191,15 +195,9 @@ node --test runtime_tests.mjs regression_tests.mjs tools_tests.mjs
 npm run test:lint
 node run_browser_tests.mjs
 node run_example_smoke.mjs
-node framework_parity/verify.mjs framework_parity/{htmx,alpine,vue,react}/*.html
+node framework_parity/verify.mjs framework_parity/*/*.html
 node agentic_feed/run_feed_smoke.mjs
 npm --prefix tooling/vscode-jst test
 ```
 
 Or just `npm test` to run the whole suite.
-
-Or run the root script:
-
-```sh
-npm test
-```

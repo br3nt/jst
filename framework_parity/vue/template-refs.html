@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!-- JST - JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
 <!--
   Source: https://vuejs.org/guide/essentials/template-refs
   Demonstrates: getting a direct reference to a DOM element to call imperative APIs
   (e.g. focus an input).
-  JST status: (i) partial — JST has no `ref` declaration that hands you a node. The
+  JST status: (i) partial - JST has no `ref` declaration that hands you a node. The
   equivalent capability exists via el.querySelector(...) inside the component (the
   component element IS the host of its light DOM). Fully functional; just a different
   API and you must query after render rather than receive a bound ref.
@@ -12,7 +12,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>JST — Template Refs</title>
+<title>JST - Template Refs</title>
 <script type="module" src="../../jst.js"></script>
 </head>
 <body>
@@ -25,9 +25,9 @@
   $     box.offsetWidth + ' x ' + box.offsetHeight + ' px';
   $ };
   <input id="the-input" placeholder="I can be focused imperatively">
-  <button id="focus" onclick="$(focusInput)">Focus the input (ref-style)</button>
+  <button id="focus" onclick="focusInput(event)">Focus the input (ref-style)</button>
   <div id="box" style="width:120px;height:40px;background:#cde">a box</div>
-  <button id="do-measure" onclick="$(measure)">Measure the box via its ref</button>
+  <button id="do-measure" onclick="measure(event)">Measure the box via its ref</button>
   <p id="dims">dimensions: (click measure)</p>
 </script>
 

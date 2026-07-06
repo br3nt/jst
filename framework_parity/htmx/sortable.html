@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!-- JST - JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
 <!--
   Source: https://htmx.org/examples/sortable/
   Demonstrates: drag-to-reorder a list, persisting the new order to the server.
   (HTMX's own example leans on the external SortableJS library + an hx-post on "end".)
   JST status: ✓ match. Reorder uses native HTML5 drag-and-drop wired
-  with @dragstart/@dragover/@drop in the template — the same idiomatic pattern as the
-  bundled kanban example — reordering a page-owned array and POSTing the order.
+  with @dragstart/@dragover/@drop in the template - the same idiomatic pattern as the
+  bundled kanban example - reordering a page-owned array and POSTing the order.
   `jst-key` preserves row identity after reorder.
 -->
 <html lang="en">
@@ -30,13 +30,11 @@
   <ul data-testid="list">
     $ (items || []).forEach(it => {
       <li draggable="true" jst-key="$(it.id)" data-testid="item-$(it.id)"
-          ondragstart="$(e => e.dataTransfer.setData('text/plain', String(it.id)))"
-          ondragover="$(e => { e.preventDefault(); e.currentTarget.classList.add('drag-over'); })"
-          ondragleave="$(e => e.currentTarget.classList.remove('drag-over'))"
-          ondrop="$(e => {
-            e.preventDefault();
-            el.emit('reorder', { draggedId: Number(e.dataTransfer.getData('text/plain')), targetId: it.id });
-          })">$(it.label)</li>
+          ondragstart="const e = event; e.dataTransfer.setData('text/plain', String(it.id))"
+          ondragover="const e = event; e.preventDefault(); e.currentTarget.classList.add('drag-over');"
+          ondragleave="const e = event; e.currentTarget.classList.remove('drag-over')"
+          ondrop="const e = event; e.preventDefault();
+            el.emit('reorder', { draggedId: Number(e.dataTransfer.getData('text/plain')), targetId: it.id });">$(it.label)</li>
     $ })
   </ul>
 </script>

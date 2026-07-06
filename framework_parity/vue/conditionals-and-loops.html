@@ -1,15 +1,15 @@
 <!DOCTYPE html>
-<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!-- JST - JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
 <!--
   Source: https://vuejs.org/examples/#conditionals-and-loops
   Demonstrates: v-if / v-else and v-for.
-  JST status: ✓ exact — `$ if (...) {` / `$ } else {` and `$ arr.forEach(...)` are
+  JST status: ✓ exact - `$ if (...) {` / `$ } else {` and `$ arr.forEach(...)` are
   first-class control flow in JST templates.
 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>JST — Conditionals and Loops</title>
+<title>JST - Conditionals and Loops</title>
 <script type="module" src="../../jst.js"></script>
 </head>
 <body>
@@ -20,7 +20,7 @@
   $ } else {
     <p id="bool-msg">Now you don't</p>
   $ }
-  <button id="toggle" onclick="$(() => el.show = !el.show)">Toggle</button>
+  <button id="toggle" onclick="el.show = !el.show">Toggle</button>
 
   <ul id="list">
     $ (list || []).forEach((item, i) => {

@@ -1,16 +1,16 @@
 <!DOCTYPE html>
-<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!-- JST - JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
 <!--
   Source: https://vuejs.org/examples/#attribute-bindings
   Demonstrates: binding dynamic values to attributes (title, href, class) and a
   conditional boolean attribute (disabled).
-  JST status: ✓ exact — interpolation works inside attribute values; boolean DOM
+  JST status: ✓ exact - interpolation works inside attribute values; boolean DOM
   attributes are set via a .prop binding.
 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>JST — Attribute Bindings</title>
+<title>JST - Attribute Bindings</title>
 <script type="module" src="../../jst.js"></script>
 <style>.danger{color:#c00;font-weight:bold}</style>
 </head>
@@ -21,7 +21,7 @@
   <a id="link" href="$(url(linkHref))">A link with a bound href</a>
   <p id="dyn" class="$(disabled ? 'danger' : '')">Class is bound to state.</p>
   <button id="btn" .disabled="$(disabled)">I may be disabled</button>
-  <button id="toggle" onclick="$(() => el.disabled = !el.disabled)">Toggle disabled</button>
+  <button id="toggle" onclick="el.disabled = !el.disabled">Toggle disabled</button>
 </script>
 
 <attribute-bindings id="app"

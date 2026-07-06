@@ -1,17 +1,17 @@
 <!DOCTYPE html>
-<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!-- JST - JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
 <!--
   Source: https://vuejs.org/guide/essentials/class-and-style
   Demonstrates: conditional class binding (object/array syntax in Vue) and inline
   style binding.
-  JST status: ✓ exact (different ergonomics) — JST has no object/array :class sugar,
+  JST status: ✓ exact (different ergonomics) - JST has no object/array :class sugar,
   but the class and style strings are built with plain expressions in the attribute,
   which covers every case Vue's sugar does. Acceptable.
 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>JST — Class & Style Bindings</title>
+<title>JST - Class & Style Bindings</title>
 <script type="module" src="../../jst.js"></script>
 <style>
   .box{padding:1rem;border:1px solid #ccc;margin:.5rem 0}
@@ -28,9 +28,9 @@
        style="color: $(color); font-size: $(size)px">
     Bound class = "$(cls)"
   </div>
-  <button id="toggle-active" onclick="$(() => el.active = !el.active)">Toggle active</button>
-  <button id="toggle-error" onclick="$(() => el.haserror = !el.haserror)">Toggle error</button>
-  <button id="grow" onclick="$(() => el.size = (el.size || 0) + 2)">Grow text</button>
+  <button id="toggle-active" onclick="el.active = !el.active">Toggle active</button>
+  <button id="toggle-error" onclick="el.haserror = !el.haserror">Toggle error</button>
+  <button id="grow" onclick="el.size = (el.size || 0) + 2">Grow text</button>
 </script>
 
 <class-style id="app" active="true" haserror="false" color="#333" size="16"></class-style>

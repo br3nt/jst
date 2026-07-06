@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!-- JST - JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
 <!--
   Source: https://lit.dev/docs/components/events/
   Demonstrates: a declarative event listener. Lit binds `@click=${this._handleClick}`
   in the template; the handler mutates a reactive property and the component re-renders.
-  Maps from: Lit `@click=${fn}` ↔ JST `onclick="$(fn)"` (adds an event listener);
-  local state is a JST prop the handler reassigns.
-  JST status: ✓ exact — `onclick="$(() => el.count = ...)"` is the same declarative bind.
+  Maps from: Lit `@click=${fn}` ↔ JST `onclick="fn(event)"` (adds an event listener);
+  local state is a JST property the handler reassigns.
+  JST status: ✓ exact - `onclick="el.count = ..."` is the same declarative bind.
 -->
 <html lang="en">
 <head>
@@ -21,9 +21,9 @@
 <body>
 <h1>Events</h1>
 
-<!-- onclick bound declaratively; the handler bumps the component's own count prop. -->
+<!-- onclick bound declaratively; the handler bumps the component's own count property. -->
 <script type="jst" name="click-counter" attributes="count">
-  <button id="inc" data-testid="inc" onclick="$(() => el.count = (el.count || 0) + 1)">
+  <button id="inc" data-testid="inc" onclick="el.count = (el.count || 0) + 1">
     Click count: $(count || 0)
   </button>
 </script>

@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!-- JST - JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
 <!--
   Source: https://react.dev/learn/tutorial-tic-tac-toe
-  Demonstrates: the full tutorial — squares lift their clicks to a board, the
+  Demonstrates: the full tutorial - squares lift their clicks to a board, the
   board lifts state to the game, and the game keeps a history array for time
   travel (jump to any past move).
-  JST status: ✓ exact — this is JST's home turf. The page owns history +
+  JST status: ✓ exact - this is JST's home turf. The page owns history +
   currentMove (immutable updates, slice() on play), the board is a dumb
   renderer fed the current squares, and a move-list emits "jump" events.
   No hacks; the immutable-history + time-travel design is exactly React's.
@@ -33,7 +33,7 @@
       <div class="board-row">
         $ [0, 1, 2].forEach(col => {
           $ const i = row * 3 + col;
-          <button class="square" data-i="$(i)" onclick="$(() => el.emit('play', i))">$((squares || [])[i] || '')</button>
+          <button class="square" data-i="$(i)" onclick="el.emit('play', i)">$((squares || [])[i] || '')</button>
         $ })
       </div>
     $ })
@@ -45,7 +45,7 @@
   <ol data-testid="moves">
     $ Array.from({ length: count || 0 }).forEach((_, m) => {
       <li>
-        <button onclick="$(() => el.emit('jump', m))">
+        <button onclick="el.emit('jump', m)">
           $(m === 0 ? 'Go to game start' : 'Go to move #' + m)$(m === current ? ' (current)' : '')
         </button>
       </li>

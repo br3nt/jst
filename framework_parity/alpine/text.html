@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<!-- JST — JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
+<!-- JST - JavaScript Templates · © Brent Jacobs (https://github.com/br3nt) · https://github.com/br3nt/jst -->
 <!--
   Source: https://alpinejs.dev/directives/text
-  Demonstrates: Alpine x-text — set an element's text content from an expression.
-  JST status: ✓ exact — `$(expr)` interpolates text content and is HTML-escaped
+  Demonstrates: Alpine x-text - set an element's text content from an expression.
+  JST status: ✓ exact - `$(expr)` interpolates text content and is HTML-escaped
   by default, matching x-text's safe textContent assignment.
 -->
 <html lang="en">
@@ -19,7 +19,7 @@
   <div>
     <input data-testid="field" placeholder="Type your name"
            .value="$(name || '')"
-           oninput="$(e => el.name = e.target.value)">
+           oninput="const e = event; el.name = e.target.value">
     <!-- x-text equivalent: text content comes from the expression, escaped -->
     <p>Hello, <strong data-testid="out">$(name || 'stranger')</strong>!</p>
   </div>
