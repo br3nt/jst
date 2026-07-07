@@ -5,6 +5,46 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.7.2 - 2026-07-07
+
+Gaps found converting budget_app and brent-mail from htmx/Turbo (#63, #64,
+#65, #66) - all four in the jst-nav error and confirmation paths.
+
+### Fixed
+
+- **`jst-swap="morph"` actually morphs (#66).** The swap table delegated to
+  `JST.morph`, but jst.js never exported its morph engine, so the attribute
+  silently behaved as `innerHTML` in every install - you thought focus,
+  scroll, and open/closed state were preserved and they were not. jst.js now
+  exports **`morph(target, next)`** (also on `window.JST.morph`): it morphs
+  the target's children to match the incoming HTML, preserving node identity
+  where the structure lines up, with `jst-key` pairing keyed children across
+  reorders. Incoming HTML is the source of truth for attributes and form
+  values. Loading jst-nav without jst.js now warns once before falling back
+  to `innerHTML` instead of pretending.
+
+### Added
+
+- **`jst:response-error` carries the response body (#63).** The event detail
+  gains `text`: the body stream is consumed by the library before the event
+  fires, so a listener could not recover a server-provided error message
+  (Rails `render plain: "…", status: 422`) any other way. Show the server's
+  message in a toast straight from the event, no hidden-sink workaround.
+- **Error routing honours a swap mode (#64).** `jst-swap-4xx` / `jst-swap-5xx`
+  / `jst-swap-error` control how a routed error response lands, defaulting to
+  `innerHTML` as before. The canonical use: a form that re-renders itself on
+  validation failure sets `jst-target-4xx="#its-own-id"` +
+  `jst-swap-4xx="outerHTML"`, so the response can contain the form's real
+  root instead of restructuring partials around an innerHTML-shaped wrapper.
+  The replaced region is re-scanned, so the re-rendered form is wired for the
+  next submit.
+- **`jst-confirm` is pluggable (#65).** Apps that ban browser dialogs set
+  `JST.nav.confirm = (message, el) => boolean | Promise<boolean>` and the
+  attribute drives their inline UI instead of `window.confirm` (which stays
+  the default). Async by design: arm-and-disarm confirmation flows just work,
+  and every app stops hand-rolling the same cancelable `jst:before-request`
+  dance.
+
 ## 0.7.1 - 2026-07-07
 
 Fixes from three production apps migrating to 0.6/0.7 (#57, #58, #60, #61).
@@ -637,7 +677,7 @@ runtime version, and fills two doc gaps. No breaking changes (patch bump).
   flags a stale vendored runtime (`jst-ssr`/`document.jst`). Dogfooded over JST's
   own surfaces via `npm run test:lint`. (#22)
 - **`JST.version`** - the loaded runtime version as an ES export (`import { version }`)
-  and on `window.JST`, sourced from `package.json` and kept honest by a drift test.
+  and on `window.JST`, sourced from `package.json` and kept in sync by a drift test.
   With `configure({ dev: true })` the runtime also logs `JST x.y.z` once on load,
   so confirming an upgrade (vs. a stale cache that renders identically) is a
   one-liner. (#23)

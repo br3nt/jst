@@ -26,8 +26,10 @@
  *   jst-select="<css>"        pick a subtree out of the response
  *   jst-push-url[="/url"]     push history (back/forward + restore)
  *   jst-replace-url[="/url"]  replace the current history entry (filters/in-place)
- *   jst-confirm="msg"         gate the request behind a confirm
+ *   jst-confirm="msg"         gate the request behind a confirm (pluggable:
+ *                             JST.nav.confirm = (msg, el) => boolean|Promise<boolean>)
  *   jst-target-4xx/5xx/error  route error responses elsewhere
+ *   jst-swap-4xx/5xx/error    how the routed error response lands (default innerHTML)
  *   jst-boost                 on a container: boost every descendant <a>/<form>
  *
  * The imperative primitive (same pipeline, callable from any handler):
@@ -40,7 +42,8 @@
  *
  * Events (bubbling): jst:before-request, jst:after-request, jst:before-swap,
  * jst:swapped, jst:swap-missed, jst:response-error, jst:send-error. before-request and
- * before-swap are cancelable (preventDefault()).
+ * before-swap are cancelable (preventDefault()). jst:response-error's detail
+ * carries the body text so apps can show server-provided error messages.
  */
 
 const WIRED = Symbol('jstNavWired');
@@ -113,6 +116,7 @@ function swapContent(target, html, how, reresolve) {
       case 'afterend': t.insertAdjacentHTML('afterend', html); return;
       case 'morph':
         if (window.JST && typeof window.JST.morph === 'function') { window.JST.morph(t, html); return; }
+        warnMorphMissing();
         t.innerHTML = html; return;   // fallback
       case 'innerHTML':
       default: t.innerHTML = html; return;
@@ -136,6 +140,16 @@ function swapContent(target, html, how, reresolve) {
   }
   run();
   return Promise.resolve(swapped);
+}
+
+// jst-swap="morph" delegates to jst.js's morph engine (JST.morph). Without
+// jst.js loaded the fallback is innerHTML — say so once instead of silently
+// pretending state was preserved (#66).
+let morphWarned = false;
+function warnMorphMissing() {
+  if (morphWarned) return;
+  morphWarned = true;
+  console.warn('JST nav: jst-swap="morph" needs jst.js loaded (it provides JST.morph); falling back to innerHTML.');
 }
 
 // Pull a subtree out of a full-page (or fragment) response.
@@ -213,8 +227,16 @@ async function performRequest(el, sourceEvent) {
   let { url, method } = requestParts(el);
   if (!url) return null;
 
+  // jst-confirm gates the request. Apps that ban browser dialogs plug their
+  // own UI in via JST.nav.confirm = (message, el) => boolean|Promise<boolean>
+  // (#65); the default stays window.confirm.
   const confirmMsg = el.getAttribute('jst-confirm');
-  if (confirmMsg && typeof window.confirm === 'function' && !window.confirm(confirmMsg)) return null;
+  if (confirmMsg) {
+    const ask = (window.JST && window.JST.nav && window.JST.nav.confirm) || null;
+    const ok = ask ? await ask(confirmMsg, el)
+      : (typeof window.confirm !== 'function' || window.confirm(confirmMsg));
+    if (!ok) return null;
+  }
 
   const form = el.matches('form') ? el : el.closest('form');
   let body = null;
@@ -255,13 +277,21 @@ async function performRequest(el, sourceEvent) {
   emitConnected(el, 'after-request', { el, response: res, status: res.status });
 
   // Non-2xx: don't swap into the normal target by default; route if asked.
+  // The event detail carries the body text (#63): res.text() above consumed
+  // the stream, so a listener could not recover a server-provided error
+  // message (Rails `render plain:, status: 422`) any other way.
   if (!res.ok) {
-    const errSel = el.getAttribute(`jst-target-${Math.floor(res.status / 100)}xx`) ||
-                   el.getAttribute('jst-target-error');
-    emitConnected(el, 'response-error', { el, response: res, status: res.status });
+    const band = `${Math.floor(res.status / 100)}xx`;
+    const errSel = el.getAttribute(`jst-target-${band}`) || el.getAttribute('jst-target-error');
+    emitConnected(el, 'response-error', { el, response: res, status: res.status, text: html });
     if (!errSel) return res;
     const errTarget = resolveTarget(el, errSel);
-    swapContent(errTarget, html, 'innerHTML');
+    // Error swaps honour jst-swap-4xx/5xx/error (#64) — outerHTML is the
+    // natural mode when a form re-renders itself on validation failure.
+    const errHow = el.getAttribute(`jst-swap-${band}`) || el.getAttribute('jst-swap-error') || 'innerHTML';
+    const errParent = errTarget ? errTarget.parentNode : null;
+    await swapContent(errTarget, html, errHow, () => resolveTarget(el, errSel));
+    scan((errTarget && errTarget.parentNode) || errParent || document);
     return res;
   }
 

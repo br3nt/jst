@@ -46,6 +46,8 @@ export function registerPrecompiledTemplate(
   source?: string,
 ): CustomElementConstructor | undefined;
 export function initializeTemplates(): Map<string, unknown>;
+/** Morph target's children to match next (HTML string or node), preserving node identity (focus, scroll, open state); jst-key pairs keyed children. Backs jst-swap="morph". */
+export function morph(target: Element, next: string | Node): void;
 
 /**
  * Handler helpers: called inside a handler body with the current event.
@@ -98,6 +100,8 @@ export interface JSTNavNavigateOptions {
 
 export interface JSTNav {
   csrf: JSTNavCsrfConfig;
+  /** Pluggable jst-confirm UI: return (a promise of) false to cancel. Unset = window.confirm. */
+  confirm?: (message: string, el: Element) => boolean | Promise<boolean>;
   configure(root?: Document | Element): void;
   /** Fetch url and swap the response into target — the imperative primitive (no events, no history). */
   swap(target: Element | string | null, url: string, options?: JSTNavSwapOptions): Promise<Response>;
@@ -119,6 +123,7 @@ export interface JSTGlobal {
   registerCustomElementFromTemplate: typeof registerCustomElementFromTemplate;
   registerPrecompiledTemplate: typeof registerPrecompiledTemplate;
   initializeTemplates: typeof initializeTemplates;
+  morph: typeof morph;
   fn: JSTCombinators;
   nav?: JSTNav;
   behaviors?: JSTBehaviors;

@@ -45,7 +45,7 @@ import { compileTemplateRenderingFunction } from './compiler.js'
  * v0.1 cache renders identically to v0.2, so `JST.version` is the one-liner that
  * tells you which runtime is actually live.
  */
-export const version = '0.7.1'
+export const version = '0.7.2'
 
 const templates = new Map()
 const config = {
@@ -537,6 +537,20 @@ function applyRenderedHtml(host, html) {
   const template = document.createElement('template');
   template.innerHTML = html;
   morphChildren(host, template.content);
+}
+
+/**
+ * Morph `target`'s children to match `next` (an HTML string, or a node whose
+ * childNodes are the desired result), preserving node identity where the
+ * structure lines up: focus, scroll positions, and open/closed state survive;
+ * `jst-key` attributes pair keyed children across reorders. The incoming HTML
+ * is the source of truth for attributes and form values. This is the engine
+ * behind jst-nav's jst-swap="morph" (#66).
+ */
+export function morph(target, next) {
+  if (!target) return;
+  if (typeof next === 'string') { applyRenderedHtml(target, next); return; }
+  if (next && next.childNodes && canMorphDom(target)) morphChildren(target, next);
 }
 
 const jsonLikePattern = /^(?:true|false|null|-?\d|\[|\{|")/
@@ -1469,6 +1483,7 @@ function publishJstApi() {
     registerCustomElementFromTemplate,
     registerPrecompiledTemplate,
     initializeTemplates,
+    morph,
     config,
     fn: combinators,
   };
