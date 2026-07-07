@@ -46,7 +46,7 @@ export function registerPrecompiledTemplate(
   source?: string,
 ): CustomElementConstructor | undefined;
 export function initializeTemplates(): Map<string, unknown>;
-/** Morph target to match next, preserving node identity (focus, scroll, open state); jst-key pairs keyed children. A string or a node's childNodes morph target's children; a single element whose tag matches target reconciles target's own attributes too (outerHTML-style). Backs jst-swap="morph". */
+/** Morph target to match next, preserving node identity (focus, scroll, open state); jst-key pairs keyed children. A string or a node's childNodes morph target's children; a single element whose tag matches target reconciles target's own attributes too (outerHTML-style). A node marked jst-preserve is frozen: its attributes and whole subtree are left untouched. Backs jst-swap="morph". */
 export function morph(target: Element, next: string | Node): void;
 
 /**

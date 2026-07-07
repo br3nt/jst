@@ -2421,6 +2421,56 @@
             }
         });
 
+        await suite.testAsync("JST Morph: jst-preserve freezes a node's attributes and whole subtree while the rest morphs (#74)", async () => {
+            const zone = document.createElement('div');
+            zone.innerHTML = `<div jst-preserve jst-key="w" data-token="OLD"><span class="inner">keep</span></div><p class="around">old</p>`;
+            document.body.appendChild(zone);
+            try {
+                const widget = zone.querySelector('[jst-key="w"]');
+                const inner = zone.querySelector('.inner');
+                window.JST.morph(zone, `<div jst-preserve jst-key="w" data-token="NEW"><span class="inner">CHANGED</span></div><p class="around">new</p>`);
+                isEqual(true, zone.querySelector('[jst-key="w"]') === widget, 'Expected the preserved node to keep its identity');
+                isEqual('OLD', zone.querySelector('[jst-key="w"]').getAttribute('data-token'), 'Expected a jst-preserve node to keep its attributes, not be reconciled to NEW');
+                isEqual('keep', zone.querySelector('.inner').textContent, 'Expected the preserved subtree to be left untouched');
+                isEqual(true, zone.querySelector('.inner') === inner, 'Expected the preserved child node identity to survive');
+                isEqual('new', zone.querySelector('.around').textContent, 'Expected the surrounding content to still morph, so preservation is not just a no-op morph');
+            } finally {
+                zone.remove();
+            }
+        });
+
+        await suite.testAsync("JST Morph: without jst-preserve, the same node's attributes are reconciled (proves the lever)", async () => {
+            const zone = document.createElement('div');
+            zone.innerHTML = `<div jst-key="w" data-token="OLD"></div>`;
+            document.body.appendChild(zone);
+            try {
+                window.JST.morph(zone, `<div jst-key="w" data-token="NEW"></div>`);
+                isEqual('NEW', zone.querySelector('[jst-key="w"]').getAttribute('data-token'), 'Expected a plain node to have its attributes reconciled to the response: this is what jst-preserve turns off');
+            } finally {
+                zone.remove();
+            }
+        });
+
+        await suite.testAsync("JST Nav: jst-swap='morph' honours jst-preserve on a node inside the region (#74)", async () => {
+            const originalFetch = window.fetch;
+            window.fetch = async () => new Response('<div id="np-region"><iframe jst-preserve jst-key="f" data-token="NEW"></iframe><p class="np-around">new</p></div>', { status: 200, headers: { 'Content-Type': 'text/html' } });
+            const zone = document.createElement('div');
+            zone.innerHTML = `<div id="np-region"><iframe jst-preserve jst-key="f" data-token="OLD"></iframe><p class="np-around">old</p></div><a href="/r" jst-target="#np-region" jst-swap="morph" jst-select="#np-region">go</a>`;
+            document.body.appendChild(zone);
+            await sleep(30);
+            try {
+                const frame = zone.querySelector('iframe');
+                zone.querySelector('a').click();
+                await sleep(30);
+                isEqual(true, zone.querySelector('iframe') === frame, 'Expected the preserved iframe node to survive the region morph');
+                isEqual('OLD', zone.querySelector('iframe').getAttribute('data-token'), 'Expected the preserved iframe to keep its per-render attribute across the morph swap');
+                isEqual('new', zone.querySelector('.np-around').textContent, 'Expected the rest of the region to still morph');
+            } finally {
+                window.fetch = originalFetch;
+                zone.remove();
+            }
+        });
+
         await suite.testAsync("JST Nav: removed attributes fail loud and do not fire", async () => {
             await withConsoleSpy('error', async (calls) => {
                 await withNavZone(`

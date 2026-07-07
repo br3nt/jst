@@ -93,6 +93,8 @@ Inputs are declared in the case-preserving `attributes` attribute:
 - `jst-model="title"` is local form shorthand: read from `title` and update
   `el.title` when the user changes it.
 - `jst-key="$(id)"` preserves DOM identity during list inserts and reorders.
+- `jst-preserve` freezes a node against morph: its attributes and whole subtree
+  are left untouched. See "Preserving DOM across morph" below.
 - `jst-transition="fade"` applies CSS-owned transition classes:
   `fade-enter-*`, `fade-leave-*`, and `fade-move`.
 - `$(slot())` and `$(slot('name', 'fallback'))` project light-DOM children.
@@ -101,6 +103,57 @@ Inputs are declared in the case-preserving `attributes` attribute:
   disconnect cleanup.
 - `onDisconnect(fn)` is the lower-level teardown escape hatch; prefer wrapping
   resource setup in `once()` so it is not re-registered on every render.
+
+## Preserving DOM across morph
+
+When morph updates the DOM (a component re-render, or a `jst-swap="morph"`
+region swap), the incoming HTML is the source of truth: for every ordinary
+element, morph reconciles its attributes to the new values and walks its
+children. Node identity is kept where the structure lines up, but the values
+are not: morph will set an element's attributes to whatever the response says.
+
+Why this usually goes unnoticed: when the old and new values match, the
+reconcile is a no-op, so static content is never touched and morph looks like it
+leaves everything alone. It only becomes visible in two cases, and those are
+exactly when you need `jst-preserve`:
+
+1. **An attribute that legitimately changes every render.** The one that bit us:
+   an `<iframe>` whose `src` carries a per-render signed token. morph reaches the
+   iframe, sees a different `src`, sets it, and the frame reloads and loses its
+   loaded state. `jst-key` does not help here, because a keyed match still has
+   its attributes reconciled.
+2. **Live state the DOM does not capture.** A `<video>` mid-playback, a
+   `<canvas>` you are drawing on, a mounted third-party widget with its own
+   internal state. There is nothing in the incoming HTML that represents "the
+   video is 34 seconds in," so morph rebuilding the node throws that away.
+
+`jst-preserve` freezes a node against all of this. morph reaches it, sees the
+attribute, and stops: attributes, form properties, and the entire subtree are
+left exactly as they are.
+
+```html
+<iframe jst-preserve jst-key="embed" src="/embed?token=abc123"></iframe>
+```
+
+Using it well:
+
+- **Keep rendering the element server-side.** morph only preserves a node it can
+  still pair with one in the response. If the server stops emitting the element
+  (or emits it as a different tag), morph removes or replaces it. Since its
+  attributes are ignored while preserved, the server can emit a bare stub:
+  `<iframe jst-preserve jst-key="embed"></iframe>`, with no need to reconstruct
+  the real `src` on every render.
+- **Pair it with `jst-key`** whenever siblings can be added or removed above it,
+  so an index shift cannot pair the preserved node with the wrong element and
+  replace it. `jst-key` finds the node; `jst-preserve` keeps it untouched.
+
+You do not need `jst-preserve` for a registered custom element or `<jst-slot>`:
+those are already preservation boundaries. morph reconciles such an element's
+own attributes but never descends into its subtree, so a nested component or
+slotted content is left alone across a parent re-render. `jst-preserve` is the
+lever for a *plain* element that morph would otherwise walk into. It is the
+stronger freeze: on a custom element it also stops the attribute sync, so use it
+there only when you want the element's own props frozen too.
 
 ## Production Path
 
