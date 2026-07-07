@@ -115,7 +115,7 @@ function swapContent(target, html, how, reresolve) {
       case 'beforeend': t.insertAdjacentHTML('beforeend', html); return;
       case 'afterend': t.insertAdjacentHTML('afterend', html); return;
       case 'morph':
-        if (window.JST && typeof window.JST.morph === 'function') { window.JST.morph(t, html); return; }
+        if (window.JST && typeof window.JST.morph === 'function') { window.JST.morph(t, morphSource(html, t)); return; }
         warnMorphMissing();
         t.innerHTML = html; return;   // fallback
       case 'innerHTML':
@@ -157,6 +157,25 @@ function selectFrom(html, selector) {
   const doc = new DOMParser().parseFromString(html, 'text/html');
   const node = doc.querySelector(selector);
   return node ? node.outerHTML : '';
+}
+
+// Decide what morph receives. When the response's single root element IS the
+// target (same tag, and same id when the target has one), the HTML describes
+// the element itself, not its new children — as happens with the whole-region
+// pattern jst-target="main" jst-swap="morph" jst-select="main", where select
+// yields the element's outerHTML. Hand morph that element so it reconciles the
+// root too, instead of nesting main inside itself (#68). Otherwise the HTML is
+// the target's new child list, and morph gets the string (children-style).
+function morphSource(html, target) {
+  const tpl = document.createElement('template');
+  tpl.innerHTML = html;
+  const root = tpl.content.firstElementChild;
+  if (root && !root.nextElementSibling
+      && root.tagName === target.tagName
+      && (!target.id || root.id === target.id)) {
+    return root;
+  }
+  return html;
 }
 
 // Out-of-band swaps: pull every [jst-swap-oob] element out of the response and

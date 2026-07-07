@@ -2323,6 +2323,50 @@
             }
         });
 
+        await suite.testAsync("JST Morph: an element whose tag matches the target morphs element-to-element, not into a child", async () => {
+            const zone = document.createElement('div');
+            zone.innerHTML = `<main id="region" class="old"><input id="mi"></main>`;
+            document.body.appendChild(zone);
+            try {
+                const main = zone.querySelector('#region');
+                const input = zone.querySelector('#mi');
+                input.focus();
+                const tpl = document.createElement('template');
+                tpl.innerHTML = `<main id="region" class="new"><input id="mi"></main>`;
+                window.JST.morph(main, tpl.content.firstElementChild);
+                isEqual(true, zone.querySelector('#region') === main, 'Expected the target element to keep its identity (morphed in place, not replaced)');
+                isEqual('new', main.className, 'Expected the root element\'s own attributes to reconcile (outerHTML-style)');
+                isEqual(null, main.querySelector('main'), 'Expected no nested main: the matching element is the target, not its child');
+                isEqual(true, zone.querySelector('#mi') === input, 'Expected the child node identity to survive');
+                isEqual(true, document.activeElement === input, 'Expected focus to survive the element-style morph');
+            } finally {
+                zone.remove();
+            }
+        });
+
+        await suite.testAsync("JST Nav: jst-select yielding the target composes with morph instead of nesting (#68)", async () => {
+            const originalFetch = window.fetch;
+            window.fetch = async () => new Response('<body><h1>page</h1><main id="region" class="new"><input id="mi" value="server"></main></body>', { status: 200, headers: { 'Content-Type': 'text/html' } });
+            const zone = document.createElement('div');
+            zone.innerHTML = `<main id="region" class="old"><input id="mi"></main><a href="/r" jst-target="#region" jst-swap="morph" jst-select="#region">go</a>`;
+            document.body.appendChild(zone);
+            await sleep(30);
+            try {
+                const main = zone.querySelector('#region');
+                const input = zone.querySelector('#mi');
+                zone.querySelector('a').click();
+                await sleep(30);
+                isEqual(1, zone.querySelectorAll('main').length, 'Expected the region to morph in place: one main, not main nested in main');
+                isEqual(true, zone.querySelector('#region') === main, 'Expected the region element to keep its identity across the morph');
+                isEqual('new', zone.querySelector('#region').className, 'Expected the selected element\'s attributes to reconcile onto the target');
+                isEqual('server', zone.querySelector('#mi').value, 'Expected the server-rendered input value to land');
+                isEqual(true, zone.querySelector('#mi') === input, 'Expected the input to be morphed in place, keeping focus/scroll/identity');
+            } finally {
+                window.fetch = originalFetch;
+                zone.remove();
+            }
+        });
+
         await suite.testAsync("JST Nav: removed attributes fail loud and do not fire", async () => {
             await withConsoleSpy('error', async (calls) => {
                 await withNavZone(`
