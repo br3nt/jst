@@ -45,7 +45,7 @@ import { compileTemplateRenderingFunction } from './compiler.js'
  * v0.1 cache renders identically to v0.2, so `JST.version` is the one-liner that
  * tells you which runtime is actually live.
  */
-export const version = '0.7.2'
+export const version = '0.7.3'
 
 const templates = new Map()
 const config = {
@@ -540,17 +540,29 @@ function applyRenderedHtml(host, html) {
 }
 
 /**
- * Morph `target`'s children to match `next` (an HTML string, or a node whose
- * childNodes are the desired result), preserving node identity where the
- * structure lines up: focus, scroll positions, and open/closed state survive;
- * `jst-key` attributes pair keyed children across reorders. The incoming HTML
- * is the source of truth for attributes and form values. This is the engine
- * behind jst-nav's jst-swap="morph" (#66).
+ * Morph `target` to match `next`, preserving node identity where the structure
+ * lines up: focus, scroll positions, and open/closed state survive; `jst-key`
+ * attributes pair keyed children across reorders. The incoming HTML is the
+ * source of truth for attributes and form values. This is the engine behind
+ * jst-nav's jst-swap="morph" (#66).
+ *
+ * `next` selects the style:
+ *   - an HTML string, or a node whose childNodes are the desired result:
+ *     children-style — target keeps its own tag/attributes, its children morph.
+ *   - a single element whose tag matches target: element-style (outerHTML) —
+ *     target's own attributes reconcile against that element too, then children
+ *     morph. This is what lets a jst-select that yields the target element
+ *     itself upgrade to a state-preserving morph instead of nesting (#68).
  */
 export function morph(target, next) {
-  if (!target) return;
+  if (!target || next == null) return;
   if (typeof next === 'string') { applyRenderedHtml(target, next); return; }
-  if (next && next.childNodes && canMorphDom(target)) morphChildren(target, next);
+  if (!canMorphDom(target)) return;
+  if (next.nodeType === Node.ELEMENT_NODE && nodesAreCompatible(target, next)) {
+    morphNode(target, next);
+    return;
+  }
+  if (next.childNodes) morphChildren(target, next);
 }
 
 const jsonLikePattern = /^(?:true|false|null|-?\d|\[|\{|")/

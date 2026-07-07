@@ -5,6 +5,31 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.7.3 - 2026-07-07
+
+Follow-up from adopting v0.7.2's morph in budget_app and brent-mail (#68):
+the whole-region swap pattern could not upgrade to a state-preserving morph.
+
+### Fixed
+
+- **`jst-swap="morph"` composes with `jst-select` (#68).** `jst-select`
+  returns the matched element's outer HTML, but morph treated that HTML as
+  the target's new children, so `jst-target="main" jst-swap="morph"
+  jst-select="main"` nested `main` inside itself. When the response came
+  through `jst-select` and its single root element is the target (same tag),
+  jst-nav now morphs element-to-element: the root's own attributes reconcile
+  onto the target and its children morph, instead of nesting. This makes
+  morph a drop-in upgrade for every `outerHTML` region swap - inputs keep
+  focus, open `<details>` and loaded iframes survive a redirect-back action.
+  A plain `jst-swap="morph"` without `jst-select` keeps its child-list
+  meaning unchanged; element-style also applies without a select when the
+  root and target carry the same `id` (a form re-rendering itself as its own
+  root through `jst-swap-4xx="morph"`). `JST.morph(target, next)` gains the
+  same behaviour directly: a single element whose tag matches the target
+  morphs outerHTML-style, reconciling that element's own attributes; a string
+  or a `DocumentFragment` (e.g. `template.content`) stays children-style as
+  before.
+
 ## 0.7.2 - 2026-07-07
 
 Gaps found converting budget_app and brent-mail from htmx/Turbo (#63, #64,
