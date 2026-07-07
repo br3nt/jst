@@ -1769,7 +1769,7 @@ function applyRenderedHtml(host, html) {
  *     itself upgrade to a state-preserving morph instead of nesting (#68).
  */
 function morph(target, next) {
-  if (!target || !next) return;
+  if (!target || next == null) return;
   if (typeof next === 'string') { applyRenderedHtml(target, next); return; }
   if (!canMorphDom(target)) return;
   if (next.nodeType === Node.ELEMENT_NODE && nodesAreCompatible(target, next)) {

@@ -15,15 +15,19 @@ the whole-region swap pattern could not upgrade to a state-preserving morph.
 - **`jst-swap="morph"` composes with `jst-select` (#68).** `jst-select`
   returns the matched element's outer HTML, but morph treated that HTML as
   the target's new children, so `jst-target="main" jst-swap="morph"
-  jst-select="main"` nested `main` inside itself. jst-nav now detects when
-  the response's single root element IS the target (same tag, and same id
-  when the target has one) and morphs element-to-element: the root's own
-  attributes reconcile onto the target and its children morph, instead of
-  nesting. This makes morph a drop-in upgrade for every `outerHTML` region
-  swap - inputs keep focus, open `<details>` and loaded iframes survive a
-  redirect-back action. `JST.morph(target, next)` gains the same behaviour
-  directly: pass a single element whose tag matches the target and it morphs
-  outerHTML-style; a string or a node's children stay children-style as
+  jst-select="main"` nested `main` inside itself. When the response came
+  through `jst-select` and its single root element is the target (same tag),
+  jst-nav now morphs element-to-element: the root's own attributes reconcile
+  onto the target and its children morph, instead of nesting. This makes
+  morph a drop-in upgrade for every `outerHTML` region swap - inputs keep
+  focus, open `<details>` and loaded iframes survive a redirect-back action.
+  A plain `jst-swap="morph"` without `jst-select` keeps its child-list
+  meaning unchanged; element-style also applies without a select when the
+  root and target carry the same `id` (a form re-rendering itself as its own
+  root through `jst-swap-4xx="morph"`). `JST.morph(target, next)` gains the
+  same behaviour directly: a single element whose tag matches the target
+  morphs outerHTML-style, reconciling that element's own attributes; a string
+  or a `DocumentFragment` (e.g. `template.content`) stays children-style as
   before.
 
 ## 0.7.2 - 2026-07-07

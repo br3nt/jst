@@ -85,7 +85,7 @@ function reducedMotion() {
 // Returns a promise resolving to true once the DOM is updated (NOT once the
 // animation finishes) — or FALSE when the write found no target, so the caller
 // can report the miss instead of silently succeeding (#57).
-function swapContent(target, html, how, reresolve) {
+function swapContent(target, html, how, reresolve, fromSelect) {
   how = (how || 'innerHTML').trim();
   let transition = false;
   if (how === 'transition') { transition = true; how = 'innerHTML'; }   // legacy alias
@@ -115,7 +115,7 @@ function swapContent(target, html, how, reresolve) {
       case 'beforeend': t.insertAdjacentHTML('beforeend', html); return;
       case 'afterend': t.insertAdjacentHTML('afterend', html); return;
       case 'morph':
-        if (window.JST && typeof window.JST.morph === 'function') { window.JST.morph(t, morphSource(html, t)); return; }
+        if (window.JST && typeof window.JST.morph === 'function') { window.JST.morph(t, morphSource(html, t, fromSelect)); return; }
         warnMorphMissing();
         t.innerHTML = html; return;   // fallback
       case 'innerHTML':
@@ -160,21 +160,27 @@ function selectFrom(html, selector) {
 }
 
 // Decide what morph receives. When the response's single root element IS the
-// target (same tag, and same id when the target has one), the HTML describes
-// the element itself, not its new children — as happens with the whole-region
-// pattern jst-target="main" jst-swap="morph" jst-select="main", where select
-// yields the element's outerHTML. Hand morph that element so it reconciles the
-// root too, instead of nesting main inside itself (#68). Otherwise the HTML is
-// the target's new child list, and morph gets the string (children-style).
-function morphSource(html, target) {
+// target rather than its new children, hand morph that element so it reconciles
+// the root too (element/outerHTML-style), instead of nesting the element inside
+// itself (#68) — as happens with the whole-region pattern jst-target="main"
+// jst-swap="morph" jst-select="main", where select yields the element's
+// outerHTML. Otherwise the HTML is the target's new child list, and morph gets
+// the string (children-style, the default since morph shipped).
+//
+// "IS the target" is only safe to infer two ways, so a plain jst-swap="morph"
+// (no select) keeps its child-list meaning:
+//   - fromSelect: the HTML is a selected node's outerHTML, so a same-tag single
+//     root is that element even without an id (the tag-selected <main> case).
+//   - an explicit id match: root and target carry the same id, which pins the
+//     identity regardless of where the HTML came from (e.g. a form re-rendering
+//     itself as its own root through jst-swap-4xx="morph").
+function morphSource(html, target, fromSelect) {
   const tpl = document.createElement('template');
   tpl.innerHTML = html;
   const root = tpl.content.firstElementChild;
-  if (root && !root.nextElementSibling
-      && root.tagName === target.tagName
-      && (!target.id || root.id === target.id)) {
-    return root;
-  }
+  if (!root || root.nextElementSibling || root.tagName !== target.tagName) return html;
+  const idMatch = target.id && root.id === target.id;
+  if (idMatch || (fromSelect && !target.id)) return root;
   return html;
 }
 
@@ -342,7 +348,7 @@ async function performRequest(el, sourceEvent) {
       const prevTop = scroller ? scroller.scrollTop : 0;
       // Re-resolve at write time (#57): an overlapping swap can detach the
       // node captured above before a View Transition's update callback runs.
-      const wrote = await swapContent(target, html, how, () => resolveTarget(el, targetSel));
+      const wrote = await swapContent(target, html, how, () => resolveTarget(el, targetSel), !!select);
       missed = !wrote;
       if (scroller) scroller.scrollTop = prevTop + (scroller.scrollHeight - prevHeight);
     } else {
@@ -503,7 +509,7 @@ export async function swap(target, url, options = {}) {
   // String targets re-resolve at write time (#57); a miss emits a bubbling
   // jst:swap-missed from document instead of succeeding silently.
   const reresolve = typeof target === 'string' ? () => document.querySelector(target) : null;
-  const wrote = await swapContent(element, html, how, reresolve);
+  const wrote = await swapContent(element, html, how, reresolve, !!select);
   if (!wrote && how !== 'none') {
     emit(document, 'swap-missed', { url, target: typeof target === 'string' ? target : null });
     return res;

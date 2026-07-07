@@ -2360,9 +2360,63 @@
                 isEqual(true, zone.querySelector('#region') === main, 'Expected the region element to keep its identity across the morph');
                 isEqual('new', zone.querySelector('#region').className, 'Expected the selected element\'s attributes to reconcile onto the target');
                 isEqual('server', zone.querySelector('#mi').value, 'Expected the server-rendered input value to land');
-                isEqual(true, zone.querySelector('#mi') === input, 'Expected the input to be morphed in place, keeping focus/scroll/identity');
+                isEqual(true, zone.querySelector('#mi') === input, 'Expected the input to be morphed in place, keeping its identity (so focus/scroll/caret would survive)');
             } finally {
                 window.fetch = originalFetch;
+                zone.remove();
+            }
+        });
+
+        await suite.testAsync("JST Nav: a tag-selected region (no id) still composes morph element-to-element (#68)", async () => {
+            const originalFetch = window.fetch;
+            window.fetch = async () => new Response('<body><h1>page</h1><section class="region2 fresh"><input class="mi2" value="srv"></section></body>', { status: 200, headers: { 'Content-Type': 'text/html' } });
+            const zone = document.createElement('div');
+            zone.innerHTML = `<section class="region2 stale"><input class="mi2"></section><a href="/r" jst-target=".region2" jst-swap="morph" jst-select=".region2">go</a>`;
+            document.body.appendChild(zone);
+            await sleep(30);
+            try {
+                const section = zone.querySelector('.region2');
+                const input = zone.querySelector('.mi2');
+                zone.querySelector('a').click();
+                await sleep(30);
+                isEqual(1, zone.querySelectorAll('section').length, 'Expected one section: a selected element with no id still unwraps, not nests');
+                isEqual(true, zone.querySelector('.region2') === section, 'Expected the region to keep identity across the tag-selected morph');
+                isEqual('region2 fresh', zone.querySelector('.region2').className, 'Expected the root class to reconcile (element-style) even without an id');
+                isEqual('srv', zone.querySelector('.mi2').value, 'Expected the server input value to land');
+                isEqual(true, zone.querySelector('.mi2') === input, 'Expected the input node to survive the morph');
+            } finally {
+                window.fetch = originalFetch;
+                zone.remove();
+            }
+        });
+
+        await suite.testAsync("JST Nav: a plain morph (no jst-select) keeps child-list semantics, does not unwrap a same-tag root", async () => {
+            const originalFetch = window.fetch;
+            window.fetch = async () => new Response('<div class="incoming">y</div>', { status: 200, headers: { 'Content-Type': 'text/html' } });
+            const zone = document.createElement('div');
+            zone.innerHTML = `<div class="plain"><span>x</span></div><a href="/r" jst-target=".plain" jst-swap="morph">go</a>`;
+            document.body.appendChild(zone);
+            await sleep(30);
+            try {
+                zone.querySelector('a').click();
+                await sleep(30);
+                isEqual(true, !!zone.querySelector('.plain > .incoming'), 'Expected the same-tag root to land as a child (children-style), not merge with the target');
+                isEqual(true, zone.querySelector('.plain').classList.contains('plain'), 'Expected the target to keep its own attributes: no element-style reconcile without select or an id match');
+            } finally {
+                window.fetch = originalFetch;
+                zone.remove();
+            }
+        });
+
+        await suite.testAsync("JST Morph: JST.morph(target, '') clears the target, matching innerHTML swaps", async () => {
+            const zone = document.createElement('div');
+            zone.innerHTML = `<div id="morph-empty"><p>keep me?</p></div>`;
+            document.body.appendChild(zone);
+            try {
+                const host = zone.querySelector('#morph-empty');
+                window.JST.morph(host, '');
+                isEqual(0, host.childNodes.length, 'Expected an empty string to clear the target (a jst-select miss must not retain stale content)');
+            } finally {
                 zone.remove();
             }
         });
