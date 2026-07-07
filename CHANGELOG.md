@@ -5,6 +5,26 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.7.4 - 2026-07-07
+
+Found adopting morph across a real app (#74): a whole-region `jst-swap="morph"`
+reloaded an `<iframe>` whose `src` carries a per-render signed token.
+
+### Added
+
+- **`jst-preserve` freezes a node against morph (#74).** morph treats the
+  incoming HTML as the source of truth for a plain element's attributes and
+  children, so an attribute that legitimately changes every render (a signed
+  iframe `src`) is overwritten and the element reloads, and client state the
+  DOM does not capture (a `<video>` mid-playback, a `<canvas>`, a third-party
+  widget) is lost. Mark the node `jst-preserve` and morph leaves it entirely
+  alone: attributes, form properties, and the whole subtree. `jst-key` does not
+  cover this, since a keyed match still has its attributes reconciled. Registered
+  custom elements and `<jst-slot>` are already preservation boundaries; this is
+  the lever for plain elements. Keep emitting the element server-side (a bare
+  stub is fine, its attributes are ignored) and pair it with `jst-key` when
+  siblings can shift. Documented in the README ("Preserving DOM across morph").
+
 ## 0.7.3 - 2026-07-07
 
 Follow-up from adopting v0.7.2's morph in budget_app and brent-mail (#68):

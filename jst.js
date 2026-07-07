@@ -33,6 +33,9 @@ import { compileTemplateRenderingFunction } from './compiler.js'
  *   once('key', setup)      run setup once per connection, after the DOM commits;
  *                           a returned function is registered as disconnect cleanup
  *   jst-key="$(id)"         preserve keyed node identity while morphing
+ *   jst-preserve            freeze this node against morph: attributes and
+ *                           whole subtree are left untouched (loaded iframe,
+ *                           media playback, canvas, third-party widget)
  *
  * State lives in this module. The ES-module exports are the canonical API; a
  * reduced `window.JST` global mirrors them for non-module/streamed consumers.
@@ -45,7 +48,7 @@ import { compileTemplateRenderingFunction } from './compiler.js'
  * v0.1 cache renders identically to v0.2, so `JST.version` is the one-liner that
  * tells you which runtime is actually live.
  */
-export const version = '0.7.3'
+export const version = '0.7.4'
 
 const templates = new Map()
 const config = {
@@ -462,6 +465,16 @@ function morphNode(currentNode, nextNode) {
     return;
   }
 
+  // jst-preserve freezes a node against morph entirely: its attributes, form
+  // properties, and whole subtree are left as they are. This is a stronger
+  // opt-out than the managed-element boundary below, which still syncs its own
+  // attributes, so this return sits ABOVE syncAttributes on purpose: the point
+  // is to keep an attribute that legitimately changes each render (a signed
+  // iframe src) or client state the DOM does not capture (media playback, a
+  // canvas, a third-party widget) from being reconciled away (#74). Pairs with
+  // jst-key so an unkeyed sibling shift cannot mismatch and replace the node.
+  if (currentNode.hasAttribute('jst-preserve')) return;
+
   syncAttributes(currentNode, nextNode);
   syncFormProperties(currentNode, nextNode);
   // Managed elements render their own children; slot elements hold projected
@@ -543,8 +556,9 @@ function applyRenderedHtml(host, html) {
  * Morph `target` to match `next`, preserving node identity where the structure
  * lines up: focus, scroll positions, and open/closed state survive; `jst-key`
  * attributes pair keyed children across reorders. The incoming HTML is the
- * source of truth for attributes and form values. This is the engine behind
- * jst-nav's jst-swap="morph" (#66).
+ * source of truth for attributes and form values, except on a node marked
+ * `jst-preserve`, which is frozen: its attributes and whole subtree are left
+ * untouched (#74). This is the engine behind jst-nav's jst-swap="morph" (#66).
  *
  * `next` selects the style:
  *   - an HTML string, or a node whose childNodes are the desired result:
