@@ -102,6 +102,27 @@ Inputs are declared in the case-preserving `attributes` attribute:
 - `onDisconnect(fn)` is the lower-level teardown escape hatch; prefer wrapping
   resource setup in `once()` so it is not re-registered on every render.
 
+## Preserving DOM across morph
+
+When morph updates the DOM (a re-render, or a `jst-swap="morph"` region swap),
+it keeps existing nodes where the structure lines up rather than replacing them.
+There are three preservation levers, from narrowest to widest:
+
+1. **`jst-key`** preserves node identity across list inserts and reorders. A
+   keyed node is matched to the same key in the next render, so it moves instead
+   of being rebuilt. Its attributes and children are still reconciled.
+2. **Form-control properties** are carried across renders: an input's value,
+   checked / selected state, focus, and caret position stay stable even as the
+   surrounding markup updates.
+3. **Custom-element and `<jst-slot>` boundaries** preserve the *whole subtree*.
+   morph reconciles such an element's own attributes but never descends into it,
+   so everything inside is left exactly as it was. To keep an expensive or
+   stateful subtree intact across a re-render or a `jst-swap="morph"` swap - a
+   loaded `<iframe>`, a media player, a `<canvas>`, a third-party widget - make
+   it, or wrap it in, a custom element. `jst-key` alone does not do this: a
+   keyed match still has its attributes reconciled, which would, for example,
+   overwrite an `<iframe>`'s `src` and reload it.
+
 ## Production Path
 
 JST has two modes:
