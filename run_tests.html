@@ -2205,6 +2205,124 @@
             });
         });
 
+        await suite.testAsync("JST Nav: jst:response-error carries the response body text", async () => {
+            const originalFetch = window.fetch;
+            window.fetch = async () => new Response('Could not delete expense: still has line items', { status: 422, headers: { 'Content-Type': 'text/plain' } });
+            const zone = document.createElement('div');
+            zone.innerHTML = `
+                <div id="err-sink-1"></div>
+                <a href="/expenses/9" method="delete" jst-target="#never-used" jst-target-error="#err-sink-1">del</a>
+            `;
+            document.body.appendChild(zone);
+            await sleep(30);
+            let detail = null;
+            const listener = (e) => { detail = e.detail; };
+            document.addEventListener('jst:response-error', listener);
+            try {
+                zone.querySelector('a').click();
+                await sleep(30);
+                isEqual(422, detail?.status, 'Expected the error event to fire with the status');
+                isEqual('Could not delete expense: still has line items', detail?.text, 'Expected the event detail to carry the body text');
+                isEqual('Could not delete expense: still has line items', zone.querySelector('#err-sink-1').textContent, 'Expected the routed error swap to still land');
+            } finally {
+                document.removeEventListener('jst:response-error', listener);
+                window.fetch = originalFetch;
+                zone.remove();
+            }
+        });
+
+        await suite.testAsync("JST Nav: jst-swap-4xx lets a form re-render itself on validation failure", async () => {
+            const originalFetch = window.fetch;
+            const requests = [];
+            window.fetch = async (url, opts = {}) => {
+                requests.push({ url: String(url), method: (opts.method || 'GET') });
+                return new Response(
+                    '<form id="err-form" class="rerendered" action="/notes" method="post" jst-target="#nav-note-out" jst-target-4xx="#err-form" jst-swap-4xx="outerHTML"><em class="msg">Name required</em></form>',
+                    { status: 422, headers: { 'Content-Type': 'text/html' } });
+            };
+            const zone = document.createElement('div');
+            zone.innerHTML = `
+                <div id="nav-note-out"></div>
+                <form id="err-form" action="/notes" method="post" jst-target="#nav-note-out" jst-target-4xx="#err-form" jst-swap-4xx="outerHTML"><button>save</button></form>
+            `;
+            document.body.appendChild(zone);
+            await sleep(30);
+            try {
+                zone.querySelector('form').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+                await sleep(30);
+                isEqual(1, zone.querySelectorAll('form').length, 'Expected the form to replace itself, not nest inside its old wrapper');
+                isEqual('Name required', zone.querySelector('#err-form.rerendered .msg')?.textContent, 'Expected the outerHTML error swap to land');
+                zone.querySelector('#err-form').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+                await sleep(30);
+                isEqual(2, requests.length, 'Expected the re-rendered form to be re-wired for the next submit');
+            } finally {
+                window.fetch = originalFetch;
+                zone.remove();
+            }
+        });
+
+        await suite.testAsync("JST Nav: JST.nav.confirm replaces window.confirm for jst-confirm", async () => {
+            await withNavZone(`
+                <div id="nav-conf-out"></div>
+                <a href="/danger" jst-target="#nav-conf-out" jst-confirm="Sure?">go</a>
+            `, async (zone, requests) => {
+                const asked = [];
+                window.JST.nav.confirm = async (msg, el) => { asked.push({ msg, tag: el.tagName }); return false; };
+                try {
+                    zone.querySelector('a').click();
+                    await sleep(30);
+                    isEqual(0, requests.length, 'Expected a false confirm to cancel the request');
+                    isEqual('Sure?', asked[0]?.msg, 'Expected the handler to receive the message');
+                    isEqual('A', asked[0]?.tag, 'Expected the handler to receive the element');
+                    window.JST.nav.confirm = async () => true;
+                    zone.querySelector('a').click();
+                    await sleep(30);
+                    isEqual(1, requests.length, 'Expected a true confirm to let the request through');
+                } finally {
+                    delete window.JST.nav.confirm;
+                }
+            });
+        });
+
+        await suite.testAsync("JST Morph: JST.morph preserves node identity, focus, and keyed order", async () => {
+            const zone = document.createElement('div');
+            zone.innerHTML = `<input id="morph-in"><ul><li jst-key="a">A</li><li jst-key="b">B</li></ul>`;
+            document.body.appendChild(zone);
+            try {
+                const input = zone.querySelector('#morph-in');
+                const liA = zone.querySelector('li[jst-key="a"]');
+                input.focus();
+                window.JST.morph(zone, `<input id="morph-in"><ul><li jst-key="b">B2</li><li jst-key="a">A2</li></ul>`);
+                isEqual(true, document.activeElement === input, 'Expected focus to survive the morph');
+                isEqual(true, zone.querySelector('li[jst-key="a"]') === liA, 'Expected the keyed node to keep its identity across the reorder');
+                isEqual('B2,A2', Array.from(zone.querySelectorAll('li')).map(li => li.textContent).join(','), 'Expected content and order to match the incoming HTML');
+            } finally {
+                zone.remove();
+            }
+        });
+
+        await suite.testAsync("JST Nav: jst-swap of morph goes through JST.morph and keeps node identity", async () => {
+            const originalFetch = window.fetch;
+            window.fetch = async () => new Response('<p class="keep">new</p>', { status: 200, headers: { 'Content-Type': 'text/html' } });
+            const zone = document.createElement('div');
+            zone.innerHTML = `
+                <div id="nav-morph-out"><p class="keep">old</p></div>
+                <a href="/region" jst-target="#nav-morph-out" jst-swap="morph">refresh</a>
+            `;
+            document.body.appendChild(zone);
+            await sleep(30);
+            try {
+                const p = zone.querySelector('.keep');
+                zone.querySelector('a').click();
+                await sleep(30);
+                isEqual('new', zone.querySelector('.keep')?.textContent, 'Expected the morph swap to apply the response');
+                isEqual(true, zone.querySelector('.keep') === p, 'Expected the existing node to be morphed in place, not replaced');
+            } finally {
+                window.fetch = originalFetch;
+                zone.remove();
+            }
+        });
+
         await suite.testAsync("JST Nav: removed attributes fail loud and do not fire", async () => {
             await withConsoleSpy('error', async (calls) => {
                 await withNavZone(`
