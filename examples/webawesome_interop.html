@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>JST interop: Web Awesome components inside JST</title>
+
+  <!-- JST's own CSS (tokens + layout + component skins) and runtime. Local
+       files, so JST works even if the Web Awesome CDN is unreachable. -->
+  <link rel="stylesheet" href="../jst-layout.css">
+  <link rel="stylesheet" href="../jst-components.css">
+  <script type="module" src="../jst.js"></script>
+
+  <!-- THIRD-PARTY: Web Awesome (the Shoelace successor), pinned to 3.10.0 from
+       the jsDelivr CDN. Every wa-* element used here (wa-rating, wa-switch,
+       wa-badge, wa-card, wa-callout) is a free-tier component. We import each
+       component module directly (jsDelivr's /+esm endpoint bundles their
+       dependencies); each module self-registers its custom element. This module
+       is separate from jst.js above, so if the CDN is blocked the wa-* elements
+       stay inert inline elements and every JST part keeps working. -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@awesome.me/webawesome@3.10.0/dist/styles/webawesome.css">
+  <script type="module">
+    const base = 'https://cdn.jsdelivr.net/npm/@awesome.me/webawesome@3.10.0/dist/components';
+    for (const name of ['rating', 'switch', 'badge', 'card', 'callout']) {
+      import(`${base}/${name}/${name}.js/+esm`).catch(() => { /* stays inert; JST is unaffected */ });
+    }
+  </script>
+
+  <style>
+    /* ---- Layer badges: every section says which layer you are looking at ---- */
+    .layer {
+      display: inline-block; font-size: 0.68rem; font-weight: 700;
+      letter-spacing: 0.04em; text-transform: uppercase;
+      padding: 0.15em 0.55em; border-radius: 999px; vertical-align: middle;
+      border: 1px solid transparent;
+    }
+    .layer[data-layer="native"]      { background: oklch(0.93 0.03 255); color: oklch(0.38 0.09 255); border-color: oklch(0.82 0.05 255); }
+    .layer[data-layer="jst"]         { background: oklch(0.93 0.06 155); color: oklch(0.38 0.11 155); border-color: oklch(0.80 0.09 155); }
+    .layer[data-layer="third-party"] { background: oklch(0.93 0.07 70);  color: oklch(0.42 0.12 70);  border-color: oklch(0.82 0.10 70); }
+    [data-scheme="dark"] .layer[data-layer="native"]      { background: oklch(0.30 0.04 255); color: oklch(0.85 0.06 255); border-color: oklch(0.45 0.06 255); }
+    [data-scheme="dark"] .layer[data-layer="jst"]         { background: oklch(0.30 0.06 155); color: oklch(0.85 0.09 155); border-color: oklch(0.45 0.09 155); }
+    [data-scheme="dark"] .layer[data-layer="third-party"] { background: oklch(0.30 0.06 70);  color: oklch(0.85 0.09 70);  border-color: oklch(0.45 0.08 70); }
+
+    .legend { display: flex; flex-wrap: wrap; gap: var(--jst-space-s); align-items: center; }
+    .card {
+      border: var(--jst-border-width) solid var(--jst-border); border-radius: var(--jst-radius);
+      padding: var(--jst-space-l); background: var(--jst-bg);
+    }
+    .card > header { display: flex; align-items: center; gap: var(--jst-space-s); margin-block-end: var(--jst-space-s); }
+    .card > header h3 { margin: 0; }
+    .card .note { color: var(--jst-muted); font-size: var(--jst-font-small); margin-block-start: var(--jst-space-s); }
+    .readout { font-size: var(--jst-font-size); }
+    .readout strong { color: var(--jst-accent-700, var(--jst-accent)); }
+
+    /* =====================================================================
+       DEMO 3, the theming bridge  (THIRD-PARTY tokens mapped FROM JST tokens)
+       Web Awesome reads its own --wa-* design tokens. Point a handful of them
+       at the --jst-* tokens and re-theming JST re-themes the wa components too.
+       These are the real Web Awesome token names (see their theming docs).
+       Declared on `body` (not :root) so the body-level accent override below
+       re-resolves them: a custom property's var() is substituted against the
+       same element, so the mapping and the override must live on one element.
+       ===================================================================== */
+    body {
+      --wa-color-brand-fill-loud:   var(--jst-accent);
+      --wa-color-brand-fill-normal: var(--jst-accent);
+      --wa-color-brand-fill-quiet:  oklch(from var(--jst-accent) calc(l + 0.28) c h);
+      --wa-color-brand-border-normal: var(--jst-accent);
+      --wa-color-brand-on-loud:     var(--jst-accent-fg);
+      --wa-color-brand-on-normal:   var(--jst-accent-fg);
+      --wa-font-family-body:        var(--jst-font);
+    }
+    /* wa-rating exposes its own custom property for the active symbol color. */
+    wa-rating { --symbol-color-active: var(--jst-accent); }
+
+    /* The "re-theme JST" button just overrides ONE JST token; the bridge above
+       carries it into every wa component. */
+    body.accent-alt { --jst-accent: oklch(0.62 0.19 28); }
+
+    wa-card { --spacing: var(--jst-space-m); }
+    .wa-row { display: flex; flex-wrap: wrap; gap: var(--jst-space-l); align-items: center; }
+  </style>
+
+  <!-- ================= JST COMPONENTS ================= -->
+
+  <!-- DEMO 1, attributes down: a JST declared attribute drives a wa-rating's
+       value. The +/- buttons are JST state; the stars are Web Awesome. -->
+  <script type="jst" name="rating-driver" attributes="stars">
+    <div class="wa-row">
+      <jst-cluster style="--space: var(--jst-space-xs)">
+        <button type="button" data-variant="quiet" onclick="el.stars = Math.max(0, (Number(el.stars) || 0) - 0.5)">−</button>
+        <button type="button" data-variant="quiet" onclick="el.stars = Math.min(5, (Number(el.stars) || 0) + 0.5)">+</button>
+      </jst-cluster>
+      <!-- THIRD-PARTY element, driven by JST state (readonly: this demo is one-way). -->
+      <wa-rating label="Product rating" precision="0.5" readonly value="$(stars)"></wa-rating>
+      <span class="readout">
+        <span class="layer" data-layer="jst">JST</span>
+        state: <strong data-testid="driver-stars">$(Number(stars) || 0)</strong> / 5
+      </span>
+    </div>
+  </script>
+
+  <!-- DEMO 2, events up: the wa-rating's change event is handled by a JST
+       handler (a plain function body) that updates JST state rendered elsewhere. -->
+  <script type="jst" name="rating-catcher" attributes="rated">
+    <div class="wa-row">
+      <!-- THIRD-PARTY element. onchange attaches via addEventListener; the body
+           is the native inline-handler contract: `this` is the wa-rating,
+           `el` is this JST host. -->
+      <wa-rating label="Your rating" precision="0.5"
+                 onchange="el.rated = Number(this.value)"></wa-rating>
+      <p class="readout" style="margin:0">
+        <span class="layer" data-layer="jst">JST</span>
+        $ if (Number(rated) > 0) {
+          you rated <strong data-testid="catcher-rated">$(rated)</strong> star$(Number(rated) === 1 ? '' : 's').
+        $ } else {
+          <span style="color: var(--jst-muted)">click the stars and JST will report it here.</span>
+        $ }
+      </p>
+    </div>
+  </script>
+</head>
+
+<body data-scheme="light">
+  <jst-center style="--measure: 74ch; --gutters: var(--jst-space-l)">
+    <jst-stack style="--space: var(--jst-space-xl); padding-block: var(--jst-space-xl)">
+
+      <jst-stack>
+        <h1>JST is a layer: Web Awesome components inside JST</h1>
+        <p>JST is light DOM and wraps nothing. A Web Awesome element is just a
+           custom element sitting in the page, so it composes with JST with no
+           adapter. This page bridges the data flow in <strong>both directions</strong>
+           and maps the theme, using only <strong>free-tier</strong> Web Awesome
+           components: <code>wa-rating</code>, <code>wa-switch</code>,
+           <code>wa-badge</code>, <code>wa-card</code>, <code>wa-callout</code>.</p>
+
+        <div class="legend">
+          <span>Every section is labelled by layer:</span>
+          <span class="layer" data-layer="native">Native</span><span>plain HTML/CSS/JS, no JST</span>
+          <span class="layer" data-layer="jst">JST</span><span>a JST component or template</span>
+          <span class="layer" data-layer="third-party">Third-party</span><span>Web Awesome</span>
+        </div>
+
+        <p style="color: var(--jst-muted); font-size: var(--jst-font-small)">
+          A registered custom element is already a preservation boundary under JST's
+          morph, so JST re-renders around a wa component without reconciling its
+          internals away. If the Web Awesome CDN is blocked, the <code>wa-*</code>
+          elements stay inert and the JST parts keep working.</p>
+      </jst-stack>
+
+      <!-- DEMO 1 -->
+      <div class="card">
+        <header>
+          <h3>Demo 1: attributes down</h3>
+          <span class="layer" data-layer="jst">JST</span>
+          <span class="layer" data-layer="third-party">Third-party</span>
+        </header>
+        <p>A JST declared attribute (<code>stars</code>) drives the wa-rating's
+           <code>value</code>. The buttons mutate JST state; the stars follow.</p>
+        <wa-card>
+          <rating-driver id="driver" stars="3"></rating-driver>
+        </wa-card>
+      </div>
+
+      <!-- DEMO 2 -->
+      <div class="card">
+        <header>
+          <h3>Demo 2: events up</h3>
+          <span class="layer" data-layer="third-party">Third-party</span>
+          <span class="layer" data-layer="jst">JST</span>
+        </header>
+        <p>The wa-rating's <code>change</code> event is caught by a JST handler that
+           writes JST state, which JST renders back out as text.</p>
+        <wa-card>
+          <rating-catcher id="catcher"></rating-catcher>
+        </wa-card>
+      </div>
+
+      <!-- DEMO 3 -->
+      <div class="card">
+        <header>
+          <h3>Demo 3: theming bridge</h3>
+          <span class="layer" data-layer="native">Native</span>
+          <span class="layer" data-layer="third-party">Third-party</span>
+        </header>
+        <p>A few Web Awesome <code>--wa-*</code> tokens are mapped
+           <em>from</em> the <code>--jst-*</code> tokens in CSS (see the
+           <code>body</code> block in this page's styles). They live on
+           <code>body</code>, not <code>:root</code>, because a custom property's
+           <code>var()</code> is substituted against the same element: the mapping and
+           the accent override both sit on <code>body</code> so re-theming re-resolves
+           them. Re-theme JST and the wa components re-theme with it. The button below
+           overrides a single JST token, <code>--jst-accent</code>; watch the rating,
+           switch, and badge all recolor.</p>
+        <jst-stack style="--space: var(--jst-space-m)">
+          <button type="button" id="reTheme" onclick="document.body.classList.toggle('accent-alt')">
+            Re-theme JST (toggle accent)
+          </button>
+          <wa-card>
+            <div class="wa-row">
+              <wa-rating label="Themed rating" value="4" readonly></wa-rating>
+              <wa-switch checked>Themed switch</wa-switch>
+              <wa-badge variant="brand">Brand badge</wa-badge>
+            </div>
+          </wa-card>
+          <wa-callout variant="brand">
+            This <code>wa-callout</code> also picks up <code>--jst-accent</code> through
+            the bridge. Same technique works for typography and every other
+            <code>--wa-*</code> token.
+          </wa-callout>
+        </jst-stack>
+      </div>
+
+      <jst-box>
+        <jst-stack style="--space: var(--jst-space-xs)">
+          <h2>Takeaway <span class="layer" data-layer="native">Native</span></h2>
+          <p>Attributes down, events up, and a token bridge for theming: three small
+             seams, no wrapper, no adapter. JST stayed a thin layer over the light DOM
+             and Web Awesome's custom elements just composed. Registered custom elements
+             are preservation boundaries, so it holds up under morph swaps too.</p>
+        </jst-stack>
+      </jst-box>
+
+    </jst-stack>
+  </jst-center>
+</body>
+</html>

@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>JST is a layer: three chart libraries, one data flow</title>
+
+  <!-- JST's own CSS (tokens + layout primitives + component skins). -->
+  <link rel="stylesheet" href="../jst-layout.css">
+  <link rel="stylesheet" href="../jst-components.css">
+
+  <!-- THIRD-PARTY: chart libraries, pinned to exact versions from a CDN.
+       Each is a plain custom-element-free library; JST does not wrap them.
+       - Chart.js 4.5.0  (classic UMD script, canvas)
+       - uPlot 1.6.32    (classic IIFE script + its own CSS, canvas)
+       - Observable Plot 0.6.17 is an ESM module, imported below.
+       `defer` keeps a slow or blocked CDN from stalling the parser; the
+       components poll for the global and show a graceful note if it never
+       arrives, so the page (and CI) never depends on third-party uptime. -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uplot@1.6.32/dist/uPlot.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/uplot@1.6.32/dist/uPlot.iife.min.js"></script>
+
+  <!-- JST runtime. Local file, never a CDN, so JST works even if every chart
+       library above fails to load. -->
+  <script type="module" src="../jst.js"></script>
+
+  <style>
+    /* ---- Layer badges: every section says which layer you are looking at ---- */
+    .layer {
+      display: inline-block; font-size: 0.68rem; font-weight: 700;
+      letter-spacing: 0.04em; text-transform: uppercase;
+      padding: 0.15em 0.55em; border-radius: 999px; vertical-align: middle;
+      border: 1px solid transparent;
+    }
+    .layer[data-layer="native"]      { background: oklch(0.93 0.03 255); color: oklch(0.38 0.09 255); border-color: oklch(0.82 0.05 255); }
+    .layer[data-layer="jst"]         { background: oklch(0.93 0.06 155); color: oklch(0.38 0.11 155); border-color: oklch(0.80 0.09 155); }
+    .layer[data-layer="third-party"] { background: oklch(0.93 0.07 70);  color: oklch(0.42 0.12 70);  border-color: oklch(0.82 0.10 70); }
+    [data-scheme="dark"] .layer[data-layer="native"]      { background: oklch(0.30 0.04 255); color: oklch(0.85 0.06 255); border-color: oklch(0.45 0.06 255); }
+    [data-scheme="dark"] .layer[data-layer="jst"]         { background: oklch(0.30 0.06 155); color: oklch(0.85 0.09 155); border-color: oklch(0.45 0.09 155); }
+    [data-scheme="dark"] .layer[data-layer="third-party"] { background: oklch(0.30 0.06 70);  color: oklch(0.85 0.09 70);  border-color: oklch(0.45 0.08 70); }
+
+    .legend { display: flex; flex-wrap: wrap; gap: var(--jst-space-s); align-items: center; }
+
+    .card {
+      border: var(--jst-border-width) solid var(--jst-border); border-radius: var(--jst-radius);
+      padding: var(--jst-space-l); background: var(--jst-bg);
+    }
+    .card > header { display: flex; align-items: center; gap: var(--jst-space-s); margin-block-end: var(--jst-space-s); }
+    .card > header h3 { margin: 0; }
+    .card .note { color: var(--jst-muted); font-size: var(--jst-font-small); margin-block-start: var(--jst-space-s); }
+
+    /* Every library draws into this frame. It is marked jst-preserve so morph
+       (JST's own re-render, and any jst-nav morph swap) never reconciles the
+       live canvas / SVG away. */
+    .chart-frame {
+      position: relative; block-size: 240px; margin: 0;
+      inline-size: 100%; overflow: hidden;
+    }
+    .chart-frame canvas { max-inline-size: 100%; }
+    .lib-missing { color: var(--jst-muted); font-size: var(--jst-font-small); padding: var(--jst-space-m); }
+
+    .chart-controls { display: flex; flex-wrap: wrap; gap: var(--jst-space-s); align-items: center; }
+    .data-signature { color: var(--jst-muted); font-size: var(--jst-font-small); }
+    .uplot { font-family: inherit; }
+  </style>
+
+  <!-- ================= JST COMPONENTS ================= -->
+  <!-- One JST component per library. Each receives the dataset as a property
+       (attributes down), builds its chart once in once('chart', ...) with a
+       returned cleanup, re-renders when the data property is republished, and
+       reads its palette from the JST theme tokens at render time. -->
+
+  <script type="jst" name="chart-js-panel" attributes="data">
+    <figure class="chart-frame" jst-preserve jst-key="cjs">
+      <canvas></canvas>
+    </figure>
+    ${ once('chart', () => {
+         let disposed = false;
+         whenGlobal('Chart')
+           .then(Chart => { if (!disposed) chartJsBuild(el, Chart); })
+           .catch(() => showLibMissing(el, 'Chart.js'));
+         return () => { disposed = true; if (el._chart) el._chart.destroy(); el._chart = null; el._update = null; };
+       }) }
+    ${ if (el._update) el._update(); }
+  </script>
+
+  <script type="jst" name="uplot-panel" attributes="data">
+    <figure class="chart-frame" jst-preserve jst-key="uplot"></figure>
+    ${ once('chart', () => {
+         let disposed = false;
+         whenGlobal('uPlot')
+           .then(uPlot => { if (!disposed) uplotBuild(el, uPlot); })
+           .catch(() => showLibMissing(el, 'uPlot'));
+         return () => { disposed = true; if (el._chart) el._chart.destroy(); el._chart = null; el._update = null; };
+       }) }
+    ${ if (el._update) el._update(); }
+  </script>
+
+  <script type="jst" name="plot-panel" attributes="data">
+    <figure class="chart-frame" jst-preserve jst-key="plot"></figure>
+    ${ once('chart', () => {
+         let disposed = false;
+         whenGlobal('Plot')
+           .then(Plot => { if (!disposed) plotBuild(el, Plot); })
+           .catch(() => showLibMissing(el, 'Observable Plot'));
+         return () => { disposed = true; if (el._chart) el._chart.destroy(); el._chart = null; el._update = null; };
+       }) }
+    ${ if (el._update) el._update(); }
+  </script>
+
+  <!-- The dashboard owns nothing but the dataset. Its controls emit events UP;
+       the page hands a fresh dataset back DOWN. The three panels are just
+       children with a .data binding, so one republish fans out to all of them. -->
+  <script type="jst" name="charts-dashboard" attributes="data">
+    <div class="chart-controls">
+      <button type="button" onclick="el.emit('randomize')">Randomize data</button>
+      <button type="button" data-variant="quiet" onclick="el.emit('toggle-scheme')">Toggle light / dark</button>
+      <span class="data-signature">
+        <span class="layer" data-layer="jst">JST</span>
+        first point (Web, Jan): <strong data-testid="signature">$(data ? data.series[0].values[0] : '...')</strong>
+      </span>
+    </div>
+    <jst-grid style="--min: 19rem; margin-block-start: var(--jst-space-l)">
+      <div class="card">
+        <header><h3>Chart.js</h3><span class="layer" data-layer="third-party">Third-party</span></header>
+        <chart-js-panel .data="$(data)"></chart-js-panel>
+        <p class="note">Canvas, classic UMD script. The <code>&lt;chart-js-panel&gt;</code> wrapper is <span class="layer" data-layer="jst">JST</span>.</p>
+      </div>
+      <div class="card">
+        <header><h3>uPlot</h3><span class="layer" data-layer="third-party">Third-party</span></header>
+        <uplot-panel .data="$(data)"></uplot-panel>
+        <p class="note">Tiny, fast canvas plotter with its own CSS. Wrapper is <span class="layer" data-layer="jst">JST</span>.</p>
+      </div>
+      <div class="card">
+        <header><h3>Observable Plot</h3><span class="layer" data-layer="third-party">Third-party</span></header>
+        <plot-panel .data="$(data)"></plot-panel>
+        <p class="note">SVG, ESM import. Wrapper is <span class="layer" data-layer="jst">JST</span>.</p>
+      </div>
+    </jst-grid>
+  </script>
+</head>
+
+<body data-scheme="light">
+  <jst-center style="--measure: 74ch; --gutters: var(--jst-space-l)">
+    <jst-stack style="--space: var(--jst-space-xl); padding-block: var(--jst-space-xl)">
+
+      <jst-stack>
+        <h1>JST is a layer, not a walled garden</h1>
+        <p>JST deliberately ships <em>no</em> chart component. Charts are not a JST
+           problem: any charting library drops straight in. This page renders the
+           <strong>same eight-point dataset</strong> (monthly active users, two series)
+           with <strong>three different open-source libraries</strong>, each inside its
+           own JST component. The pattern is identical for all three, so pick your
+           favourite library.</p>
+
+        <div class="legend">
+          <span>Every section is labelled by layer:</span>
+          <span class="layer" data-layer="native">Native</span><span>plain HTML/CSS/JS, no JST</span>
+          <span class="layer" data-layer="jst">JST</span><span>a JST component or template</span>
+          <span class="layer" data-layer="third-party">Third-party</span><span>library code</span>
+        </div>
+      </jst-stack>
+
+      <jst-box>
+        <jst-stack style="--space: var(--jst-space-s)">
+          <h2>The pattern <span class="layer" data-layer="jst">JST</span></h2>
+          <p>Each component receives the dataset as a declared property
+             (<code>.data="$(dataset)"</code>, attributes down) and builds its chart in
+             <code>once('chart', () =&gt; { ... })</code>, returning a cleanup that
+             destroys the chart on disconnect. When the data property is republished the
+             component re-renders and pushes the new data into the existing chart.</p>
+          <p>The chart mount is marked <code>jst-preserve</code>. That is the load-bearing
+             detail: JST re-renders by morphing, so without it the live canvas/SVG would
+             be reconciled away on every republish (the same reason it matters under a
+             <code>jst-nav</code> morph swap). Registered custom elements are already
+             preservation boundaries, so the JST wrappers compose without extra ceremony.</p>
+          <p>Colours are read from the JST theme tokens
+             (<code>--jst-accent</code>, <code>--jst-ok</code>, <code>--jst-fg</code>,
+             <code>--jst-muted</code>, <code>--jst-border</code>) <em>at render time</em>.
+             Hit <strong>Toggle light / dark</strong> and every chart re-reads the tokens
+             and re-themes: the charts are wired into the same theming story as the rest
+             of JST.</p>
+          <p>The <strong>Randomize data</strong> button is
+             <span class="layer" data-layer="jst">JST</span> state: it emits an event up,
+             the page hands a new dataset down, and all three libraries re-render through
+             the one attributes-down flow. Watch the JST-rendered "first point" number
+             change in lock-step with the charts.</p>
+        </jst-stack>
+      </jst-box>
+
+      <!-- The whole dashboard. -->
+      <charts-dashboard id="dashboard"></charts-dashboard>
+
+      <jst-box>
+        <jst-stack style="--space: var(--jst-space-xs)">
+          <h2>Takeaway <span class="layer" data-layer="native">Native</span></h2>
+          <p>Three canvas/SVG libraries, three rendering models, zero JST-specific
+             adapters. JST stayed a thin controlled-renderer layer over the light DOM;
+             the libraries did their own thing inside a preserved mount node. That is the
+             whole trick, and it works for maps, editors, video players, or anything else
+             you already use.</p>
+        </jst-stack>
+      </jst-box>
+
+    </jst-stack>
+  </jst-center>
+
+  <!-- ================= NATIVE: plain-JS helpers ================= -->
+  <!-- Classic (non-module) script so these are globals reachable from JST
+       template bodies. No JST here: just library glue and the sample data. -->
+  <script>
+    // Resolve a JST theme token to a concrete color (rgb(...)) usable by canvas
+    // and SVG. Reads at call time, so a theme change re-colors on the next build.
+    function readToken(name) {
+      const probe = document.createElement('span');
+      probe.style.cssText = 'position:absolute;visibility:hidden;pointer-events:none';
+      probe.style.color = `var(${name})`;
+      document.body.appendChild(probe);
+      const value = getComputedStyle(probe).color;
+      probe.remove();
+      return value;
+    }
+    function seriesColor(i) { return readToken(i === 0 ? '--jst-accent' : '--jst-ok'); }
+    function emptyDataset() { return { labels: [], series: [{ name: 'A', values: [] }, { name: 'B', values: [] }] }; }
+
+    // Poll for a library global; reject after a timeout so a blocked CDN turns
+    // into a graceful note instead of a hang.
+    function whenGlobal(name, timeout = 6000) {
+      return new Promise((resolve, reject) => {
+        const started = Date.now();
+        (function poll() {
+          if (window[name]) return resolve(window[name]);
+          if (Date.now() - started > timeout) return reject(new Error(name + ' unavailable'));
+          setTimeout(poll, 60);
+        })();
+      });
+    }
+    function showLibMissing(el, label) {
+      const mount = el.querySelector('.chart-frame');
+      if (mount) mount.innerHTML = `<p class="lib-missing">${label} did not load from the CDN. The JST component around it still rendered fine.</p>`;
+    }
+
+    // ---- Chart.js (canvas) ----
+    function chartJsData(dataIn) {
+      const data = dataIn || emptyDataset();
+      return {
+        labels: data.labels,
+        datasets: data.series.map((s, i) => ({
+          label: s.name, data: s.values,
+          borderColor: seriesColor(i), backgroundColor: seriesColor(i),
+          tension: 0.3, pointRadius: 3, borderWidth: 2,
+        })),
+      };
+    }
+    function chartJsOptions() {
+      const fg = readToken('--jst-fg'), muted = readToken('--jst-muted'), border = readToken('--jst-border');
+      return {
+        responsive: true, maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: { legend: { labels: { color: fg } } },
+        scales: {
+          x: { ticks: { color: muted }, grid: { color: border } },
+          y: { ticks: { color: muted }, grid: { color: border } },
+        },
+      };
+    }
+    window.chartJsBuild = function (el, Chart) {
+      const canvas = el.querySelector('canvas');
+      const chart = new Chart(canvas, { type: 'line', data: chartJsData(el.data), options: chartJsOptions() });
+      el._chart = chart;
+      el._update = () => {
+        const next = chartJsData(el.data);
+        chart.data.labels = next.labels;
+        chart.data.datasets = next.datasets;
+        Object.assign(chart.options, chartJsOptions());
+        chart.update();
+      };
+    };
+
+    // ---- uPlot (canvas) ----
+    function uplotData(dataIn) {
+      const data = dataIn || emptyDataset();
+      const x = data.labels.map((_, i) => i);
+      return [x, ...data.series.map(s => s.values)];
+    }
+    function uplotOpts(el) {
+      const mount = el.querySelector('.chart-frame');
+      const data = el.data || emptyDataset();
+      const muted = readToken('--jst-muted'), border = readToken('--jst-border');
+      return {
+        width: Math.max(160, mount.clientWidth || 300), height: 188,
+        legend: { show: true },
+        scales: { x: { time: false } },
+        axes: [
+          { stroke: muted, grid: { stroke: border }, ticks: { stroke: border },
+            values: (u, splits) => splits.map(i => data.labels[i] ?? '') },
+          { stroke: muted, grid: { stroke: border }, ticks: { stroke: border } },
+        ],
+        series: [
+          {},
+          { label: data.series[0] ? data.series[0].name : 'A', stroke: seriesColor(0), width: 2, points: { show: true } },
+          { label: data.series[1] ? data.series[1].name : 'B', stroke: seriesColor(1), width: 2, points: { show: true } },
+        ],
+      };
+    }
+    window.uplotBuild = function (el, uPlot) {
+      const render = () => {
+        const mount = el.querySelector('.chart-frame');
+        if (el._u) { el._u.destroy(); el._u = null; }
+        mount.replaceChildren();
+        el._u = new uPlot(uplotOpts(el), uplotData(el.data), mount);
+      };
+      el._update = render;
+      el._chart = { destroy: () => { if (el._u) { el._u.destroy(); el._u = null; } } };
+      render();
+    };
+
+    // ---- Observable Plot (SVG) ----
+    function plotSpec(dataIn, Plot) {
+      const data = dataIn || emptyDataset();
+      const rows = data.series.flatMap(s => s.values.map((v, i) => ({ month: data.labels[i], value: v, series: s.name })));
+      return {
+        height: 224, marginLeft: 44,
+        style: { background: 'transparent', color: readToken('--jst-fg'), fontFamily: 'inherit' },
+        x: { label: null, domain: data.labels }, y: { grid: true, label: null },
+        color: { domain: data.series.map(s => s.name), range: [seriesColor(0), seriesColor(1)] },
+        marks: [
+          Plot.ruleY([0], { stroke: readToken('--jst-border') }),
+          Plot.line(rows, { x: 'month', y: 'value', stroke: 'series', strokeWidth: 2, curve: 'catmull-rom' }),
+          Plot.dot(rows, { x: 'month', y: 'value', stroke: 'series', fill: 'series', r: 3 }),
+        ],
+      };
+    }
+    window.plotBuild = function (el, Plot) {
+      const render = () => {
+        const mount = el.querySelector('.chart-frame');
+        if (mount) mount.replaceChildren(Plot.plot(plotSpec(el.data, Plot)));
+      };
+      el._update = render;
+      el._chart = { destroy: () => { const m = el.querySelector('.chart-frame'); if (m) m.replaceChildren(); } };
+      render();
+    };
+
+    // ---- The sample dataset + a randomizer (plain data, no library, no JST) ----
+    function makeDataset() {
+      return {
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'],
+        series: [
+          { name: 'Web',    values: [1200, 1900, 1700, 2400, 2200, 2800, 3100, 3600] },
+          { name: 'Mobile', values: [ 800, 1100, 1500, 1400, 1900, 2100, 2600, 3000] },
+        ],
+      };
+    }
+    function randomizeDataset(prev) {
+      return {
+        labels: prev.labels,
+        series: prev.series.map(s => ({ name: s.name, values: s.values.map(() => Math.round(500 + Math.random() * 3500)) })),
+      };
+    }
+  </script>
+
+  <!-- ================= Observable Plot is ESM: import it here ================= -->
+  <!-- Isolated in its own module so a CDN failure cannot take down jst.js. -->
+  <script type="module">
+    import('https://cdn.jsdelivr.net/npm/@observablehq/plot@0.6.17/+esm')
+      .then(Plot => { window.Plot = Plot; })
+      .catch(() => { /* plot-panel polls, times out, shows its unavailable note */ });
+
+    // ---- Page controller: attributes down, events up ----
+    const dashboard = document.getElementById('dashboard');
+    dashboard.data = makeDataset();
+    dashboard.addEventListener('randomize', () => {
+      dashboard.data = randomizeDataset(dashboard.data);
+    });
+    dashboard.addEventListener('toggle-scheme', () => {
+      const root = document.body;
+      root.dataset.scheme = root.dataset.scheme === 'dark' ? 'light' : 'dark';
+      // Republish the same data so every chart re-reads the theme tokens.
+      dashboard.data = { labels: dashboard.data.labels, series: dashboard.data.series };
+    });
+  </script>
+</body>
+</html>

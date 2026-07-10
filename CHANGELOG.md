@@ -5,6 +5,37 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.7.6 - 2026-07-10
+
+Round two from the Web Awesome audit: prove the themeability claim (#71), and
+prove "a layer, not a walled garden" with real third-party libraries.
+
+### Added
+
+- **Live theme knobs on the docs page (#71).** The docs page's own chrome now
+  derives from the `--jst-*` tokens (it loads `jst-layout.css`; its bespoke
+  palette re-plumbed onto token roles), and an inline `jst-theme-knobs` JST
+  component writes tokens inline on `<html>`: accent picker (1x1-canvas
+  oklch-to-hex sync, since computed styles serialize oklch as oklch),
+  space/ratio/radius/font-size sliders, system/light/dark scheme, localStorage
+  persistence reapplied before first paint, reset. Inline styles beating the
+  `jst.tokens` layer is the cascade-layer story demonstrating itself. Plus a
+  "Theming JST" docs section: the token contract, how to theme, the layer model.
+- **Third-party interop examples.** `examples/third_party_charts.html`: one
+  dataset through Chart.js 4.5.0, uPlot 1.6.32, and Observable Plot 0.6.17, each
+  inside a JST component (`once()` setup with cleanup, `jst-preserve` mounts so
+  morph re-renders keep the live canvas/SVG, colors read from the tokens, one
+  Randomize republishes all three). `examples/webawesome_interop.html`:
+  free-tier Web Awesome components inside JST, attributes down into
+  `wa-rating`, its `change` event back up into JST-rendered state, and
+  `--wa-*` brand tokens bridged from `--jst-*` (mapped on `body` so token
+  overrides re-resolve). Every section badge-labeled NATIVE / JST /
+  THIRD-PARTY. Smoke checks stay green without CDN access.
+- **Skill: "Upgrading a vendored copy".** `CHANGELOG.md` is the migration
+  guide: find the vendored version, read the entries crossed, copy ALL
+  distributables in one move, run `tools/lint.mjs` + `tools/codemod.mjs` from
+  the target tag, browser-verify in dev mode.
+
 ## 0.7.5 - 2026-07-10
 
 Prompted by a competitive audit against Web Awesome: two things it ships that

@@ -259,6 +259,27 @@ regression, lint, browser, example smoke, framework-parity verify). After changi
 template syntax run `node tools/lint.mjs`, since removed syntax only errors when a
 component renders in the browser.
 
+## Upgrading a vendored copy
+
+`CHANGELOG.md` is the migration guide: every release entry states what changed
+and how to migrate it. Pre-1.0 semver: a minor bump (`0.6` to `0.7`) means
+breaking changes, a patch bump is compatible.
+
+1. Find the app's current version: `grep "export const version" jst.js` in the
+   vendored files (or `JST.version` in the console, which reports the runtime
+   actually live, useful when a stale cache is suspected).
+2. Read `CHANGELOG.md` top-down from the target version back to the vendored
+   one. Collect the migration steps from each entry crossed.
+3. Copy ALL the distributables from the target tag over the vendored ones in one
+   move: runtime, module deps, jst-nav, jst-behaviors, both stylesheets,
+   jst-components.html, minified twins. Mixed versions drift silently.
+4. From a checkout of the jst repo at the target tag, run `node tools/lint.mjs`
+   over the app's HTML to find removed syntax (stale forms fail loud there
+   instead of at first render), and `node tools/codemod.mjs` to apply the
+   mechanical rewrites (it handled the handler-body migration across whole apps).
+5. Browser-verify with `configure({ dev: true })`: stale template syntax and
+   render errors surface as visible error boxes, not silently empty DOM.
+
 ## Common mistakes (from the fix history)
 
 - Writing `$(...)` or `$ ...` inside a handler body (handlers are function bodies),
