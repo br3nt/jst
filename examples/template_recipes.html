@@ -1,0 +1,589 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>JST template recipes: the custom element falls out of source you can read</title>
+
+  <!-- JST's own CSS (tokens + layout primitives + component skins) and runtime.
+       Local files, never a CDN, so every JST recipe on this page works even when
+       the two CDN-backed recipes (Markdown, QR) cannot reach their libraries. -->
+  <link rel="stylesheet" href="../jst-layout.css">
+  <link rel="stylesheet" href="../jst-components.css">
+  <script type="module" src="../jst.js"></script>
+
+  <!-- THIRD-PARTY, pinned to exact versions from the jsDelivr CDN, each in its
+       OWN isolated module import so a blocked or slow CDN can never take down
+       jst.js or any pure-JST recipe. A failed import resolves to nothing; the
+       component polls for the global, times out, and shows a graceful note.
+         - marked 15.0.6            (Markdown -> HTML)
+         - DOMPurify 3.2.4          (HTML sanitizer, the safety gate)
+         - qrcode-generator 1.4.4   (dependency-free QR, SVG output) -->
+  <script type="module">
+    import('https://cdn.jsdelivr.net/npm/marked@15.0.6/+esm')
+      .then(m => { window.markedLib = m.marked || m.default; })
+      .catch(() => { /* markdown-block polls, times out, shows its note */ });
+    import('https://cdn.jsdelivr.net/npm/dompurify@3.2.4/+esm')
+      .then(m => { window.DOMPurify = m.default || m; })
+      .catch(() => { /* same graceful fallback */ });
+    import('https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/+esm')
+      .then(m => { window.qrcodeLib = m.default || m; })
+      .catch(() => { /* qr-panel shows its note */ });
+  </script>
+
+  <style>
+    /* ---- Layer badges: every recipe says which layer you are looking at ---- */
+    .layer {
+      display: inline-block; font-size: 0.68rem; font-weight: 700;
+      letter-spacing: 0.04em; text-transform: uppercase;
+      padding: 0.15em 0.55em; border-radius: 999px; vertical-align: middle;
+      border: 1px solid transparent;
+    }
+    .layer[data-layer="native"]      { background: oklch(0.93 0.03 255); color: oklch(0.38 0.09 255); border-color: oklch(0.82 0.05 255); }
+    .layer[data-layer="jst"]         { background: oklch(0.93 0.06 155); color: oklch(0.38 0.11 155); border-color: oklch(0.80 0.09 155); }
+    .layer[data-layer="third-party"] { background: oklch(0.93 0.07 70);  color: oklch(0.42 0.12 70);  border-color: oklch(0.82 0.10 70); }
+    [data-scheme="dark"] .layer[data-layer="native"]      { background: oklch(0.30 0.04 255); color: oklch(0.85 0.06 255); border-color: oklch(0.45 0.06 255); }
+    [data-scheme="dark"] .layer[data-layer="jst"]         { background: oklch(0.30 0.06 155); color: oklch(0.85 0.09 155); border-color: oklch(0.45 0.09 155); }
+    [data-scheme="dark"] .layer[data-layer="third-party"] { background: oklch(0.30 0.06 70);  color: oklch(0.85 0.09 70);  border-color: oklch(0.45 0.08 70); }
+
+    .legend { display: flex; flex-wrap: wrap; gap: var(--jst-space-s); align-items: center; }
+
+    .card {
+      border: var(--jst-border-width) solid var(--jst-border); border-radius: var(--jst-radius);
+      padding: var(--jst-space-l); background: var(--jst-bg);
+    }
+    .card > header { display: flex; align-items: center; flex-wrap: wrap; gap: var(--jst-space-s); margin-block-end: var(--jst-space-s); }
+    .card > header h3 { margin: 0; margin-inline-end: auto; }
+    .card .note { color: var(--jst-muted); font-size: var(--jst-font-small); margin-block-start: var(--jst-space-s); }
+    .demo { display: flex; flex-wrap: wrap; gap: var(--jst-space-l); align-items: center; padding-block: var(--jst-space-s); }
+
+    /* ---- The source viewer: template text sits next to its live instance ---- */
+    details.src { margin-block-start: var(--jst-space-m); }
+    details.src > summary { cursor: pointer; color: var(--jst-muted); font-size: var(--jst-font-small); font-weight: 600; }
+    details.src pre {
+      margin-block-start: var(--jst-space-s); overflow-x: auto;
+      background: var(--jst-surface); border: var(--jst-border-width) solid var(--jst-border);
+      border-radius: var(--jst-radius); padding: var(--jst-space-m);
+    }
+    details.src code { font-size: 0.82rem; line-height: 1.5; white-space: pre; tab-size: 2; }
+
+    .readout { font-size: var(--jst-font-size); }
+    .readout strong { color: var(--jst-accent-700, var(--jst-accent)); }
+    .lib-missing { color: var(--jst-muted); font-size: var(--jst-font-small); padding: var(--jst-space-m); margin: 0; }
+
+    /* ---- jst-rating ---- */
+    jst-rating { display: inline-block; }
+    jst-rating .rating { display: inline-flex; gap: 3px; font-size: 1.7rem; line-height: 1; cursor: pointer; }
+    jst-rating .rating:focus-visible { outline: 2px solid var(--jst-accent); outline-offset: 4px; border-radius: 4px; }
+    jst-rating .star { position: relative; display: inline-block; inline-size: 1em; block-size: 1em; }
+    jst-rating .glyph { pointer-events: none; color: var(--jst-border); }
+    jst-rating .star[data-fill="full"] .glyph { color: var(--jst-accent); }
+    jst-rating .star[data-fill="half"] .glyph {
+      background: linear-gradient(90deg, var(--jst-accent) 50%, var(--jst-border) 50%);
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    jst-rating .hit { position: absolute; inset-block: 0; inline-size: 50%; margin: 0; padding: 0; border: 0; background: transparent; cursor: pointer; }
+    jst-rating .hit.left { inset-inline-start: 0; }
+    jst-rating .hit.right { inset-inline-end: 0; }
+
+    /* ---- jst-copy-button ---- */
+    jst-copy-button .copy-btn[data-state="copied"] { background: var(--jst-ok); color: var(--jst-ok-fg); border-color: var(--jst-ok); }
+    jst-copy-button .copy-btn[data-state="error"]  { background: var(--jst-error); color: var(--jst-error-fg); border-color: var(--jst-error); }
+    .copy-src { padding: 0.15em 0.4em; background: var(--jst-surface); border-radius: var(--jst-radius); }
+
+    /* ---- jst-relative-time / formats ---- */
+    .fmt-grid { display: grid; grid-template-columns: auto 1fr; gap: var(--jst-space-xs) var(--jst-space-l); align-items: baseline; }
+    .fmt-grid dt { color: var(--jst-muted); font-size: var(--jst-font-small); }
+    .fmt-grid dd { margin: 0; font-variant-numeric: tabular-nums; }
+    .fmt-grid strong { color: var(--jst-accent-700, var(--jst-accent)); }
+
+    /* ---- qr-panel + markdown-block mounts ---- */
+    .qr-frame { margin: 0; inline-size: 160px; block-size: 160px; display: grid; place-items: center; }
+    .qr-frame svg { inline-size: 100%; block-size: 100%; }
+    .md-rendered { border: var(--jst-border-width) solid var(--jst-border); border-radius: var(--jst-radius); padding: var(--jst-space-m) var(--jst-space-l); background: var(--jst-surface); }
+    .md-rendered > :first-child { margin-block-start: 0; }
+    .md-rendered > :last-child { margin-block-end: 0; }
+    .md-rendered pre { overflow-x: auto; }
+  </style>
+
+  <!-- ============================================================= -->
+  <!-- ================= THE RECIPES (JST templates) ================ -->
+  <!-- Each block below is the whole thing. Read it, copy it into your -->
+  <!-- page, edit it. Nothing here is hidden behind Shadow DOM.        -->
+  <!-- ============================================================= -->
+
+  <!-- 1. RATING. Stars driven by a declared `value` (halves supported), keyboard
+       accessible via a slider role, emits a 'change' event up. Token-coloured. -->
+  <script type="jst" name="jst-rating" attributes="value max label">
+    ${ const cap = Math.max(1, Number(max) || 5); el._max = cap; }
+    ${ const cur = Math.max(0, Math.min(cap, Number(value) || 0)); }
+    <div class="rating" role="slider" tabindex="0"
+         aria-label="$(label || 'Rating')"
+         aria-valuemin="0" aria-valuemax="$(cap)" aria-valuenow="$(cur)"
+         aria-valuetext="$(cur) of $(cap)"
+         onkeydown="keys(event, {
+           ArrowRight: () => { event.preventDefault(); el.value = Math.min(el._max, (Number(el.value) || 0) + 0.5); el.emit('change', Number(el.value)); },
+           ArrowUp:    () => { event.preventDefault(); el.value = Math.min(el._max, (Number(el.value) || 0) + 0.5); el.emit('change', Number(el.value)); },
+           ArrowLeft:  () => { event.preventDefault(); el.value = Math.max(0, (Number(el.value) || 0) - 0.5); el.emit('change', Number(el.value)); },
+           ArrowDown:  () => { event.preventDefault(); el.value = Math.max(0, (Number(el.value) || 0) - 0.5); el.emit('change', Number(el.value)); },
+           Home:       () => { event.preventDefault(); el.value = 0; el.emit('change', 0); },
+           End:        () => { event.preventDefault(); el.value = el._max; el.emit('change', Number(el.value)); },
+         })">
+      $ for (let i = 1; i <= cap; i++) {
+        ${ const fill = cur >= i ? 'full' : (cur >= i - 0.5 ? 'half' : 'empty'); }
+        <span class="star" data-fill="$(fill)">
+          <span class="glyph" aria-hidden="true">&#9733;</span>
+          <button type="button" class="hit left" tabindex="-1"
+                  data-val="$(i - 0.5)" aria-label="$(i - 0.5) of $(cap)"
+                  onclick="el.value = Number(this.dataset.val); el.emit('change', Number(this.dataset.val))"></button>
+          <button type="button" class="hit right" tabindex="-1"
+                  data-val="$(i)" aria-label="$(i) of $(cap)"
+                  onclick="el.value = Number(this.dataset.val); el.emit('change', Number(this.dataset.val))"></button>
+        </span>
+      $ }
+    </div>
+  </script>
+
+  <!-- 2. COPY BUTTON. Copies its `value` (or the text of a `target` selector) to
+       the clipboard, then flips to a "copied" state for 1.5s. -->
+  <script type="jst" name="jst-copy-button" attributes="value target label copied">
+    <button type="button" class="copy-btn" data-state="$(copied || '')"
+      onclick="
+        const text = (el.value !== undefined && el.value !== null && String(el.value) !== '')
+          ? String(el.value)
+          : (el.target ? (document.querySelector(el.target)?.innerText || '').trim() : '');
+        const flip = (next) => { el.copied = next; setTimeout(() => { el.copied = ''; }, 1500); };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(() => flip('copied')).catch(() => flip('error'));
+        } else { flip('error'); }
+      ">
+      $ if (copied === 'copied') {
+        <span aria-hidden="true">&#10003;</span> Copied
+      $ } else if (copied === 'error') {
+        Copy failed
+      $ } else {
+        $(label || 'Copy')
+      $ }
+    </button>
+  </script>
+
+  <!-- 3. RELATIVE TIME. Formatting is NATIVE Intl.RelativeTimeFormat; JST is the
+       reactive wrapper. once('tick') schedules a self-adjusting timer sized to the
+       current unit (seconds -> every second, minutes -> every minute) and returns
+       a cleanup that clears it. The inner <time> keeps the absolute value. -->
+  <script type="jst" name="jst-relative-time" attributes="datetime locale tick">
+    ${ const p = relParts(el.datetime, el.locale); }
+    <time datetime="$(el.datetime || '')" title="$(p.title)">$(p.text || '…')</time>
+    ${ once('tick', () => {
+         let timer = null;
+         const loop = () => {
+           const { size } = relParts(el.datetime, el.locale);
+           timer = setTimeout(() => { el.tick = (Number(el.tick) || 0) + 1; loop(); }, Math.max(1000, size));
+         };
+         loop();
+         return () => { if (timer) clearTimeout(timer); };
+       }) }
+  </script>
+
+  <!-- 4. FORMAT BYTES. Value in bytes; a manual unit ladder picks byte/kB/MB/GB/TB
+       and feeds a NATIVE Intl.NumberFormat unit style. (See prose for why the
+       compact-notation byte unit is avoided.) -->
+  <script type="jst" name="jst-format-bytes" attributes="value locale">
+    <span>$(formatBytes(value, locale))</span>
+  </script>
+
+  <!-- 5a. FORMAT NUMBER. A thin template over NATIVE Intl.NumberFormat. -->
+  <script type="jst" name="jst-format-number" attributes="value kind currency unit locale">
+    ${
+      const opts = { style: kind || 'decimal' };
+      if (opts.style === 'currency') opts.currency = currency || 'USD';
+      if (opts.style === 'unit') opts.unit = unit || 'kilometer';
+      if (opts.style === 'percent') opts.maximumFractionDigits = 1;
+      const nf = new Intl.NumberFormat(locale || undefined, opts);
+    }
+    <span>$(nf.format(Number(value) || 0))</span>
+  </script>
+
+  <!-- 5b. FORMAT DATE. A thin template over NATIVE Intl.DateTimeFormat. -->
+  <script type="jst" name="jst-format-date" attributes="value datestyle timestyle locale">
+    ${
+      const opts = {};
+      if (datestyle) opts.dateStyle = datestyle;
+      if (timestyle) opts.timeStyle = timestyle;
+      if (!datestyle && !timestyle) opts.dateStyle = 'medium';
+      const d = value ? new Date(value) : new Date();
+      const df = new Intl.DateTimeFormat(locale || undefined, opts);
+    }
+    <time datetime="$(value || '')">$(df.format(d))</time>
+  </script>
+
+  <!-- 6. MARKDOWN. THIRD-PARTY marked renders the source; THIRD-PARTY DOMPurify
+       sanitizes it; ONLY THEN does it reach $(trustedHTML(...)). trustedHTML is
+       the escape hatch, and third-party HTML must be sanitized before it. -->
+  <script type="jst" name="markdown-block" attributes="source state">
+    ${ once('md', () => {
+         let disposed = false;
+         Promise.all([whenGlobal('markedLib'), whenGlobal('DOMPurify')])
+           .then(([marked, DOMPurify]) => {
+             if (disposed) return;
+             const dirty = marked.parse(String(el.source || ''));
+             el._safe = DOMPurify.sanitize(dirty);   // <-- the safety gate
+             el.state = 'ready';
+           })
+           .catch(() => { el._safe = null; el.state = 'error'; });
+         return () => { disposed = true; };
+       }) }
+    <div class="md-rendered">
+      $ if (state === 'ready' && el._safe != null) {
+        $(trustedHTML(el._safe))
+      $ } else if (state === 'error') {
+        <p class="lib-missing">The Markdown libraries did not load from the CDN. Nothing was rendered, which is the safe default.</p>
+      $ } else {
+        <p class="lib-missing">Rendering Markdown&hellip;</p>
+      $ }
+    </div>
+  </script>
+
+  <!-- 7. QR CODE. THIRD-PARTY qrcode-generator draws into a jst-preserve'd mount
+       built once in once('qr'); a republished `value` re-renders through _render.
+       Same shape as the third-party charts recipe. -->
+  <script type="jst" name="qr-panel" attributes="value">
+    <figure class="qr-frame" jst-preserve jst-key="qr"></figure>
+    ${ once('qr', () => {
+         let disposed = false;
+         whenGlobal('qrcodeLib')
+           .then(lib => { if (!disposed) qrBuild(el, lib); })
+           .catch(() => showQrMissing(el));
+         return () => { disposed = true; el._render = null; };
+       }) }
+    ${ if (el._render) el._render(); }
+  </script>
+</head>
+
+<body data-scheme="light">
+  <jst-center style="--measure: 74ch; --gutters: var(--jst-space-l)">
+    <jst-stack style="--space: var(--jst-space-xl); padding-block: var(--jst-space-xl)">
+
+      <jst-stack>
+        <h1>JST ships the template, not a sealed element</h1>
+        <p>Web Awesome ships each of these as a compiled custom element whose
+           implementation is hidden behind Shadow DOM. JST ships the
+           <strong>template</strong>. The custom element falls out of source you can
+           read, copy into your own page, and edit. Every recipe below is a complete,
+           copyable <code>&lt;script type="jst"&gt;</code> block shown next to its live
+           instances: open the <em>Show the template source</em> disclosure and the code
+           you see is the exact code running above it.</p>
+
+        <p>These are recipes that live in the examples, deliberately
+           <strong>not</strong> shipped in <code>jst-components.html</code>. The library
+           stays lean; you own your copy. Want half-star precision gone, a different
+           glyph, a byte ladder in binary units? Edit the template. There is no build
+           step and nothing to override from the outside.</p>
+
+        <div class="legend">
+          <span>Every recipe is labelled by layer:</span>
+          <span class="layer" data-layer="native">Native</span><span>the platform (Intl, clipboard, custom elements)</span>
+          <span class="layer" data-layer="jst">JST</span><span>the reactive template</span>
+          <span class="layer" data-layer="third-party">Third-party</span><span>a pinned CDN library</span>
+        </div>
+      </jst-stack>
+
+      <!-- ================= 1. RATING ================= -->
+      <div class="card" id="recipe-rating">
+        <header>
+          <h3>&lt;jst-rating&gt;</h3>
+          <span class="layer" data-layer="jst">JST</span>
+        </header>
+        <p>Stars driven by a declared <code>value</code> (half steps supported) and a
+           <code>max</code>. It is a keyboard <code>slider</code>: focus it and use the
+           arrow keys, <kbd>Home</kbd>, and <kbd>End</kbd>. Clicking the left or right
+           half of a star sets a half or whole value. Every change
+           <strong>emits a <code>change</code> event up</strong>, which the page renders
+           elsewhere. Colour comes from <code>--jst-accent</code>.</p>
+        <div class="demo">
+          <jst-rating id="demo-rating" value="3" max="5" label="Rate this recipe"></jst-rating>
+          <span class="readout">event caught by the page: <strong><output id="rating-readout">3 / 5</output></strong></span>
+        </div>
+        <p class="note">Compare: <code>wa-rating</code> is free but sealed. This one you
+           restyle by editing the template, not by fighting Shadow DOM parts.</p>
+        <details class="src"><summary>Show the template source</summary><pre><code data-source-for="jst-rating"></code></pre></details>
+      </div>
+
+      <!-- ================= 2. COPY BUTTON ================= -->
+      <div class="card" id="recipe-copy">
+        <header>
+          <h3>&lt;jst-copy-button&gt;</h3>
+          <span class="layer" data-layer="jst">JST</span>
+          <span class="layer" data-layer="native">Native clipboard</span>
+        </header>
+        <p><code>navigator.clipboard.writeText</code> of the button's <code>value</code>,
+           or the text of the element its <code>target</code> selector points at. It
+           flips to a confirmed state for 1.5 seconds, then flips back, all from the one
+           declared <code>copied</code> attribute.</p>
+        <div class="demo">
+          <jst-copy-button value="npm is not required - just copy the file" label="Copy a value"></jst-copy-button>
+          <jst-copy-button target="#copy-src" label="Copy the code below"></jst-copy-button>
+          <code class="copy-src" id="copy-src">git clone https://github.com/br3nt/jst</code>
+        </div>
+        <details class="src"><summary>Show the template source</summary><pre><code data-source-for="jst-copy-button"></code></pre></details>
+      </div>
+
+      <!-- ================= 3. RELATIVE TIME ================= -->
+      <div class="card" id="recipe-relative-time">
+        <header>
+          <h3>&lt;jst-relative-time&gt;</h3>
+          <span class="layer" data-layer="jst">JST</span>
+          <span class="layer" data-layer="native">Native Intl</span>
+        </header>
+        <p>The wording is pure <code>Intl.RelativeTimeFormat</code> picking the best unit;
+           JST is the reactive wrapper. <code>once('tick', ...)</code> schedules a timer
+           <strong>sized to that unit</strong> - seconds re-render every second, minutes
+           every minute - and returns a cleanup that clears it on disconnect. A
+           <code>&lt;time&gt;</code> element carries the absolute value in its
+           <code>datetime</code> and <code>title</code>.</p>
+        <dl class="fmt-grid">
+          <dt>seconds (watch it tick)</dt><dd><jst-relative-time id="rt-seconds"></jst-relative-time></dd>
+          <dt>minutes</dt><dd><jst-relative-time id="rt-minutes"></jst-relative-time></dd>
+          <dt>hours</dt><dd><jst-relative-time id="rt-hours"></jst-relative-time></dd>
+          <dt>days</dt><dd><jst-relative-time id="rt-days"></jst-relative-time></dd>
+          <dt>future</dt><dd><jst-relative-time id="rt-future"></jst-relative-time></dd>
+        </dl>
+        <details class="src"><summary>Show the template source</summary><pre><code data-source-for="jst-relative-time"></code></pre></details>
+      </div>
+
+      <!-- ================= 4. FORMAT BYTES ================= -->
+      <div class="card" id="recipe-format-bytes">
+        <header>
+          <h3>&lt;jst-format-bytes&gt;</h3>
+          <span class="layer" data-layer="jst">JST</span>
+          <span class="layer" data-layer="native">Native Intl</span>
+        </header>
+        <p>A byte count in, a human size out. The number and unit label come from
+           <code>Intl.NumberFormat</code> with its <code>unit</code> style.</p>
+        <dl class="fmt-grid">
+          <dt>0</dt><dd><jst-format-bytes value="0"></jst-format-bytes></dd>
+          <dt>512</dt><dd><jst-format-bytes value="512"></jst-format-bytes></dd>
+          <dt>1536</dt><dd><jst-format-bytes value="1536"></jst-format-bytes></dd>
+          <dt>1048576</dt><dd><jst-format-bytes value="1048576"></jst-format-bytes></dd>
+          <dt>1073741824</dt><dd><jst-format-bytes value="1073741824"></jst-format-bytes></dd>
+          <dt>2500000000000</dt><dd><jst-format-bytes value="2500000000000"></jst-format-bytes></dd>
+        </dl>
+        <p class="note">Intl gotcha, why the template uses a manual ladder: asking Intl
+           for <code>notation:'compact'</code> together with <code>unit:'byte'</code>
+           reads cleanly up to the megabyte, but at the gigabyte it collides - the compact
+           scale suffix "B" (billion) lands next to the byte symbol and you get
+           <code>1.1BB</code>. So the template picks the unit itself (dividing by 1000)
+           and formats with plain, non-compact <code>Intl.NumberFormat</code>, which
+           yields a clean <code>1.1 GB</code>.</p>
+        <details class="src"><summary>Show the template source</summary><pre><code data-source-for="jst-format-bytes"></code></pre></details>
+      </div>
+
+      <!-- ================= 5. FORMAT NUMBER + DATE ================= -->
+      <div class="card" id="recipe-format">
+        <header>
+          <h3>&lt;jst-format-number&gt; &amp; &lt;jst-format-date&gt;</h3>
+          <span class="layer" data-layer="jst">JST</span>
+          <span class="layer" data-layer="native">Native Intl</span>
+        </header>
+        <p>Two thin templates over <code>Intl.NumberFormat</code> and
+           <code>Intl.DateTimeFormat</code>. <code>locale</code> is optional and defaults
+           to the page locale. These are the recipes that show JST's smallest useful
+           shape: declare the inputs, call the platform, escape the output.</p>
+        <dl class="fmt-grid">
+          <dt>currency (USD)</dt><dd><jst-format-number value="1234.5" kind="currency" currency="USD"></jst-format-number></dd>
+          <dt>currency (EUR, de)</dt><dd><jst-format-number value="1234.5" kind="currency" currency="EUR" locale="de-DE"></jst-format-number></dd>
+          <dt>percent</dt><dd><jst-format-number value="0.1234" kind="percent"></jst-format-number></dd>
+          <dt>decimal</dt><dd><jst-format-number value="1048576"></jst-format-number></dd>
+          <dt>unit (km/h)</dt><dd><jst-format-number value="88" kind="unit" unit="kilometer-per-hour"></jst-format-number></dd>
+          <dt>date (medium)</dt><dd><jst-format-date value="2026-03-14T09:26:00" datestyle="medium"></jst-format-date></dd>
+          <dt>date + time (long/short)</dt><dd><jst-format-date value="2026-03-14T09:26:00" datestyle="long" timestyle="short"></jst-format-date></dd>
+          <dt>date (full, fr)</dt><dd><jst-format-date value="2026-03-14T09:26:00" datestyle="full" locale="fr-FR"></jst-format-date></dd>
+        </dl>
+        <details class="src"><summary>Show both template sources</summary><pre><code data-source-for="jst-format-number"></code>
+
+<code data-source-for="jst-format-date"></code></pre></details>
+      </div>
+
+      <!-- ================= 6. MARKDOWN ================= -->
+      <div class="card" id="recipe-markdown">
+        <header>
+          <h3>&lt;markdown-block&gt;</h3>
+          <span class="layer" data-layer="third-party">Third-party</span>
+          <span class="layer" data-layer="jst">JST</span>
+        </header>
+        <p>This is the safety lesson. <code>trustedHTML(...)</code> is the one opt-out of
+           JST's automatic escaping, so <strong>third-party HTML must be sanitized before
+           it gets there</strong>. The pattern, in order: <code>marked</code> turns the
+           source into HTML, <code>DOMPurify</code> strips anything dangerous from that
+           HTML, and only the sanitized result is passed to
+           <code>$(trustedHTML(...))</code>. The source below deliberately includes a
+           <code>&lt;script&gt;</code> tag and a <code>javascript:</code> link; watch them
+           get stripped while the real formatting survives.</p>
+        <markdown-block id="demo-markdown" source="# Live Markdown
+
+Rendered by **marked**, sanitized by **DOMPurify**, then handed to `trustedHTML`.
+
+- lists work
+- so does [a link](https://example.com)
+- and `inline code`
+
+&gt; A blockquote for good measure.
+
+Even a [defused link](javascript:alert('xss')) is safe here.
+
+&lt;script&gt;alert('xss')&lt;/script&gt;
+
+The javascript link loses its href and the script tag is removed by the sanitizer, before anything reaches trustedHTML."></markdown-block>
+        <p class="note">If the CDN is unreachable the block renders nothing and says so;
+           the escape hatch never fires without its sanitizer. That is the safe default,
+           and the rest of this page keeps working.</p>
+        <details class="src"><summary>Show the template source</summary><pre><code data-source-for="markdown-block"></code></pre></details>
+      </div>
+
+      <!-- ================= 7. QR CODE ================= -->
+      <div class="card" id="recipe-qr">
+        <header>
+          <h3>&lt;qr-panel&gt;</h3>
+          <span class="layer" data-layer="third-party">Third-party</span>
+          <span class="layer" data-layer="jst">JST</span>
+        </header>
+        <p>A pinned QR library draws into a <code>jst-preserve</code>'d mount built once
+           in <code>once('qr', ...)</code>. Republishing <code>value</code> re-renders
+           through the stored <code>_render</code> function, exactly like the third-party
+           charts recipe: JST stays a thin controlled-renderer over a preserved node the
+           library owns.</p>
+        <div class="demo">
+          <qr-panel id="demo-qr" value="https://github.com/br3nt/jst"></qr-panel>
+          <label class="readout">
+            Encode a value:
+            <input id="qr-input" type="text" value="https://github.com/br3nt/jst"
+                   style="min-inline-size: 22ch">
+          </label>
+        </div>
+        <p class="note">If the CDN is unreachable the mount shows a note and the JST
+           wrapper still renders. Nothing else on the page depends on it.</p>
+        <details class="src"><summary>Show the template source</summary><pre><code data-source-for="qr-panel"></code></pre></details>
+      </div>
+
+      <jst-box>
+        <jst-stack style="--space: var(--jst-space-xs)">
+          <h2>Takeaway <span class="layer" data-layer="native">Native</span></h2>
+          <p>None of these is a framework feature. A rating, a copy button, a byte
+             formatter: each is a short template that leans on the platform (Intl, the
+             clipboard, custom elements) and, where a real library helps, drops one in
+             behind a preserved mount. JST's job is to stay out of the way and keep the
+             source in your hands. Copy any block above into your own page and change it.</p>
+        </jst-stack>
+      </jst-box>
+
+    </jst-stack>
+  </jst-center>
+
+  <!-- ================= NATIVE: plain-JS helpers (globals) ================= -->
+  <!-- Classic (non-module) script so these are reachable from JST template
+       bodies. No JST here: just Intl helpers and the CDN-guard glue. -->
+  <script>
+    // Poll for a global set by an isolated CDN import; reject after a timeout so a
+    // blocked CDN turns into a graceful note instead of a hang.
+    function whenGlobal(name, timeout) {
+      timeout = timeout || 6000;
+      return new Promise((resolve, reject) => {
+        const started = Date.now();
+        (function poll() {
+          if (window[name]) return resolve(window[name]);
+          if (Date.now() - started > timeout) return reject(new Error(name + ' unavailable'));
+          setTimeout(poll, 60);
+        })();
+      });
+    }
+
+    // ---- format-bytes: manual ladder + Intl.NumberFormat unit style ----
+    const BYTE_UNITS = ['byte', 'kilobyte', 'megabyte', 'gigabyte', 'terabyte', 'petabyte'];
+    function formatBytes(bytes, locale) {
+      const n = Number(bytes);
+      if (!Number.isFinite(n)) return '';
+      let i = 0, v = Math.abs(n);
+      while (v >= 1000 && i < BYTE_UNITS.length - 1) { v /= 1000; i++; }
+      const nf = new Intl.NumberFormat(locale || undefined, {
+        style: 'unit', unit: BYTE_UNITS[i], unitDisplay: 'short',
+        maximumFractionDigits: (v < 10 && i > 0) ? 1 : 0,
+      });
+      return nf.format(n < 0 ? -v : v);
+    }
+
+    // ---- relative-time: best unit + the ms until the next meaningful change ----
+    const REL_UNITS = [
+      ['year', 31536e6], ['month', 2592e6], ['week', 6048e5],
+      ['day', 864e5], ['hour', 36e5], ['minute', 6e4], ['second', 1e3],
+    ];
+    function relParts(datetime, locale) {
+      const target = new Date(datetime).getTime();
+      if (!Number.isFinite(target)) return { text: '', size: 1e3, title: '' };
+      const diff = target - Date.now();
+      const abs = Math.abs(diff);
+      const rtf = new Intl.RelativeTimeFormat(locale || undefined, { numeric: 'auto' });
+      let unit = 'second', size = 1e3;
+      for (const [u, ms] of REL_UNITS) { if (abs >= ms) { unit = u; size = ms; break; } }
+      return { text: rtf.format(Math.round(diff / size), unit), size, title: new Date(target).toString() };
+    }
+
+    // ---- qr-panel glue: build into the preserved mount, re-render on republish ----
+    function showQrMissing(el) {
+      const mount = el.querySelector('.qr-frame');
+      if (mount) mount.innerHTML = '<p class="lib-missing">The QR library did not load from the CDN. The JST wrapper still rendered.</p>';
+    }
+    function qrBuild(el, qrcode) {
+      el._render = () => {
+        const mount = el.querySelector('.qr-frame');
+        if (!mount) return;
+        const text = String(el.value == null ? '' : el.value);
+        if (!text) { mount.innerHTML = '<p class="lib-missing">Set a value to encode.</p>'; return; }
+        try {
+          const qr = qrcode(0, 'M');
+          qr.addData(text);
+          qr.make();
+          mount.innerHTML = qr.createSvgTag({ cellSize: 4, margin: 2, scalable: true });
+        } catch (err) {
+          mount.innerHTML = '<p class="lib-missing">Could not encode that value.</p>';
+        }
+      };
+      el._render();
+    }
+  </script>
+
+  <!-- ================= Page wiring (module) ================= -->
+  <script type="module">
+    // Rating: render the emitted 'change' event somewhere else on the page.
+    const rating = document.getElementById('demo-rating');
+    const out = document.getElementById('rating-readout');
+    if (rating && out) {
+      const cap = Number(rating.max) || 5;
+      out.textContent = (Number(rating.value) || 0) + ' / ' + cap;
+      rating.addEventListener('change', (e) => {
+        out.textContent = (Number(e.detail) || 0) + ' / ' + cap;
+      });
+    }
+
+    // Relative-time demos: set datetimes relative to load so they are near "now".
+    const now = Date.now();
+    const setTime = (id, ms) => { const t = document.getElementById(id); if (t) t.datetime = new Date(now + ms).toISOString(); };
+    setTime('rt-seconds', -6000);
+    setTime('rt-minutes', -8 * 60 * 1000);
+    setTime('rt-hours', -5 * 60 * 60 * 1000);
+    setTime('rt-days', -3 * 24 * 60 * 60 * 1000);
+    setTime('rt-future', 26 * 60 * 60 * 1000);
+
+    // QR live input: republish the panel's value (attributes down) as you type.
+    const qrInput = document.getElementById('qr-input');
+    const qrPanel = document.getElementById('demo-qr');
+    if (qrInput && qrPanel) qrInput.addEventListener('input', () => { qrPanel.value = qrInput.value; });
+
+    // Source viewers: inject each template's own text (textContent auto-escapes),
+    // so the code you read is exactly the code that ran.
+    document.querySelectorAll('[data-source-for]').forEach((code) => {
+      const tpl = document.querySelector('script[type="jst"][name="' + code.dataset.sourceFor + '"]');
+      if (tpl) code.textContent = tpl.textContent.replace(/^\n+/, '').replace(/\s+$/, '');
+    });
+  </script>
+</body>
+</html>

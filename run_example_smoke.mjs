@@ -461,6 +461,91 @@ const checks = [
       && result.waBrand === result.jstAccent
       && result.waRendered === true,
   },
+  {
+    // Platform recipes: everything on this page is either plain HTML/CSS or
+    // one JST component (scroll-spy); jst.js is local, never a CDN, so the
+    // whole page is hermetic. Assert real behavior per recipe, not just DOM
+    // presence: the progress ring's --value, the context-menu popover opening
+    // from its invoker, and the scrollspy TOC actually rendering links.
+    page: '/examples/platform_recipes.html',
+    script: `(async () => {
+      ${flushSnippet}
+      await customElements.whenDefined('scroll-spy');
+      await flush();
+
+      const cards = document.querySelectorAll('.recipe').length;
+
+      const ring = document.querySelector('.ring-demo');
+      const ringValue = getComputedStyle(ring).getPropertyValue('--value').trim();
+
+      const menu = document.getElementById('r9-menu');
+      const menuOpenBefore = menu.matches(':popover-open');
+      document.querySelector('button[commandfor="r9-menu"]').click();
+      await flush();
+      const menuOpenAfter = menu.matches(':popover-open');
+
+      const tocLinks = document.querySelectorAll('.spy-toc a').length;
+
+      return { cards, ringValue, menuOpenBefore, menuOpenAfter, tocLinks };
+    })()`,
+    assert: result => result.cards === 14
+      && result.ringValue === '68'
+      && result.menuOpenBefore === false
+      && result.menuOpenAfter === true
+      && result.tocLinks === 4,
+  },
+  {
+    // Template recipes: JST-owned DOM and behavior that works with no CDN.
+    // Markdown and QR are third-party-CDN-dependent (see the module script at
+    // the top of the page); assert only that their containers exist, never
+    // their rendered internals, so this check stays offline-safe.
+    page: '/examples/template_recipes.html',
+    script: `(async () => {
+      ${flushSnippet}
+      await Promise.all(['jst-rating', 'jst-copy-button', 'jst-relative-time',
+        'jst-format-bytes', 'jst-format-number', 'jst-format-date',
+        'markdown-block', 'qr-panel'].map(n => customElements.whenDefined(n)));
+      await flush(); await flush();
+
+      const rating = document.getElementById('demo-rating');
+      const starsBefore = rating.querySelectorAll('.star[data-fill="full"]').length;
+      const readoutBefore = document.getElementById('rating-readout').textContent;
+      rating.querySelectorAll('.hit.right')[4].click();
+      await flush();
+      const starsAfter = rating.querySelectorAll('.star[data-fill="full"]').length;
+      const readoutAfter = document.getElementById('rating-readout').textContent;
+
+      const copyButtons = document.querySelectorAll('jst-copy-button .copy-btn').length;
+
+      const relativeTimeText = document.querySelector('#rt-seconds time')?.textContent.trim();
+
+      const relativeTimeOutputs = document.querySelectorAll('#recipe-relative-time .fmt-grid dd').length;
+      const formatBytesOutputs = document.querySelectorAll('#recipe-format-bytes .fmt-grid dd').length;
+      const formatBytesText = document.querySelector('jst-format-bytes')?.textContent.trim();
+      const formatNumberDateOutputs = document.querySelectorAll('#recipe-format .fmt-grid dd').length;
+      const formatCurrencyText = document.querySelector('jst-format-number')?.textContent.trim();
+
+      const markdownContainer = !!document.querySelector('#recipe-markdown .md-rendered');
+      const qrContainer = !!document.querySelector('#recipe-qr .qr-frame');
+
+      return { starsBefore, readoutBefore, starsAfter, readoutAfter, copyButtons,
+        relativeTimeText, relativeTimeOutputs, formatBytesOutputs, formatBytesText,
+        formatNumberDateOutputs, formatCurrencyText, markdownContainer, qrContainer };
+    })()`,
+    assert: result => result.starsBefore === 3
+      && result.readoutBefore === '3 / 5'
+      && result.starsAfter === 5
+      && result.readoutAfter === '5 / 5'
+      && result.copyButtons === 2
+      && !!result.relativeTimeText && result.relativeTimeText.length > 0
+      && result.relativeTimeOutputs === 5
+      && result.formatBytesOutputs === 6
+      && !!result.formatBytesText && result.formatBytesText.length > 0
+      && result.formatNumberDateOutputs === 8
+      && !!result.formatCurrencyText && result.formatCurrencyText.length > 0
+      && result.markdownContainer === true
+      && result.qrContainer === true,
+  },
 ];
 
 async function waitForJson(baseUrl, pathName, timeoutMs = 10000) {
