@@ -373,6 +373,94 @@ const checks = [
       && result.paletteRan === true
       && result.paletteClosed === true,
   },
+  {
+    // Third-party charts: three chart libraries, each inside a JST component.
+    // The chart libraries load from a CDN, so every ASSERTED fact here is
+    // JST-owned DOM: the page (and CI) must pass even if all three CDNs fail.
+    // Library-specific facts are only returned for visibility, never asserted.
+    page: '/examples/third_party_charts.html',
+    script: `(async () => {
+      ${flushSnippet}
+      // jst.js is local, never a CDN, so the JST components always upgrade.
+      await Promise.all(['charts-dashboard', 'chart-js-panel', 'uplot-panel', 'plot-panel']
+        .map(n => customElements.whenDefined(n)));
+      await flush(); await flush();
+
+      // The page controller hands the dataset down as a property; wait for it.
+      const sig = () => document.querySelector('[data-testid="signature"]').textContent.trim();
+      const startedData = Date.now();
+      while (sig() === '...' && Date.now() - startedData < 3000) await flush();
+
+      const panels = document.querySelectorAll('chart-js-panel, uplot-panel, plot-panel').length;
+      const frames = document.querySelectorAll('.chart-frame[jst-preserve]').length;
+
+      // Randomize is JST state: emit up, page hands a new dataset down to all
+      // three panels through the one attributes-down flow. Loop guards the rare
+      // case where a random redraw lands on the same first value.
+      const before = sig();
+      let after = before;
+      for (let i = 0; i < 5 && after === before; i++) {
+        document.querySelector('.chart-controls button').click();
+        await flush(); await flush();
+        after = sig();
+      }
+
+      // Returned for visibility only (NOT asserted): did the CDNs load?
+      const libs = {
+        chartjs: typeof window.Chart !== 'undefined',
+        uplot: typeof window.uPlot !== 'undefined',
+        plot: typeof window.Plot !== 'undefined',
+      };
+      return { panels, frames, mutated: before !== after && after !== '...', libs };
+    })()`,
+    assert: result => result.panels === 3
+      && result.frames === 3
+      && result.mutated === true,
+  },
+  {
+    // Web Awesome interop: wa-* components inside JST, both data directions plus
+    // the theming bridge. Every ASSERTED fact is JST-owned DOM or a CSS token
+    // mapping, so it passes even if the Web Awesome CDN is blocked. The one
+    // wa-specific check is guarded on the component having actually upgraded.
+    page: '/examples/webawesome_interop.html',
+    script: `(async () => {
+      ${flushSnippet}
+      await Promise.all(['rating-driver', 'rating-catcher'].map(n => customElements.whenDefined(n)));
+      await flush(); await flush();
+
+      // Demo 1, attributes down: a JST +button mutates JST state (and the
+      // wa-rating value it drives). The label is JST-owned.
+      const driver = document.getElementById('driver');
+      const driverBefore = document.querySelector('[data-testid="driver-stars"]').textContent;
+      document.querySelectorAll('#driver button')[1].click(); // the "+"
+      await flush(); await flush();
+      const driverAfter = document.querySelector('[data-testid="driver-stars"]').textContent;
+
+      // Demo 2, events up: fire the wa-rating change event; a JST handler writes
+      // JST state that JST renders back out. Works whether or not wa upgraded.
+      const rating = document.querySelector('#catcher wa-rating');
+      rating.value = 4;
+      rating.dispatchEvent(new Event('change', { bubbles: true }));
+      await flush(); await flush();
+      const caught = document.querySelector('[data-testid="catcher-rated"]')?.textContent;
+
+      // Demo 3, theming bridge: the wa token is mapped from the jst token in CSS.
+      const jstAccent = getComputedStyle(document.body).getPropertyValue('--jst-accent').trim();
+      const waBrand = getComputedStyle(document.body).getPropertyValue('--wa-color-brand-fill-loud').trim();
+
+      // Guarded wa-specific fact: only assert once the component upgraded.
+      const waLoaded = !!customElements.get('wa-rating');
+      const waRendered = waLoaded ? !!driver.querySelector('wa-rating').shadowRoot : true;
+
+      return { driverBefore, driverAfter, caught, jstAccent, waBrand, waRendered, waLoaded };
+    })()`,
+    assert: result => result.driverBefore === '3'
+      && result.driverAfter === '3.5'
+      && result.caught === '4'
+      && result.jstAccent.length > 0
+      && result.waBrand === result.jstAccent
+      && result.waRendered === true,
+  },
 ];
 
 async function waitForJson(baseUrl, pathName, timeoutMs = 10000) {

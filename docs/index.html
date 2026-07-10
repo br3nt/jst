@@ -5,16 +5,55 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>JST docs</title>
 <meta name="description" content="JST documentation: no-build web components, HATEOAS fragments, production notes, security, and examples.">
+<!-- This page eats its own dog food: its palette, spacing, and radius are the
+     jst-layout.css tokens. Relative path so it always matches this checkout.
+     Move the knobs (bottom-right) and the whole page re-themes live. -->
+<link rel="stylesheet" href="../jst-layout.css">
+<!-- Reapply saved knob choices before first paint: read localStorage and set the
+     --jst-* tokens (and data-scheme) inline on <html> now, so there is no flash
+     of the default theme before the knob component boots. -->
+<script>
+  (function () {
+    try {
+      var saved = JSON.parse(localStorage.getItem('jst-knobs') || '{}');
+      var root = document.documentElement;
+      var vars = { accent: '--jst-accent', space: '--jst-space', ratio: '--jst-ratio', radius: '--jst-radius', fontsize: '--jst-font-size' };
+      Object.keys(vars).forEach(function (k) {
+        var v = saved[k];
+        if (v == null || v === '') return;
+        root.style.setProperty(vars[k], k === 'accent' ? 'oklch(from ' + v + ' l c h)' : v);
+      });
+      if (saved.scheme === 'light' || saved.scheme === 'dark') root.setAttribute('data-scheme', saved.scheme);
+    } catch (e) {}
+  })();
+</script>
 <style>
   :root {
-    --ink: #1b2030;
-    --muted: #667085;
-    --accent: #3f51b5;
-    --accent-2: #5c6bc0;
-    --accent-soft: #eef0fb;
-    --line: #e3e6ef;
-    --paper: #fff;
-    --bg: #f7f8fc;
+    /* The page's own variables now DERIVE from the jst token contract, so the
+       knob panel (which writes inline --jst-* properties on <html>) moves them
+       all. jst tokens are built on light-dark(), so wiring them in is what
+       gives this page its dark mode. */
+    --ink: var(--jst-fg);
+    --muted: var(--jst-muted);
+    --accent: var(--jst-accent);
+    /* One accent knob drives the pair: -2 a touch lighter, -soft a faint wash.
+       Relative color + color-mix keep them in step across both schemes. */
+    --accent-2: oklch(from var(--jst-accent) calc(l + 0.06) c h);
+    --accent-soft: color-mix(in oklch, var(--jst-accent) 12%, var(--jst-bg));
+    --line: var(--jst-border);
+    /* Cards sit on --paper, the page on --bg. Mapping paper→--jst-bg and
+       bg→--jst-surface keeps the light look close to before (cards a shade
+       lighter than the page). In dark the surface reads a step up from bg,
+       so cards recede slightly rather than float; still calm and readable. */
+    --paper: var(--jst-bg);
+    --bg: var(--jst-surface);
+    /* Surface radius follows --jst-radius so the Radius knob rounds this page's
+       own cards and controls. The defaults land on today's 3px/6px. */
+    --radius: var(--jst-radius);
+    --radius-lg: calc(var(--jst-radius) * 2);
+    /* Default the page's text size to 1rem (jst's own default is 0.875rem);
+       the Font size knob overrides this token inline on <html>. */
+    --jst-font-size: 1rem;
     --code: #1e2030;
     --tag: #89ddff;
     --attr: #c792ea;
@@ -29,9 +68,15 @@
   html { scroll-behavior: smooth; }
   body {
     margin: 0;
+    /* jst.base's classless body rule adds padding to <body>; this page bleeds
+       its header full-width, so zero it back out, unlayered. Text size flows
+       from --jst-font-size (defaulted to 1rem at :root above) so the Font size
+       knob moves the whole page's copy. */
+    padding: 0;
     color: var(--ink);
     background: var(--bg);
     font-family: system-ui, -apple-system, Segoe UI, sans-serif;
+    font-size: var(--jst-font-size);
     line-height: 1.55;
   }
   a { color: var(--accent); }
@@ -69,7 +114,7 @@
   .btn {
     display: inline-block;
     border: 1px solid var(--accent);
-    border-radius: 4px;
+    border-radius: var(--radius);
     padding: .42rem .75rem;
     text-decoration: none;
     font-weight: 700;
@@ -78,7 +123,7 @@
   }
   .btn.primary {
     background: var(--accent);
-    color: #fff;
+    color: var(--jst-accent-fg);
   }
   .wrap.layout { max-width: 110rem; }
   .layout {
@@ -98,6 +143,7 @@
       --data-flow,
       --state-and-forms,
       --slots,
+      --theming,
       --hateoas-fragments,
       --server-side-rendering,
       --security-and-production,
@@ -116,7 +162,7 @@
     overflow: auto;
     border: 1px solid var(--line);
     background: var(--paper);
-    border-radius: 6px;
+    border-radius: var(--radius-lg);
     padding: .75rem;
   }
   .toc h2 {
@@ -130,7 +176,7 @@
     display: block;
     padding: .28rem .35rem;
     border-left: 3px solid transparent;
-    border-radius: 3px;
+    border-radius: var(--radius);
     color: var(--ink);
     text-decoration: none;
     font-size: .91rem;
@@ -149,6 +195,7 @@
   body:has(#data-flow:target) .toc a[href="#data-flow"],
   body:has(#state-and-forms:target) .toc a[href="#state-and-forms"],
   body:has(#slots:target) .toc a[href="#slots"],
+  body:has(#theming:target) .toc a[href="#theming"],
   body:has(#hateoas-fragments:target) .toc a[href="#hateoas-fragments"],
   body:has(#server-side-rendering:target) .toc a[href="#server-side-rendering"],
   body:has(#security-and-production:target) .toc a[href="#security-and-production"],
@@ -168,13 +215,13 @@
     /* One column capped at the free space: a long unbreakable code line then
        scrolls inside its pre instead of blowing the page out sideways. */
     grid-template-columns: minmax(0, 1fr);
-    gap: .95rem;
+    gap: var(--jst-space-l);
   }
   section {
     background: var(--paper);
     border: 1px solid var(--line);
-    border-radius: 6px;
-    padding: 1.05rem;
+    border-radius: var(--radius-lg);
+    padding: var(--jst-space-l);
     scroll-margin-top: 1rem;
     /* Grid items default to min-width:auto, so one long unbreakable code line
        would blow the track out past the viewport; pres scroll instead. */
@@ -188,6 +235,7 @@
   #data-flow { view-timeline-name: --data-flow; }
   #state-and-forms { view-timeline-name: --state-and-forms; }
   #slots { view-timeline-name: --slots; }
+  #theming { view-timeline-name: --theming; }
   #hateoas-fragments { view-timeline-name: --hateoas-fragments; }
   #server-side-rendering { view-timeline-name: --server-side-rendering; }
   #security-and-production { view-timeline-name: --security-and-production; }
@@ -203,6 +251,7 @@
     .toc a[href="#data-flow"] { animation: toc-active both linear; animation-timeline: --data-flow; animation-range: entry 10% exit 70%; }
     .toc a[href="#state-and-forms"] { animation: toc-active both linear; animation-timeline: --state-and-forms; animation-range: entry 10% exit 70%; }
     .toc a[href="#slots"] { animation: toc-active both linear; animation-timeline: --slots; animation-range: entry 10% exit 70%; }
+    .toc a[href="#theming"] { animation: toc-active both linear; animation-timeline: --theming; animation-range: entry 10% exit 70%; }
     .toc a[href="#hateoas-fragments"] { animation: toc-active both linear; animation-timeline: --hateoas-fragments; animation-range: entry 10% exit 70%; }
     .toc a[href="#server-side-rendering"] { animation: toc-active both linear; animation-timeline: --server-side-rendering; animation-range: entry 10% exit 70%; }
     .toc a[href="#security-and-production"] { animation: toc-active both linear; animation-timeline: --security-and-production; animation-range: entry 10% exit 70%; }
@@ -216,7 +265,7 @@
   }
   section:target {
     border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(63, 81, 181, .12);
+    box-shadow: 0 0 0 3px color-mix(in oklch, var(--jst-accent) 16%, transparent);
   }
   h2 {
     margin: 0 0 .45rem;
@@ -226,14 +275,16 @@
     margin: 1rem 0 .35rem;
     font-size: 1rem;
   }
-  p { margin: .45rem 0; }
+  /* jst.base caps every <p> at --jst-measure (60ch). This page's section copy
+     runs to the column width, so opt those paragraphs back out. */
+  p { margin: .45rem 0; max-inline-size: none; }
   ul { padding-left: 1.2rem; }
   li { margin: .25rem 0; }
   .callout {
     border-left: 3px solid var(--accent);
     background: var(--accent-soft);
     padding: .65rem .8rem;
-    border-radius: 4px;
+    border-radius: var(--radius);
     margin: .8rem 0;
   }
   .grid {
@@ -246,9 +297,9 @@
   }
   .mini {
     border: 1px solid var(--line);
-    border-radius: 5px;
+    border-radius: var(--radius-lg);
     padding: .75rem;
-    background: #fff;
+    background: var(--paper);
   }
   .mini h3 { margin-top: 0; }
   .mini p:last-child { margin-bottom: 0; }
@@ -261,7 +312,7 @@
     overflow: auto;
     background: var(--code);
     color: #d7d9e6;
-    border-radius: 5px;
+    border-radius: var(--radius);
     font-size: .86rem;
     line-height: 1.5;
   }
@@ -286,8 +337,8 @@
   .snippet-detail {
     margin-top: .45rem;
     border: 1px solid var(--line);
-    background: #fbfcff;
-    border-radius: 5px;
+    background: color-mix(in oklch, var(--jst-accent) 4%, var(--paper));
+    border-radius: var(--radius);
     padding: .65rem .75rem;
     min-height: 4.25rem;
   }
@@ -312,14 +363,14 @@
   .chip {
     display: inline-block;
     min-width: 8.5rem;
-    border-radius: 4px;
+    border-radius: var(--radius);
     background: var(--code);
     padding: .08rem .35rem;
   }
   .live-demo {
     position: relative;
     border: 1px solid var(--accent);
-    border-radius: 6px;
+    border-radius: var(--radius-lg);
     background: var(--accent-soft);
     padding: 1rem;
     margin: .6rem 0 0;
@@ -329,18 +380,18 @@
     top: -.6rem;
     left: .75rem;
     background: var(--accent);
-    color: #fff;
+    color: var(--jst-accent-fg);
     font-size: .68rem;
     font-weight: 700;
     letter-spacing: .08em;
     text-transform: uppercase;
-    border-radius: 3px;
+    border-radius: var(--radius);
     padding: .1rem .45rem;
   }
   .live-demo button {
     border: 1px solid var(--accent);
     background: var(--paper);
-    border-radius: 4px;
+    border-radius: var(--radius);
     padding: .35rem .7rem;
     cursor: pointer;
     font-size: .95rem;
@@ -357,6 +408,68 @@
     .grid,
     .grid.three { grid-template-columns: 1fr; }
   }
+  /* Theme knob panel: floats bottom-right, sized in rem so it stays put when the
+     Font size knob scales the page. These class selectors sit unlayered, so they
+     win over jst.base's classless button/input styling. */
+  jst-theme-knobs { position: fixed; z-index: 1000; inset-block-end: 1rem; inset-inline-end: 1rem; }
+  .jst-knobs-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    border: 1px solid var(--line);
+    background: var(--paper);
+    color: var(--ink);
+    border-radius: 999px;
+    padding: .5rem .8rem;
+    cursor: pointer;
+    font-size: .82rem;
+    font-weight: 600;
+    box-shadow: 0 .2rem .7rem rgba(0, 0, 0, .2);
+  }
+  .jst-knobs-panel {
+    position: absolute;
+    inset-block-end: calc(100% + .5rem);
+    inset-inline-end: 0;
+    inline-size: min(19rem, 82vw);
+    max-block-size: 80vh;
+    overflow: auto;
+    display: grid;
+    gap: .55rem;
+    border: 1px solid var(--line);
+    background: var(--paper);
+    color: var(--ink);
+    border-radius: var(--radius-lg);
+    padding: .9rem;
+    font-size: .8rem;
+    box-shadow: 0 .5rem 1.5rem rgba(0, 0, 0, .28);
+  }
+  .jst-knobs-caption { margin: 0 0 .2rem; color: var(--muted); font-size: .72rem; line-height: 1.45; }
+  .jst-knobs-caption code { color: var(--accent); background: none; padding: 0; }
+  .jst-knobs-panel label { display: grid; gap: .2rem; }
+  .jst-knobs-panel label > span { color: var(--muted); }
+  .jst-knobs-panel input[type="range"] { inline-size: 100%; margin: 0; }
+  .jst-knobs-panel input[type="color"] {
+    inline-size: 100%;
+    block-size: 1.9rem;
+    padding: 0;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--bg);
+  }
+  .jst-knobs-scheme { display: flex; flex-wrap: wrap; gap: .3rem; }
+  .jst-knobs-scheme > span { flex: 0 0 100%; color: var(--muted); }
+  .jst-knobs-scheme button, .jst-knobs-reset {
+    border: 1px solid var(--line);
+    background: var(--bg);
+    color: var(--ink);
+    border-radius: var(--radius);
+    padding: .3rem .55rem;
+    cursor: pointer;
+    font-size: .75rem;
+  }
+  .jst-knobs-scheme button { flex: 1 1 auto; }
+  .jst-knobs-scheme button[data-active="true"] { background: var(--accent); color: var(--jst-accent-fg); border-color: var(--accent); }
+  .jst-knobs-reset { inline-size: 100%; margin-block-start: .1rem; }
 </style>
 <script type="module" src="../jst.js"></script>
 </head>
@@ -392,6 +505,7 @@
     <a href="#data-flow">Data Flow</a>
     <a href="#state-and-forms">State, Forms, Lists</a>
     <a href="#slots">Slots</a>
+    <a href="#theming">Theming JST</a>
     <a href="#hateoas-fragments">HATEOAS Fragments</a>
     <a href="#server-side-rendering">Server-Side Rendering</a>
     <a href="#security-and-production">Security And Production</a>
@@ -430,7 +544,7 @@
 <span class="tok-tag">&lt;script</span> <span class="tok-attr ann" tabindex="0" data-label="Classic script" data-detail="A plain script tag, not a module, so the browser loads it from disk. Everything is on window.JST.">src</span>=<span class="tok-string">"jst.global.min.js"</span><span class="tok-tag">&gt;&lt;/script&gt;</span>
 
 <span class="tok-comment">&lt;!-- ...or load it from the CDN, pinned to a release tag. --&gt;</span>
-<span class="tok-tag">&lt;script</span> <span class="tok-attr ann" tabindex="0" data-label="Pin the version" data-detail="jsDelivr serves the tagged file straight from the GitHub repo. Always pin (jst@vX.Y.Z) and check JST.version in the console when in doubt.">src</span>=<span class="tok-string">"https://cdn.jsdelivr.net/gh/br3nt/jst@v0.7.5/jst.global.min.js"</span><span class="tok-tag">&gt;&lt;/script&gt;</span></code></pre>
+<span class="tok-tag">&lt;script</span> <span class="tok-attr ann" tabindex="0" data-label="Pin the version" data-detail="jsDelivr serves the tagged file straight from the GitHub repo. Always pin (jst@vX.Y.Z) and check JST.version in the console when in doubt.">src</span>=<span class="tok-string">"https://cdn.jsdelivr.net/gh/br3nt/jst@v0.7.6/jst.global.min.js"</span><span class="tok-tag">&gt;&lt;/script&gt;</span></code></pre>
         <div class="snippet-detail" aria-live="polite"><strong>Hover over the code</strong><span>Hover over parts of the code snippet to get a detailed explanation.</span></div>
       </div>
 
@@ -447,7 +561,7 @@
 
 <span class="tok-comment">&lt;!-- No local copy at all: import straight from the CDN. --&gt;</span>
 <span class="tok-tag">&lt;script</span> <span class="tok-attr">type</span>=<span class="tok-string">"module"</span><span class="tok-tag">&gt;</span>
-  <span class="tok-js">import</span> { configure } <span class="tok-js">from</span> <span class="tok-string">'https://cdn.jsdelivr.net/gh/br3nt/jst@v0.7.5/jst.js'</span>;
+  <span class="tok-js">import</span> { configure } <span class="tok-js">from</span> <span class="tok-string">'https://cdn.jsdelivr.net/gh/br3nt/jst@v0.7.6/jst.js'</span>;
   configure({ <span class="tok-attr ann" tabindex="0" data-label="One URL, one instance" data-detail="Modules dedupe by URL. Use the same URL for every import of the runtime on a page; a second copy loaded from a different URL is a second, separate template registry.">dev</span>: true });
 <span class="tok-tag">&lt;/script&gt;</span></code></pre>
         <div class="snippet-detail" aria-live="polite"><strong>Hover over the code</strong><span>Hover over parts of the code snippet to get a detailed explanation.</span></div>
@@ -464,7 +578,7 @@ node tools/precompile.mjs components.html <span class="tok-attr ann" tabindex="0
 
 <span class="tok-comment"># Or serve the runtime from the CDN: the templates module imports it directly,</span>
 <span class="tok-comment"># so the templates file is the only script tag on the page.</span>
-node tools/precompile.mjs components.html <span class="tok-attr">--out</span> dist/templates.js <span class="tok-attr ann" tabindex="0" data-label="CDN runtime" data-detail="The generated module does: import { registerPrecompiledTemplate } from this URL. Keep it identical to any other runtime import on the page; modules dedupe by URL and a second URL means a second registry.">--runtime</span> https://cdn.jsdelivr.net/gh/br3nt/jst@v0.7.5/jst.runtime.js
+node tools/precompile.mjs components.html <span class="tok-attr">--out</span> dist/templates.js <span class="tok-attr ann" tabindex="0" data-label="CDN runtime" data-detail="The generated module does: import { registerPrecompiledTemplate } from this URL. Keep it identical to any other runtime import on the page; modules dedupe by URL and a second URL means a second registry.">--runtime</span> https://cdn.jsdelivr.net/gh/br3nt/jst@v0.7.6/jst.runtime.js
 
 <span class="tok-tag">&lt;script</span> <span class="tok-attr">type</span>=<span class="tok-string">"module"</span> <span class="tok-attr">src</span>=<span class="tok-string">"/dist/templates.js"</span><span class="tok-tag">&gt;&lt;/script&gt;</span></code></pre>
         <div class="snippet-detail" aria-live="polite"><strong>Hover over the code</strong><span>Hover over parts of the code snippet to get a detailed explanation.</span></div>
@@ -485,13 +599,13 @@ node tools/precompile.mjs components.html <span class="tok-attr">--out</span> di
       </div>
 
       <h3 id="component-library">Component library (opt-in)</h3>
-      <p>Two stylesheets and one fragment of component definitions. <code>jst-layout.css</code> is design tokens, a classless base, and the layout primitives (zero JavaScript); <code>jst-components.css</code> styles the component patterns; <code>jst-components.html</code> defines the five JST components (<code>&lt;jst-palette&gt;</code> <code>&lt;jst-tabs&gt;</code> <code>&lt;jst-toaster&gt;</code> <code>&lt;jst-combobox&gt;</code> <code>&lt;jst-table&gt;</code>). Minified copies (<code>.min.css</code>) sit next to the sources. See it live: <a href="../examples/components_cross_section.html">every component on one page</a> (re-skinnable to ten framework looks) and <a href="../examples/layout_primitives.html">the layout primitives</a> (zero JavaScript).</p>
+      <p>Two stylesheets and one fragment of component definitions. <code>jst-layout.css</code> is design tokens, a classless base, and the layout primitives (zero JavaScript); <code>jst-components.css</code> styles the component patterns; <code>jst-components.html</code> defines the five JST components (<code>&lt;jst-palette&gt;</code> <code>&lt;jst-tabs&gt;</code> <code>&lt;jst-toaster&gt;</code> <code>&lt;jst-combobox&gt;</code> <code>&lt;jst-table&gt;</code>). Minified copies (<code>.min.css</code>) sit next to the sources. See it live: <a href="../examples/components_cross_section.html">every component on one page</a> (re-skinnable to ten framework looks) and <a href="../examples/layout_primitives.html">the layout primitives</a> (zero JavaScript). For what JST deliberately does not author, see the interop proofs: <a href="../examples/third_party_charts.html">three chart libraries inside JST</a> and <a href="../examples/webawesome_interop.html">Web Awesome components inside JST</a>.</p>
       <div class="code-example">
-        <pre><code><span class="tok-tag">&lt;link</span> <span class="tok-attr">rel</span>=<span class="tok-string">"stylesheet"</span> <span class="tok-attr">href</span>=<span class="tok-string">"https://cdn.jsdelivr.net/gh/br3nt/jst@v0.7.5/jst-layout.min.css"</span><span class="tok-tag">&gt;</span>
-<span class="tok-tag">&lt;link</span> <span class="tok-attr">rel</span>=<span class="tok-string">"stylesheet"</span> <span class="tok-attr">href</span>=<span class="tok-string">"https://cdn.jsdelivr.net/gh/br3nt/jst@v0.7.5/jst-components.min.css"</span><span class="tok-tag">&gt;</span>
+        <pre><code><span class="tok-tag">&lt;link</span> <span class="tok-attr">rel</span>=<span class="tok-string">"stylesheet"</span> <span class="tok-attr">href</span>=<span class="tok-string">"https://cdn.jsdelivr.net/gh/br3nt/jst@v0.7.6/jst-layout.min.css"</span><span class="tok-tag">&gt;</span>
+<span class="tok-tag">&lt;link</span> <span class="tok-attr">rel</span>=<span class="tok-string">"stylesheet"</span> <span class="tok-attr">href</span>=<span class="tok-string">"https://cdn.jsdelivr.net/gh/br3nt/jst@v0.7.6/jst-components.min.css"</span><span class="tok-tag">&gt;</span>
 
 <span class="tok-comment">&lt;!-- Runtime: the definitions auto-register on arrival. --&gt;</span>
-<span class="tok-tag">&lt;jst-include</span> <span class="tok-attr ann" tabindex="0" data-label="Component definitions" data-detail="The fragment is executable application code, like any script: serve it from your own origin or the pinned CDN tag. Properties set on a component before its definition arrives are preserved through the upgrade.">src</span>=<span class="tok-string">"https://cdn.jsdelivr.net/gh/br3nt/jst@v0.7.5/jst-components.html"</span><span class="tok-tag">&gt;&lt;/jst-include&gt;</span>
+<span class="tok-tag">&lt;jst-include</span> <span class="tok-attr ann" tabindex="0" data-label="Component definitions" data-detail="The fragment is executable application code, like any script: serve it from your own origin or the pinned CDN tag. Properties set on a component before its definition arrives are preserved through the upgrade.">src</span>=<span class="tok-string">"https://cdn.jsdelivr.net/gh/br3nt/jst@v0.7.6/jst-components.html"</span><span class="tok-tag">&gt;&lt;/jst-include&gt;</span>
 
 <span class="tok-comment"># Strict CSP: precompile the same fragment instead.</span>
 node tools/precompile.mjs jst-components.html <span class="tok-attr">--out</span> dist/jst-components.js <span class="tok-attr">--runtime</span> /jst.runtime.js</code></pre>
@@ -680,6 +794,43 @@ node tools/precompile.mjs jst-components.html <span class="tok-attr">--out</span
 <span class="tok-tag">&lt;/app-panel&gt;</span></code></pre>
         <div class="snippet-detail" aria-live="polite"><strong>Hover over the code</strong><span>Hover over parts of the code snippet to get a detailed explanation.</span></div>
       </div>
+    </section>
+
+    <section id="theming">
+      <h2>Theming JST</h2>
+      <p>Every JST stylesheet is tokens first: override the tokens and the look re-themes while the structure stays put. This very page is the proof. Its palette, spacing, radius, and text size all derive from the <code>--jst-*</code> tokens, so the knob panel in the bottom-right corner re-themes what you are reading right now. Open it and move something.</p>
+
+      <h3>The token contract</h3>
+      <p>A small set of roles, not a bag of one-off values:</p>
+      <table>
+        <tr><th>Token</th><th>Role</th></tr>
+        <tr><td><code>--jst-bg</code>, <code>--jst-surface</code></td><td>The page background and the raised surface that sits on it (cards, panels, menus).</td></tr>
+        <tr><td><code>--jst-fg</code>, <code>--jst-muted</code></td><td>Body text and its quieter companion for labels, hints, and metadata.</td></tr>
+        <tr><td><code>--jst-border</code></td><td>Hairlines and control outlines.</td></tr>
+        <tr><td><code>--jst-accent</code></td><td>One accent. The shade ramp <code>--jst-accent-400/600/700</code> derives from it with relative color syntax, so overriding the accent alone moves the ramp. Native controls pick it up through <code>accent-color</code>.</td></tr>
+        <tr><td><code>--jst-ok</code>, <code>--jst-warn</code>, <code>--jst-error</code></td><td>Status roles for validation, alerts, badges, and toasts, each with a matching <code>-fg</code> for text on that color.</td></tr>
+        <tr><td><code>--jst-space</code>, <code>--jst-ratio</code></td><td>One base step and one ratio derive the whole modular scale, <code>--jst-space-3xs</code> through <code>--jst-space-2xl</code>. Raise the base to loosen a whole app at once.</td></tr>
+        <tr><td><code>--jst-radius</code>, <code>--jst-font-size</code>, <code>--jst-measure</code></td><td>Corner radius, base text size, and the max line length that keeps prose readable.</td></tr>
+      </table>
+
+      <h3>How to theme</h3>
+      <p>Override tokens wherever you need them: at <code>:root</code> for the whole document, or on any element to re-theme just that subtree. <code>data-scheme="light"</code> or <code>"dark"</code> on <code>&lt;html&gt;</code> (or a subtree) is the entire dark-mode toggle, because the role tokens are built on <code>light-dark()</code>. The framework theme skins in <code>jst-components.css</code> (<code>data-theme="bootstrap|shadcn|pico|…"</code>) are nothing but token overrides, which is why the same markup re-skins to another framework's look.</p>
+      <div class="code-example">
+        <pre><code><span class="tok-comment">/* Whole document: one accent, looser spacing, softer corners */</span>
+<span class="tok-attr">:root</span> {
+  <span class="tok-attr ann" tabindex="0" data-label="One accent, whole ramp" data-detail="Set --jst-accent and the derived 400/600/700 shades follow via relative color syntax. Buttons, links, focus rings, and native accent-color controls all shift together.">--jst-accent</span>: oklch(0.55 0.18 20);
+  --jst-space: 0.8rem;
+  --jst-radius: 0.5rem;
+}
+
+<span class="tok-comment">&lt;!-- Just this subtree, with its own dark scheme --&gt;</span>
+<span class="tok-tag">&lt;section</span> <span class="tok-attr ann" tabindex="0" data-label="Scoped override" data-detail="Tokens are ordinary custom properties, so they cascade. Set them on any element and only that subtree re-themes; data-scheme flips light-dark() for the subtree too.">data-scheme</span>=<span class="tok-string">"dark"</span> <span class="tok-attr">style</span>=<span class="tok-string">"--jst-accent: oklch(0.7 0.15 150)"</span><span class="tok-tag">&gt;</span>…<span class="tok-tag">&lt;/section&gt;</span></code></pre>
+        <div class="snippet-detail" aria-live="polite"><strong>Hover over the code</strong><span>Override tokens at the root or scoped to a subtree; data-scheme is the dark-mode toggle.</span></div>
+      </div>
+
+      <h3>The cascade layer</h3>
+      <p>Every rule JST ships lives in the <code>jst</code> cascade layer (<code>@layer jst.tokens, jst.base, jst.primitives, jst.components</code>). Any unlayered app rule outranks it regardless of specificity, so overriding a default is a plain selector, never a specificity fight, and one property drops out locally with <code>revert-layer</code>. The knob panel leans on exactly this: it writes tokens as <em>inline</em> styles on <code>&lt;html&gt;</code>, and an inline style beats the <code>jst.tokens</code> layer, so a knob always wins over the shipped default.</p>
+      <div class="callout">This page is themed by these tokens. Open the knobs in the bottom-right and move them: accent, spacing, ratio, radius, text size, and light/dark. To see the components those same tokens style, open <a href="../examples/components_cross_section.html">every component on one page</a>.</div>
     </section>
 
     <section id="hateoas-fragments">
@@ -896,5 +1047,98 @@ configure({
     example.addEventListener('mouseleave', reset);
   });
 </script>
+
+<!-- The knob panel, authored as a JST component. It writes the --jst-* tokens as
+     inline styles on <html> (which beat the jst.tokens layer) and mirrors the
+     choices to localStorage. Handlers are plain function bodies; el is the host. -->
+<script type="jst" name="jst-theme-knobs" attributes="open accent space ratio radius fontsize scheme">
+  $ const STORE = 'jst-knobs';
+  $ const DEFAULTS = { space: '0.625rem', ratio: '1.5', radius: '0.1875rem', fontsize: '1rem', scheme: 'system' };
+  $ /* <input type=color> only speaks #rrggbb, and computed styles serialize
+  $    oklch colors AS oklch strings, so paint the token onto a 1x1 canvas:
+  $    getImageData always hands back sRGB bytes whatever the input space. */
+  $ const readAccentHex = () => {
+  $   try {
+  $     const token = (getComputedStyle(document.documentElement).getPropertyValue('--jst-accent') || '').trim() || 'oklch(0.55 0.18 255)';
+  $     const ctx = document.createElement('canvas').getContext('2d', { willReadFrequently: true });
+  $     ctx.fillStyle = token;
+  $     ctx.fillRect(0, 0, 1, 1);
+  $     const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data;
+  $     return '#' + [r, g, b].map(n => n.toString(16).padStart(2, '0')).join('');
+  $   } catch (e) { return '#3f51b5'; }
+  $ };
+  $ once('knobs', () => {
+  $   const root = document.documentElement;
+  $   const VARS = { accent: '--jst-accent', space: '--jst-space', ratio: '--jst-ratio', radius: '--jst-radius', fontsize: '--jst-font-size' };
+  $   el.save = () => {
+  $     const data = { accent: el.accent, space: el.space, ratio: el.ratio, radius: el.radius, fontsize: el.fontsize, scheme: el.scheme };
+  $     try { localStorage.setItem(STORE, JSON.stringify(data)); } catch (e) {}
+  $   };
+  $   el.setKnob = (key, value) => {
+  $     el[key] = value;
+  $     root.style.setProperty(VARS[key], key === 'accent' ? `oklch(from ${value} l c h)` : value);
+  $     el.save();
+  $   };
+  $   el.setScheme = (value) => {
+  $     el.scheme = value;
+  $     if (value === 'light' || value === 'dark') root.setAttribute('data-scheme', value);
+  $     else root.removeAttribute('data-scheme');
+  $     el.save();
+  $   };
+  $   el.resetKnobs = () => {
+  $     Object.values(VARS).forEach(v => root.style.removeProperty(v));
+  $     root.removeAttribute('data-scheme');
+  $     try { localStorage.removeItem(STORE); } catch (e) {}
+  $     el.accent = readAccentHex();
+  $     el.space = DEFAULTS.space; el.ratio = DEFAULTS.ratio; el.radius = DEFAULTS.radius;
+  $     el.fontsize = DEFAULTS.fontsize; el.scheme = 'system';
+  $   };
+  $   let saved = {};
+  $   try { saved = JSON.parse(localStorage.getItem(STORE) || '{}'); } catch (e) {}
+  $   el.accent = saved.accent || readAccentHex();
+  $   el.space = saved.space || DEFAULTS.space;
+  $   el.ratio = saved.ratio || DEFAULTS.ratio;
+  $   el.radius = saved.radius || DEFAULTS.radius;
+  $   el.fontsize = saved.fontsize || DEFAULTS.fontsize;
+  $   el.scheme = saved.scheme || DEFAULTS.scheme;
+  $ });
+  <button type="button" class="jst-knobs-toggle" aria-expanded="$(open ? 'true' : 'false')" aria-controls="jst-knobs-panel"
+          onclick="el.open = !el.open">
+    <span aria-hidden="true">$(open ? '✕' : '🎛')</span> Theme
+  </button>
+  $ if (open) {
+    <div class="jst-knobs-panel" id="jst-knobs-panel" role="group" aria-label="Theme knobs"
+         onkeydown="keys(event, { Escape: () => { el.open = false; setTimeout(() => { const t = el.querySelector('.jst-knobs-toggle'); if (t) t.focus(); }, 0); } })">
+      <p class="jst-knobs-caption">This page is themed by the <code>--jst-*</code> tokens. The panel writes them inline on &lt;html&gt;, and inline styles beat the <code>jst.tokens</code> layer, so your choices win.</p>
+      <label>Accent
+        <input type="color" .value="$(accent || '#3f51b5')" oninput="el.setKnob('accent', this.value)">
+      </label>
+      <label>Space <span>$(space)</span>
+        <input type="range" min="0.3" max="1.4" step="0.05" .value="$(parseFloat(space))"
+               oninput="el.setKnob('space', this.value + 'rem')">
+      </label>
+      <label>Ratio <span>$(ratio)</span>
+        <input type="range" min="1.1" max="2" step="0.05" .value="$(parseFloat(ratio))"
+               oninput="el.setKnob('ratio', this.value)">
+      </label>
+      <label>Radius <span>$(radius)</span>
+        <input type="range" min="0" max="1" step="0.02" .value="$(parseFloat(radius))"
+               oninput="el.setKnob('radius', this.value + 'rem')">
+      </label>
+      <label>Font size <span>$(fontsize)</span>
+        <input type="range" min="0.75" max="1.5" step="0.05" .value="$(parseFloat(fontsize))"
+               oninput="el.setKnob('fontsize', this.value + 'rem')">
+      </label>
+      <div class="jst-knobs-scheme" role="group" aria-label="Colour scheme">
+        <span>Scheme</span>
+        <button type="button" data-active="$(scheme === 'system')" onclick="el.setScheme('system')">System</button>
+        <button type="button" data-active="$(scheme === 'light')" onclick="el.setScheme('light')">Light</button>
+        <button type="button" data-active="$(scheme === 'dark')" onclick="el.setScheme('dark')">Dark</button>
+      </div>
+      <button type="button" class="jst-knobs-reset" onclick="el.resetKnobs()">Reset to defaults</button>
+    </div>
+  $ }
+</script>
+<jst-theme-knobs></jst-theme-knobs>
 </body>
 </html>
