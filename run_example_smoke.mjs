@@ -504,7 +504,7 @@ const checks = [
       ${flushSnippet}
       await Promise.all(['jst-rating', 'jst-copy-button', 'jst-relative-time',
         'jst-format-bytes', 'jst-format-number', 'jst-format-date',
-        'markdown-block', 'qr-panel'].map(n => customElements.whenDefined(n)));
+        'markdown-block', 'qr-code'].map(n => customElements.whenDefined(n)));
       await flush(); await flush();
 
       const rating = document.getElementById('demo-rating');

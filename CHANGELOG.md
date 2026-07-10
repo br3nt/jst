@@ -5,6 +5,28 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.7.8 - 2026-07-11
+
+Fixes from reading the recipe pages on an iPhone.
+
+### Fixed
+
+- **Icons vanished in Safari.** A sprite reference (`<svg><use href="#...">`)
+  without a `viewBox` has no intrinsic aspect ratio, so `jst-icon`'s
+  `inline-size: auto` resolved to 0 and the icon disappeared (Chromium is
+  forgiving, Safari is not). Two-part fix: `jst-icon > svg` now carries
+  `aspect-ratio: auto 1 / 1` (intrinsic ratio when a viewBox provides one,
+  square fallback when it does not), and the icons recipe adds `viewBox` to
+  the referencing svgs with the reason stated.
+
+### Changed
+
+- **`qr-panel` renamed `qr-code`** in the template recipes. The natural name
+  was sitting right there.
+
+Body-HTML `$()` interpolation (so a value can render via a plain function
+call, no template or wrapper element) is now designed in #83.
+
 ## 0.7.7 - 2026-07-10
 
 The component-gap sweep (#80): every pattern a component library ships now has

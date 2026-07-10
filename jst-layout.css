@@ -563,6 +563,9 @@ jst-icon > svg {
   align-self: center;
   block-size: 0.75em;
   inline-size: auto;
+  /* A sprite reference without a viewBox has no intrinsic ratio, so
+     inline-size: auto would collapse to 0 (Safari). Fall back to square. */
+  aspect-ratio: auto 1 / 1;
   fill: currentColor;
 }
 @supports (block-size: 1cap) {
