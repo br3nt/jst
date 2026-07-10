@@ -670,9 +670,12 @@
             </symbol>
           </svg>
           <div class="icon-row">
-            <jst-icon><svg aria-hidden="true"><use href="#ic-home"></use></svg> Home</jst-icon>
-            <jst-icon style="color: var(--jst-accent)"><svg aria-hidden="true"><use href="#ic-star"></use></svg> Starred</jst-icon>
-            <jst-icon><svg aria-hidden="true"><use href="#ic-bell"></use></svg> Alerts</jst-icon>
+            <!-- viewBox on the referencing svg is load-bearing: without an
+                 intrinsic aspect ratio, jst-icon's inline-size: auto resolves
+                 to 0 in Safari and the icon vanishes. -->
+            <jst-icon><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-home"></use></svg> Home</jst-icon>
+            <jst-icon style="color: var(--jst-accent)"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-star"></use></svg> Starred</jst-icon>
+            <jst-icon><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-bell"></use></svg> Alerts</jst-icon>
           </div>
         </div>
         <details>
@@ -684,8 +687,10 @@
   &lt;/symbol&gt;
 &lt;/svg&gt;
 
-&lt;!-- Use it anywhere, sized by the jst-icon primitive --&gt;
-&lt;jst-icon&gt;&lt;svg&gt;&lt;use href="#ic-home"/&gt;&lt;/svg&gt; Home&lt;/jst-icon&gt;
+&lt;!-- Use it anywhere, sized by the jst-icon primitive. The viewBox on the
+     referencing svg matters: no viewBox means no aspect ratio, and Safari
+     collapses the auto width to zero. --&gt;
+&lt;jst-icon&gt;&lt;svg viewBox="0 0 24 24"&gt;&lt;use href="#ic-home"/&gt;&lt;/svg&gt; Home&lt;/jst-icon&gt;
 
 /* jst-icon (in jst-layout.css) aligns and sizes the svg to the text. */</code></pre>
         </details>

@@ -28,7 +28,7 @@
       .catch(() => { /* same graceful fallback */ });
     import('https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/+esm')
       .then(m => { window.qrcodeLib = m.default || m; })
-      .catch(() => { /* qr-panel shows its note */ });
+      .catch(() => { /* qr-code shows its note */ });
   </script>
 
   <style>
@@ -97,7 +97,7 @@
     .fmt-grid dd { margin: 0; font-variant-numeric: tabular-nums; }
     .fmt-grid strong { color: var(--jst-accent-700, var(--jst-accent)); }
 
-    /* ---- qr-panel + markdown-block mounts ---- */
+    /* ---- qr-code + markdown-block mounts ---- */
     .qr-frame { margin: 0; inline-size: 160px; block-size: 160px; display: grid; place-items: center; }
     .qr-frame svg { inline-size: 100%; block-size: 100%; }
     .md-rendered { border: var(--jst-border-width) solid var(--jst-border); border-radius: var(--jst-radius); padding: var(--jst-space-m) var(--jst-space-l); background: var(--jst-surface); }
@@ -247,7 +247,7 @@
   <!-- 7. QR CODE. THIRD-PARTY qrcode-generator draws into a jst-preserve'd mount
        built once in once('qr'); a republished `value` re-renders through _render.
        Same shape as the third-party charts recipe. -->
-  <script type="jst" name="qr-panel" attributes="value">
+  <script type="jst" name="qr-code" attributes="value">
     <figure class="qr-frame" jst-preserve jst-key="qr"></figure>
     ${ once('qr', () => {
          let disposed = false;
@@ -443,7 +443,7 @@ The javascript link loses its href and the script tag is removed by the sanitize
       <!-- ================= 7. QR CODE ================= -->
       <div class="card" id="recipe-qr">
         <header>
-          <h3>&lt;qr-panel&gt;</h3>
+          <h3>&lt;qr-code&gt;</h3>
           <span class="layer" data-layer="third-party">Third-party</span>
           <span class="layer" data-layer="jst">JST</span>
         </header>
@@ -453,7 +453,7 @@ The javascript link loses its href and the script tag is removed by the sanitize
            charts recipe: JST stays a thin controlled-renderer over a preserved node the
            library owns.</p>
         <div class="demo">
-          <qr-panel id="demo-qr" value="https://github.com/br3nt/jst"></qr-panel>
+          <qr-code id="demo-qr" value="https://github.com/br3nt/jst"></qr-code>
           <label class="readout">
             Encode a value:
             <input id="qr-input" type="text" value="https://github.com/br3nt/jst"
@@ -462,7 +462,7 @@ The javascript link loses its href and the script tag is removed by the sanitize
         </div>
         <p class="note">If the CDN is unreachable the mount shows a note and the JST
            wrapper still renders. Nothing else on the page depends on it.</p>
-        <details class="src"><summary>Show the template source</summary><pre><code data-source-for="qr-panel"></code></pre></details>
+        <details class="src"><summary>Show the template source</summary><pre><code data-source-for="qr-code"></code></pre></details>
       </div>
 
       <jst-box>
@@ -527,7 +527,7 @@ The javascript link loses its href and the script tag is removed by the sanitize
       return { text: rtf.format(Math.round(diff / size), unit), size, title: new Date(target).toString() };
     }
 
-    // ---- qr-panel glue: build into the preserved mount, re-render on republish ----
+    // ---- qr-code glue: build into the preserved mount, re-render on republish ----
     function showQrMissing(el) {
       const mount = el.querySelector('.qr-frame');
       if (mount) mount.innerHTML = '<p class="lib-missing">The QR library did not load from the CDN. The JST wrapper still rendered.</p>';
