@@ -11,11 +11,20 @@
  *
  * Theme by overriding the --jst-* tokens at :root. Structure stays put, the look
  * re-themes (the CSS Zen Garden bet).
+ *
+ * Everything lives in the `jst` cascade layer, so ANY unlayered app stylesheet
+ * outranks these rules regardless of specificity: override with a plain
+ * selector, no specificity games, or strip one rule locally with
+ * `property: revert-layer`. Sub-layer order (weakest first) is declared here
+ * once, and jst.components is filled by jst-components.css.
  */
+@layer jst.tokens, jst.base, jst.primitives, jst.components;
 
 /* ============================================================================
- * Layer 0 - design tokens (the theming contract)
+ * jst.tokens - design tokens (the theming contract)
  * ==========================================================================*/
+@layer jst.tokens {
+
 :root {
   color-scheme: light dark;
 
@@ -112,9 +121,13 @@
   }
 }
 
+} /* @layer jst.tokens */
+
 /* ============================================================================
- * Layer 0 - classless base (style elements directly, Pico-style)
+ * jst.base - classless base (style elements directly, Pico-style)
  * ==========================================================================*/
+@layer jst.base {
+
 *, *::before, *::after { box-sizing: border-box; }
 
 body {
@@ -303,11 +316,14 @@ fieldset {
 
 code, pre { font-family: var(--jst-font-mono); }
 
+} /* @layer jst.base */
+
 /* ============================================================================
- * Layer 1 - layout primitives (Every Layout recipes, CSS-only)
+ * jst.primitives - layout primitives (Every Layout recipes, CSS-only)
  * Set per-instance values with an inline custom property, e.g.
  *   <jst-stack style="--space: var(--jst-space-l)">
  * ==========================================================================*/
+@layer jst.primitives {
 
 /* Stack: even vertical rhythm between flow children. */
 jst-stack {
@@ -552,3 +568,5 @@ jst-icon > svg {
 @supports (block-size: 1cap) {
   jst-icon > svg { block-size: 1cap; }
 }
+
+} /* @layer jst.primitives */

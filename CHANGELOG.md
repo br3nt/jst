@@ -5,6 +5,30 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.7.5 - 2026-07-10
+
+Prompted by a competitive audit against Web Awesome: two things it ships that
+JST should too, done the JST way.
+
+### Added
+
+- **Agent-facing docs: `llms.txt` + a `jst` skill (#77).** `.claude/skills/jst/SKILL.md`
+  is the canonical instruction set for AI agents working on a JST page:
+  component authoring, handler semantics, jst-nav, the token contract, known
+  gotchas. `llms.txt` at the site root points agents at it, including how to
+  fetch the skill pinned to the version an app has vendored
+  (`grep "export const version" jst.js` → the matching `v<version>` tag).
+
+### Changed
+
+- **All CSS now lives in the `jst` cascade layer (#77).** `jst-layout.css`
+  declares `@layer jst.tokens, jst.base, jst.primitives, jst.components` and
+  fills the first three; `jst-components.css` fills the last. Consequence: any
+  unlayered app stylesheet outranks jst styles regardless of specificity, so
+  overriding a jst default needs a plain selector, never a specificity fight,
+  and a single property can be stripped locally with `revert-layer`. Token
+  overrides at `:root` behave as before.
+
 ## 0.7.4 - 2026-07-07
 
 Found adopting morph across a real app (#74): a whole-region `jst-swap="morph"`

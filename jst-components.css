@@ -4,7 +4,14 @@
  * primitives (dialog, popover, details, Invoker Commands) styled by tokens, so
  * the SAME markup re-skins to any framework's look by swapping a theme that
  * overrides the --jst-* tokens. Demonstrated in examples/components_cross_section.html.
+ *
+ * Everything here fills the jst.components sub-layer, so unlayered app CSS
+ * outranks any of it without specificity games. The order declaration repeats
+ * jst-layout.css's so the sub-layer order holds whichever file loads first.
  */
+@layer jst.tokens, jst.base, jst.primitives, jst.components;
+
+@layer jst.components {
 
 /* ============================================================================
  * Theme skins - each overrides only tokens. Same components, different look.
@@ -622,3 +629,5 @@ jst-palette .jst-empty-line { padding: var(--jst-space-s); color: var(--jst-mute
   --jst-shadow: 0 4px 12px oklch(0 0 0 / 0.12);
   --jst-ring: 0 0 0 2px oklch(0.49 0.24 277 / 0.4);
 }
+
+} /* @layer jst.components */
