@@ -1,0 +1,31 @@
+# JST
+
+> JavaScript Templates (JST) : reactive web components in plain HTML, with
+> JavaScript itself as the templating language. No build step. JST is vendored
+> into apps as plain files (never an npm install), and releases are git tags.
+
+If you are an AI agent working on a page or app that uses JST, read the JST
+skill first. It is the canonical agent-facing instruction set: component
+authoring, jst-nav, the token/theming contract, and the known gotchas.
+
+## Agent instructions
+
+- [JST skill (latest)](https://br3nt.github.io/jst/.claude/skills/jst/SKILL.md):
+  matches the current main branch.
+- Version-pinned skill: the app you are in carries its own vendored copy of
+  JST. Find its version with `grep "export const version" jst.js`, then fetch
+  the skill that matches it:
+  `https://raw.githubusercontent.com/br3nt/jst/v<version>/.claude/skills/jst/SKILL.md`
+
+## Docs
+
+- [README](https://raw.githubusercontent.com/br3nt/jst/main/README.md): what
+  JST is, the philosophy, the component API in brief.
+- [Onboarding walkthrough](https://br3nt.github.io/jst/docs/): one page,
+  ordered to teach, annotated live examples.
+- [index.d.ts](https://raw.githubusercontent.com/br3nt/jst/main/index.d.ts):
+  authoritative core API surface.
+- [jst-nav.d.ts](https://raw.githubusercontent.com/br3nt/jst/main/jst-nav.d.ts):
+  authoritative navigation API surface.
+- [CHANGELOG](https://raw.githubusercontent.com/br3nt/jst/main/CHANGELOG.md):
+  semantics changes release by release.
