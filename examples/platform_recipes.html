@@ -1,0 +1,708 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Platform recipes: what JST leaves to the platform</title>
+  <link rel="icon" href="data:,">
+
+  <!-- JST's own CSS (tokens + classless base + layout primitives) and the
+       component skins. Local files, zero network. jst.js is loaded because
+       one recipe (scrollspy) is a genuine JST component; every other recipe
+       on this page is plain HTML/CSS that needs no runtime at all. -->
+  <link rel="stylesheet" href="../jst-layout.css">
+  <link rel="stylesheet" href="../jst-components.css">
+  <script type="module" src="../jst.js"></script>
+
+  <style>
+    /* ---- Layer badges: each recipe says which layer you are looking at ---- */
+    .layer {
+      display: inline-block; font-size: 0.68rem; font-weight: 700;
+      letter-spacing: 0.04em; text-transform: uppercase;
+      padding: 0.15em 0.55em; border-radius: 999px; vertical-align: middle;
+      border: 1px solid transparent; white-space: nowrap;
+    }
+    .layer[data-layer="native"]      { background: oklch(0.93 0.03 255); color: oklch(0.38 0.09 255); border-color: oklch(0.82 0.05 255); }
+    .layer[data-layer="jst"]         { background: oklch(0.93 0.06 155); color: oklch(0.38 0.11 155); border-color: oklch(0.80 0.09 155); }
+    .layer[data-layer="third-party"] { background: oklch(0.93 0.07 70);  color: oklch(0.42 0.12 70);  border-color: oklch(0.82 0.10 70); }
+    [data-scheme="dark"] .layer[data-layer="native"]      { background: oklch(0.30 0.04 255); color: oklch(0.85 0.06 255); border-color: oklch(0.45 0.06 255); }
+    [data-scheme="dark"] .layer[data-layer="jst"]         { background: oklch(0.30 0.06 155); color: oklch(0.85 0.09 155); border-color: oklch(0.45 0.09 155); }
+    [data-scheme="dark"] .layer[data-layer="third-party"] { background: oklch(0.30 0.06 70);  color: oklch(0.85 0.09 70);  border-color: oklch(0.45 0.08 70); }
+
+    .legend { display: flex; flex-wrap: wrap; gap: var(--jst-space-s); align-items: center; }
+
+    .recipe {
+      border: var(--jst-border-width) solid var(--jst-border); border-radius: var(--jst-radius);
+      padding: var(--jst-space-l); background: var(--jst-bg);
+    }
+    .recipe > header { display: flex; align-items: center; flex-wrap: wrap; gap: var(--jst-space-s); margin-block-end: var(--jst-space-xs); }
+    .recipe > header h3 { margin: 0; }
+    .recipe .lead { color: var(--jst-muted); margin-block: 0 var(--jst-space-m); }
+    .recipe .demo { padding: var(--jst-space-m); border: var(--jst-border-width) dashed var(--jst-border); border-radius: var(--jst-radius); }
+    .recipe details { margin-block-start: var(--jst-space-m); }
+    .recipe summary { cursor: pointer; color: var(--jst-accent-700, var(--jst-accent)); font-weight: 600; font-size: var(--jst-font-small); }
+    .recipe pre {
+      margin-block-start: var(--jst-space-s); overflow-x: auto;
+      background: var(--jst-surface); padding: var(--jst-space-s) var(--jst-space-m);
+      border-radius: var(--jst-radius); border: var(--jst-border-width) solid var(--jst-border);
+    }
+    .recipe pre code { font-family: var(--jst-font-mono); font-size: 0.82rem; line-height: 1.55; white-space: pre; }
+
+    /* ---------- Recipe 4: progress ring (conic-gradient + --value) ---------- */
+    .ring-demo { display: flex; align-items: center; gap: var(--jst-space-l); flex-wrap: wrap; --value: 68; }
+    .ring {
+      inline-size: 5.5rem; aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center;
+      background: conic-gradient(var(--jst-accent) calc(var(--value) * 1%), var(--jst-border) 0);
+      -webkit-mask: radial-gradient(farthest-side, transparent 58%, #000 59%);
+              mask: radial-gradient(farthest-side, transparent 58%, #000 59%);
+    }
+    .ring-num { font-weight: 700; font-variant-numeric: tabular-nums; }
+
+    /* ---------- Recipe 5: stepper (ol + counters + aria-current) ---------- */
+    .steps { list-style: none; counter-reset: step; display: flex; gap: var(--jst-space-xs); padding: 0; margin: 0; }
+    .steps li {
+      counter-increment: step; flex: 1; text-align: center; position: relative;
+      color: var(--jst-muted); font-size: var(--jst-font-small);
+    }
+    .steps li::before {
+      content: counter(step); display: grid; place-items: center; margin: 0 auto var(--jst-space-2xs);
+      inline-size: 2rem; aspect-ratio: 1; border-radius: 50%;
+      background: var(--jst-surface); border: var(--jst-border-width) solid var(--jst-border); font-weight: 700;
+    }
+    .steps li:not(:first-child)::after {
+      content: ""; position: absolute; inset-block-start: 1rem; inset-inline-end: 50%;
+      inline-size: 100%; block-size: var(--jst-border-width); background: var(--jst-border); z-index: -1;
+    }
+    .steps li[aria-current="step"] { color: var(--jst-fg); font-weight: 600; }
+    .steps li[aria-current="step"]::before { background: var(--jst-accent); color: var(--jst-accent-fg); border-color: var(--jst-accent); }
+
+    /* ---------- Recipe 6: tree view (nested details + connectors) ---------- */
+    .tree, .tree ul { list-style: none; margin: 0; padding-inline-start: var(--jst-space-l); }
+    .tree > details, .tree details details { border-inline-start: var(--jst-border-width) solid var(--jst-border); padding-inline-start: var(--jst-space-s); }
+    .tree summary { cursor: pointer; padding-block: var(--jst-space-3xs); }
+    .tree .leaf { padding-block: var(--jst-space-3xs); padding-inline-start: 1.1rem; color: var(--jst-muted); }
+
+    /* ---------- Recipe 7: floating label (:placeholder-shown) ---------- */
+    .float { position: relative; display: block; }
+    .float input { inline-size: 100%; padding-block-start: 1.3rem; }
+    .float span {
+      position: absolute; inset-inline-start: var(--jst-space-s); inset-block-start: 0.85rem;
+      color: var(--jst-muted); pointer-events: none; transition: 0.15s ease; transform-origin: left;
+    }
+    .float input:focus + span,
+    .float input:not(:placeholder-shown) + span { transform: translateY(-0.75rem) scale(0.8); color: var(--jst-accent-700, var(--jst-accent)); }
+
+    /* ---------- Recipe 8: OTP ---------- */
+    .otp { font-family: var(--jst-font-mono); letter-spacing: 0.6em; text-align: center; inline-size: 10rem; }
+
+    /* ---------- Recipe 9 + 10: popover menu / animated popover ---------- */
+    .ctx-menu { margin: 0; padding: var(--jst-space-2xs); border: var(--jst-border-width) solid var(--jst-border); border-radius: var(--jst-radius); background: var(--jst-bg); box-shadow: 0 6px 24px oklch(0 0 0 / 0.18); min-inline-size: 9rem; }
+    .ctx-menu button { display: block; inline-size: 100%; text-align: start; background: none; border: 0; color: var(--jst-fg); padding: var(--jst-space-2xs) var(--jst-space-s); border-radius: calc(var(--jst-radius) / 1.5); }
+    .ctx-menu button:hover { background: var(--jst-surface); }
+
+    .anim-pop {
+      margin: 0; border: var(--jst-border-width) solid var(--jst-border); border-radius: var(--jst-radius);
+      background: var(--jst-bg); padding: var(--jst-space-m); max-inline-size: 22rem;
+      opacity: 0; transform: translateY(0.5rem) scale(0.97);
+      transition: opacity 0.25s ease, transform 0.25s ease, overlay 0.25s allow-discrete, display 0.25s allow-discrete;
+    }
+    .anim-pop:popover-open { opacity: 1; transform: none; }
+    @starting-style { .anim-pop:popover-open { opacity: 0; transform: translateY(0.5rem) scale(0.97); } }
+
+    /* ---------- Recipe 11: comparison slider ---------- */
+    .compare { position: relative; inline-size: min(100%, 22rem); aspect-ratio: 16 / 10; --pos: 50%; border-radius: var(--jst-radius); overflow: hidden; }
+    .compare img { position: absolute; inset: 0; inline-size: 100%; block-size: 100%; object-fit: cover; display: block; }
+    .compare .over { clip-path: inset(0 calc(100% - var(--pos)) 0 0); }
+    .compare .handle { position: absolute; inset-block: 0; inset-inline-start: var(--pos); inline-size: 2px; background: #fff; transform: translateX(-50%); pointer-events: none; }
+    .compare input[type="range"] { position: absolute; inset-block-end: var(--jst-space-s); inset-inline: var(--jst-space-s); inline-size: calc(100% - 2 * var(--jst-space-s)); }
+
+    /* ---------- Recipe 12: split panel ---------- */
+    .split { display: flex; gap: var(--jst-space-2xs); block-size: 9rem; }
+    .split .pane { padding: var(--jst-space-s); border: var(--jst-border-width) solid var(--jst-border); border-radius: var(--jst-radius); background: var(--jst-surface); overflow: auto; }
+    .split .pane-a { resize: horizontal; inline-size: 45%; min-inline-size: 5rem; max-inline-size: 85%; }
+    .split .pane-b { flex: 1; }
+
+    /* ---------- Recipe 13: scrollspy JST component ---------- */
+    .spy { display: grid; grid-template-columns: 12rem 1fr; gap: var(--jst-space-l); }
+    .spy-toc { position: sticky; inset-block-start: var(--jst-space-s); align-self: start; }
+    .spy-toc ol { list-style: none; margin: var(--jst-space-xs) 0 0; padding: 0; display: grid; gap: var(--jst-space-3xs); }
+    .spy-toc a { text-decoration: none; color: var(--jst-muted); border-inline-start: 2px solid transparent; padding-inline-start: var(--jst-space-s); display: block; }
+    .spy-toc a[aria-current="true"] { color: var(--jst-accent-700, var(--jst-accent)); border-inline-start-color: var(--jst-accent); font-weight: 600; }
+    .spy-sections section { min-block-size: 60vh; padding-block: var(--jst-space-m); }
+    .spy-sections h4 { margin-block: 0 var(--jst-space-xs); }
+
+    /* ---------- Recipe 14: icons ---------- */
+    .icon-row { display: flex; gap: var(--jst-space-l); flex-wrap: wrap; }
+    .icon-row jst-icon { --space: var(--jst-space-2xs); }
+    .icon-row jst-icon svg { block-size: 1.4em; }
+  </style>
+
+  <!-- Recipe 13 is the only JST component on the page: a scrollspy driven by
+       JST's `onreveal` synthetic event. As each <section> scrolls into view it
+       fires `reveal`; the handler (a plain function body) records the active id,
+       which re-highlights the table of contents. `jst-key` preserves each section
+       node across re-renders so its IntersectionObserver is not re-attached. -->
+  <script type="jst" name="scroll-spy" attributes="sections active">
+    <div class="spy">
+      <nav class="spy-toc" aria-label="On this page">
+        <strong>On this page</strong>
+        <ol>
+          $ (sections || []).forEach(s => {
+            <li><a href="#$(s.id)" aria-current="$(active === s.id ? 'true' : 'false')">$(s.label)</a></li>
+          $ })
+        </ol>
+      </nav>
+      <div class="spy-sections">
+        $ (sections || []).forEach(s => {
+          <section id="$(s.id)" jst-key="$(s.id)" onreveal="if (el.active !== this.id) el.active = this.id">
+            <h4>$(s.label)</h4>
+            <p>$(s.body)</p>
+          </section>
+        $ })
+      </div>
+    </div>
+  </script>
+</head>
+
+<body data-scheme="light">
+  <jst-center style="--measure: 76ch; --gutters: var(--jst-space-l)">
+    <jst-stack style="--space: var(--jst-space-xl); padding-block: var(--jst-space-xl)">
+
+      <jst-stack>
+        <h1>Platform recipes: the components JST deliberately does not ship</h1>
+        <p>Web Awesome ships a component for each of the things below. The web
+           platform already covers them, so JST does not add a component - it just
+           lets you use the platform. Each recipe is a working demo with its
+           complete, copyable source in a <em>View source</em> panel beneath it,
+           badged by the layer it lives on. This is the answer to
+           <q>how do I do X in JST</q> for every X here: you write the HTML.</p>
+
+        <div class="legend">
+          <span>Every recipe is labelled by layer:</span>
+          <span class="layer" data-layer="native">Native</span><span>plain HTML/CSS/JS, no JST</span>
+          <span class="layer" data-layer="jst">JST</span><span>a JST component</span>
+          <span class="layer" data-layer="third-party">Third-party</span><span>an outside library, by choice</span>
+        </div>
+
+        <p style="color: var(--jst-muted); font-size: var(--jst-font-small)">
+          The whole page is hermetic: every image is an inline SVG data URI and
+          nothing is fetched over the network. Serve the repo root and open this
+          file to try each demo.</p>
+      </jst-stack>
+
+      <!-- ============ 1. DATE / TIME / NUMBER INPUTS ============ -->
+      <section class="recipe" id="recipe-datetime-number">
+        <header>
+          <h3>Date, time and number inputs</h3>
+          <span class="layer" data-layer="native">Native</span>
+        </header>
+        <p class="lead">Web Awesome's Date Input and Date Picker are Pro;
+           <code>input[type=date]</code> is free in every browser, and the
+           classless base already token-styles it.</p>
+        <div class="demo">
+          <jst-form-row>
+            <jst-field><label for="r1-date">Date</label><input id="r1-date" type="date" value="2026-07-10"></jst-field>
+            <jst-field><label for="r1-time">Time</label><input id="r1-time" type="time" value="09:30"></jst-field>
+            <jst-field><label for="r1-num">Quantity</label><input id="r1-num" type="number" min="0" max="99" value="3"></jst-field>
+          </jst-form-row>
+        </div>
+        <details>
+          <summary>View source</summary>
+          <pre><code>&lt;jst-field&gt;&lt;label&gt;Date&lt;/label&gt;
+  &lt;input type="date" value="2026-07-10"&gt;
+&lt;/jst-field&gt;
+&lt;jst-field&gt;&lt;label&gt;Time&lt;/label&gt;
+  &lt;input type="time" value="09:30"&gt;
+&lt;/jst-field&gt;
+&lt;jst-field&gt;&lt;label&gt;Quantity&lt;/label&gt;
+  &lt;input type="number" min="0" max="99" value="3"&gt;
+&lt;/jst-field&gt;
+
+&lt;!-- No CSS. jst-layout.css styles native inputs by element. --&gt;</code></pre>
+        </details>
+      </section>
+
+      <!-- ============ 2. FILE INPUT ============ -->
+      <section class="recipe" id="recipe-file-input">
+        <header>
+          <h3>File input</h3>
+          <span class="layer" data-layer="native">Native</span>
+        </header>
+        <p class="lead">Web Awesome's File Input is Pro. The classless base already
+           skins the native picker through <code>::file-selector-button</code>.</p>
+        <div class="demo">
+          <jst-field>
+            <label for="r2-file">Attachment</label>
+            <input id="r2-file" type="file">
+          </jst-field>
+        </div>
+        <details>
+          <summary>View source</summary>
+          <pre><code>&lt;jst-field&gt;
+  &lt;label&gt;Attachment&lt;/label&gt;
+  &lt;input type="file"&gt;
+&lt;/jst-field&gt;
+
+/* Already in jst-layout.css - shown for reference: */
+::file-selector-button {
+  font: inherit;
+  padding: var(--jst-space-2xs) var(--jst-space-s);
+  border: var(--jst-border-width) solid var(--jst-border);
+  border-radius: var(--jst-radius);
+  background: var(--jst-surface);
+  color: var(--jst-fg);
+  cursor: pointer;
+}</code></pre>
+        </details>
+      </section>
+
+      <!-- ============ 3. VIDEO ============ -->
+      <section class="recipe" id="recipe-video">
+        <header>
+          <h3>Video</h3>
+          <span class="layer" data-layer="native">Native</span>
+        </header>
+        <p class="lead">Web Awesome's Video is Pro. Native <code>&lt;video&gt;</code>
+           gives you controls, a poster, and <code>&lt;track&gt;</code> captions with
+           no library. (This demo has a poster but no media source, so it shows the
+           frame without playing.)</p>
+        <div class="demo">
+          <video controls width="320" style="max-inline-size: 100%; border-radius: var(--jst-radius)"
+                 poster="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='320' height='180'><rect width='320' height='180' fill='dimgray'/><polygon points='140,66 140,114 178,90' fill='white'/><text x='160' y='150' fill='gainsboro' font-family='sans-serif' font-size='13' text-anchor='middle'>native &lt;video&gt; poster</text></svg>">
+            <track kind="captions" default srclang="en" label="English"
+                   src="data:text/vtt,WEBVTT%0A%0A00:00.000 --> 00:03.000%0ANative captions, no library needed.">
+            Your browser cannot play this video.
+          </video>
+        </div>
+        <details>
+          <summary>View source</summary>
+          <pre><code>&lt;video controls width="320" poster="poster.jpg"&gt;
+  &lt;source src="clip.mp4" type="video/mp4"&gt;
+  &lt;track kind="captions" default srclang="en" label="English"
+         src="captions.vtt"&gt;
+  Your browser cannot play this video.
+&lt;/video&gt;
+
+&lt;!-- controls, fullscreen, PiP and captions are all native. --&gt;</code></pre>
+        </details>
+      </section>
+
+      <!-- ============ 4. PROGRESS RING ============ -->
+      <section class="recipe" id="recipe-progress-ring">
+        <header>
+          <h3>Progress ring and bar</h3>
+          <span class="layer" data-layer="native">Native</span>
+        </header>
+        <p class="lead">A ring is a <code>conic-gradient()</code> driven by one
+           <code>--value</code> custom property; the linear case is just
+           <code>&lt;progress&gt;</code>. Drag the slider to drive both.</p>
+        <div class="demo">
+          <div class="ring-demo" style="--value: 68">
+            <div class="ring" role="img" aria-label="68 percent complete"><span class="ring-num">68%</span></div>
+            <jst-stack style="--space: var(--jst-space-xs); flex: 1; min-inline-size: 12rem">
+              <input type="range" min="0" max="100" value="68" aria-label="Progress"
+                     oninput="const d = this.closest('.ring-demo'); d.style.setProperty('--value', this.value); d.querySelector('.ring-num').textContent = this.value + '%'; d.querySelector('progress').value = this.value / 100">
+              <progress value="0.68" max="1"></progress>
+            </jst-stack>
+          </div>
+        </div>
+        <details>
+          <summary>View source</summary>
+          <pre><code>&lt;div class="ring-demo" style="--value: 68"&gt;
+  &lt;div class="ring"&gt;&lt;span class="ring-num"&gt;68%&lt;/span&gt;&lt;/div&gt;
+  &lt;input type="range" min="0" max="100" value="68"
+    oninput="const d = this.closest('.ring-demo');
+             d.style.setProperty('--value', this.value);
+             d.querySelector('.ring-num').textContent = this.value + '%'"&gt;
+  &lt;progress value="0.68" max="1"&gt;&lt;/progress&gt;
+&lt;/div&gt;
+
+.ring {
+  inline-size: 5.5rem; aspect-ratio: 1; border-radius: 50%;
+  display: grid; place-items: center;
+  background: conic-gradient(var(--jst-accent)
+                calc(var(--value) * 1%), var(--jst-border) 0);
+  mask: radial-gradient(farthest-side, transparent 58%, #000 59%);
+}</code></pre>
+        </details>
+      </section>
+
+      <!-- ============ 5. STEPPER / STEPS ============ -->
+      <section class="recipe" id="recipe-stepper">
+        <header>
+          <h3>Stepper / steps</h3>
+          <span class="layer" data-layer="native">Native</span>
+        </header>
+        <p class="lead">An ordered list numbered by CSS counters, with the current
+           step marked by <code>aria-current="step"</code>.</p>
+        <div class="demo">
+          <ol class="steps">
+            <li>Cart</li>
+            <li aria-current="step">Shipping</li>
+            <li>Payment</li>
+            <li>Review</li>
+          </ol>
+        </div>
+        <details>
+          <summary>View source</summary>
+          <pre><code>&lt;ol class="steps"&gt;
+  &lt;li&gt;Cart&lt;/li&gt;
+  &lt;li aria-current="step"&gt;Shipping&lt;/li&gt;
+  &lt;li&gt;Payment&lt;/li&gt;
+  &lt;li&gt;Review&lt;/li&gt;
+&lt;/ol&gt;
+
+.steps { counter-reset: step; display: flex; list-style: none; }
+.steps li { counter-increment: step; flex: 1; text-align: center; }
+.steps li::before { content: counter(step); /* numbered bubble */ }
+.steps li[aria-current="step"]::before {
+  background: var(--jst-accent); color: var(--jst-accent-fg);
+}</code></pre>
+        </details>
+      </section>
+
+      <!-- ============ 6. TREE VIEW ============ -->
+      <section class="recipe" id="recipe-tree">
+        <header>
+          <h3>Tree view</h3>
+          <span class="layer" data-layer="native">Native</span>
+        </header>
+        <p class="lead">Nested <code>&lt;details&gt;</code>/<code>&lt;summary&gt;</code>
+           with connector lines. Expand, collapse and keyboard focus come from the
+           platform.</p>
+        <div class="demo">
+          <div class="tree">
+            <details open>
+              <summary>src</summary>
+              <details>
+                <summary>components</summary>
+                <div class="leaf">button.js</div>
+                <div class="leaf">card.js</div>
+              </details>
+              <div class="leaf">index.js</div>
+            </details>
+            <details>
+              <summary>tests</summary>
+              <div class="leaf">smoke.mjs</div>
+            </details>
+          </div>
+        </div>
+        <details>
+          <summary>View source</summary>
+          <pre><code>&lt;div class="tree"&gt;
+  &lt;details open&gt;
+    &lt;summary&gt;src&lt;/summary&gt;
+    &lt;details&gt;
+      &lt;summary&gt;components&lt;/summary&gt;
+      &lt;div class="leaf"&gt;button.js&lt;/div&gt;
+    &lt;/details&gt;
+    &lt;div class="leaf"&gt;index.js&lt;/div&gt;
+  &lt;/details&gt;
+&lt;/div&gt;
+
+.tree details { border-inline-start: 1px solid var(--jst-border);
+                padding-inline-start: var(--jst-space-s); }</code></pre>
+        </details>
+      </section>
+
+      <!-- ============ 7. FLOATING LABEL ============ -->
+      <section class="recipe" id="recipe-floating-label">
+        <header>
+          <h3>Floating label</h3>
+          <span class="layer" data-layer="native">Native</span>
+        </header>
+        <p class="lead">Pure CSS with <code>:placeholder-shown</code> and
+           <code>:focus-within</code>. The label sits inside the field and lifts on
+           focus or when there is a value.</p>
+        <div class="demo">
+          <label class="float">
+            <input type="text" placeholder=" " aria-label="Email address">
+            <span>Email address</span>
+          </label>
+        </div>
+        <details>
+          <summary>View source</summary>
+          <pre><code>&lt;label class="float"&gt;
+  &lt;input type="text" placeholder=" "&gt;
+  &lt;span&gt;Email address&lt;/span&gt;
+&lt;/label&gt;
+
+.float { position: relative; }
+.float span { position: absolute; inset-block-start: 0.85rem; transition: 0.15s; }
+.float input:focus + span,
+.float input:not(:placeholder-shown) + span {
+  transform: translateY(-0.75rem) scale(0.8);
+}</code></pre>
+        </details>
+      </section>
+
+      <!-- ============ 8. OTP / ONE-TIME CODE ============ -->
+      <section class="recipe" id="recipe-otp">
+        <header>
+          <h3>One-time code</h3>
+          <span class="layer" data-layer="native">Native</span>
+        </header>
+        <p class="lead">One input with <code>autocomplete="one-time-code"</code> and
+           <code>inputmode="numeric"</code>. On a phone the platform offers the SMS
+           code for one-tap autofill.</p>
+        <div class="demo">
+          <jst-field>
+            <label for="r8-otp">Verification code</label>
+            <input id="r8-otp" class="otp" type="text" inputmode="numeric"
+                   autocomplete="one-time-code" maxlength="6" pattern="[0-9]*" placeholder="000000">
+          </jst-field>
+        </div>
+        <details>
+          <summary>View source</summary>
+          <pre><code>&lt;label&gt;Verification code&lt;/label&gt;
+&lt;input class="otp" type="text" inputmode="numeric"
+       autocomplete="one-time-code" maxlength="6"
+       pattern="[0-9]*" placeholder="000000"&gt;
+
+.otp { font-family: var(--jst-font-mono); letter-spacing: 0.6em;
+       text-align: center; }
+
+&lt;!-- iOS/Android surface the SMS code above the keyboard. --&gt;</code></pre>
+        </details>
+      </section>
+
+      <!-- ============ 9. CONTEXT MENU ============ -->
+      <section class="recipe" id="recipe-context-menu">
+        <header>
+          <h3>Context menu</h3>
+          <span class="layer" data-layer="native">Native</span>
+        </header>
+        <p class="lead">A <code>[popover]</code> menu opened by a
+           <code>command</code> / <code>commandfor</code> invoker button. Light
+           dismiss (outside click, <kbd>Esc</kbd>) is built in.</p>
+        <div class="demo">
+          <button command="toggle-popover" commandfor="r9-menu" style="anchor-name: --r9-btn">Actions &#9662;</button>
+          <div popover id="r9-menu" class="ctx-menu" style="position-anchor: --r9-btn; position-area: bottom span-right; margin-block-start: var(--jst-space-2xs)">
+            <button command="hide-popover" commandfor="r9-menu">Rename</button>
+            <button command="hide-popover" commandfor="r9-menu">Duplicate</button>
+            <button command="hide-popover" commandfor="r9-menu">Move to&#8230;</button>
+          </div>
+        </div>
+        <details>
+          <summary>View source</summary>
+          <pre><code>&lt;button command="toggle-popover" commandfor="menu"
+        style="anchor-name: --btn"&gt;Actions &#9662;&lt;/button&gt;
+
+&lt;div popover id="menu" class="ctx-menu"
+     style="position-anchor: --btn; position-area: bottom span-right"&gt;
+  &lt;button command="hide-popover" commandfor="menu"&gt;Rename&lt;/button&gt;
+  &lt;button command="hide-popover" commandfor="menu"&gt;Duplicate&lt;/button&gt;
+&lt;/div&gt;
+
+&lt;!-- No JS: the invoker opens it, popover light-dismiss closes it. --&gt;</code></pre>
+        </details>
+      </section>
+
+      <!-- ============ 10. ENTER / EXIT ANIMATION ============ -->
+      <section class="recipe" id="recipe-enter-exit">
+        <header>
+          <h3>Enter / exit animation</h3>
+          <span class="layer" data-layer="native">Native</span>
+        </header>
+        <p class="lead"><code>@starting-style</code> plus
+           <code>transition-behavior: allow-discrete</code> animate a popover both
+           ways, including the switch off <code>display: none</code>. No library.</p>
+        <div class="demo">
+          <button command="toggle-popover" commandfor="r10-pop" style="anchor-name: --r10-btn">Toggle panel</button>
+          <div popover id="r10-pop" class="anim-pop" style="position-anchor: --r10-btn; position-area: bottom span-right; margin-block-start: var(--jst-space-2xs)">
+            <strong>Animated both ways.</strong>
+            <p style="margin: var(--jst-space-2xs) 0 0; color: var(--jst-muted)">Fades and lifts in on open, and reverses on close because <code>display</code> and <code>overlay</code> transition with <code>allow-discrete</code>.</p>
+          </div>
+        </div>
+        <details>
+          <summary>View source</summary>
+          <pre><code>&lt;button command="toggle-popover" commandfor="pop"&gt;Toggle&lt;/button&gt;
+&lt;div popover id="pop" class="anim-pop"&gt;Animated both ways.&lt;/div&gt;
+
+.anim-pop {
+  opacity: 0; transform: translateY(0.5rem) scale(0.97);
+  transition: opacity 0.25s, transform 0.25s,
+              overlay 0.25s allow-discrete,
+              display 0.25s allow-discrete;
+}
+.anim-pop:popover-open { opacity: 1; transform: none; }
+@starting-style {
+  .anim-pop:popover-open { opacity: 0; transform: translateY(0.5rem); }
+}</code></pre>
+        </details>
+      </section>
+
+      <!-- ============ 11. COMPARISON SLIDER ============ -->
+      <section class="recipe" id="recipe-comparison-slider">
+        <header>
+          <h3>Comparison slider (before / after)</h3>
+          <span class="layer" data-layer="native">Native</span>
+        </header>
+        <p class="lead">An <code>input[type=range]</code> writes a <code>--pos</code>
+           custom property; the top image is clipped with
+           <code>clip-path: inset()</code>. The one-line <code>oninput</code> is a
+           native inline handler. Both images are inline SVG.</p>
+        <div class="demo">
+          <div class="compare" style="--pos: 50%">
+            <img class="under" alt="After" src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='320' height='200'><rect width='320' height='200' fill='steelblue'/><circle cx='90' cy='80' r='42' fill='gold'/><rect x='150' y='120' width='130' height='55' fill='coral'/><text x='160' y='188' fill='white' font-family='sans-serif' font-size='18' font-weight='bold' text-anchor='middle'>AFTER</text></svg>">
+            <img class="over" alt="Before" src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='320' height='200'><rect width='320' height='200' fill='gray'/><circle cx='90' cy='80' r='42' fill='dimgray'/><rect x='150' y='120' width='130' height='55' fill='darkgray'/><text x='160' y='188' fill='white' font-family='sans-serif' font-size='18' font-weight='bold' text-anchor='middle'>BEFORE</text></svg>">
+            <div class="handle"></div>
+            <input type="range" min="0" max="100" value="50" aria-label="Reveal amount"
+                   oninput="this.closest('.compare').style.setProperty('--pos', this.value + '%')">
+          </div>
+        </div>
+        <details>
+          <summary>View source</summary>
+          <pre><code>&lt;div class="compare" style="--pos: 50%"&gt;
+  &lt;img class="under" src="after.jpg" alt="After"&gt;
+  &lt;img class="over"  src="before.jpg" alt="Before"&gt;
+  &lt;div class="handle"&gt;&lt;/div&gt;
+  &lt;input type="range" min="0" max="100" value="50"
+    oninput="this.closest('.compare')
+      .style.setProperty('--pos', this.value + '%')"&gt;
+&lt;/div&gt;
+
+.compare { position: relative; --pos: 50%; }
+.compare img { position: absolute; inset: 0; object-fit: cover; }
+.compare .over { clip-path: inset(0 calc(100% - var(--pos)) 0 0); }
+.compare .handle { inset-inline-start: var(--pos); }</code></pre>
+        </details>
+      </section>
+
+      <!-- ============ 12. SPLIT PANEL ============ -->
+      <section class="recipe" id="recipe-split-panel">
+        <header>
+          <h3>Split panel</h3>
+          <span class="layer" data-layer="native">Native</span>
+        </header>
+        <p class="lead">Native CSS <code>resize</code> on one pane inside a flex row.
+           Drag the handle at the pane's bottom-inline corner.</p>
+        <div class="demo">
+          <div class="split">
+            <div class="pane pane-a">Left pane. Drag my corner handle to resize.</div>
+            <div class="pane pane-b">Right pane takes the remaining space.</div>
+          </div>
+          <p style="color: var(--jst-muted); font-size: var(--jst-font-small); margin-block-end: 0">
+            Limits: <code>resize</code> gives a corner grip only (no full-height
+            divider), one axis at a time, and clamps with
+            <code>min/max-inline-size</code>. When you need a draggable bar between
+            two panes, that is a real component - reach for a library or write one.</p>
+        </div>
+        <details>
+          <summary>View source</summary>
+          <pre><code>&lt;div class="split"&gt;
+  &lt;div class="pane pane-a"&gt;Left&lt;/div&gt;
+  &lt;div class="pane pane-b"&gt;Right&lt;/div&gt;
+&lt;/div&gt;
+
+.split { display: flex; gap: var(--jst-space-2xs); }
+.split .pane-a {
+  resize: horizontal; overflow: auto;
+  inline-size: 45%; min-inline-size: 5rem; max-inline-size: 85%;
+}
+.split .pane-b { flex: 1; }</code></pre>
+        </details>
+      </section>
+
+      <!-- ============ 13. SCROLLSPY (JST) ============ -->
+      <section class="recipe" id="recipe-scrollspy">
+        <header>
+          <h3>Scrollspy</h3>
+          <span class="layer" data-layer="jst">JST</span>
+        </header>
+        <p class="lead">The one recipe that is a JST component. Its
+           <code>onreveal</code> synthetic event fires as each section scrolls into
+           view; the handler records the active id and JST re-highlights the table
+           of contents. Scroll the page and watch the marker move.</p>
+        <div class="demo">
+          <scroll-spy sections='[
+            {"id":"spy-intro","label":"Introduction","body":"onreveal is the JST synthetic reveal event: a shared IntersectionObserver dispatches a real reveal event on the element as it enters the viewport."},
+            {"id":"spy-install","label":"Install","body":"Because the handler is a plain function body, it reads this.id (the section) and writes el.active (the host), and JST re-renders the table of contents."},
+            {"id":"spy-usage","label":"Usage","body":"jst-key preserves each section node across re-renders, so its observer is never re-attached and the highlight cannot loop between visible sections."},
+            {"id":"spy-api","label":"API","body":"No scroll listeners, no offset math, no library. The platform observes; JST turns the observation into state you can render."}
+          ]' active="spy-intro"></scroll-spy>
+        </div>
+        <details>
+          <summary>View source</summary>
+          <pre><code>&lt;script type="jst" name="scroll-spy" attributes="sections active"&gt;
+  &lt;nav class="spy-toc"&gt;
+    &lt;ol&gt;
+      $ (sections || []).forEach(s =&gt; {
+        &lt;li&gt;&lt;a href="#$(s.id)"
+             aria-current="$(active === s.id ? 'true' : 'false')"&gt;
+          $(s.label)&lt;/a&gt;&lt;/li&gt;
+      $ })
+    &lt;/ol&gt;
+  &lt;/nav&gt;
+  $ (sections || []).forEach(s =&gt; {
+    &lt;section id="$(s.id)" jst-key="$(s.id)"
+             onreveal="if (el.active !== this.id) el.active = this.id"&gt;
+      &lt;h4&gt;$(s.label)&lt;/h4&gt;&lt;p&gt;$(s.body)&lt;/p&gt;
+    &lt;/section&gt;
+  $ })
+&lt;/script&gt;
+
+&lt;scroll-spy sections='[...]' active="spy-intro"&gt;&lt;/scroll-spy&gt;</code></pre>
+        </details>
+      </section>
+
+      <!-- ============ 14. ICONS ============ -->
+      <section class="recipe" id="recipe-icons">
+        <header>
+          <h3>Icons</h3>
+          <span class="layer" data-layer="native">Native</span>
+          <span class="layer" data-layer="third-party">Third-party</span>
+        </header>
+        <p class="lead">An inline SVG sprite (<code>&lt;symbol&gt;</code> /
+           <code>&lt;use&gt;</code>) sized by the <code>jst-icon</code> primitive. Any
+           icon set drops straight in: Lucide, Heroicons, Font Awesome Free - copy
+           their paths into symbols.</p>
+        <div class="demo">
+          <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+            <symbol id="ic-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 10.5 12 3l9 7.5"></path><path d="M5 9.5V21h14V9.5"></path><path d="M9 21v-6h6v6"></path>
+            </symbol>
+            <symbol id="ic-star" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 3l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 18.8 6.2 21.9l1.1-6.5L2.6 9.8l6.5-.9z"></path>
+            </symbol>
+            <symbol id="ic-bell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M6 9a6 6 0 1 1 12 0c0 5 2 6 2 6H4s2-1 2-6"></path><path d="M10 20a2 2 0 0 0 4 0"></path>
+            </symbol>
+          </svg>
+          <div class="icon-row">
+            <jst-icon><svg aria-hidden="true"><use href="#ic-home"></use></svg> Home</jst-icon>
+            <jst-icon style="color: var(--jst-accent)"><svg aria-hidden="true"><use href="#ic-star"></use></svg> Starred</jst-icon>
+            <jst-icon><svg aria-hidden="true"><use href="#ic-bell"></use></svg> Alerts</jst-icon>
+          </div>
+        </div>
+        <details>
+          <summary>View source</summary>
+          <pre><code>&lt;!-- Define the sprite once (paste any icon set's paths here) --&gt;
+&lt;svg width="0" height="0" aria-hidden="true"&gt;
+  &lt;symbol id="ic-home" viewBox="0 0 24 24" ...&gt;
+    &lt;path d="M3 10.5 12 3l9 7.5"/&gt; ...
+  &lt;/symbol&gt;
+&lt;/svg&gt;
+
+&lt;!-- Use it anywhere, sized by the jst-icon primitive --&gt;
+&lt;jst-icon&gt;&lt;svg&gt;&lt;use href="#ic-home"/&gt;&lt;/svg&gt; Home&lt;/jst-icon&gt;
+
+/* jst-icon (in jst-layout.css) aligns and sizes the svg to the text. */</code></pre>
+        </details>
+      </section>
+
+      <jst-box>
+        <jst-stack style="--space: var(--jst-space-xs)">
+          <h2>Takeaway <span class="layer" data-layer="native">Native</span></h2>
+          <p>Thirteen of these fourteen recipes are plain HTML and CSS with no
+             runtime, and the fourteenth is a small JST component that only turns a
+             platform observation into rendered state. Shipping a component for each
+             would be re-wrapping the platform. JST leaves them to the platform on
+             purpose, and shows you the markup instead.</p>
+        </jst-stack>
+      </jst-box>
+
+    </jst-stack>
+  </jst-center>
+</body>
+</html>

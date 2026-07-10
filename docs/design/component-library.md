@@ -185,7 +185,7 @@ OP = Open Props, Rx = Radix (behavioral spec only).
 | Tooltip | BS, WA, Pico, dUI, Rx | Popover API (Baseline Widely 2025) + anchor positioning (Baseline Newly 2026); `popover=hint` still Chromium-only | `.jst-tooltip` (CSS `::after`, hover/focus) | have it; revisit anchor-positioned version as Baseline widens |
 | Popover / hover card | BS, WA, Rx | `[popover]` + light dismiss + anchor positioning | `.jst-menu[popover]` + `position-area` under `@supports` | have it (platform, thin CSS) |
 | Dropdown menu | BS, WA, Pico, dUI, Rx | popover + invokers cover open/close/dismiss; menu keyboard semantics still not native | `.jst-menu[popover]` CSS | mostly have it; small keyboard/ARIA enhancement possible |
-| Context menu / menubar | Rx only | none declarative | nothing | skip (niche; document popover recipe) |
+| Context menu / menubar | Rx only | none declarative | [recipe shown](../examples/platform_recipes.html#recipe-context-menu) | recipe shown (native popover menu) |
 | Accordion / disclosure | BS, WA, Pico, dUI, Rx | `<details>`/`<summary>`; `name` for exclusive groups (safe since 2025); `::details-content` (Baseline Newly 2025) for animation | `.jst-accordion` on `<details>`, incl. gated `::details-content` animation | have it |
 | Tabs | BS, WA, dUI, Rx | none native | `jst-tabs` component | have it |
 | Toast / notification stack | BS, WA (P), dUI, Rx | none native | `jst-toaster` component | have it |
@@ -195,14 +195,14 @@ OP = Open Props, Rx = Radix (behavioral spec only).
 | Sortable data table | none of the six | none native | `jst-table` component | have it (differentiator) |
 | Form validation states | BS, Pico, dUI | `:user-valid` / `:user-invalid` (Baseline Newly 2023) | `:user-invalid` border + `jst-field:has(:user-invalid)` label, `--jst-error` token | have it |
 | Input group / addons | BS, Pico, dUI | flex + border collapse, no element | `.jst-join` + `.jst-addon` | have it |
-| Floating labels | BS, dUI | `:placeholder-shown` + CSS | nothing | skip (fashion; label-above is clearer) |
+| Floating labels | BS, dUI | `:placeholder-shown` + CSS | [recipe shown](../examples/platform_recipes.html#recipe-floating-label) | recipe shown (label-above is still clearer) |
 | Switch / checkbox / radio | BS, WA, Pico, dUI, Rx | `accent-color` (Baseline 2022); switch via styled checkbox | `accent-color` token + `.jst-switch` | have it |
 | Range / slider | BS, WA, Pico, dUI, Rx | `input[type=range]` + `accent-color`; multi-thumb not native | accent-color pickup | have it; multi-thumb: skip |
-| File input | BS, dUI, WA (P) | `::file-selector-button` (widely available) | classless `::file-selector-button` rules | have it |
-| Number / time / date inputs | WA, dUI | native inputs widely; styling limited | classless input styling | platform; date-picker component: skip |
-| OTP field | dUI, Rx | input + `autocomplete="one-time-code"` | nothing | skip (platform autocomplete does the real work) |
+| File input | BS, dUI, WA (P) | `::file-selector-button` (widely available) | classless `::file-selector-button` rules; also [recipe shown](../examples/platform_recipes.html#recipe-file-input) | have it |
+| Number / time / date inputs | WA, dUI | native inputs widely; styling limited | classless input styling; [recipe shown](../examples/platform_recipes.html#recipe-datetime-number) | platform; date-picker component: skip |
+| OTP field | dUI, Rx | input + `autocomplete="one-time-code"` | [recipe shown](../examples/platform_recipes.html#recipe-otp) | recipe shown (platform autocomplete does the real work) |
 | Progress bar | BS, WA, Pico, dUI, Rx | `<progress>` + `accent-color` | accent-color pickup | have it (platform) |
-| Progress ring | WA, dUI | conic-gradient recipe | nothing | skip (doc recipe if asked) |
+| Progress ring | WA, dUI | conic-gradient recipe | [recipe shown](../examples/platform_recipes.html#recipe-progress-ring) | recipe shown (native conic-gradient) |
 | Spinner | BS, WA, Pico, dUI | trivial CSS | `.jst-spinner` | have it |
 | Skeleton / placeholder | BS, WA, dUI | trivial CSS animation | `.jst-skeleton` (pairs with `jst-include` loading) | have it |
 | Badge / tag / chip | BS, WA, dUI | trivial CSS | `.jst-badge` variants (+ the specialized `.jst-tag`) | have it |
@@ -215,17 +215,36 @@ OP = Open Props, Rx = Radix (behavioral spec only).
 | Button / toggle group | BS, WA, Rx | flex + border collapse | `.jst-join` | have it |
 | Carousel | BS, WA, dUI | scroll-snap (widely); `::scroll-button`/`::scroll-marker` Chromium-only, NOT Baseline | `jst-reel[data-carousel]`: snap everywhere, zero-JS arrows + dot markers where supported | have it (progressive) |
 | Command palette | none of the six | `<dialog>` + combobox pattern | `jst-palette`: global shortcut via `keys()`, filter, keyboard run, `run` event | have it (differentiator) |
-| Stepper / steps | dUI | ol + counters CSS | nothing | skip (doc recipe) |
-| Rating | WA, dUI | radio group + CSS | nothing | skip (niche) |
-| Tree view | WA | none native | nothing | skip (large a11y surface, small audience) |
-| Split panel | WA | none | nothing | skip (niche) |
+| Stepper / steps | dUI | ol + counters CSS | [recipe shown](../examples/platform_recipes.html#recipe-stepper) | recipe shown (native counters) |
+| Rating | WA, dUI | radio group + CSS | [recipe shown](../examples/template_recipes.html#recipe-rating) | recipe shown (copyable template) |
+| Tree view | WA | none native | [recipe shown](../examples/platform_recipes.html#recipe-tree) | recipe shown (native details) |
+| Split panel | WA | none | [recipe shown](../examples/platform_recipes.html#recipe-split-panel) | recipe shown (native resize) |
 | Color picker | WA | `input[type=color]` | classless inputs | platform |
-| Scrollspy | BS | IntersectionObserver | `onreveal` synthetic event | have it (doc recipe) |
+| Scrollspy | BS | IntersectionObserver | `onreveal` synthetic event ([recipe shown](../examples/platform_recipes.html#recipe-scrollspy)) | have it (recipe shown) |
 | Custom scrollbars | Rx | `scrollbar-color`/`scrollbar-width` (Baseline 2024) | reel uses it | platform |
 | Divider / kbd / visually-hidden | BS, WA, dUI | `<hr>`, `<kbd>`, clip utility | classless `kbd` + `.jst-visually-hidden` | have it |
 | Theme switching | dUI | `light-dark()` + `color-scheme` | `--jst-*` tokens + `data-theme` skins | have it |
 | Design tokens | OP | CSS custom properties | Layer 0 `--jst-*` contract | have it |
 | Include / lazy fragment | WA | none | `jst-include` (+ `when="visible"`) | have it |
+| Copy button | WA | `navigator.clipboard` | [recipe shown](../examples/template_recipes.html#recipe-copy) | recipe shown |
+| Relative time | WA | `Intl.RelativeTimeFormat` | [recipe shown](../examples/template_recipes.html#recipe-relative-time) | recipe shown |
+| Format bytes / number / date | WA | `Intl.NumberFormat` / `Intl.DateTimeFormat` | [recipe shown](../examples/template_recipes.html#recipe-format-bytes), [recipe shown](../examples/template_recipes.html#recipe-format) | recipe shown (note the compact-notation byte-unit collision at giga scale, manual unit ladder instead) |
+| Markdown rendering | WA | none native | [recipe shown](../examples/template_recipes.html#recipe-markdown) | recipe shown (third-party marked + DOMPurify through `trustedHTML`; the sanitization pattern is the point) |
+| QR code | WA | none native | [recipe shown](../examples/template_recipes.html#recipe-qr) | recipe shown (third-party lib inside a JST component) |
+| Before/after comparison | WA | range input + `clip-path` | [recipe shown](../examples/platform_recipes.html#recipe-comparison-slider) | recipe shown |
+| Video / video playlist | WA (P) | native `<video>` + `<track>` | [recipe shown](../examples/platform_recipes.html#recipe-video) | platform (WA charges for this) |
+| Charts / sparklines | WA (P) | none native | [three chart libraries inside JST](../examples/third_party_charts.html) | third-party libs inside JST (WA charges for this) |
+| Enter/exit animation helper | WA | `@starting-style` + `transition-behavior`, `element.animate` | [recipe shown](../examples/platform_recipes.html#recipe-enter-exit) | platform |
+| Icon (library) | WA | inline SVG sprite | [recipe shown](../examples/platform_recipes.html#recipe-icons) + `jst-icon` primitive | platform; any icon set |
+| Intersection observer helper | WA | IntersectionObserver | `onreveal` synthetic event ([recipe shown](../examples/platform_recipes.html#recipe-scrollspy)) | have it |
+| Resize observer helper | WA | ResizeObserver | planned: per-element `onresize`, [br3nt/jst#81](https://github.com/br3nt/jst/issues/81) | planned (#81) |
+| Mutation observer helper | WA | MutationObserver | plain platform API | skip (use the platform) |
+| Anchored popup helper | WA | anchor positioning (Baseline Newly 2026) | covered by the popover/menu rows above | platform |
+| App shell / page | WA | none needed | layout primitives (`jst-sidebar`, `jst-cover`, `jst-grid`) | have it |
+| Scroller | WA | overflow + `scrollbar-color` | `jst-reel` | have it |
+| Animated image (gif control) | WA | `<video muted loop>` replaces animated gifs | nothing | skip (platform substitute) |
+| Zoomable frame | WA | iframe + CSS zoom | nothing | skip (niche) |
+| Random content | WA | one line of JS | nothing | skip |
 
 ### Ranked build list from the audit
 
@@ -240,6 +259,15 @@ platform (`::details-content`), popovers and invokers are fully cross-browser,
 anchor positioning reached Baseline Newly 2026, and `field-sizing` reached
 Baseline in June 2026. Still not Baseline: customizable `<select>` and the CSS
 carousel pseudo-elements; both stay progressive-enhancement-only.
+
+As of this pass, every pattern in the table lands in one of three buckets:
+it ships in `jst-layout.css` / `jst-components.css`, the platform already
+covers it with no JST involvement, or it has a shown, copyable recipe in
+[`examples/platform_recipes.html`](../examples/platform_recipes.html) or
+[`examples/template_recipes.html`](../examples/template_recipes.html). Those
+recipes deliberately live in the examples, not in `jst-components.html`, so
+the shipped library stays lean and every recipe stays something you copy and
+own rather than something you import.
 
 ## The platform did most of our work: Invoker Commands + popovers (#29)
 

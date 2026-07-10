@@ -5,6 +5,38 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.7.7 - 2026-07-10
+
+The component-gap sweep (#80): every pattern a component library ships now has
+a shown answer, so "JST has no X" always resolves to a working page.
+
+### Added
+
+- **`examples/platform_recipes.html`.** Fourteen recipes the platform already
+  covers, each a working demo with its complete copyable source: date/time/
+  number inputs, file input, video (all three Pro in Web Awesome), progress
+  ring, stepper, tree view (native `<details>`), floating label, one-time code,
+  context menu (`[popover]` + invokers), enter/exit animation
+  (`@starting-style`), before/after comparison slider, split panel (native
+  `resize`), scrollspy (`onreveal`, the one JST item), inline SVG sprite icons.
+  Hermetic: zero external requests.
+- **`examples/template_recipes.html`.** "JST ships the template, not a sealed
+  element": copyable `<script type="jst">` recipes whose shown source is
+  injected from the live template tag, so the code you read is provably the
+  code running. `jst-rating` (keyboard accessible, half steps, change event
+  up), `jst-copy-button`, `jst-relative-time` (Intl.RelativeTimeFormat with a
+  unit-sized refresh tick), `jst-format-bytes` (manual unit ladder: Intl's
+  compact notation collides "B"-for-billion with the byte symbol at giga
+  scale), `jst-format-number`/`jst-format-date`, plus third-party minis:
+  markdown through marked + DOMPurify + `trustedHTML` (the sanitization
+  lesson, with a live defused script/javascript: payload) and a QR panel on a
+  `jst-preserve` mount. Recipes live in the examples, not
+  `jst-components.html`: the shipped library stays lean, you own your copy.
+- **Coverage audit completed.** `docs/design/component-library.md` now audits
+  the full Web Awesome inventory (19 new rows: helpers, media, Pro charts) and
+  every skip/recipe row links its live demo anchor. Per-element `onresize` is
+  tracked separately (#81).
+
 ## 0.7.6 - 2026-07-10
 
 Round two from the Web Awesome audit: prove the themeability claim (#71), and
