@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Alert · JST components</title>
+<link rel="stylesheet" href="../../jst-layout.css">
+<link rel="stylesheet" href="../../jst-components.css">
+<style>
+  body { margin: var(--jst-space-l); }
+</style>
+</head>
+<body data-theme="jst">
+<script>
+  (function () {
+    const ok = (t) => typeof t === 'string' && /^[a-z][a-z0-9]*$/.test(t);
+    const p = new URLSearchParams(location.search).get('theme');
+    if (ok(p)) document.body.dataset.theme = p;
+    addEventListener('message', (e) => {
+      const d = e.data;
+      if (d && d.type === 'jst-theme' && ok(d.theme)) document.body.dataset.theme = d.theme;
+    });
+  })();
+</script>
+<!-- example:start -->
+<jst-stack style="--space: var(--jst-space-l)">
+
+  <!-- Plain alerts: static status messaging. HTML + CSS, no script. -->
+  <jst-stack style="--space: var(--jst-space-xs)">
+    <div class="jst-alert" data-variant="success"><strong>Saved.</strong> Your changes are live.</div>
+    <div class="jst-alert" data-variant="warning"><strong>Heads up.</strong> This action can't be undone.</div>
+    <div class="jst-alert" data-variant="error"><strong>Failed.</strong> Check your connection and retry.</div>
+  </jst-stack>
+
+  <!-- Dismissable alerts: the same .jst-alert plus a × button. Dismissing
+       collapses and fades the alert, then removes the node on transitionend.
+       Under prefers-reduced-motion it is removed instantly. -->
+  <jst-stack style="--space: var(--jst-space-xs)" id="dismissable">
+    <div class="jst-alert" data-variant="success">
+      <span><strong>Copied.</strong> The invite link is on your clipboard.</span>
+      <button type="button" class="alert-close" data-dismiss aria-label="Dismiss">&times;</button>
+    </div>
+    <div class="jst-alert" data-variant="warning">
+      <span><strong>Trial ending.</strong> 3 days left on your plan.</span>
+      <button type="button" class="alert-close" data-dismiss aria-label="Dismiss">&times;</button>
+    </div>
+  </jst-stack>
+
+</jst-stack>
+
+<style>
+  /* Dismissable variant only: space the message from the close button, and
+     give the box the transition the removal animates. */
+  #dismissable .jst-alert {
+    justify-content: space-between;
+    overflow: clip; max-block-size: 8rem;
+    transition: opacity .25s ease, transform .25s ease,
+                max-block-size .25s ease, margin-block .25s ease,
+                padding-block .25s ease, border-width .25s ease;
+  }
+  #dismissable .jst-alert.is-dismissing {
+    opacity: 0; transform: translateX(1rem);
+    max-block-size: 0; margin-block: 0; padding-block: 0; border-block-width: 0;
+  }
+  .alert-close {
+    flex: 0 0 auto; margin-inline-start: var(--jst-space-s);
+    background: none; border: 0; padding: 0; cursor: pointer;
+    font-size: 1.25em; line-height: 1; color: var(--jst-muted);
+  }
+  .alert-close:hover { color: var(--jst-fg); }
+  @media (prefers-reduced-motion: reduce) {
+    #dismissable .jst-alert { transition: none; }
+  }
+</style>
+<script>
+  document.getElementById('dismissable').addEventListener('click', (event) => {
+    const button = event.target.closest('[data-dismiss]');
+    if (!button) return;
+    const alert = button.closest('.jst-alert');
+    // No motion for users who asked for none: just remove it.
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) { alert.remove(); return; }
+    // Otherwise animate the collapse, then remove the node. Every property
+    // transitions for the same .25s, so the first transitionend marks the end;
+    // the timeout covers transitions that never fire (e.g. the alert was
+    // hidden mid-animation), and remove() is safe to call twice.
+    const remove = () => alert.remove();
+    alert.addEventListener('transitionend', remove, { once: true });
+    setTimeout(remove, 400);
+    alert.classList.add('is-dismissing');
+  });
+</script>
+<!-- example:end -->
+</body>
+</html>

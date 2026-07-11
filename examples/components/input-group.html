@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Input group / Join · JST components</title>
+<link rel="stylesheet" href="../../jst-layout.css">
+<link rel="stylesheet" href="../../jst-components.css">
+<style>
+  body { margin: var(--jst-space-l); }
+</style>
+</head>
+<body data-theme="jst">
+<script>
+  (function () {
+    const ok = (t) => typeof t === 'string' && /^[a-z][a-z0-9]*$/.test(t);
+    const p = new URLSearchParams(location.search).get('theme');
+    if (ok(p)) document.body.dataset.theme = p;
+    addEventListener('message', (e) => {
+      const d = e.data;
+      if (d && d.type === 'jst-theme' && ok(d.theme)) document.body.dataset.theme = d.theme;
+    });
+  })();
+</script>
+<!-- example:start -->
+<jst-stack style="--space: var(--jst-space-s)">
+  <div class="jst-join">
+    <span class="jst-addon">https://</span>
+    <input placeholder="example.com" aria-label="Domain">
+    <button type="button">Check</button>
+  </div>
+  <div class="jst-join">
+    <button type="button">Day</button>
+    <button type="button">Week</button>
+    <button type="button">Month</button>
+  </div>
+</jst-stack>
+<!-- example:end -->
+</body>
+</html>

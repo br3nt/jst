@@ -16,67 +16,104 @@
 /* ============================================================================
  * Theme skins - each overrides only tokens. Same components, different look.
  * (The CSS Zen Garden bet, applied to component frameworks.)
+ *
+ * The differentiators are border treatment, resting elevation and surface
+ * shape - not just accent colour. Each skin sets some of:
+ *   --jst-border-width  border thickness on cards/inputs/tabs (0 = hairline off)
+ *   --jst-border        border colour (transparent = borderless surfaces)
+ *   --jst-radius        corner rounding
+ *   --jst-shadow-surface  resting card elevation (see jst-box wiring below)
+ *   --jst-shadow        floating elevation for dialogs / popovers / toasts
+ *   --jst-font, --jst-ring
+ * so the SAME markup reads as w3css (flat, square, solid borders) or material
+ * (borderless, elevated) at a glance.
  * ==========================================================================*/
 
+/* Cards (jst-box) are flat by default; a skin's --jst-shadow-surface lifts them.
+   Lives in jst.components so it wins over the primitives-layer jst-box rule
+   without touching that rule. Borderless skins (material, daisy) still separate
+   from the page because jst-box sits on --jst-surface, a distinct tone from the
+   page --jst-bg - so a raised card reads in dark mode by tone, in light by
+   shadow. */
+jst-box { box-shadow: var(--jst-shadow-surface); }
+
 /* JST's own look: the jst-layout defaults, no overrides. Lean radius, compact
-   controls, one accent. Selecting it in a theme switcher simply removes the
-   imitations. */
+   controls, one accent, hairline borders, no resting elevation. Selecting it in
+   a theme switcher simply removes the imitations. */
 [data-theme="jst"] {
   --jst-ring: 0 0 0 2px oklch(from var(--jst-accent) l c h / 0.45);
 }
 
-/* Bootstrap-like: bright blue, medium radius, soft elevation. */
+/* Bootstrap-like: classic 1px borders, familiar blue, its own radius, a faint
+   card shadow. Nothing exotic - the framework everyone recognises. */
 [data-theme="bootstrap"] {
   --jst-accent: oklch(0.55 0.20 262);     /* ~#0d6efd */
   --jst-radius: 0.375rem;
   --jst-font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --jst-border: light-dark(oklch(0.86 0.005 262), oklch(0.38 0.01 262));
+  --jst-shadow-surface: 0 0.125rem 0.25rem oklch(0 0 0 / 0.075);
   --jst-shadow: 0 0.5rem 1rem oklch(0 0 0 / 0.15);
   --jst-ring: 0 0 0 0.25rem oklch(0.55 0.20 262 / 0.5);
 }
 
-/* shadcn-like: near-monochrome zinc, larger radius, subtle ring + hairline borders. */
+/* shadcn-like: near-monochrome zinc, larger radius, hairline zinc borders and a
+   whisper of shadow. Restrained on purpose - the border IS the identity. */
 [data-theme="shadcn"] {
   --jst-accent: oklch(0.22 0.006 285);    /* zinc-900-ish, near black */
   --jst-radius: 0.5rem;
   --jst-font: system-ui, sans-serif;
+  --jst-border: light-dark(oklch(0.92 0.004 285), oklch(0.30 0.006 285));
+  --jst-shadow-surface: 0 1px 2px oklch(0 0 0 / 0.06);
   --jst-shadow: 0 0.25rem 0.75rem oklch(0 0 0 / 0.10);
   --jst-ring: 0 0 0 2px var(--jst-bg), 0 0 0 4px oklch(0.55 0.01 285);
-  --jst-border: light-dark(oklch(0.92 0.004 285), oklch(0.30 0.006 285));
 }
 
-/* Shoelace / Web Awesome-like: sky primary, tight radius, airy. */
+/* Shoelace / Web Awesome-like: sky primary, tight radius, thin borders, small
+   soft shadow. Airy and neutral. */
 [data-theme="shoelace"] {
   --jst-accent: oklch(0.68 0.14 233);     /* sky-ish */
   --jst-radius: 0.25rem;
   --jst-font: system-ui, sans-serif;
+  --jst-border: light-dark(oklch(0.90 0.01 233), oklch(0.33 0.01 233));
+  --jst-shadow-surface: 0 1px 2px oklch(0.55 0.05 233 / 0.14);
   --jst-shadow: 0 0.25rem 1rem oklch(0.55 0.05 233 / 0.18);
   --jst-ring: 0 0 0 3px oklch(0.68 0.14 233 / 0.4);
 }
 
-/* Pico-like: indigo, generous radius, soft and calm. */
+/* Pico-like: indigo, generous radius, calm and airy. Inputs keep a soft border;
+   cards get a big radius + soft diffuse shadow so they read light, not boxed. */
 [data-theme="pico"] {
   --jst-accent: oklch(0.52 0.16 277);     /* pico indigo */
-  --jst-radius: 0.5rem;
+  --jst-radius: 0.75rem;
   --jst-font: system-ui, sans-serif;
+  --jst-border: light-dark(oklch(0.91 0.01 277), oklch(0.32 0.01 277));
+  --jst-shadow-surface: 0 0.125rem 1rem oklch(0.3 0.05 277 / 0.10);
   --jst-shadow: 0 0.5rem 1.5rem oklch(0.3 0.05 277 / 0.12);
   --jst-ring: 0 0 0 3px oklch(0.52 0.16 277 / 0.35);
 }
 
-/* W3.CSS-like (W3Schools): flat, square corners, bold primary, no elevation. */
+/* W3.CSS-like (W3Schools): dead flat. Square corners, solid visible grey
+   borders, NO resting elevation. The anti-skin - everything hard-edged. */
 [data-theme="w3css"] {
   --jst-accent: oklch(0.62 0.12 236);     /* w3-blue */
   --jst-radius: 0;
   --jst-font: "Segoe UI", Arial, sans-serif;
+  --jst-border-width: 1px;
+  --jst-border: light-dark(oklch(0.72 0 0), oklch(0.48 0 0));
+  --jst-shadow-surface: none;
   --jst-shadow: 0 2px 5px oklch(0 0 0 / 0.16), 0 2px 10px oklch(0 0 0 / 0.12);
   --jst-ring: 0 0 0 2px oklch(0.62 0.12 236 / 0.6);
 }
 
-/* Bulma-like: turquoise primary, rounded, crisp borders. */
+/* Bulma-like: turquoise primary, crisp visible borders, its signature soft-drop
+   card shadow. */
 [data-theme="bulma"] {
   --jst-accent: oklch(0.74 0.13 184);     /* bulma turquoise */
   --jst-radius: 0.375rem;
   --jst-font: "Helvetica Neue", system-ui, sans-serif;
-  --jst-shadow: 0 0.5em 1em -0.125em oklch(0.3 0.02 184 / 0.1);
+  --jst-border: light-dark(oklch(0.86 0.005 184), oklch(0.38 0.01 184));
+  --jst-shadow-surface: 0 0.5em 1em -0.125em oklch(0.3 0.02 184 / 0.1), 0 0 0 1px oklch(0.3 0.02 184 / 0.02);
+  --jst-shadow: 0 0.5em 1em -0.125em oklch(0.3 0.02 184 / 0.15);
   --jst-ring: 0 0 0 0.125em oklch(0.74 0.13 184 / 0.4);
 }
 
@@ -93,18 +130,12 @@
 .jst-tag::before { content: "●"; font-size: 0.8em; }
 /* No JST at all - the best outcome. */
 .jst-tag[data-tech="none"]     { background: oklch(0.95 0.05 150); color: oklch(0.40 0.12 150); border-color: oklch(0.85 0.08 150); }
-/* A single native platform primitive (dialog / popover / details / progress). */
-.jst-tag[data-tech="platform"] { background: oklch(0.95 0.04 170); color: oklch(0.42 0.10 170); border-color: oklch(0.86 0.06 170); }
-/* Invoker Commands wiring (command / commandfor / oncommand). */
-.jst-tag[data-tech="invoker"]  { background: oklch(0.95 0.04 250); color: oklch(0.45 0.12 250); border-color: oklch(0.86 0.06 250); }
 /* A jst-layout primitive or token. */
 .jst-tag[data-tech="layout"]   { background: oklch(0.95 0.04 300); color: oklch(0.45 0.12 300); border-color: oklch(0.87 0.06 300); }
 /* A genuine JST custom-element component. */
 .jst-tag[data-tech="jst"]      { background: oklch(0.93 0.06 30);  color: oklch(0.48 0.16 30);  border-color: oklch(0.85 0.09 30); }
 @media (prefers-color-scheme: dark) {
   .jst-tag[data-tech="none"]     { background: oklch(0.30 0.06 150); color: oklch(0.85 0.10 150); border-color: oklch(0.40 0.08 150); }
-  .jst-tag[data-tech="platform"] { background: oklch(0.30 0.05 170); color: oklch(0.85 0.08 170); border-color: oklch(0.40 0.07 170); }
-  .jst-tag[data-tech="invoker"]  { background: oklch(0.30 0.05 250); color: oklch(0.85 0.08 250); border-color: oklch(0.40 0.07 250); }
   .jst-tag[data-tech="layout"]   { background: oklch(0.30 0.05 300); color: oklch(0.86 0.08 300); border-color: oklch(0.40 0.07 300); }
   .jst-tag[data-tech="jst"]      { background: oklch(0.32 0.08 30);  color: oklch(0.86 0.10 30);  border-color: oklch(0.42 0.10 30); }
 }
@@ -594,40 +625,74 @@ jst-palette .jst-empty-line { padding: var(--jst-space-s); color: var(--jst-mute
 
 /* ---- More framework skins (#1): one token-block each. ---------------------- */
 
-/* Material Design 3-like: purple primary, large radius, layered elevation. */
+/* Material Design 3-like: purple primary, large radius, BORDERLESS surfaces with
+   layered elevation, and filled inputs. Card depth is carried by shadow (light)
+   and raised surface tone (dark); --jst-border stays a faint outline-variant
+   because material keeps dividers on lists, tables and accordions - true
+   borderlessness is scoped to jst-box below. */
 [data-theme="material"] {
   --jst-accent: oklch(0.47 0.15 300);
   --jst-radius: 1rem;
   --jst-font: "Roboto", system-ui, sans-serif;
+  --jst-border: light-dark(oklch(0.55 0.01 300 / 0.28), oklch(0.85 0.01 300 / 0.22));
+  --jst-surface: light-dark(oklch(0.95 0.006 300), oklch(0.27 0.008 300));
+  --jst-shadow-surface: 0 1px 3px oklch(0 0 0 / 0.2), 0 4px 8px oklch(0 0 0 / 0.12);
   --jst-shadow: 0 1px 3px oklch(0 0 0 / 0.3), 0 4px 8px oklch(0 0 0 / 0.15);
   --jst-ring: 0 0 0 3px oklch(0.47 0.15 300 / 0.4);
 }
 
-/* Ant Design-like: brand blue, small radius, soft layered shadow. */
+/* Ant Design-like: brand blue, small radius, hairline border plus a soft
+   two-part shadow - the enterprise-console look. */
 [data-theme="antd"] {
   --jst-accent: oklch(0.58 0.17 258);
   --jst-radius: 0.375rem;
   --jst-font: -apple-system, "Segoe UI", Roboto, sans-serif;
+  --jst-border: light-dark(oklch(0.92 0.004 258), oklch(0.31 0.008 258));
+  --jst-shadow-surface: 0 1px 2px oklch(0 0 0 / 0.06), 0 1px 6px -1px oklch(0 0 0 / 0.05);
   --jst-shadow: 0 6px 16px oklch(0 0 0 / 0.08), 0 3px 6px oklch(0 0 0 / 0.12);
   --jst-ring: 0 0 0 2px oklch(0.58 0.17 258 / 0.3);
 }
 
-/* Tailwind UI-like: indigo-600, medium radius, ring-offset focus. */
+/* Tailwind UI-like: indigo-600, medium radius, hairline borders + a tight
+   shadow-sm. The default Tailwind card: 1px ring of border, minimal lift. */
 [data-theme="tailwind"] {
   --jst-accent: oklch(0.51 0.23 277);
   --jst-radius: 0.5rem;
   --jst-font: ui-sans-serif, system-ui, sans-serif;
+  --jst-border: light-dark(oklch(0.93 0.004 277), oklch(0.33 0.008 277));
+  --jst-shadow-surface: 0 1px 2px oklch(0 0 0 / 0.05);
   --jst-shadow: 0 10px 15px -3px oklch(0 0 0 / 0.1), 0 4px 6px -4px oklch(0 0 0 / 0.1);
   --jst-ring: 0 0 0 2px var(--jst-bg), 0 0 0 4px oklch(0.51 0.23 277 / 0.5);
 }
 
-/* DaisyUI-like: vivid violet, very rounded, soft shadow. */
+/* DaisyUI-like: vivid violet, very large radius, BORDERLESS soft cards with a
+   gentle single-layer shadow, filled inputs, chunky rounded controls. Softer and
+   rounder than material - distinguished by radius, tint and a diffuse shadow.
+   As with material, --jst-border keeps a faint divider tone so tables, lists
+   and accordions retain their separators; only jst-box goes borderless. */
 [data-theme="daisy"] {
   --jst-accent: oklch(0.49 0.24 277);
   --jst-radius: 1rem;
   --jst-font: system-ui, sans-serif;
+  --jst-border: light-dark(oklch(0.55 0.015 277 / 0.28), oklch(0.85 0.015 277 / 0.22));
+  --jst-surface: light-dark(oklch(0.96 0.01 277), oklch(0.27 0.012 277));
+  --jst-shadow-surface: 0 4px 14px oklch(0.4 0.05 277 / 0.12);
   --jst-shadow: 0 4px 12px oklch(0 0 0 / 0.12);
   --jst-ring: 0 0 0 2px oklch(0.49 0.24 277 / 0.4);
+}
+
+/* Filled inputs for the borderless skins: with hairline-free cards a plain
+   input would look out of place, so fill it with the surface tone - the
+   "filled field" look those systems actually use. */
+:where([data-theme="material"], [data-theme="daisy"]) :where(input, textarea, select) {
+  background: var(--jst-surface);
+}
+
+/* Borderless surfaces, scoped: cards drop their outline (depth comes from
+   --jst-shadow-surface and the raised surface tone) while the faint
+   --jst-border above keeps dividers alive in tables, lists and accordions. */
+:where([data-theme="material"], [data-theme="daisy"]) jst-box {
+  border-color: transparent;
 }
 
 } /* @layer jst.components */

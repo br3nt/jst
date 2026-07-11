@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Accordion · JST components</title>
+<link rel="stylesheet" href="../../jst-layout.css">
+<link rel="stylesheet" href="../../jst-components.css">
+<style>
+  body { margin: var(--jst-space-l); }
+</style>
+</head>
+<body data-theme="jst">
+<script>
+  (function () {
+    const ok = (t) => typeof t === 'string' && /^[a-z][a-z0-9]*$/.test(t);
+    const p = new URLSearchParams(location.search).get('theme');
+    if (ok(p)) document.body.dataset.theme = p;
+    addEventListener('message', (e) => {
+      const d = e.data;
+      if (d && d.type === 'jst-theme' && ok(d.theme)) document.body.dataset.theme = d.theme;
+    });
+  })();
+</script>
+<!-- example:start -->
+<div class="jst-accordion">
+  <details name="acc" open>
+    <summary>What is it?</summary>
+    <div class="jst-accordion-body">Three <code>&lt;details name="acc"&gt;</code> &mdash; the shared <code>name</code> makes them mutually exclusive (Baseline). No script.</div>
+  </details>
+  <details name="acc">
+    <summary>How does it animate?</summary>
+    <div class="jst-accordion-body">The marker rotates via CSS. Open/close is the browser's job.</div>
+  </details>
+  <details name="acc">
+    <summary>What did JST add?</summary>
+    <div class="jst-accordion-body">Nothing &mdash; this is the "just use HTML + CSS" outcome.</div>
+  </details>
+</div>
+<!-- example:end -->
+</body>
+</html>

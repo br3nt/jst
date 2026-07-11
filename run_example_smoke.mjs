@@ -315,63 +315,387 @@ const checks = [
       && result.containerPositioned === true,
   },
   {
+    // The gallery shell: a plain HTML/CSS/vanilla-JS page (no jst.js) that
+    // renders a manifest of cards, each an <iframe> to a mini page. Assert the
+    // grid builds, badges carry literal tag text, and the re-skin dropdown
+    // re-themes the shell and rewrites the standalone links.
     page: '/examples/components_cross_section.html',
     script: `(async () => {
       ${flushSnippet}
-      // The component definitions arrive via <jst-include> from the consumable
-      // fragment, exactly as an app would load them: wait for the upgrade.
-      await Promise.all(['jst-tabs', 'jst-palette', 'jst-toaster'].map(n => customElements.whenDefined(n)));
       await flush();
+      const stages = document.querySelectorAll('.stage').length;
+      const cards = document.querySelectorAll('.card').length;
+      const iframes = document.querySelectorAll('.card iframe').length;
+      const scrollingNo = [...document.querySelectorAll('.card iframe')].every(f => f.getAttribute('scrolling') === 'no');
+      const themedSrc = [...document.querySelectorAll('.card iframe')].every(f => f.getAttribute('src').includes('?theme='));
+      const hasTagBadge = [...document.querySelectorAll('.jst-tag')].some(b => b.textContent === '<jst-tabs>');
+      // w3css exercises the digit-bearing theme name (regression: a
+      // letters-only validation regex once rejected it).
+      const sel = document.getElementById('theme');
+      sel.value = 'w3css';
+      sel.dispatchEvent(new Event('change'));
+      await flush();
+      const bodyThemed = document.body.dataset.theme === 'w3css';
+      const link = document.querySelector('.card footer a');
+      const linkThemed = link.getAttribute('href').includes('?theme=w3css');
+      // View source: opening a <details> fetches the mini page and extracts the
+      // markup between the example markers.
+      const details = document.querySelector('.card details');
+      const codeEl = details.querySelector('code');
+      details.open = true;
+      const started = Date.now();
+      while ((codeEl.textContent === '' || codeEl.textContent.includes('Loading')) && Date.now() - started < 3000) await flush();
+      const source = codeEl.textContent;
+      // Lazy frames below the fold must still pick up the theme chosen above:
+      // scroll the last card's frame into view and assert it renders shadcn.
+      const lastFrame = [...document.querySelectorAll('.card iframe')].pop();
+      lastFrame.scrollIntoView();
+      const t2 = Date.now();
+      while (lastFrame.contentDocument?.body?.dataset.theme !== 'w3css' && Date.now() - t2 < 3000) await flush();
+      const lazyFrameThemed = lastFrame.contentDocument?.body?.dataset.theme === 'w3css';
+      return { stages, cards, iframes, scrollingNo, themedSrc, hasTagBadge, bodyThemed, linkThemed, lazyFrameThemed, sourceLen: source.length, sourceHasMarkers: source.includes('example:') };
+    })()`,
+    assert: result => result.stages === 4
+      && result.cards === 26
+      && result.iframes === 26
+      && result.scrollingNo === true
+      && result.themedSrc === true
+      && result.hasTagBadge === true
+      && result.bodyThemed === true
+      && result.linkThemed === true
+      && result.lazyFrameThemed === true
+      && result.sourceLen > 20
+      && result.sourceHasMarkers === false,
+  },
+  {
+    page: '/examples/components/modal.html',
+    script: `(async () => { ${flushSnippet} await flush();
+      const dlg = document.querySelector('dialog.jst-modal');
+      const beforeOpen = dlg.open;
+      document.querySelector('button[command="show-modal"]').click();
+      await flush();
+      const afterOpen = dlg.open;
+      document.querySelector('.jst-modal-close').click();
+      await flush();
+      return { beforeOpen, afterOpen, closed: dlg.open };
+    })()`,
+    assert: r => r.beforeOpen === false && r.afterOpen === true && r.closed === false,
+  },
+  {
+    page: '/examples/components/drawer.html',
+    script: `(async () => { ${flushSnippet} await flush();
+      const d = document.getElementById('demo-drawer');
+      document.querySelector('button[data-side="start"]').click();
+      await flush();
+      return { open: d.open, side: d.dataset.side };
+    })()`,
+    assert: r => r.open === true && r.side === 'start',
+  },
+  {
+    page: '/examples/components/dropdown.html',
+    script: `(async () => { ${flushSnippet} await flush();
+      const menu = document.getElementById('demo-menu');
+      const before = menu.matches(':popover-open');
+      document.querySelector('button[commandfor="demo-menu"]').click();
+      await flush();
+      return { before, after: menu.matches(':popover-open'), items: menu.querySelectorAll('button').length };
+    })()`,
+    assert: r => r.before === false && r.after === true && r.items === 4,
+  },
+  {
+    page: '/examples/components/accordion.html',
+    script: `(async () => { ${flushSnippet} await flush();
+      const items = document.querySelectorAll('.jst-accordion details');
+      const firstOpenInit = items[0].open;
+      items[1].querySelector('summary').click();
+      await flush();
+      return { count: items.length, firstOpenInit, firstAfter: items[0].open, secondAfter: items[1].open };
+    })()`,
+    assert: r => r.count === 3 && r.firstOpenInit === true && r.firstAfter === false && r.secondAfter === true,
+  },
+  {
+    page: '/examples/components/switch.html',
+    script: `(async () => { ${flushSnippet} await flush();
+      const boxes = document.querySelectorAll('.jst-switch input[type=checkbox]');
+      return { count: boxes.length, firstChecked: boxes[0].checked };
+    })()`,
+    assert: r => r.count === 2 && r.firstChecked === true,
+  },
+  {
+    page: '/examples/components/tooltip.html',
+    script: `(async () => { ${flushSnippet} await flush();
+      const tip = document.querySelector('.jst-tooltip');
+      return { hasTip: !!tip && tip.hasAttribute('data-tip') };
+    })()`,
+    assert: r => r.hasTip === true,
+  },
+  {
+    page: '/examples/components/alert.html',
+    script: `(async () => { ${flushSnippet} await flush();
+      const total = document.querySelectorAll('.jst-alert').length;
+      const plainVariants = [...document.querySelectorAll('jst-stack:not(#dismissable) > .jst-alert')]
+        .map(a => a.dataset.variant).join(',');
+      // Dismissing a dismissable alert animates it out and removes the node.
+      const before = document.querySelectorAll('#dismissable .jst-alert').length;
+      document.querySelector('#dismissable [data-dismiss]').click();
+      const started = Date.now();
+      while (document.querySelectorAll('#dismissable .jst-alert').length === before && Date.now() - started < 2000) await flush();
+      const after = document.querySelectorAll('#dismissable .jst-alert').length;
+      return { total, plainVariants, before, after };
+    })()`,
+    assert: r => r.total === 5 && r.plainVariants === 'success,warning,error'
+      && r.before === 2 && r.after === 1,
+  },
+  {
+    page: '/examples/components/progress.html',
+    script: `(async () => { ${flushSnippet} await flush();
+      const p = document.querySelector('progress.jst-progress');
+      return { value: p.value, spinner: !!document.querySelector('.jst-spinner') };
+    })()`,
+    assert: r => r.value === 0.66 && r.spinner === true,
+  },
+  {
+    page: '/examples/components/badge.html',
+    script: `(async () => { ${flushSnippet} await flush();
+      return { badges: document.querySelectorAll('.jst-badge').length, avatars: document.querySelectorAll('.jst-avatar').length };
+    })()`,
+    assert: r => r.badges === 5 && r.avatars === 2,
+  },
+  {
+    page: '/examples/components/skeleton.html',
+    script: `(async () => { ${flushSnippet}
+      await customElements.whenDefined('jst-include'); await flush();
+      // First load: the include's skeleton children swap out for the fragment.
+      const t0 = Date.now();
+      while (!document.querySelector('#swap-slot team-stats strong') && Date.now() - t0 < 3000) await flush();
+      const shapeSkeletons = document.querySelectorAll('jst-switcher .jst-skeleton').length;
+      const loadedInitially = !!document.querySelector('#swap-slot team-stats strong');
+      // Replay stages the skeleton, then re-runs the swap to the loaded content.
+      document.getElementById('replay').click();
+      const t1 = Date.now();
+      while (!document.querySelector('#swap-slot .jst-skeleton') && Date.now() - t1 < 2000) await flush();
+      const skeletonDuringReplay = !!document.querySelector('#swap-slot .jst-skeleton')
+        && !document.querySelector('#swap-slot team-stats strong');
+      const t2 = Date.now();
+      while (!document.querySelector('#swap-slot team-stats strong') && Date.now() - t2 < 4000) await flush();
+      const reloaded = !!document.querySelector('#swap-slot team-stats strong');
+      return { shapeSkeletons, loadedInitially, skeletonDuringReplay, reloaded };
+    })()`,
+    assert: r => r.shapeSkeletons === 9 && r.loadedInitially === true
+      && r.skeletonDuringReplay === true && r.reloaded === true,
+  },
+  {
+    page: '/examples/components/breadcrumb.html',
+    script: `(async () => { ${flushSnippet} await flush();
+      return { crumb: !!document.querySelector('.jst-breadcrumb'), pag: !!document.querySelector('.jst-pagination'),
+        current: document.querySelector('.jst-breadcrumb [aria-current="page"]').textContent };
+    })()`,
+    assert: r => r.crumb === true && r.pag === true && r.current === '#4471',
+  },
+  {
+    page: '/examples/components/input-group.html',
+    script: `(async () => { ${flushSnippet} await flush();
+      return { joins: document.querySelectorAll('.jst-join').length, addon: !!document.querySelector('.jst-addon') };
+    })()`,
+    assert: r => r.joins === 2 && r.addon === true,
+  },
+  {
+    page: '/examples/components/button-variants.html',
+    script: `(async () => { ${flushSnippet} await flush();
+      return { count: document.querySelectorAll('button').length,
+        hasDanger: !!document.querySelector('[data-variant="danger"]'),
+        disabled: !!document.querySelector('button[disabled]') };
+    })()`,
+    assert: r => r.count === 5 && r.hasDanger === true && r.disabled === true,
+  },
+  {
+    page: '/examples/components/page-header.html',
+    script: `(async () => { ${flushSnippet} await flush();
+      return { header: !!document.querySelector('.jst-page-header'),
+        income: document.querySelector('[data-testid="stat-income"]').textContent,
+        stats: document.querySelectorAll('.jst-stat').length };
+    })()`,
+    assert: r => r.header === true && r.income === '$8,120' && r.stats === 3,
+  },
+  {
+    page: '/examples/components/empty-state.html',
+    script: `(async () => { ${flushSnippet} await flush();
+      const list = document.getElementById('members');
+      const empty = document.getElementById('empty');
+      const initialRows = list.querySelectorAll('li').length;
+      const emptyHiddenInitially = empty.hidden;
+      // Remove every row → the empty state takes over.
+      [...list.querySelectorAll('[data-remove]')].forEach(b => b.click());
+      await flush();
+      const rowsAfterClear = list.querySelectorAll('li').length;
+      const emptyVisible = !empty.hidden && list.hidden;
+      // Invite adds a member back → empty hides again.
+      document.getElementById('invite').click();
+      await flush();
+      const rowsAfterInvite = list.querySelectorAll('li').length;
+      const emptyHiddenAgain = empty.hidden;
+      return { initialRows, emptyHiddenInitially, rowsAfterClear, emptyVisible, rowsAfterInvite, emptyHiddenAgain };
+    })()`,
+    assert: r => r.initialRows === 2 && r.emptyHiddenInitially === true
+      && r.rowsAfterClear === 0 && r.emptyVisible === true
+      && r.rowsAfterInvite === 1 && r.emptyHiddenAgain === true,
+  },
+  {
+    page: '/examples/components/validation.html',
+    script: `(async () => { ${flushSnippet} await flush();
+      const input = document.getElementById('val-email');
+      const requiredInvalid = input.matches(':invalid');
+      input.value = 'nope';
+      const stillInvalid = input.matches(':invalid');
+      input.value = 'a@b.com';
+      const nowValid = input.matches(':valid');
+      // TLD-required field: type=email is happy with a@b, the pattern is not.
+      const tld = document.getElementById('val-email-tld');
+      tld.value = 'a@b';
+      const tldTypeOk = !tld.validity.typeMismatch;
+      const tldPatternRejects = tld.validity.patternMismatch && tld.matches(':invalid');
+      tld.value = 'a@b.com';
+      const tldValid = tld.matches(':valid');
+      return { requiredInvalid, stillInvalid, nowValid, tldTypeOk, tldPatternRejects, tldValid };
+    })()`,
+    assert: r => r.requiredInvalid === true && r.stillInvalid === true && r.nowValid === true
+      && r.tldTypeOk === true && r.tldPatternRejects === true && r.tldValid === true,
+  },
+  {
+    page: '/examples/components/carousel.html',
+    script: `(async () => { ${flushSnippet} await flush();
+      const reel = document.querySelector('jst-reel[data-carousel]');
+      return { frames: reel.querySelectorAll('jst-frame').length, scrollable: reel.scrollWidth > reel.clientWidth };
+    })()`,
+    assert: r => r.frames === 3 && r.scrollable === true,
+  },
+  {
+    page: '/examples/components/container-query.html',
+    script: `(async () => { ${flushSnippet} await flush();
+      return { container: !!document.querySelector('[data-container]'), stats: document.querySelectorAll('.jst-stat').length };
+    })()`,
+    assert: r => r.container === true && r.stats === 3,
+  },
+  {
+    // Reveal-on-scroll must have its own scrollport so animation-timeline: view()
+    // has something to track; assert the box scrolls, holds the reveal cards, and
+    // (where the engine gives the timeline a currentTime — some environments leave
+    // view() timelines inactive) actually hides below-fold cards until scrolled to.
+    page: '/examples/components/reveal-on-scroll.html',
+    script: `(async () => { ${flushSnippet} await flush();
+      const box = document.querySelector('.reveal-scroller');
+      const items = [...box.querySelectorAll('.jst-reveal')];
+      const last = items[items.length - 1];
+      const active = !!(last && last.getAnimations()[0]?.timeline?.currentTime !== null && last.getAnimations()[0]);
+      box.scrollTop = 0; await new Promise(r => setTimeout(r, 250));
+      const hiddenAtTop = last ? getComputedStyle(last).opacity === '0' : false;
+      box.scrollTop = box.scrollHeight; await new Promise(r => setTimeout(r, 250));
+      const shownAtBottom = last ? getComputedStyle(last).opacity === '1' : false;
+      return { scrollable: box.scrollHeight > box.clientHeight, reveals: items.length, active, hiddenAtTop, shownAtBottom };
+    })()`,
+    assert: r => r.scrollable === true && r.reveals === 4 &&
+      (r.active === false || (r.hiddenAtTop === true && r.shownAtBottom === true)),
+  },
+  {
+    page: '/examples/components/tabs.html',
+    script: `(async () => { ${flushSnippet}
+      await customElements.whenDefined('jst-tabs'); await flush();
       const tabs = document.querySelector('jst-tabs');
       const before = tabs.querySelector('[role=tabpanel]').textContent;
       tabs.querySelectorAll('[role=tab]')[1].click();
       await flush();
       const after = tabs.querySelector('[role=tabpanel]').textContent;
       const selected = tabs.querySelectorAll('[role=tab]')[1].getAttribute('aria-selected');
+      return { count: tabs.querySelectorAll('[role=tab]').length, changed: before !== after, selected };
+    })()`,
+    assert: r => r.count === 3 && r.changed === true && r.selected === 'true',
+  },
+  {
+    page: '/examples/components/combobox.html',
+    script: `(async () => { ${flushSnippet}
+      await customElements.whenDefined('jst-combobox'); await flush();
+      // Static combobox: filters the JSON options client-side.
+      const stat = document.getElementById('fruit-combobox');
+      stat.query = 'ap'; stat.open = true;
+      await flush();
+      const staticOpts = [...stat.querySelectorAll('[role=option]')].map(o => o.textContent);
 
-      // The lazy region: scrolling the <jst-include when="visible"> into view
-      // fetches the fragment, whose component definition auto-registers.
-      const include = document.getElementById('team-include');
-      include.scrollIntoView();
+      // Async combobox: focus and type into the inner field; a debounced handler
+      // fetches from the simulated remote catalog and assigns el.options.
+      const asyncCb = document.getElementById('catalog-combobox');
+      const field = asyncCb.querySelector('input');
+      field.focus();
+      field.value = 'man';
+      field.dispatchEvent(new Event('input', { bubbles: true }));
+      const started = Date.now();
+      while (asyncCb.querySelectorAll('[role=option]').length === 0 && Date.now() - started < 3000) await flush();
+      const asyncOpts = [...asyncCb.querySelectorAll('[role=option]')].map(o => o.textContent);
+      return { staticCount: staticOpts.length, staticFirst: staticOpts[0], asyncOpts };
+    })()`,
+    assert: r => r.staticCount === 3 && r.staticFirst === 'Apple'
+      && r.asyncOpts.length === 2 && r.asyncOpts.includes('Mandarin') && r.asyncOpts.includes('Mango'),
+  },
+  {
+    page: '/examples/components/table.html',
+    script: `(async () => { ${flushSnippet}
+      await customElements.whenDefined('jst-table'); await flush();
+      const table = document.querySelector('jst-table');
+      table.querySelectorAll('th button')[2].click();
+      await flush();
+      const th = table.querySelectorAll('th')[2];
+      return { rows: table.querySelectorAll('tbody tr').length, sort: th.getAttribute('aria-sort'),
+        firstCell: table.querySelector('tbody tr td').textContent };
+    })()`,
+    assert: r => r.rows === 4 && r.sort === 'ascending' && r.firstCell === 'Alan',
+  },
+  {
+    page: '/examples/components/toaster.html',
+    script: `(async () => { ${flushSnippet}
+      await customElements.whenDefined('jst-toaster'); await flush();
+      document.querySelector('button[data-variant="success"]').click();
+      await flush(); await flush();
+      return { viaCommand: document.querySelectorAll('jst-toaster .jst-toast').length };
+    })()`,
+    assert: r => r.viaCommand === 1,
+  },
+  {
+    page: '/examples/components/lazy-region.html',
+    script: `(async () => { ${flushSnippet}
       const started = Date.now();
       while (!document.querySelector('team-stats strong') && Date.now() - started < 3000) await flush();
-      const lazyStats = document.querySelectorAll('team-stats strong').length;
-
-      // The lazy accordion: a closed details must NOT fetch, opening it must.
+      return { stats: document.querySelectorAll('team-stats strong').length };
+    })()`,
+    assert: r => r.stats === 3,
+  },
+  {
+    page: '/examples/components/lazy-accordion.html',
+    script: `(async () => { ${flushSnippet} await flush(); await flush();
       const faq = document.getElementById('lazy-faq');
-      faq.scrollIntoView({ block: 'center' });
-      await flush(); await flush(); await flush();
-      const faqLoadedClosed = !!faq.querySelector('[data-testid="faq-loaded"]');
+      const loadedClosed = !!faq.querySelector('[data-testid="faq-loaded"]');
       faq.open = true;
-      const t1 = Date.now();
-      while (!faq.querySelector('[data-testid="faq-loaded"]') && Date.now() - t1 < 3000) await flush();
-      const faqLoadedOpen = !!faq.querySelector('[data-testid="faq-loaded"]');
-
-      // Command palette: open via property, filter, run -> a toast lands.
+      const t = Date.now();
+      while (!faq.querySelector('[data-testid="faq-loaded"]') && Date.now() - t < 3000) await flush();
+      return { loadedClosed, loadedOpen: !!faq.querySelector('[data-testid="faq-loaded"]') };
+    })()`,
+    assert: r => r.loadedClosed === false && r.loadedOpen === true,
+  },
+  {
+    page: '/examples/components/command-palette.html',
+    script: `(async () => { ${flushSnippet}
+      await Promise.all(['jst-palette', 'jst-toaster'].map(n => customElements.whenDefined(n)));
+      await flush(); await flush();
       const palette = document.getElementById('palette');
-      palette.open = true;
-      await flush();
-      const paletteOpened = !!palette.querySelector('input');
-      palette.query = 'toast';
-      await flush();
-      const paletteFiltered = palette.querySelectorAll('[role=option]').length;
+      palette.open = true; await flush();
+      const opened = !!palette.querySelector('input');
+      palette.query = 'toast'; await flush();
+      const filtered = palette.querySelectorAll('[role=option]').length;
       palette.querySelector('[role=option]').click();
       await flush(); await flush();
-      const paletteRan = !!document.querySelector('jst-toaster .jst-toast');
-      const paletteClosed = !palette.querySelector('input');
-
-      return { tabCount: tabs.querySelectorAll('[role=tab]').length, changed: before !== after, selected, lazyStats, faqLoadedClosed, faqLoadedOpen, paletteOpened, paletteFiltered, paletteRan, paletteClosed };
+      const ran = !!document.querySelector('jst-toaster .jst-toast');
+      const closed = !palette.querySelector('input');
+      return { opened, filtered, ran, closed };
     })()`,
-    assert: result => result.tabCount === 3
-      && result.changed === true
-      && result.selected === 'true'
-      && result.lazyStats === 3
-      && result.faqLoadedClosed === false
-      && result.faqLoadedOpen === true
-      && result.paletteOpened === true
-      && result.paletteFiltered === 1
-      && result.paletteRan === true
-      && result.paletteClosed === true,
+    assert: r => r.opened === true && r.filtered === 1 && r.ran === true && r.closed === true,
   },
   {
     // Third-party charts: three chart libraries, each inside a JST component.
@@ -486,13 +810,32 @@ const checks = [
 
       const tocLinks = document.querySelectorAll('.spy-toc a').length;
 
-      return { cards, ringValue, menuOpenBefore, menuOpenAfter, tocLinks };
+      // Docs sidebar nav: an IntersectionObserver rooted at the scroll pane
+      // drives the active sidebar item. Assert the initial active item, then
+      // scroll the pane to the bottom and confirm the active marker moves.
+      const sideLinks = document.querySelectorAll('#recipe-sidebar-nav .sidenav-rail a').length;
+      const activeInitial = document.querySelector('#recipe-sidebar-nav .sidenav-rail a[aria-current="true"]')?.textContent.trim();
+      const pane = document.querySelector('#recipe-sidebar-nav .sidenav-content');
+      pane.scrollTo(0, pane.scrollHeight);
+      let activeAfter = activeInitial;
+      const startedSpy = Date.now();
+      while (activeAfter === 'Install' && Date.now() - startedSpy < 2000) {
+        await flush();
+        activeAfter = document.querySelector('#recipe-sidebar-nav .sidenav-rail a[aria-current="true"]')?.textContent.trim();
+      }
+
+      return { cards, ringValue, menuOpenBefore, menuOpenAfter, tocLinks,
+               sideLinks, activeInitial, activeAfter };
     })()`,
-    assert: result => result.cards === 14
+    assert: result => result.cards === 15
       && result.ringValue === '68'
       && result.menuOpenBefore === false
       && result.menuOpenAfter === true
-      && result.tocLinks === 4,
+      && result.tocLinks === 4
+      && result.sideLinks === 4
+      && result.activeInitial === 'Install'
+      && !!result.activeAfter
+      && result.activeAfter !== 'Install',
   },
   {
     // Template recipes: JST-owned DOM and behavior that works with no CDN.

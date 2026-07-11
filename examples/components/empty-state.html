@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>List &amp; Empty state · JST components</title>
+<link rel="stylesheet" href="../../jst-layout.css">
+<link rel="stylesheet" href="../../jst-components.css">
+<style>
+  body { margin: var(--jst-space-l); }
+</style>
+</head>
+<body data-theme="jst">
+<script>
+  (function () {
+    const ok = (t) => typeof t === 'string' && /^[a-z][a-z0-9]*$/.test(t);
+    const p = new URLSearchParams(location.search).get('theme');
+    if (ok(p)) document.body.dataset.theme = p;
+    addEventListener('message', (e) => {
+      const d = e.data;
+      if (d && d.type === 'jst-theme' && ok(d.theme)) document.body.dataset.theme = d.theme;
+    });
+  })();
+</script>
+<!-- example:start -->
+<!-- A member list with the empty state it falls back to. The × on each row
+     removes it; when the last row goes, the empty block takes over; "Invite
+     someone" adds a member back. The whole thing is a list plus a placeholder
+     you toggle on count — the pattern every dashboard needs. -->
+<jst-stack>
+  <ul class="jst-list" id="members">
+    <li>
+      <span class="jst-avatar" style="--size: 1.9rem">AL</span>
+      <span data-main><strong>Ada Lovelace</strong><br><small>ada@example.com</small></span>
+      <span class="jst-badge" data-variant="success">Owner</span>
+      <span data-actions><button type="button" data-variant="ghost" data-remove aria-label="Remove Ada Lovelace">&times;</button></span>
+    </li>
+    <li>
+      <span class="jst-avatar" style="--size: 1.9rem">GH</span>
+      <span data-main><strong>Grace Hopper</strong><br><small>grace@example.com</small></span>
+      <span class="jst-badge" data-variant="muted">Member</span>
+      <span data-actions><button type="button" data-variant="ghost" data-remove aria-label="Remove Grace Hopper">&times;</button></span>
+    </li>
+  </ul>
+  <div class="jst-empty" id="empty" hidden>
+    <strong>No members yet</strong>
+    <small>People you invite will show up here.</small>
+    <button type="button" data-variant="quiet" id="invite">Invite someone</button>
+  </div>
+</jst-stack>
+
+<script>
+  const list = document.getElementById('members');
+  const empty = document.getElementById('empty');
+
+  // A tiny roster the "Invite someone" button cycles through.
+  const roster = [
+    { initials: 'AT', name: 'Alan Turing',    email: 'alan@example.com',    role: 'Member', variant: 'muted' },
+    { initials: 'KJ', name: 'Katherine Johnson', email: 'katherine@example.com', role: 'Member', variant: 'muted' },
+    { initials: 'AL', name: 'Ada Lovelace',   email: 'ada@example.com',     role: 'Owner',  variant: 'success' },
+    { initials: 'GH', name: 'Grace Hopper',   email: 'grace@example.com',   role: 'Member', variant: 'muted' },
+  ];
+  let nextInvite = 0;
+
+  function sync() {
+    const hasRows = list.children.length > 0;
+    list.hidden = !hasRows;
+    empty.hidden = hasRows;
+  }
+
+  function makeRow(person) {
+    const li = document.createElement('li');
+    const avatar = document.createElement('span');
+    avatar.className = 'jst-avatar';
+    avatar.style.setProperty('--size', '1.9rem');
+    avatar.textContent = person.initials;
+    const main = document.createElement('span');
+    main.dataset.main = '';
+    main.innerHTML = '<strong></strong><br><small></small>';
+    main.querySelector('strong').textContent = person.name;
+    main.querySelector('small').textContent = person.email;
+    const badge = document.createElement('span');
+    badge.className = 'jst-badge';
+    badge.dataset.variant = person.variant;
+    badge.textContent = person.role;
+    const actions = document.createElement('span');
+    actions.dataset.actions = '';
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.dataset.variant = 'ghost';
+    remove.dataset.remove = '';
+    remove.setAttribute('aria-label', 'Remove ' + person.name);
+    remove.innerHTML = '&times;';
+    actions.append(remove);
+    li.append(avatar, main, badge, actions);
+    return li;
+  }
+
+  list.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-remove]');
+    if (!button) return;
+    button.closest('li').remove();
+    sync();
+  });
+
+  document.getElementById('invite').addEventListener('click', () => {
+    list.append(makeRow(roster[nextInvite % roster.length]));
+    nextInvite++;
+    sync();
+  });
+
+  sync();
+</script>
+<!-- example:end -->
+</body>
+</html>

@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Modal · JST components</title>
+<link rel="stylesheet" href="../../jst-layout.css">
+<link rel="stylesheet" href="../../jst-components.css">
+<style>
+  body { margin: var(--jst-space-m); display: grid; place-content: center; min-block-size: calc(100dvh - var(--jst-space-l)); }
+</style>
+</head>
+<body data-theme="jst">
+<script>
+  (function () {
+    const ok = (t) => typeof t === 'string' && /^[a-z][a-z0-9]*$/.test(t);
+    const p = new URLSearchParams(location.search).get('theme');
+    if (ok(p)) document.body.dataset.theme = p;
+    addEventListener('message', (e) => {
+      const d = e.data;
+      if (d && d.type === 'jst-theme' && ok(d.theme)) document.body.dataset.theme = d.theme;
+    });
+  })();
+</script>
+<!-- example:start -->
+<button command="show-modal" commandfor="demo-modal">Open modal</button>
+<dialog class="jst-modal" id="demo-modal" closedby="any">
+  <header>Confirm action <button class="jst-modal-close" command="close" commandfor="demo-modal" aria-label="Close">&times;</button></header>
+  <div class="jst-modal-body"><p style="margin:0">A native <code>&lt;dialog&gt;</code> with focus trap, <kbd>Esc</kbd>, and backdrop dismiss &mdash; opened and closed entirely by <code>command</code>/<code>commandfor</code>.</p></div>
+  <footer>
+    <button command="close" commandfor="demo-modal" style="background:var(--jst-surface);color:var(--jst-fg)">Cancel</button>
+    <button command="close" commandfor="demo-modal">Confirm</button>
+  </footer>
+</dialog>
+<!-- example:end -->
+</body>
+</html>

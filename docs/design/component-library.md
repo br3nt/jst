@@ -221,6 +221,7 @@ OP = Open Props, Rx = Radix (behavioral spec only).
 | Split panel | WA | none | [recipe shown](../examples/platform_recipes.html#recipe-split-panel) | recipe shown (native resize) |
 | Color picker | WA | `input[type=color]` | classless inputs | platform |
 | Scrollspy | BS | IntersectionObserver | `onreveal` synthetic event ([recipe shown](../examples/platform_recipes.html#recipe-scrollspy)) | have it (recipe shown) |
+| Sidebar navigation (nested, active bar) | WA (docs chrome / tree) | IntersectionObserver rooted at the scroll pane + CSS active bar | [recipe shown](../examples/platform_recipes.html#recipe-sidebar-nav) | recipe shown (docs-style nested sidebar; the scrollspy idea in a real layout) |
 | Custom scrollbars | Rx | `scrollbar-color`/`scrollbar-width` (Baseline 2024) | reel uses it | platform |
 | Divider / kbd / visually-hidden | BS, WA, dUI | `<hr>`, `<kbd>`, clip utility | classless `kbd` + `.jst-visually-hidden` | have it |
 | Theme switching | dUI | `light-dark()` + `color-scheme` | `--jst-*` tokens + `data-theme` skins | have it |
@@ -492,6 +493,31 @@ Every component page starts with a **"Do you even need this? - just use HTML +
 CSS"** callout and a runnable example, *then* the JST component if one is still
 justified. Each modern-CSS feature is tagged with its Baseline status and a
 fallback. The message throughout: **reach for the platform first.**
+
+## Badge convention (canonical for example + docs pages)
+
+Every recipe on an example or docs page carries **exactly one** badge, drawn from
+four categories with fixed label grammar. Every example/docs page uses this same
+convention; when a page is relabelled, match this table.
+
+| Category | Colour | Label grammar | Examples |
+| --- | --- | --- | --- |
+| Platform | green | one of `HTML + CSS`, `CSS only`, `HTML + CSS + JS` - never the specific API | `HTML + CSS + JS` |
+| JST component | red | the element tag, written literally | `<jst-rating>`, `<jst-include>` |
+| JST layout CSS | purple | the CSS hook as written in HTML | `<jst-reel>`, `[data-container]` |
+| Third-party | its own colour | library name + major version | `marked 15 + DOMPurify 3`, `qrcode-generator 1.4` |
+
+Rules:
+
+- Specific platform APIs (`:user-invalid`, `command`/`commandfor`, `<dialog>`, the
+  Popover API, scroll-driven animations, `IntersectionObserver`, …) are **not**
+  badge text. Name them in the recipe's description in `<code>`.
+- The JST-component badge is never the words "JST component"; it is the tag, so
+  tag badges must not be uppercased.
+- Each page carries a compact colour legend under its intro: green = the platform
+  already does this, no JST needed · red = a JST component, the template you see is
+  the implementation · purple = JST's CSS-only layout hooks · third-party = an
+  external library dropped into a JST component.
 
 ## Open questions
 

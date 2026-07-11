@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Command palette · JST components</title>
+<link rel="stylesheet" href="../../jst-layout.css">
+<link rel="stylesheet" href="../../jst-components.css">
+<script type="module" src="../../jst.js"></script>
+<script type="module" src="../../jst-behaviors.js"></script>
+<style>
+  body { margin: var(--jst-space-l); }
+</style>
+</head>
+<body data-theme="jst">
+<script>
+  (function () {
+    const ok = (t) => typeof t === 'string' && /^[a-z][a-z0-9]*$/.test(t);
+    const p = new URLSearchParams(location.search).get('theme');
+    if (ok(p)) document.body.dataset.theme = p;
+    addEventListener('message', (e) => {
+      const d = e.data;
+      if (d && d.type === 'jst-theme' && ok(d.theme)) document.body.dataset.theme = d.theme;
+    });
+  })();
+</script>
+<jst-include src="../../jst-components.html"></jst-include>
+<!-- example:start -->
+<jst-cluster>
+  <button type="button" data-variant="quiet" onclick="document.getElementById('palette').open = true">Open palette</button>
+  <span style="color:var(--jst-muted);font-size:var(--jst-font-small)">or press <kbd>&#8984;K</kbd> / <kbd>Ctrl+K</kbd></span>
+</jst-cluster>
+<jst-toaster id="toaster"></jst-toaster>
+<jst-palette id="palette" open="false" query="" active="0"></jst-palette>
+<!-- example:end -->
+<script type="module">
+  import { keys } from '../../jst.js';
+
+  const palette = document.getElementById('palette');
+  await customElements.whenDefined('jst-palette');
+  palette.actions = [
+    { id: 'toast', label: 'Show a success toast', kbd: 'T' },
+    { id: 'theme-shadcn', label: 'Re-skin as shadcn/ui' },
+    { id: 'theme-jst', label: 'Re-skin as JST (default)' },
+  ];
+  document.addEventListener('keydown', (e) => keys(e, {
+    'Meta+k': () => { e.preventDefault(); palette.open = true; },
+    'Ctrl+k': () => { e.preventDefault(); palette.open = true; },
+  }));
+  palette.addEventListener('run', (e) => {
+    const actions = {
+      toast: () => document.getElementById('toaster').push?.('Saved from the palette.', 'success'),
+      'theme-shadcn': () => { document.body.dataset.theme = 'shadcn'; },
+      'theme-jst': () => { document.body.dataset.theme = 'jst'; },
+    };
+    actions[e.detail]?.();
+  });
+</script>
+</body>
+</html>

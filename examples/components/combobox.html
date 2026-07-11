@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Combobox · JST components</title>
+<link rel="stylesheet" href="../../jst-layout.css">
+<link rel="stylesheet" href="../../jst-components.css">
+<script type="module" src="../../jst.js"></script>
+<script type="module" src="../../jst-behaviors.js"></script>
+<style>
+  body { margin: var(--jst-space-l); }
+</style>
+</head>
+<body data-theme="jst">
+<script>
+  (function () {
+    const ok = (t) => typeof t === 'string' && /^[a-z][a-z0-9]*$/.test(t);
+    const p = new URLSearchParams(location.search).get('theme');
+    if (ok(p)) document.body.dataset.theme = p;
+    addEventListener('message', (e) => {
+      const d = e.data;
+      if (d && d.type === 'jst-theme' && ok(d.theme)) document.body.dataset.theme = d.theme;
+    });
+  })();
+</script>
+<jst-include src="../../jst-components.html"></jst-include>
+<!-- example:start -->
+<jst-stack style="--space: var(--jst-space-l)">
+
+  <!-- Static: the whole option list ships in the tag. The combobox filters it
+       client-side as you type. -->
+  <jst-stack style="--space: var(--jst-space-2xs)">
+    <label class="cb-label" for="fruit-combobox">Static &mdash; options in the attribute</label>
+    <jst-combobox id="fruit-combobox" options='["Apple","Apricot","Banana","Blackberry","Blueberry","Cherry","Date","Fig","Grape","Kiwi","Lemon","Lime","Mango","Melon","Orange","Peach","Pear","Plum","Raspberry","Strawberry"]'></jst-combobox>
+  </jst-stack>
+
+  <!-- Async: the SAME element. There is no "remote" mode to switch on — you
+       just listen for input, fetch, and assign el.options. The `input` event
+       bubbles from the inner field up to the host, so one listener survives
+       every re-render. -->
+  <jst-stack style="--space: var(--jst-space-2xs)">
+    <label class="cb-label" for="catalog-combobox">Async &mdash; a handler fetches and assigns <code>el.options</code></label>
+    <jst-combobox id="catalog-combobox" options='[]'></jst-combobox>
+    <small id="cb-status" class="cb-status" role="status" aria-live="polite">Type to search the catalog</small>
+  </jst-stack>
+
+</jst-stack>
+
+<style>
+  .cb-label { color: var(--jst-muted); font-size: var(--jst-font-small); }
+  .cb-label code { color: var(--jst-fg); }
+  .cb-status { color: var(--jst-muted); }
+  .cb-status[data-busy="true"]::before {
+    content: ""; display: inline-block; inline-size: 0.7em; block-size: 0.7em;
+    margin-inline-end: 0.4em; border-radius: 50%; vertical-align: baseline;
+    border: 2px solid var(--jst-border); border-block-start-color: var(--jst-accent);
+    animation: jst-spin 0.7s linear infinite;
+  }
+  @media (prefers-reduced-motion: reduce) { .cb-status[data-busy="true"]::before { animation: none; } }
+</style>
+<script>
+  // A simulated remote source: an in-page catalog behind a Promise + setTimeout.
+  // No network is touched, but the call site is exactly what a real fetch()
+  // would look like — that's the point: async is usage, not a different API.
+  // (This catalog is larger than the static list above, standing in for a
+  // dataset too big to inline in an attribute.)
+  const CATALOG = ["Apple","Apricot","Avocado","Banana","Blackberry","Blackcurrant","Blueberry","Cherry","Clementine","Cranberry","Date","Dragonfruit","Elderberry","Fig","Gooseberry","Grape","Grapefruit","Guava","Kiwi","Lemon","Lime","Lychee","Mandarin","Mango","Melon","Nectarine","Orange","Papaya","Passionfruit","Peach","Pear","Persimmon","Pineapple","Plum","Pomegranate","Quince","Raspberry","Redcurrant","Starfruit","Strawberry","Tangerine","Watermelon"];
+  function searchRemote(query) {
+    return new Promise(resolve => setTimeout(() => {
+      const q = query.toLowerCase();
+      resolve(CATALOG.filter(c => c.toLowerCase().includes(q)));
+    }, 300));
+  }
+
+  const combobox = document.getElementById('catalog-combobox');
+  const status = document.getElementById('cb-status');
+  let debounceTimer, requestSeq = 0;
+
+  combobox.addEventListener('input', (event) => {
+    const query = event.target.value.trim();
+    clearTimeout(debounceTimer);
+    // Bump the sequence on EVERY keystroke (including this clear), so any
+    // in-flight fetch that resolves later sees it has been superseded.
+    const mine = ++requestSeq;
+    if (!query) {
+      combobox.options = [];
+      status.dataset.busy = 'false';
+      status.textContent = 'Type to search the catalog';
+      return;
+    }
+    status.dataset.busy = 'true';
+    status.textContent = 'Searching…';
+    debounceTimer = setTimeout(async () => {
+      const results = await searchRemote(query);
+      if (mine !== requestSeq) return;   // a newer keystroke already superseded this one
+      combobox.options = results;        // assigning the property re-renders the list
+      if (combobox.contains(document.activeElement)) combobox.open = true; // don't reopen an unfocused field
+      status.dataset.busy = 'false';
+      status.textContent = results.length
+        ? results.length + (results.length === 1 ? ' match' : ' matches')
+        : 'No matches';
+    }, 250);
+  });
+</script>
+<!-- example:end -->
+</body>
+</html>

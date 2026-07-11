@@ -87,6 +87,12 @@
   --jst-shadow: 0 0.25rem 0.75rem oklch(0 0 0 / 0.12);
   --jst-backdrop: oklch(0 0 0 / 0.45);
 
+  /* Resting elevation for static surfaces (cards / boxes), distinct from the
+     floating --jst-shadow used by dialogs, popovers and toasts. Default is flat:
+     JST's own look separates surfaces by tone and border, not elevation. A skin
+     that wants raised cards (material, daisy, bootstrap…) overrides this token. */
+  --jst-shadow-surface: none;
+
   /* Support text: hints, sublines, metadata under a control or heading. */
   --jst-font-small: 0.8rem;
 }

@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tabs · JST components</title>
+<link rel="stylesheet" href="../../jst-layout.css">
+<link rel="stylesheet" href="../../jst-components.css">
+<script type="module" src="../../jst.js"></script>
+<script type="module" src="../../jst-behaviors.js"></script>
+<style>
+  body { margin: var(--jst-space-l); }
+</style>
+</head>
+<body data-theme="jst">
+<script>
+  (function () {
+    const ok = (t) => typeof t === 'string' && /^[a-z][a-z0-9]*$/.test(t);
+    const p = new URLSearchParams(location.search).get('theme');
+    if (ok(p)) document.body.dataset.theme = p;
+    addEventListener('message', (e) => {
+      const d = e.data;
+      if (d && d.type === 'jst-theme' && ok(d.theme)) document.body.dataset.theme = d.theme;
+    });
+  })();
+</script>
+<jst-include src="../../jst-components.html"></jst-include>
+<!-- example:start -->
+<jst-tabs active="0" tabs='[{"label":"Overview","body":"There is no native tabs element, so this is a real JST custom element - roving tabindex, aria-selected, and ArrowLeft/Right navigation."},{"label":"Behavior","body":"Click a tab or focus one and use the arrow keys. The selected tab is the only one in the tab order."},{"label":"Theming","body":"It re-skins with the theme selector like every other component here."}]'></jst-tabs>
+<!-- example:end -->
+</body>
+</html>
