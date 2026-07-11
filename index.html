@@ -79,16 +79,19 @@
   .open-standalone { display: inline-flex; align-items: center; gap: .3rem; padding: .32rem .75rem; border-radius: 3px; font-size: .84rem; font-weight: 600; text-decoration: none; border: 1px solid var(--accent); color: #fff; background: var(--accent); white-space: nowrap; }
   .open-standalone:hover { background: #35459c; }
   .open-standalone:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-  .embed-shield:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
-  .embed-shield:focus-visible .hint { background: var(--accent); }
   .demo-frame { display: block; width: 100%; border: 0; background: transparent; min-height: 120px; }
   .breakout { width: 100vw; margin-left: calc(50% - 50vw); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
-  /* Click-to-interact shield: lets the page scroll smoothly past the demo
-     (the wheel hits the shield, not the iframe) until you click to engage. */
-  .embed { position: relative; }
-  .embed-shield { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: transparent; cursor: pointer; padding: 10px; display: flex; align-items: flex-start; justify-content: flex-end; }
-  .embed-shield .hint { background: rgba(27,32,48,.62); color: #fff; font-size: .72rem; padding: 2px 9px; border-radius: 3px; }
-  .embed.active .embed-shield { display: none; }
+  /* A grid of fixed-height, non-scrolling mini-example frames. Each one is a
+     single component on its own page under examples/components/. */
+  .mini-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: .8rem; margin-top: 1.1rem; }
+  .mini { border: 1px solid var(--line); border-radius: 3px; overflow: hidden; background: #fff; }
+  .mini > .mini-head { display: flex; align-items: baseline; justify-content: space-between; gap: .5rem; padding: .45rem .6rem; border-bottom: 1px solid var(--line); }
+  .mini > .mini-head h4 { margin: 0; font-size: .9rem; }
+  .mini > .mini-head a { font-size: .8rem; white-space: nowrap; }
+  .mini iframe { display: block; width: 100%; border: 0; background: #fff; }
+  .mini > .mini-note { margin: 0; padding: .45rem .6rem; font-size: .8rem; color: var(--muted, #5b6472); border-top: 1px solid var(--line); }
+  .gallery-link { margin-top: 1rem; }
+  .gallery-link a { font-weight: 600; }
 
   /* Marquee (CSS-animated; <marquee> is dead). Two copies + -50% = seamless. */
   .marquee { display: block; overflow: hidden; padding: 3px 0; background: #ffe6f1; border-top: 1px solid deeppink; border-bottom: 1px solid deeppink; }
@@ -120,7 +123,7 @@
     <div class="cta">
       <a class="btn primary" href="#examples">Examples ↓</a>
       <a class="btn ghost" href="framework_parity/index.html">Compare vs HTMX · Alpine · Vue · React · Lit &amp; more →</a>
-      <a class="btn ghost" href="examples/components_cross_section.html">Component library →</a>
+      <a class="btn ghost" href="examples/components_cross_section.html">Component gallery →</a>
       <a class="btn ghost" href="docs/">Read the docs →</a>
     </div>
   </div>
@@ -258,10 +261,10 @@
 <section id="examples">
   <div class="wrap">
     <h2>Examples</h2>
-    <p class="lede">Each of these is running live below: real JST components on this page, in
-      isolated frames. Use <strong>Open standalone ↗</strong> on any example to interact with it
-      on its own page, inspect it in DevTools, or view its source: it's plain HTML and
-      <code>jst.js</code>.</p>
+    <p class="lede">Everything below runs live in an isolated frame. Use
+      <strong>Open standalone ↗</strong> on any example to interact with it on its own page,
+      inspect it in DevTools, or read its source &mdash; it's plain HTML and <code>jst.js</code>,
+      nothing built.</p>
 
     <div class="example">
       <div class="example-head">
@@ -273,9 +276,8 @@
       <p class="blurb">A three-level component tree (board → column → card), native drag &amp; drop,
         a modal editor, composable filters, and an insights panel whose component definition is
         fetched from the "server" at runtime.</p>
-      <div class="embed breakout">
+      <div class="breakout">
         <iframe class="demo-frame" data-autosize src="examples/kanban.html" loading="lazy" title="Kanban board (live preview)" aria-describedby="example-kanban"></iframe>
-        <button class="embed-shield" aria-label="Activate this preview to interact in place (or use Open standalone above)"><span class="hint">click to interact</span></button>
       </div>
     </div>
 
@@ -288,27 +290,42 @@
       </div>
       <p class="blurb">Attributes down, events up: the page owns the list, components are dumb renderers,
         and interpolation is escaped by default.</p>
-      <div class="embed breakout">
+      <div class="breakout">
         <iframe class="demo-frame" data-autosize src="examples/todo_app.html" loading="lazy" title="Todo app (live preview)" aria-describedby="example-todo"></iframe>
-        <button class="embed-shield" aria-label="Activate this preview to interact in place (or use Open standalone above)"><span class="hint">click to interact</span></button>
       </div>
     </div>
 
     <div class="example">
       <div class="example-head">
-        <h3 id="example-components">Component library</h3>
+        <h3 id="example-components">Component gallery</h3>
         <div class="example-actions">
-          <a class="open-standalone" href="examples/components_cross_section.html" target="_blank" rel="noopener" aria-label="Open the component library as its own page">Open standalone ↗</a>
+          <a class="open-standalone" href="examples/components_cross_section.html" target="_blank" rel="noopener" aria-label="Open the component gallery as its own page">Open standalone ↗</a>
         </div>
       </div>
-      <p class="blurb">The opt-in, CSS-first library: layout primitives, ~30 component patterns
-        (most of them platform + tokens, a handful of real JST components incl. a command palette),
-        re-skinnable to any framework's look by swapping theme tokens. The
-        <a href="examples/layout_primitives.html">layout primitives page</a> runs with zero JavaScript.</p>
-      <div class="embed breakout">
-        <iframe class="demo-frame" data-autosize src="examples/components_cross_section.html" loading="lazy" title="Component library (live preview)" aria-describedby="example-components"></iframe>
-        <button class="embed-shield" aria-label="Activate this preview to interact in place (or use Open standalone above)"><span class="hint">click to interact</span></button>
+      <p class="blurb">A CSS-first component set: layout primitives, a stack of everyday
+        patterns that are mostly just platform HTML + tokens, and a handful of real JST
+        custom elements where the platform has no equivalent. A few live below; the full
+        gallery re-skins every one to another framework's look from a single dropdown.</p>
+      <div class="mini-grid" aria-describedby="example-components">
+        <div class="mini">
+          <div class="mini-head"><h4>Tabs</h4><a href="examples/components/tabs.html" target="_blank" rel="noopener">Open ↗</a></div>
+          <iframe src="examples/components/tabs.html" loading="lazy" scrolling="no" style="height:260px" title="Tabs (live preview)"></iframe>
+          <p class="mini-note">A real custom element with roving tabindex and arrow-key navigation — one <code>tabs</code> attribute configures it.</p>
+        </div>
+        <div class="mini">
+          <div class="mini-head"><h4>Modal</h4><a href="examples/components/modal.html" target="_blank" rel="noopener">Open ↗</a></div>
+          <iframe src="examples/components/modal.html" loading="lazy" scrolling="no" style="height:260px" title="Modal (live preview)"></iframe>
+          <p class="mini-note">Native <code>&lt;dialog&gt;</code> wired by <code>command</code>/<code>commandfor</code> — the platform does modals without JST.</p>
+        </div>
+        <div class="mini">
+          <div class="mini-head"><h4>Combobox</h4><a href="examples/components/combobox.html" target="_blank" rel="noopener">Open ↗</a></div>
+          <iframe src="examples/components/combobox.html" loading="lazy" scrolling="no" style="height:420px" title="Combobox (live preview)"></iframe>
+          <p class="mini-note">Filter-as-you-type with full keyboard support — static options or an async lookup, same element.</p>
+        </div>
       </div>
+      <p class="gallery-link">See every component re-skinnable to ten framework looks →
+        <a href="examples/components_cross_section.html">the full component gallery</a>.
+        The <a href="examples/layout_primitives.html">layout primitives page</a> runs with zero JavaScript.</p>
     </div>
 
     <div class="example">
@@ -320,9 +337,8 @@
       </div>
       <p class="blurb">Light-DOM slots: a component projects the author's children via
         <code>$(slot())</code> and named <code>$(slot('name', 'fallback'))</code>.</p>
-      <div class="embed breakout">
+      <div class="breakout">
         <iframe class="demo-frame" data-autosize src="examples/slots.html" loading="lazy" title="Slots and composition (live preview)" aria-describedby="example-slots"></iframe>
-        <button class="embed-shield" aria-label="Activate this preview to interact in place (or use Open standalone above)"><span class="hint">click to interact</span></button>
       </div>
     </div>
   </div>
@@ -357,14 +373,15 @@
 <footer>
   <div class="wrap">
     JST: an exploration in no-build, platform-native components.
-    Built with itself: the demo above, the four embedded examples, and the
+    Built with itself: the demo above, every embedded example, and the
     comparison browser are all JST components.
   </div>
 </footer>
 
 <script>
-  // The hero demo holds its own state; the only page logic is sizing the
-  // embedded example frames to their content so each example shows in full.
+  // The hero demo holds its own state; the whole-page app frames (kanban, todo,
+  // slots) are sized to their content so each shows in full. The component
+  // mini-frames use fixed heights and scrolling="no", so they need no sizing.
   document.querySelectorAll('iframe[data-autosize]').forEach(ifr => {
     const size = () => {
       try {
@@ -376,13 +393,6 @@
       size();
       try { new ResizeObserver(size).observe(ifr.contentDocument.body); } catch {}
     });
-  });
-  // Click-to-interact: the shield is up by default so the page scrolls smoothly
-  // past a demo; click to engage, and re-shield on pointer-leave so a fast flick
-  // never snags on the frame.
-  document.querySelectorAll('.embed').forEach(embed => {
-    embed.querySelector('.embed-shield')?.addEventListener('click', () => embed.classList.add('active'));
-    embed.addEventListener('mouseleave', () => embed.classList.remove('active'));
   });
   document.querySelectorAll('.code-example').forEach(example => {
     const detail = example.querySelector('.snippet-detail');

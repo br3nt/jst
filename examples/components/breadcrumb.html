@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Breadcrumb &amp; Pagination · JST components</title>
+<link rel="stylesheet" href="../../jst-layout.css">
+<link rel="stylesheet" href="../../jst-components.css">
+<style>
+  body { margin: var(--jst-space-l); }
+</style>
+</head>
+<body data-theme="jst">
+<script>
+  (function () {
+    const ok = (t) => typeof t === 'string' && /^[a-z][a-z0-9]*$/.test(t);
+    const p = new URLSearchParams(location.search).get('theme');
+    if (ok(p)) document.body.dataset.theme = p;
+    addEventListener('message', (e) => {
+      const d = e.data;
+      if (d && d.type === 'jst-theme' && ok(d.theme)) document.body.dataset.theme = d.theme;
+    });
+  })();
+</script>
+<!-- example:start -->
+<jst-stack>
+  <nav class="jst-breadcrumb" aria-label="Breadcrumb">
+    <ol>
+      <li><a href="#">Orders</a></li>
+      <li><a href="#">2026</a></li>
+      <li><span aria-current="page">#4471</span></li>
+    </ol>
+  </nav>
+  <nav class="jst-pagination" aria-label="Pagination">
+    <a href="#" aria-disabled="true">&lsaquo;</a>
+    <a href="#">1</a>
+    <span aria-current="page">2</span>
+    <a href="#">3</a>
+    <a href="#">4</a>
+    <a href="#">&rsaquo;</a>
+  </nav>
+</jst-stack>
+<!-- example:end -->
+</body>
+</html>

@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tooltip · JST components</title>
+<link rel="stylesheet" href="../../jst-layout.css">
+<link rel="stylesheet" href="../../jst-components.css">
+<style>
+  /* The tip renders above its anchor, so keep the anchor clear of the top edge
+     to stay fully visible in a short frame. */
+  body { margin: var(--jst-space-l); padding-block-start: 5rem; }
+</style>
+</head>
+<body data-theme="jst">
+<script>
+  (function () {
+    const ok = (t) => typeof t === 'string' && /^[a-z][a-z0-9]*$/.test(t);
+    const p = new URLSearchParams(location.search).get('theme');
+    if (ok(p)) document.body.dataset.theme = p;
+    addEventListener('message', (e) => {
+      const d = e.data;
+      if (d && d.type === 'jst-theme' && ok(d.theme)) document.body.dataset.theme = d.theme;
+    });
+  })();
+</script>
+<!-- example:start -->
+<p>Hover or focus <span class="jst-tooltip" tabindex="0" data-tip="Rendered with a CSS ::after pseudo-element &mdash; no JavaScript, no component.">this term</span> to see the tip.</p>
+<!-- example:end -->
+</body>
+</html>

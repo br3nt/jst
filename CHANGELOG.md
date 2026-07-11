@@ -5,6 +5,64 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.7.9 - 2026-07-11
+
+Example-gallery overhaul from a full read-through of the live docs: per-example
+frames, one badge convention, distinct theme skins, and the missing example
+variants. No runtime changes; vendored apps only need the two stylesheets
+(`jst-layout.css`, `jst-components.css`) if they use the component library.
+
+### Changed
+- The component gallery (`examples/components_cross_section.html`) is rebuilt
+  as a shell of 26 cards, each loading its own mini page from
+  `examples/components/` in its own iframe with "Open standalone" and
+  "View source" — overlay examples (modal, drawer, toast) get frames tall
+  enough for the overlay to actually appear in view. The re-skin dropdown
+  re-themes every frame live via `postMessage`.
+- The landing page no longer embeds whole example pages behind a
+  "click to interact" shield; the shield (and its double-click) is gone
+  entirely — per-example frames sized to content have no internal scroll to
+  steal, so the first click lands.
+- One badge convention sitewide, recorded in
+  `docs/design/component-library.md`: green badges say only `HTML + CSS`,
+  `CSS only` or `HTML + CSS + JS`; JST badges name the literal tag
+  (`<jst-tabs>`, never "JST component"); purple badges name the layout hook as
+  written (`<jst-reel>`, `[data-container]`); third-party badges name the
+  library and version. Every gallery/recipes page carries a colour legend, and
+  specific APIs (`:user-invalid`, `command`, …) moved into descriptions.
+- Every example now opens with a one-sentence description of what it
+  demonstrates, written for a developer evaluating JST; the self-proof tone is
+  gone from the gallery, recipes pages and landing.
+- The eleven `data-theme` skins are now structurally distinct: per-skin border,
+  elevation and surface treatment (Material and DaisyUI go borderless with
+  raised surfaces and filled inputs — cards only; tables, lists and accordions
+  keep faint dividers — W3.CSS goes dead flat and square, and so on). New
+  `--jst-shadow-surface` token carries resting card elevation; `jst-box`
+  consumes it.
+
+### Added
+- Combobox example gained an async mode: a debounced handler fetches and
+  assigns `el.options` with a visible loading state — same element, no
+  separate remote API.
+- Alert example gained dismissable alerts with an animated, reduced-motion-safe
+  collapse.
+- Skeleton example gained shape variants (text, avatar, card) and a live
+  `<jst-include>` swap demo with a replay control.
+- Validation example explains that `type=email` accepts TLD-less addresses
+  (`a@b` is legal intranet email) and shows `pattern` as the strictness knob.
+- The empty-state example is now live: removing every row reveals the designed
+  empty state; inviting adds one back.
+- New platform recipe: a nested docs sidebar with an active-item bar driven by
+  scrollspy (`platform_recipes.html#recipe-sidebar-nav`).
+
+### Fixed
+- Reveal-on-scroll now animates everywhere it can: the demo carries its own
+  scrollport so `animation-timeline: view()` has something to track (inside
+  the old whole-page iframe embed there was no scrollport at all, so the
+  boxes never moved). The smoke test now asserts the actual reveal behaviour.
+- Theme names with digits (`w3css`) were rejected by the theme-parameter
+  validation, making that skin unselectable.
+
 ## 0.7.8 - 2026-07-11
 
 Fixes from reading the recipe pages on an iPhone.

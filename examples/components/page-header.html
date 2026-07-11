@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Page header &amp; Stats · JST components</title>
+<link rel="stylesheet" href="../../jst-layout.css">
+<link rel="stylesheet" href="../../jst-components.css">
+<style>
+  body { margin: var(--jst-space-l); }
+</style>
+</head>
+<body data-theme="jst">
+<script>
+  (function () {
+    const ok = (t) => typeof t === 'string' && /^[a-z][a-z0-9]*$/.test(t);
+    const p = new URLSearchParams(location.search).get('theme');
+    if (ok(p)) document.body.dataset.theme = p;
+    addEventListener('message', (e) => {
+      const d = e.data;
+      if (d && d.type === 'jst-theme' && ok(d.theme)) document.body.dataset.theme = d.theme;
+    });
+  })();
+</script>
+<!-- example:start -->
+<jst-stack>
+  <div class="jst-page-header">
+    <div data-main>
+      <span class="jst-eyebrow">Household</span>
+      <h2>March budget</h2>
+      <p class="jst-sub">Shared with 2 people</p>
+    </div>
+    <span data-actions>
+      <button type="button" data-variant="quiet">Export</button>
+      <button type="button">Add expense</button>
+    </span>
+  </div>
+  <jst-cluster style="--space: var(--jst-space-xl)">
+    <div class="jst-stat"><span class="jst-eyebrow">Income</span><span class="jst-stat-value" data-testid="stat-income">$8,120</span></div>
+    <div class="jst-stat" data-trend="down"><span class="jst-eyebrow">Spent</span><span class="jst-stat-value">$5,867</span></div>
+    <div class="jst-stat" data-trend="up"><span class="jst-eyebrow">Remaining</span><span class="jst-stat-value">$2,253</span></div>
+  </jst-cluster>
+</jst-stack>
+<!-- example:end -->
+</body>
+</html>

@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reveal on scroll · JST components</title>
+<link rel="stylesheet" href="../../jst-layout.css">
+<link rel="stylesheet" href="../../jst-components.css">
+<style>
+  body { margin: var(--jst-space-l); }
+</style>
+</head>
+<body data-theme="jst">
+<script>
+  (function () {
+    const ok = (t) => typeof t === 'string' && /^[a-z][a-z0-9]*$/.test(t);
+    const p = new URLSearchParams(location.search).get('theme');
+    if (ok(p)) document.body.dataset.theme = p;
+    addEventListener('message', (e) => {
+      const d = e.data;
+      if (d && d.type === 'jst-theme' && ok(d.theme)) document.body.dataset.theme = d.theme;
+    });
+  })();
+</script>
+<!-- example:start -->
+<style>
+  /* A self-contained scrollport so animation-timeline: view() has something to
+     track: scroll THIS box and the reveal cards animate as they enter it. */
+  .reveal-scroller {
+    block-size: 15rem;
+    overflow-y: auto;
+    border: var(--jst-border-width) dashed var(--jst-border);
+    border-radius: var(--jst-radius);
+    padding: var(--jst-space-m);
+  }
+  .reveal-scroller > jst-stack { --space: 7rem; }
+  .reveal-scroller .spacer { block-size: 8rem; }
+</style>
+<p style="margin:0 0 var(--jst-space-s); color: var(--jst-muted); font-size: var(--jst-font-small)">Scroll this box &darr;</p>
+<div class="reveal-scroller" tabindex="0">
+  <jst-stack>
+    <jst-box class="jst-reveal">These boxes fade and rise as they enter the scrollport.</jst-box>
+    <jst-box class="jst-reveal">Driven by <code>animation-timeline: view()</code>: no observers, no JS.</jst-box>
+    <jst-box class="jst-reveal">The animation tracks <em>this</em> scroll box, not the page.</jst-box>
+    <jst-box class="jst-reveal">Disabled automatically for reduced-motion users.</jst-box>
+    <div class="spacer" aria-hidden="true"></div>
+  </jst-stack>
+</div>
+<!-- example:end -->
+</body>
+</html>

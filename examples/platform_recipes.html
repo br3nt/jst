@@ -9,27 +9,37 @@
   <!-- JST's own CSS (tokens + classless base + layout primitives) and the
        component skins. Local files, zero network. jst.js is loaded because
        one recipe (scrollspy) is a genuine JST component; every other recipe
-       on this page is plain HTML/CSS that needs no runtime at all. -->
+       on this page is plain HTML and CSS, with a couple adding a little vanilla
+       JavaScript, and none of them needs the JST runtime at all. -->
   <link rel="stylesheet" href="../jst-layout.css">
   <link rel="stylesheet" href="../jst-components.css">
   <script type="module" src="../jst.js"></script>
 
   <style>
-    /* ---- Layer badges: each recipe says which layer you are looking at ---- */
+    /* ---- Badge convention: one badge per recipe, four categories ----
+       green (platform)      = the platform already does this, no JST needed
+       red (jst)             = a JST component; the label is the element tag
+       purple (jst-layout)   = JST's CSS-only layout hooks
+       third-party           = an external library dropped into a JST component
+       Tags stay lowercase (no text-transform) so <scroll-spy> reads correctly. */
     .layer {
-      display: inline-block; font-size: 0.68rem; font-weight: 700;
-      letter-spacing: 0.04em; text-transform: uppercase;
+      display: inline-block; font-size: 0.7rem; font-weight: 700;
       padding: 0.15em 0.55em; border-radius: 999px; vertical-align: middle;
       border: 1px solid transparent; white-space: nowrap;
+      font-family: var(--jst-font-mono, monospace);
     }
-    .layer[data-layer="native"]      { background: oklch(0.93 0.03 255); color: oklch(0.38 0.09 255); border-color: oklch(0.82 0.05 255); }
-    .layer[data-layer="jst"]         { background: oklch(0.93 0.06 155); color: oklch(0.38 0.11 155); border-color: oklch(0.80 0.09 155); }
-    .layer[data-layer="third-party"] { background: oklch(0.93 0.07 70);  color: oklch(0.42 0.12 70);  border-color: oklch(0.82 0.10 70); }
-    [data-scheme="dark"] .layer[data-layer="native"]      { background: oklch(0.30 0.04 255); color: oklch(0.85 0.06 255); border-color: oklch(0.45 0.06 255); }
-    [data-scheme="dark"] .layer[data-layer="jst"]         { background: oklch(0.30 0.06 155); color: oklch(0.85 0.09 155); border-color: oklch(0.45 0.09 155); }
-    [data-scheme="dark"] .layer[data-layer="third-party"] { background: oklch(0.30 0.06 70);  color: oklch(0.85 0.09 70);  border-color: oklch(0.45 0.08 70); }
+    .layer[data-layer="platform"],    .swatch[data-layer="platform"]    { background: oklch(0.93 0.06 155); color: oklch(0.38 0.11 155); border-color: oklch(0.80 0.09 155); }
+    .layer[data-layer="jst"],         .swatch[data-layer="jst"]         { background: oklch(0.93 0.05 25);  color: oklch(0.44 0.16 25);  border-color: oklch(0.82 0.10 25); }
+    .layer[data-layer="jst-layout"],  .swatch[data-layer="jst-layout"]  { background: oklch(0.93 0.05 300); color: oklch(0.44 0.15 300); border-color: oklch(0.82 0.09 300); }
+    .layer[data-layer="third-party"], .swatch[data-layer="third-party"] { background: oklch(0.93 0.07 70);  color: oklch(0.42 0.12 70);  border-color: oklch(0.82 0.10 70); }
+    [data-scheme="dark"] .layer[data-layer="platform"],    [data-scheme="dark"] .swatch[data-layer="platform"]    { background: oklch(0.30 0.06 155); color: oklch(0.85 0.09 155); border-color: oklch(0.45 0.09 155); }
+    [data-scheme="dark"] .layer[data-layer="jst"],         [data-scheme="dark"] .swatch[data-layer="jst"]         { background: oklch(0.32 0.08 25);  color: oklch(0.86 0.11 25);  border-color: oklch(0.48 0.11 25); }
+    [data-scheme="dark"] .layer[data-layer="jst-layout"],  [data-scheme="dark"] .swatch[data-layer="jst-layout"]  { background: oklch(0.32 0.08 300); color: oklch(0.86 0.10 300); border-color: oklch(0.48 0.10 300); }
+    [data-scheme="dark"] .layer[data-layer="third-party"], [data-scheme="dark"] .swatch[data-layer="third-party"] { background: oklch(0.30 0.06 70);  color: oklch(0.85 0.09 70);  border-color: oklch(0.45 0.08 70); }
 
-    .legend { display: flex; flex-wrap: wrap; gap: var(--jst-space-s); align-items: center; }
+    .legend { display: flex; flex-wrap: wrap; gap: var(--jst-space-s) var(--jst-space-m); align-items: center; }
+    .legend-item { display: inline-flex; align-items: center; gap: 0.45em; font-size: var(--jst-font-small); color: var(--jst-muted); }
+    .swatch { display: inline-block; inline-size: 0.95em; block-size: 0.95em; border-radius: 4px; border: 1px solid transparent; flex: none; }
 
     .recipe {
       border: var(--jst-border-width) solid var(--jst-border); border-radius: var(--jst-radius);
@@ -131,6 +141,30 @@
     .spy-sections section { min-block-size: 60vh; padding-block: var(--jst-space-m); }
     .spy-sections h4 { margin-block: 0 var(--jst-space-xs); }
 
+    /* ---------- Recipe 15: docs sidebar nav (scrollspy over a pane) ---------- */
+    .sidenav { display: grid; grid-template-columns: 12rem 1fr; gap: var(--jst-space-l); align-items: start; }
+    .sidenav-rail { font-size: var(--jst-font-small); align-self: start; }
+    .sidenav-rail ul { list-style: none; margin: 0; padding: 0; }
+    .sidenav-heading { display: block; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.68rem; color: var(--jst-muted); padding: var(--jst-space-2xs) var(--jst-space-s); }
+    .sidenav-section + .sidenav-section { margin-block-start: var(--jst-space-s); }
+    /* the light indent guide the active bar overlaps */
+    .sidenav-section > ul { border-inline-start: var(--jst-border-width) solid var(--jst-border); margin-inline-start: var(--jst-space-s); }
+    .sidenav-section > ul a {
+      display: block; text-decoration: none; color: var(--jst-muted);
+      padding: var(--jst-space-2xs) var(--jst-space-s);
+      border-inline-start: 2px solid transparent; margin-inline-start: calc(-1 * var(--jst-border-width));
+      transition: color 0.12s ease, border-color 0.12s ease;
+    }
+    .sidenav-section > ul a:hover { color: var(--jst-fg); }
+    .sidenav-section > ul a[aria-current="true"] {
+      color: var(--jst-accent-700, var(--jst-accent)); font-weight: 700;
+      border-inline-start-color: var(--jst-accent);
+    }
+    .sidenav-content { max-block-size: 15rem; overflow: auto; padding-inline: var(--jst-space-m); border: var(--jst-border-width) solid var(--jst-border); border-radius: var(--jst-radius); }
+    .sidenav-content section { min-block-size: 9rem; padding-block: var(--jst-space-s); }
+    .sidenav-content section + section { border-block-start: var(--jst-border-width) solid var(--jst-border); }
+    .sidenav-content h4 { margin-block: 0 var(--jst-space-2xs); }
+
     /* ---------- Recipe 14: icons ---------- */
     .icon-row { display: flex; gap: var(--jst-space-l); flex-wrap: wrap; }
     .icon-row jst-icon { --space: var(--jst-space-2xs); }
@@ -169,19 +203,19 @@
     <jst-stack style="--space: var(--jst-space-xl); padding-block: var(--jst-space-xl)">
 
       <jst-stack>
-        <h1>Platform recipes: the components JST deliberately does not ship</h1>
-        <p>Web Awesome ships a component for each of the things below. The web
-           platform already covers them, so JST does not add a component - it just
-           lets you use the platform. Each recipe is a working demo with its
-           complete, copyable source in a <em>View source</em> panel beneath it,
-           badged by the layer it lives on. This is the answer to
-           <q>how do I do X in JST</q> for every X here: you write the HTML.</p>
+        <h1>Platform recipes: UI patterns you build on the platform, no component needed</h1>
+        <p>These are the everyday widgets a UI kit would ship - date pickers,
+           progress rings, trees, context menus, a docs sidebar - built from the web
+           platform itself. Each one is a working demo with its complete, copyable
+           source in a <em>View source</em> panel beneath it. Reach for these when you
+           are wondering <q>how do I do X in JST</q>: for everything here the answer is
+           that you write the HTML and let the platform do the work.</p>
 
         <div class="legend">
-          <span>Every recipe is labelled by layer:</span>
-          <span class="layer" data-layer="native">Native</span><span>plain HTML/CSS/JS, no JST</span>
-          <span class="layer" data-layer="jst">JST</span><span>a JST component</span>
-          <span class="layer" data-layer="third-party">Third-party</span><span>an outside library, by choice</span>
+          <span class="legend-item"><span class="swatch" data-layer="platform"></span>green - the platform already does this, no JST needed</span>
+          <span class="legend-item"><span class="swatch" data-layer="jst"></span>red - a JST component; the template you see is the implementation</span>
+          <span class="legend-item"><span class="swatch" data-layer="jst-layout"></span>purple - JST's CSS-only layout hooks</span>
+          <span class="legend-item"><span class="swatch" data-layer="third-party"></span>third-party - an external library dropped into a JST component</span>
         </div>
 
         <p style="color: var(--jst-muted); font-size: var(--jst-font-small)">
@@ -194,11 +228,13 @@
       <section class="recipe" id="recipe-datetime-number">
         <header>
           <h3>Date, time and number inputs</h3>
-          <span class="layer" data-layer="native">Native</span>
+          <span class="layer" data-layer="platform">HTML + CSS</span>
         </header>
-        <p class="lead">Web Awesome's Date Input and Date Picker are Pro;
-           <code>input[type=date]</code> is free in every browser, and the
-           classless base already token-styles it.</p>
+        <p class="lead">A date, time and quantity form with no component. Native
+           <code>input[type=date]</code>, <code>input[type=time]</code> and
+           <code>input[type=number]</code> give you a picker, keyboard entry and
+           locale-aware formatting in every browser, and the classless base already
+           token-styles them.</p>
         <div class="demo">
           <jst-form-row>
             <jst-field><label for="r1-date">Date</label><input id="r1-date" type="date" value="2026-07-10"></jst-field>
@@ -226,10 +262,11 @@
       <section class="recipe" id="recipe-file-input">
         <header>
           <h3>File input</h3>
-          <span class="layer" data-layer="native">Native</span>
+          <span class="layer" data-layer="platform">HTML + CSS</span>
         </header>
-        <p class="lead">Web Awesome's File Input is Pro. The classless base already
-           skins the native picker through <code>::file-selector-button</code>.</p>
+        <p class="lead">A styled file picker with no component: the native
+           <code>input[type=file]</code> handles selection, and the classless base
+           skins its button through <code>::file-selector-button</code>.</p>
         <div class="demo">
           <jst-field>
             <label for="r2-file">Attachment</label>
@@ -260,12 +297,12 @@
       <section class="recipe" id="recipe-video">
         <header>
           <h3>Video</h3>
-          <span class="layer" data-layer="native">Native</span>
+          <span class="layer" data-layer="platform">HTML + CSS</span>
         </header>
-        <p class="lead">Web Awesome's Video is Pro. Native <code>&lt;video&gt;</code>
-           gives you controls, a poster, and <code>&lt;track&gt;</code> captions with
-           no library. (This demo has a poster but no media source, so it shows the
-           frame without playing.)</p>
+        <p class="lead">Native <code>&lt;video&gt;</code> gives you play controls,
+           fullscreen, picture-in-picture, a poster and <code>&lt;track&gt;</code>
+           captions with no library. (This demo has a poster but no media source, so
+           it shows the frame without playing.)</p>
         <div class="demo">
           <video controls width="320" style="max-inline-size: 100%; border-radius: var(--jst-radius)"
                  poster="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='320' height='180'><rect width='320' height='180' fill='dimgray'/><polygon points='140,66 140,114 178,90' fill='white'/><text x='160' y='150' fill='gainsboro' font-family='sans-serif' font-size='13' text-anchor='middle'>native &lt;video&gt; poster</text></svg>">
@@ -291,11 +328,12 @@
       <section class="recipe" id="recipe-progress-ring">
         <header>
           <h3>Progress ring and bar</h3>
-          <span class="layer" data-layer="native">Native</span>
+          <span class="layer" data-layer="platform">HTML + CSS + JS</span>
         </header>
-        <p class="lead">A ring is a <code>conic-gradient()</code> driven by one
-           <code>--value</code> custom property; the linear case is just
-           <code>&lt;progress&gt;</code>. Drag the slider to drive both.</p>
+        <p class="lead">A percentage indicator as a ring and a bar. The ring is a
+           <code>conic-gradient()</code> driven by one <code>--value</code> custom
+           property; the linear case is just <code>&lt;progress&gt;</code>. Drag the
+           slider to drive both.</p>
         <div class="demo">
           <div class="ring-demo" style="--value: 68">
             <div class="ring" role="img" aria-label="68 percent complete"><span class="ring-num">68%</span></div>
@@ -331,10 +369,11 @@
       <section class="recipe" id="recipe-stepper">
         <header>
           <h3>Stepper / steps</h3>
-          <span class="layer" data-layer="native">Native</span>
+          <span class="layer" data-layer="platform">HTML + CSS</span>
         </header>
-        <p class="lead">An ordered list numbered by CSS counters, with the current
-           step marked by <code>aria-current="step"</code>.</p>
+        <p class="lead">A multi-step progress header (checkout, onboarding) built from
+           an ordered list: CSS counters number the steps and
+           <code>aria-current="step"</code> marks the one you are on.</p>
         <div class="demo">
           <ol class="steps">
             <li>Cart</li>
@@ -365,11 +404,11 @@
       <section class="recipe" id="recipe-tree">
         <header>
           <h3>Tree view</h3>
-          <span class="layer" data-layer="native">Native</span>
+          <span class="layer" data-layer="platform">HTML + CSS</span>
         </header>
-        <p class="lead">Nested <code>&lt;details&gt;</code>/<code>&lt;summary&gt;</code>
-           with connector lines. Expand, collapse and keyboard focus come from the
-           platform.</p>
+        <p class="lead">A collapsible tree (file explorer, nav) from nested
+           <code>&lt;details&gt;</code>/<code>&lt;summary&gt;</code> with connector
+           lines. Expand, collapse and keyboard focus all come from the platform.</p>
         <div class="demo">
           <div class="tree">
             <details open>
@@ -409,11 +448,11 @@
       <section class="recipe" id="recipe-floating-label">
         <header>
           <h3>Floating label</h3>
-          <span class="layer" data-layer="native">Native</span>
+          <span class="layer" data-layer="platform">CSS only</span>
         </header>
-        <p class="lead">Pure CSS with <code>:placeholder-shown</code> and
-           <code>:focus-within</code>. The label sits inside the field and lifts on
-           focus or when there is a value.</p>
+        <p class="lead">A label that lifts out of the field on focus or input, in pure
+           CSS with <code>:placeholder-shown</code> and <code>:focus-within</code> - no
+           JavaScript at all.</p>
         <div class="demo">
           <label class="float">
             <input type="text" placeholder=" " aria-label="Email address">
@@ -440,10 +479,11 @@
       <section class="recipe" id="recipe-otp">
         <header>
           <h3>One-time code</h3>
-          <span class="layer" data-layer="native">Native</span>
+          <span class="layer" data-layer="platform">HTML + CSS</span>
         </header>
-        <p class="lead">One input with <code>autocomplete="one-time-code"</code> and
-           <code>inputmode="numeric"</code>. On a phone the platform offers the SMS
+        <p class="lead">A verification-code field. One input with
+           <code>autocomplete="one-time-code"</code> and
+           <code>inputmode="numeric"</code>; on a phone the platform offers the SMS
            code for one-tap autofill.</p>
         <div class="demo">
           <jst-field>
@@ -470,11 +510,12 @@
       <section class="recipe" id="recipe-context-menu">
         <header>
           <h3>Context menu</h3>
-          <span class="layer" data-layer="native">Native</span>
+          <span class="layer" data-layer="platform">HTML + CSS</span>
         </header>
-        <p class="lead">A <code>[popover]</code> menu opened by a
-           <code>command</code> / <code>commandfor</code> invoker button. Light
-           dismiss (outside click, <kbd>Esc</kbd>) is built in.</p>
+        <p class="lead">An actions menu with no JavaScript: a <code>[popover]</code>
+           opened by a <code>command</code> / <code>commandfor</code> invoker button,
+           anchored with CSS anchor positioning. Light dismiss (outside click,
+           <kbd>Esc</kbd>) is built in.</p>
         <div class="demo">
           <button command="toggle-popover" commandfor="r9-menu" style="anchor-name: --r9-btn">Actions &#9662;</button>
           <div popover id="r9-menu" class="ctx-menu" style="position-anchor: --r9-btn; position-area: bottom span-right; margin-block-start: var(--jst-space-2xs)">
@@ -502,9 +543,10 @@
       <section class="recipe" id="recipe-enter-exit">
         <header>
           <h3>Enter / exit animation</h3>
-          <span class="layer" data-layer="native">Native</span>
+          <span class="layer" data-layer="platform">CSS only</span>
         </header>
-        <p class="lead"><code>@starting-style</code> plus
+        <p class="lead">Fade-and-lift a panel in on open and reverse it on close, in
+           CSS alone. <code>@starting-style</code> plus
            <code>transition-behavior: allow-discrete</code> animate a popover both
            ways, including the switch off <code>display: none</code>. No library.</p>
         <div class="demo">
@@ -536,12 +578,13 @@
       <section class="recipe" id="recipe-comparison-slider">
         <header>
           <h3>Comparison slider (before / after)</h3>
-          <span class="layer" data-layer="native">Native</span>
+          <span class="layer" data-layer="platform">HTML + CSS + JS</span>
         </header>
-        <p class="lead">An <code>input[type=range]</code> writes a <code>--pos</code>
-           custom property; the top image is clipped with
-           <code>clip-path: inset()</code>. The one-line <code>oninput</code> is a
-           native inline handler. Both images are inline SVG.</p>
+        <p class="lead">A drag-to-reveal before/after image wipe. An
+           <code>input[type=range]</code> writes a <code>--pos</code> custom property;
+           the top image is clipped with <code>clip-path: inset()</code>. The one-line
+           <code>oninput</code> is a native inline handler. Both images are inline
+           SVG.</p>
         <div class="demo">
           <div class="compare" style="--pos: 50%">
             <img class="under" alt="After" src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='320' height='200'><rect width='320' height='200' fill='steelblue'/><circle cx='90' cy='80' r='42' fill='gold'/><rect x='150' y='120' width='130' height='55' fill='coral'/><text x='160' y='188' fill='white' font-family='sans-serif' font-size='18' font-weight='bold' text-anchor='middle'>AFTER</text></svg>">
@@ -573,10 +616,11 @@
       <section class="recipe" id="recipe-split-panel">
         <header>
           <h3>Split panel</h3>
-          <span class="layer" data-layer="native">Native</span>
+          <span class="layer" data-layer="platform">HTML + CSS</span>
         </header>
-        <p class="lead">Native CSS <code>resize</code> on one pane inside a flex row.
-           Drag the handle at the pane's bottom-inline corner.</p>
+        <p class="lead">Two resizable panes side by side, using native CSS
+           <code>resize</code> on one pane inside a flex row. Drag the handle at the
+           pane's bottom-inline corner.</p>
         <div class="demo">
           <div class="split">
             <div class="pane pane-a">Left pane. Drag my corner handle to resize.</div>
@@ -608,12 +652,15 @@
       <section class="recipe" id="recipe-scrollspy">
         <header>
           <h3>Scrollspy</h3>
-          <span class="layer" data-layer="jst">JST</span>
+          <span class="layer" data-layer="jst">&lt;scroll-spy&gt;</span>
         </header>
-        <p class="lead">The one recipe that is a JST component. Its
-           <code>onreveal</code> synthetic event fires as each section scrolls into
-           view; the handler records the active id and JST re-highlights the table
-           of contents. Scroll the page and watch the marker move.</p>
+        <p class="lead">A table of contents that highlights the section you are
+           currently reading - the classic docs <q>scrollspy</q>, and the one recipe
+           here that is a JST component. Its <code>onreveal</code> synthetic event
+           fires as each section scrolls into view; the handler records the active id
+           and JST re-highlights the list. For the same idea as a nested sidebar with
+           an active bar, see <a href="#recipe-sidebar-nav">the docs sidebar</a>
+           below.</p>
         <div class="demo">
           <scroll-spy sections='[
             {"id":"spy-intro","label":"Introduction","body":"onreveal is the JST synthetic reveal event: a shared IntersectionObserver dispatches a real reveal event on the element as it enters the viewport."},
@@ -646,17 +693,141 @@
         </details>
       </section>
 
-      <!-- ============ 14. ICONS ============ -->
+      <!-- ============ 14. DOCS SIDEBAR NAV (scrollspy) ============ -->
+      <section class="recipe" id="recipe-sidebar-nav">
+        <header>
+          <h3>Docs sidebar navigation</h3>
+          <span class="layer" data-layer="platform">HTML + CSS + JS</span>
+        </header>
+        <p class="lead">A nested documentation sidebar - section headings with
+           indented items, light indent guides, and a coloured bar on the active item
+           - kept in sync with the content pane beside it. It is the
+           <a href="#recipe-scrollspy">scrollspy</a> idea applied to a real docs
+           layout: an <code>IntersectionObserver</code> whose root is the scroll pane
+           watches the sections and moves the active marker. Scroll the pane on the
+           right.</p>
+        <div class="demo">
+          <div class="sidenav">
+            <nav class="sidenav-rail" aria-label="Documentation">
+              <ul>
+                <li class="sidenav-section">
+                  <span class="sidenav-heading">Getting started</span>
+                  <ul>
+                    <li><a href="#sn-install" aria-current="false">Install</a></li>
+                    <li><a href="#sn-configure" aria-current="false">Configure</a></li>
+                  </ul>
+                </li>
+                <li class="sidenav-section">
+                  <span class="sidenav-heading">Guides</span>
+                  <ul>
+                    <li><a href="#sn-layout" aria-current="false">Layout</a></li>
+                    <li><a href="#sn-theming" aria-current="false">Theming</a></li>
+                  </ul>
+                </li>
+              </ul>
+            </nav>
+            <div class="sidenav-content" tabindex="0" aria-label="Documentation content">
+              <section id="sn-install"><h4>Install</h4><p>Copy the JST files into your app, or load them from a pinned CDN tag. There is no build step and nothing to configure to get the first component rendering on the page.</p></section>
+              <section id="sn-configure"><h4>Configure</h4><p>Override <code>--jst-*</code> tokens at <code>:root</code> to theme, and call <code>configure({ dev: true })</code> while developing so render errors surface as visible boxes instead of stale DOM.</p></section>
+              <section id="sn-layout"><h4>Layout</h4><p>Compose pages from the layout primitives - <code>jst-stack</code>, <code>jst-grid</code>, <code>jst-sidebar</code> - styled by element with zero JavaScript required.</p></section>
+              <section id="sn-theming"><h4>Theming</h4><p>One accent token drives a derived ramp, and <code>[data-scheme]</code> flips light and dark. Skins override only tokens, so the same markup re-skins to another framework's look.</p></section>
+            </div>
+          </div>
+        </div>
+        <details>
+          <summary>View source</summary>
+          <pre><code>&lt;div class="sidenav"&gt;
+  &lt;nav class="sidenav-rail" aria-label="Documentation"&gt;
+    &lt;ul&gt;
+      &lt;li class="sidenav-section"&gt;
+        &lt;span class="sidenav-heading"&gt;Getting started&lt;/span&gt;
+        &lt;ul&gt;
+          &lt;li&gt;&lt;a href="#sn-install"&gt;Install&lt;/a&gt;&lt;/li&gt;
+          &lt;li&gt;&lt;a href="#sn-configure"&gt;Configure&lt;/a&gt;&lt;/li&gt;
+        &lt;/ul&gt;
+      &lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/nav&gt;
+  &lt;div class="sidenav-content" tabindex="0"&gt;
+    &lt;section id="sn-install"&gt;&lt;h4&gt;Install&lt;/h4&gt;&lt;p&gt;&#8230;&lt;/p&gt;&lt;/section&gt;
+    &lt;section id="sn-configure"&gt;&#8230;&lt;/section&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
+
+/* light indent guide + active bar, like a docs sidebar */
+.sidenav-section &gt; ul { border-inline-start: 1px solid var(--jst-border); }
+.sidenav-section &gt; ul a { border-inline-start: 2px solid transparent; }
+.sidenav-section &gt; ul a[aria-current="true"] {
+  border-inline-start-color: var(--jst-accent);
+  color: var(--jst-accent-700, var(--jst-accent)); font-weight: 700;
+}
+
+&lt;script&gt;
+// Same IntersectionObserver idea as the scrollspy recipe, but the root is the
+// scrollable content pane and the marker is the matching sidebar link.
+const pane = document.querySelector('.sidenav-content');
+const links = new Map([...document.querySelectorAll('.sidenav-rail a')]
+  .map(a =&gt; [a.hash.slice(1), a]));
+const visible = new Set();
+const setActive = id =&gt; links.forEach((a, key) =&gt;
+  a.setAttribute('aria-current', key === id ? 'true' : 'false'));
+const io = new IntersectionObserver(entries =&gt; {
+  for (const e of entries) e.isIntersecting
+    ? visible.add(e.target.id) : visible.delete(e.target.id);
+  // highlight the topmost section currently in view
+  let top = Infinity, active = null;
+  visible.forEach(id =&gt; {
+    const y = pane.querySelector('#' + id).getBoundingClientRect().top;
+    if (y &lt; top) { top = y; active = id; }
+  });
+  if (active) setActive(active);
+}, { root: pane, threshold: 0.1 });
+pane.querySelectorAll('section[id]').forEach(s =&gt; io.observe(s));
+setActive(pane.querySelector('section[id]').id);   // initial
+&lt;/script&gt;</code></pre>
+        </details>
+      </section>
+      <script>
+        // Docs sidebar scrollspy: an IntersectionObserver rooted at the scroll
+        // pane keeps the active sidebar item in sync with the section on screen.
+        (() => {
+          const pane = document.querySelector('#recipe-sidebar-nav .sidenav-content');
+          if (!pane) return;
+          const links = new Map(
+            [...document.querySelectorAll('#recipe-sidebar-nav .sidenav-rail a')]
+              .map(a => [a.hash.slice(1), a]));
+          const visible = new Set();
+          const setActive = (id) => links.forEach((a, key) =>
+            a.setAttribute('aria-current', key === id ? 'true' : 'false'));
+          const sections = [...pane.querySelectorAll('section[id]')];
+          const io = new IntersectionObserver((entries) => {
+            for (const e of entries) {
+              if (e.isIntersecting) visible.add(e.target.id);
+              else visible.delete(e.target.id);
+            }
+            let top = Infinity, active = null;
+            visible.forEach((id) => {
+              const y = pane.querySelector('#' + id).getBoundingClientRect().top;
+              if (y < top) { top = y; active = id; }
+            });
+            if (active) setActive(active);
+          }, { root: pane, threshold: 0.1 });
+          sections.forEach((s) => io.observe(s));
+          setActive(sections[0].id);
+        })();
+      </script>
+
+      <!-- ============ 15. ICONS ============ -->
       <section class="recipe" id="recipe-icons">
         <header>
           <h3>Icons</h3>
-          <span class="layer" data-layer="native">Native</span>
-          <span class="layer" data-layer="third-party">Third-party</span>
+          <span class="layer" data-layer="platform">HTML + CSS</span>
         </header>
-        <p class="lead">An inline SVG sprite (<code>&lt;symbol&gt;</code> /
-           <code>&lt;use&gt;</code>) sized by the <code>jst-icon</code> primitive. Any
-           icon set drops straight in: Lucide, Heroicons, Font Awesome Free - copy
-           their paths into symbols.</p>
+        <p class="lead">Themeable, text-aligned icons from an inline SVG sprite
+           (<code>&lt;symbol&gt;</code> / <code>&lt;use&gt;</code>) sized by the
+           <code>jst-icon</code> primitive. Any icon set drops straight in: Lucide,
+           Heroicons, Font Awesome Free - copy their paths into symbols, no runtime
+           library.</p>
         <div class="demo">
           <svg width="0" height="0" style="position: absolute" aria-hidden="true">
             <symbol id="ic-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -698,12 +869,13 @@
 
       <jst-box>
         <jst-stack style="--space: var(--jst-space-xs)">
-          <h2>Takeaway <span class="layer" data-layer="native">Native</span></h2>
-          <p>Thirteen of these fourteen recipes are plain HTML and CSS with no
-             runtime, and the fourteenth is a small JST component that only turns a
-             platform observation into rendered state. Shipping a component for each
-             would be re-wrapping the platform. JST leaves them to the platform on
-             purpose, and shows you the markup instead.</p>
+          <h2>Takeaway</h2>
+          <p>Almost everything here is plain HTML and CSS with no runtime; a couple
+             add a few lines of vanilla JavaScript, and exactly one - the scrollspy -
+             is a small JST component that turns a platform observation into rendered
+             state. That is the pattern worth taking away: reach for the platform
+             first, keep the markup in your hands, and add JST only where it earns a
+             place.</p>
         </jst-stack>
       </jst-box>
 

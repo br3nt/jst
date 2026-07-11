@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Validation states · JST components</title>
+<link rel="stylesheet" href="../../jst-layout.css">
+<link rel="stylesheet" href="../../jst-components.css">
+<style>
+  body { margin: var(--jst-space-l); }
+</style>
+</head>
+<body data-theme="jst">
+<script>
+  (function () {
+    const ok = (t) => typeof t === 'string' && /^[a-z][a-z0-9]*$/.test(t);
+    const p = new URLSearchParams(location.search).get('theme');
+    if (ok(p)) document.body.dataset.theme = p;
+    addEventListener('message', (e) => {
+      const d = e.data;
+      if (d && d.type === 'jst-theme' && ok(d.theme)) document.body.dataset.theme = d.theme;
+    });
+  })();
+</script>
+<!-- example:start -->
+<form onsubmit="event.preventDefault()">
+  <jst-stack style="--space: var(--jst-space-l)">
+
+    <jst-form-row>
+      <jst-field>
+        <label for="val-email">Email (required)</label>
+        <input id="val-email" type="email" required placeholder="type, then leave the field">
+        <small>Turns red only after you interact: the platform's own <code>:user-invalid</code>, zero JS.</small>
+      </jst-field>
+      <button>Subscribe</button>
+    </jst-form-row>
+
+    <jst-field>
+      <label for="val-email-tld">Email, TLD required</label>
+      <input id="val-email-tld" type="email" pattern="[^@\s]+@[^@\s]+\.[^@\s]+"
+             required placeholder="try a@b, then a@b.com">
+      <small><code>type="email"</code> alone accepts <code>a@b</code> &mdash; a bare host like
+        <code>root@localhost</code> is a legal address, so the platform allows it. Add a
+        <code>pattern</code> requiring a dot-TLD when you want the stricter rule.</small>
+    </jst-field>
+
+  </jst-stack>
+</form>
+<!-- example:end -->
+</body>
+</html>

@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Drawer · JST components</title>
+<link rel="stylesheet" href="../../jst-layout.css">
+<link rel="stylesheet" href="../../jst-components.css">
+<style>
+  body { margin: var(--jst-space-m); display: grid; place-content: center; min-block-size: calc(100dvh - var(--jst-space-l)); }
+</style>
+</head>
+<body data-theme="jst">
+<script>
+  (function () {
+    const ok = (t) => typeof t === 'string' && /^[a-z][a-z0-9]*$/.test(t);
+    const p = new URLSearchParams(location.search).get('theme');
+    if (ok(p)) document.body.dataset.theme = p;
+    addEventListener('message', (e) => {
+      const d = e.data;
+      if (d && d.type === 'jst-theme' && ok(d.theme)) document.body.dataset.theme = d.theme;
+    });
+  })();
+</script>
+<!-- example:start -->
+<jst-cluster>
+  <button data-side="end" onclick="const d = document.getElementById('demo-drawer'); d.dataset.side = this.dataset.side; d.showModal()">Right</button>
+  <button data-variant="quiet" data-side="start" onclick="const d = document.getElementById('demo-drawer'); d.dataset.side = this.dataset.side; d.showModal()">Left</button>
+  <button data-variant="quiet" data-side="top" onclick="const d = document.getElementById('demo-drawer'); d.dataset.side = this.dataset.side; d.showModal()">Top</button>
+  <button data-variant="quiet" data-side="bottom" onclick="const d = document.getElementById('demo-drawer'); d.dataset.side = this.dataset.side; d.showModal()">Bottom</button>
+</jst-cluster>
+<dialog class="jst-drawer" id="demo-drawer" closedby="any">
+  <header>
+    <span>Filters</span>
+    <button class="jst-modal-close" command="close" commandfor="demo-drawer" aria-label="Close">&times;</button>
+  </header>
+  <div class="jst-drawer-body">
+    <jst-stack style="--space: var(--jst-space-s)">
+      <jst-field>
+        <label for="drawer-status">Status</label>
+        <select id="drawer-status"><option>Any</option><option>Open</option><option>Closed</option></select>
+      </jst-field>
+      <label class="jst-switch"><input type="checkbox"><span class="track"></span> Only mine</label>
+    </jst-stack>
+  </div>
+</dialog>
+<!-- example:end -->
+</body>
+</html>

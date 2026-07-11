@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Skeleton · JST components</title>
+<link rel="stylesheet" href="../../jst-layout.css">
+<link rel="stylesheet" href="../../jst-components.css">
+<script type="module" src="../../jst.js"></script>
+<script type="module" src="../../jst-behaviors.js"></script>
+<style>
+  body { margin: var(--jst-space-l); }
+</style>
+</head>
+<body data-theme="jst">
+<script>
+  (function () {
+    const ok = (t) => typeof t === 'string' && /^[a-z][a-z0-9]*$/.test(t);
+    const p = new URLSearchParams(location.search).get('theme');
+    if (ok(p)) document.body.dataset.theme = p;
+    addEventListener('message', (e) => {
+      const d = e.data;
+      if (d && d.type === 'jst-theme' && ok(d.theme)) document.body.dataset.theme = d.theme;
+    });
+  })();
+</script>
+<!-- example:start -->
+<jst-stack style="--space: var(--jst-space-l)">
+
+  <!-- Three shapes, all the same .jst-skeleton class sized with inline styles:
+       text lines, an avatar beside lines, and a card. Pure CSS. -->
+  <jst-switcher style="--threshold: 26rem; --space: var(--jst-space-l)">
+
+    <jst-stack style="--space: var(--jst-space-xs)" class="skel-shape">
+      <small class="skel-label">Text lines</small>
+      <span class="jst-skeleton" style="inline-size: 40%"></span>
+      <span class="jst-skeleton"></span>
+      <span class="jst-skeleton" style="inline-size: 85%"></span>
+    </jst-stack>
+
+    <jst-stack style="--space: var(--jst-space-xs)" class="skel-shape">
+      <small class="skel-label">Avatar + lines</small>
+      <jst-cluster style="--space: var(--jst-space-s); align-items: center; flex-wrap: nowrap">
+        <span class="jst-skeleton" style="inline-size: 2.75rem; block-size: 2.75rem; border-radius: 50%; flex: 0 0 auto"></span>
+        <jst-stack style="--space: var(--jst-space-2xs); flex: 1 1 auto">
+          <span class="jst-skeleton" style="inline-size: 60%"></span>
+          <span class="jst-skeleton" style="inline-size: 90%"></span>
+        </jst-stack>
+      </jst-cluster>
+    </jst-stack>
+
+    <jst-stack style="--space: var(--jst-space-xs)" class="skel-shape">
+      <small class="skel-label">Card</small>
+      <span class="jst-skeleton" style="block-size: 4rem"></span>
+      <span class="jst-skeleton" style="inline-size: 70%"></span>
+      <span class="jst-skeleton" style="inline-size: 95%"></span>
+    </jst-stack>
+
+  </jst-switcher>
+
+  <!-- The swap story: skeletons are the pre-fetch children of a <jst-include>.
+       They show until the fragment arrives, then the include replaces them
+       with the real content. "Replay" re-runs it: it re-shows the skeleton for
+       a beat (simulating a slow network — the local fetch is instant) then
+       mounts a fresh <jst-include> that loads the fragment for real. -->
+  <jst-stack style="--space: var(--jst-space-xs)">
+    <jst-cluster style="justify-content: space-between; align-items: center; flex-wrap: nowrap">
+      <small class="skel-label">Loading → loaded</small>
+      <button type="button" id="replay" data-variant="quiet">Replay</button>
+    </jst-cluster>
+    <div id="swap-slot">
+      <jst-include src="../fragments/team_stats.html">
+        <jst-cluster style="--space: var(--jst-space-xl)">
+          <span class="jst-skeleton" style="inline-size: 5rem"></span>
+          <span class="jst-skeleton" style="inline-size: 5rem"></span>
+          <span class="jst-skeleton" style="inline-size: 5rem"></span>
+        </jst-cluster>
+      </jst-include>
+    </div>
+  </jst-stack>
+
+</jst-stack>
+
+<style>
+  .skel-label { color: var(--jst-muted); }
+</style>
+<script>
+  // Capture the include's own pre-fetch skeleton so replay reuses exactly the
+  // first-load markup. This classic script runs during parse, before the
+  // deferred jst-behaviors module upgrades the include and swaps its children.
+  const SKELETON = document.querySelector('#swap-slot jst-include').innerHTML;
+  document.getElementById('replay').addEventListener('click', () => {
+    const slot = document.getElementById('swap-slot');
+    // Stage the skeleton on its own so the swap is watchable (the local fetch
+    // is otherwise instant).
+    slot.innerHTML = SKELETON;
+    setTimeout(() => {
+      // Then mount a fresh include: on connect it fetches the fragment and
+      // swaps its skeleton child out for the real content — the first-load path.
+      const include = document.createElement('jst-include');
+      include.setAttribute('src', '../fragments/team_stats.html');
+      include.innerHTML = SKELETON;
+      slot.replaceChildren(include);
+    }, 900);
+  });
+</script>
+<!-- example:end -->
+</body>
+</html>

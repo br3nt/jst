@@ -32,21 +32,30 @@
   </script>
 
   <style>
-    /* ---- Layer badges: every recipe says which layer you are looking at ---- */
+    /* ---- Badge convention: one badge per recipe, four categories ----
+       green (platform)      = the platform already does this, no JST needed
+       red (jst)             = a JST component; the label is the element tag
+       purple (jst-layout)   = JST's CSS-only layout hooks
+       third-party           = an external library dropped into a JST component
+       Tags stay lowercase (no text-transform) so <jst-rating> reads correctly. */
     .layer {
-      display: inline-block; font-size: 0.68rem; font-weight: 700;
-      letter-spacing: 0.04em; text-transform: uppercase;
+      display: inline-block; font-size: 0.7rem; font-weight: 700;
       padding: 0.15em 0.55em; border-radius: 999px; vertical-align: middle;
-      border: 1px solid transparent;
+      border: 1px solid transparent; white-space: nowrap;
+      font-family: var(--jst-font-mono, monospace);
     }
-    .layer[data-layer="native"]      { background: oklch(0.93 0.03 255); color: oklch(0.38 0.09 255); border-color: oklch(0.82 0.05 255); }
-    .layer[data-layer="jst"]         { background: oklch(0.93 0.06 155); color: oklch(0.38 0.11 155); border-color: oklch(0.80 0.09 155); }
-    .layer[data-layer="third-party"] { background: oklch(0.93 0.07 70);  color: oklch(0.42 0.12 70);  border-color: oklch(0.82 0.10 70); }
-    [data-scheme="dark"] .layer[data-layer="native"]      { background: oklch(0.30 0.04 255); color: oklch(0.85 0.06 255); border-color: oklch(0.45 0.06 255); }
-    [data-scheme="dark"] .layer[data-layer="jst"]         { background: oklch(0.30 0.06 155); color: oklch(0.85 0.09 155); border-color: oklch(0.45 0.09 155); }
-    [data-scheme="dark"] .layer[data-layer="third-party"] { background: oklch(0.30 0.06 70);  color: oklch(0.85 0.09 70);  border-color: oklch(0.45 0.08 70); }
+    .layer[data-layer="platform"],    .swatch[data-layer="platform"]    { background: oklch(0.93 0.06 155); color: oklch(0.38 0.11 155); border-color: oklch(0.80 0.09 155); }
+    .layer[data-layer="jst"],         .swatch[data-layer="jst"]         { background: oklch(0.93 0.05 25);  color: oklch(0.44 0.16 25);  border-color: oklch(0.82 0.10 25); }
+    .layer[data-layer="jst-layout"],  .swatch[data-layer="jst-layout"]  { background: oklch(0.93 0.05 300); color: oklch(0.44 0.15 300); border-color: oklch(0.82 0.09 300); }
+    .layer[data-layer="third-party"], .swatch[data-layer="third-party"] { background: oklch(0.93 0.07 70);  color: oklch(0.42 0.12 70);  border-color: oklch(0.82 0.10 70); }
+    [data-scheme="dark"] .layer[data-layer="platform"],    [data-scheme="dark"] .swatch[data-layer="platform"]    { background: oklch(0.30 0.06 155); color: oklch(0.85 0.09 155); border-color: oklch(0.45 0.09 155); }
+    [data-scheme="dark"] .layer[data-layer="jst"],         [data-scheme="dark"] .swatch[data-layer="jst"]         { background: oklch(0.32 0.08 25);  color: oklch(0.86 0.11 25);  border-color: oklch(0.48 0.11 25); }
+    [data-scheme="dark"] .layer[data-layer="jst-layout"],  [data-scheme="dark"] .swatch[data-layer="jst-layout"]  { background: oklch(0.32 0.08 300); color: oklch(0.86 0.10 300); border-color: oklch(0.48 0.10 300); }
+    [data-scheme="dark"] .layer[data-layer="third-party"], [data-scheme="dark"] .swatch[data-layer="third-party"] { background: oklch(0.30 0.06 70);  color: oklch(0.85 0.09 70);  border-color: oklch(0.45 0.08 70); }
 
-    .legend { display: flex; flex-wrap: wrap; gap: var(--jst-space-s); align-items: center; }
+    .legend { display: flex; flex-wrap: wrap; gap: var(--jst-space-s) var(--jst-space-m); align-items: center; }
+    .legend-item { display: inline-flex; align-items: center; gap: 0.45em; font-size: var(--jst-font-small); color: var(--jst-muted); }
+    .swatch { display: inline-block; inline-size: 0.95em; block-size: 0.95em; border-radius: 4px; border: 1px solid transparent; flex: none; }
 
     .card {
       border: var(--jst-border-width) solid var(--jst-border); border-radius: var(--jst-radius);
@@ -266,25 +275,24 @@
 
       <jst-stack>
         <h1>JST ships the template, not a sealed element</h1>
-        <p>Web Awesome ships each of these as a compiled custom element whose
-           implementation is hidden behind Shadow DOM. JST ships the
-           <strong>template</strong>. The custom element falls out of source you can
-           read, copy into your own page, and edit. Every recipe below is a complete,
-           copyable <code>&lt;script type="jst"&gt;</code> block shown next to its live
-           instances: open the <em>Show the template source</em> disclosure and the code
-           you see is the exact code running above it.</p>
+        <p>Every recipe below is a complete, copyable
+           <code>&lt;script type="jst"&gt;</code> block shown next to its live instances.
+           Open the <em>Show the template source</em> disclosure and the code you see
+           is exactly the code running above it - the custom element falls out of
+           source you can read, copy into your page, and edit. Nothing is hidden behind
+           Shadow DOM.</p>
 
-        <p>These are recipes that live in the examples, deliberately
-           <strong>not</strong> shipped in <code>jst-components.html</code>. The library
-           stays lean; you own your copy. Want half-star precision gone, a different
-           glyph, a byte ladder in binary units? Edit the template. There is no build
-           step and nothing to override from the outside.</p>
+        <p>These recipes live in the examples, deliberately <strong>not</strong>
+           shipped in <code>jst-components.html</code>: the library stays lean and you
+           own your copy. Want half-star precision gone, a different glyph, a byte
+           ladder in binary units? Edit the template. There is no build step and
+           nothing to override from the outside.</p>
 
         <div class="legend">
-          <span>Every recipe is labelled by layer:</span>
-          <span class="layer" data-layer="native">Native</span><span>the platform (Intl, clipboard, custom elements)</span>
-          <span class="layer" data-layer="jst">JST</span><span>the reactive template</span>
-          <span class="layer" data-layer="third-party">Third-party</span><span>a pinned CDN library</span>
+          <span class="legend-item"><span class="swatch" data-layer="platform"></span>green - the platform already does this, no JST needed</span>
+          <span class="legend-item"><span class="swatch" data-layer="jst"></span>red - a JST component; the template you see is the implementation</span>
+          <span class="legend-item"><span class="swatch" data-layer="jst-layout"></span>purple - JST's CSS-only layout hooks</span>
+          <span class="legend-item"><span class="swatch" data-layer="third-party"></span>third-party - an external library dropped into a JST component</span>
         </div>
       </jst-stack>
 
@@ -292,7 +300,7 @@
       <div class="card" id="recipe-rating">
         <header>
           <h3>&lt;jst-rating&gt;</h3>
-          <span class="layer" data-layer="jst">JST</span>
+          <span class="layer" data-layer="jst">&lt;jst-rating&gt;</span>
         </header>
         <p>Stars driven by a declared <code>value</code> (half steps supported) and a
            <code>max</code>. It is a keyboard <code>slider</code>: focus it and use the
@@ -304,8 +312,9 @@
           <jst-rating id="demo-rating" value="3" max="5" label="Rate this recipe"></jst-rating>
           <span class="readout">event caught by the page: <strong><output id="rating-readout">3 / 5</output></strong></span>
         </div>
-        <p class="note">Compare: <code>wa-rating</code> is free but sealed. This one you
-           restyle by editing the template, not by fighting Shadow DOM parts.</p>
+        <p class="note">Restyle it by editing the template: the glyph, the half-star
+           precision and the accent token are all right here, with no Shadow DOM parts
+           to fight.</p>
         <details class="src"><summary>Show the template source</summary><pre><code data-source-for="jst-rating"></code></pre></details>
       </div>
 
@@ -313,8 +322,7 @@
       <div class="card" id="recipe-copy">
         <header>
           <h3>&lt;jst-copy-button&gt;</h3>
-          <span class="layer" data-layer="jst">JST</span>
-          <span class="layer" data-layer="native">Native clipboard</span>
+          <span class="layer" data-layer="jst">&lt;jst-copy-button&gt;</span>
         </header>
         <p><code>navigator.clipboard.writeText</code> of the button's <code>value</code>,
            or the text of the element its <code>target</code> selector points at. It
@@ -332,8 +340,7 @@
       <div class="card" id="recipe-relative-time">
         <header>
           <h3>&lt;jst-relative-time&gt;</h3>
-          <span class="layer" data-layer="jst">JST</span>
-          <span class="layer" data-layer="native">Native Intl</span>
+          <span class="layer" data-layer="jst">&lt;jst-relative-time&gt;</span>
         </header>
         <p>The wording is pure <code>Intl.RelativeTimeFormat</code> picking the best unit;
            JST is the reactive wrapper. <code>once('tick', ...)</code> schedules a timer
@@ -355,8 +362,7 @@
       <div class="card" id="recipe-format-bytes">
         <header>
           <h3>&lt;jst-format-bytes&gt;</h3>
-          <span class="layer" data-layer="jst">JST</span>
-          <span class="layer" data-layer="native">Native Intl</span>
+          <span class="layer" data-layer="jst">&lt;jst-format-bytes&gt;</span>
         </header>
         <p>A byte count in, a human size out. The number and unit label come from
            <code>Intl.NumberFormat</code> with its <code>unit</code> style.</p>
@@ -382,8 +388,7 @@
       <div class="card" id="recipe-format">
         <header>
           <h3>&lt;jst-format-number&gt; &amp; &lt;jst-format-date&gt;</h3>
-          <span class="layer" data-layer="jst">JST</span>
-          <span class="layer" data-layer="native">Native Intl</span>
+          <span class="layer" data-layer="jst">&lt;jst-format-number&gt;</span>
         </header>
         <p>Two thin templates over <code>Intl.NumberFormat</code> and
            <code>Intl.DateTimeFormat</code>. <code>locale</code> is optional and defaults
@@ -408,12 +413,12 @@
       <div class="card" id="recipe-markdown">
         <header>
           <h3>&lt;markdown-block&gt;</h3>
-          <span class="layer" data-layer="third-party">Third-party</span>
-          <span class="layer" data-layer="jst">JST</span>
+          <span class="layer" data-layer="third-party">marked 15 + DOMPurify 3</span>
         </header>
-        <p>This is the safety lesson. <code>trustedHTML(...)</code> is the one opt-out of
-           JST's automatic escaping, so <strong>third-party HTML must be sanitized before
-           it gets there</strong>. The pattern, in order: <code>marked</code> turns the
+        <p>Render user-supplied Markdown to HTML without opening an XSS hole - and the
+           safety pattern is the real lesson. <code>trustedHTML(...)</code> is the one
+           opt-out of JST's automatic escaping, so <strong>third-party HTML must be
+           sanitized before it gets there</strong>. The pattern, in order: <code>marked</code> turns the
            source into HTML, <code>DOMPurify</code> strips anything dangerous from that
            HTML, and only the sanitized result is passed to
            <code>$(trustedHTML(...))</code>. The source below deliberately includes a
@@ -444,8 +449,7 @@ The javascript link loses its href and the script tag is removed by the sanitize
       <div class="card" id="recipe-qr">
         <header>
           <h3>&lt;qr-code&gt;</h3>
-          <span class="layer" data-layer="third-party">Third-party</span>
-          <span class="layer" data-layer="jst">JST</span>
+          <span class="layer" data-layer="third-party">qrcode-generator 1.4</span>
         </header>
         <p>A pinned QR library draws into a <code>jst-preserve</code>'d mount built once
            in <code>once('qr', ...)</code>. Republishing <code>value</code> re-renders
@@ -467,7 +471,7 @@ The javascript link loses its href and the script tag is removed by the sanitize
 
       <jst-box>
         <jst-stack style="--space: var(--jst-space-xs)">
-          <h2>Takeaway <span class="layer" data-layer="native">Native</span></h2>
+          <h2>Takeaway</h2>
           <p>None of these is a framework feature. A rating, a copy button, a byte
              formatter: each is a short template that leans on the platform (Intl, the
              clipboard, custom elements) and, where a real library helps, drops one in

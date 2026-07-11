@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Toast · JST components</title>
+<link rel="stylesheet" href="../../jst-layout.css">
+<link rel="stylesheet" href="../../jst-components.css">
+<script type="module" src="../../jst.js"></script>
+<script type="module" src="../../jst-behaviors.js"></script>
+<style>
+  body { margin: var(--jst-space-l); }
+</style>
+</head>
+<body data-theme="jst">
+<script>
+  (function () {
+    const ok = (t) => typeof t === 'string' && /^[a-z][a-z0-9]*$/.test(t);
+    const p = new URLSearchParams(location.search).get('theme');
+    if (ok(p)) document.body.dataset.theme = p;
+    addEventListener('message', (e) => {
+      const d = e.data;
+      if (d && d.type === 'jst-theme' && ok(d.theme)) document.body.dataset.theme = d.theme;
+    });
+  })();
+</script>
+<jst-include src="../../jst-components.html"></jst-include>
+<!-- example:start -->
+<jst-cluster style="--space: var(--jst-space-xs)">
+  <button command="--toast" commandfor="toaster" data-variant="success" data-message="Changes saved.">Success toast</button>
+  <button command="--toast" commandfor="toaster" data-variant="error" data-message="Something went wrong.">Error toast</button>
+</jst-cluster>
+<jst-toaster id="toaster"></jst-toaster>
+<!-- example:end -->
+</body>
+</html>
