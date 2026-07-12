@@ -368,6 +368,48 @@ const checks = [
       && result.sourceHasMarkers === false,
   },
   {
+    // The landing page embeds the FULL component gallery via the shared module
+    // (regression: v0.7.9 had shrunk it to 3 mini frames + a link). Assert the
+    // whole grid renders, EVERY iframe (the three app demos + all 26 cards) is
+    // scrolling="no" (the scroll-stealing fix), the re-skin dropdown re-themes a
+    // card frame, the hero JST component painted, and the runtime is preloaded.
+    page: '/index.html',
+    script: `(async () => {
+      ${flushSnippet}
+      await flush();
+      const t0 = Date.now();
+      while ((!document.querySelector('jst-demo-counter button')
+              || document.querySelectorAll('#landing-gallery .card').length < 26)
+             && Date.now() - t0 < 6000) await flush();
+      const counterButton = !!document.querySelector('jst-demo-counter button');
+      const cards = document.querySelectorAll('#landing-gallery .card').length;
+      const allIframes = [...document.querySelectorAll('iframe')];
+      const iframeCount = allIframes.length;
+      const scrollingNo = allIframes.every(f => f.getAttribute('scrolling') === 'no');
+      const preloads = [...document.querySelectorAll('link[rel="modulepreload"]')]
+        .map(l => l.getAttribute('href'));
+      const needed = ['jst.js','compiler.js','parser.js','interpreter.js','input_reader.js','lexer.js','tokens.js'];
+      const preloadOk = needed.every(n => preloads.includes(n));
+      // Re-skin to the digit-bearing theme, then confirm a card frame re-themes.
+      const sel = document.getElementById('landing-theme');
+      sel.value = 'w3css';
+      sel.dispatchEvent(new Event('change'));
+      await flush();
+      const frame = document.querySelector('#landing-gallery .card iframe');
+      frame.scrollIntoView();
+      const t1 = Date.now();
+      while (frame.contentDocument?.body?.dataset.theme !== 'w3css' && Date.now() - t1 < 4000) await flush();
+      const frameThemed = frame.contentDocument?.body?.dataset.theme === 'w3css';
+      return { counterButton, cards, iframeCount, scrollingNo, preloadOk, frameThemed };
+    })()`,
+    assert: result => result.counterButton === true
+      && result.cards === 26
+      && result.iframeCount === 29
+      && result.scrollingNo === true
+      && result.preloadOk === true
+      && result.frameThemed === true,
+  },
+  {
     page: '/examples/components/modal.html',
     script: `(async () => { ${flushSnippet} await flush();
       const dlg = document.querySelector('dialog.jst-modal');

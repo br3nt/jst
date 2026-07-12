@@ -5,6 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>JST: components in plain HTML, no build step</title>
 <meta name="description" content="JST is a tiny framework for building reactive web components directly in HTML, with no build step. Plain HTML and JavaScript, real custom elements, server-streamable components.">
+<!-- Warm the runtime's import graph so the hero's <jst-demo-counter> paints fast.
+     jst.js pulls compiler → parser → interpreter → reader/lexer/tokens in a
+     sequential waterfall; preloading each hop fetches them in parallel. -->
+<link rel="modulepreload" href="jst.js">
+<link rel="modulepreload" href="compiler.js">
+<link rel="modulepreload" href="parser.js">
+<link rel="modulepreload" href="interpreter.js">
+<link rel="modulepreload" href="input_reader.js">
+<link rel="modulepreload" href="lexer.js">
+<link rel="modulepreload" href="tokens.js">
 <script type="module" src="jst.js"></script>
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <style>
@@ -54,10 +64,6 @@
   .demo-note { font-size:.84rem; color:var(--muted); margin-top:.6rem; }
 
   .grid3 { display:grid; grid-template-columns:repeat(3,1fr); gap:.8rem; margin-top:1.1rem; }
-  .card { border:1px solid var(--line); border-radius:3px; padding:.75rem .9rem; background:#fff; }
-  .card h3 { margin:.1rem 0 .35rem; font-size:1rem; }
-  .card p { margin:0; color:var(--muted); font-size:.9rem; }
-  .card .who { font-size:.74rem; text-transform:uppercase; letter-spacing:0; color:var(--accent2); font-weight:700; }
 
   ul.principles { list-style:none; padding:0; margin:1rem 0 0; display:grid; gap:.55rem; }
   ul.principles li { padding-left:1.5rem; position:relative; }
@@ -81,15 +87,16 @@
   .open-standalone:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   .demo-frame { display: block; width: 100%; border: 0; background: transparent; min-height: 120px; }
   .breakout { width: 100vw; margin-left: calc(50% - 50vw); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
-  /* A grid of fixed-height, non-scrolling mini-example frames. Each one is a
-     single component on its own page under examples/components/. */
-  .mini-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: .8rem; margin-top: 1.1rem; }
-  .mini { border: 1px solid var(--line); border-radius: 3px; overflow: hidden; background: #fff; }
-  .mini > .mini-head { display: flex; align-items: baseline; justify-content: space-between; gap: .5rem; padding: .45rem .6rem; border-bottom: 1px solid var(--line); }
-  .mini > .mini-head h4 { margin: 0; font-size: .9rem; }
-  .mini > .mini-head a { font-size: .8rem; white-space: nowrap; }
-  .mini iframe { display: block; width: 100%; border: 0; background: #fff; }
-  .mini > .mini-note { margin: 0; padding: .45rem .6rem; font-size: .8rem; color: var(--muted, #5b6472); border-top: 1px solid var(--line); }
+  /* The full component gallery is rendered here by the shared gallery module.
+     The module ships the card/badge/legend styles (scoped under .jst-gallery,
+     which it puts on #landing-gallery), so only the re-skin toolbar chrome is
+     styled locally, in the landing's own palette. */
+  .gallery-mount { margin-top: 1.1rem; }
+  .reskin-bar { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem .9rem; padding: .6rem .8rem; background: var(--bg); border: 1px solid var(--line); border-radius: 3px; }
+  .reskin-bar label { font-weight: 600; font-size: .9rem; }
+  .reskin-bar select { font: inherit; font-size: .88rem; padding: .2rem .35rem; }
+  .reskin-note { font-size: .84rem; color: var(--muted); }
+  .reskin-bar .legend { flex-basis: 100%; }
   .gallery-link { margin-top: 1rem; }
   .gallery-link a { font-weight: 600; }
 
@@ -276,8 +283,11 @@
       <p class="blurb">A three-level component tree (board → column → card), native drag &amp; drop,
         a modal editor, composable filters, and an insights panel whose component definition is
         fetched from the "server" at runtime.</p>
+      <!-- The app frames' min-height reserves each example's settled content
+           height (at time of writing) so lazy-load never passes through a
+           scrollable phase; data-autosize corrects to the live height on load. -->
       <div class="breakout">
-        <iframe class="demo-frame" data-autosize src="examples/kanban.html" loading="lazy" title="Kanban board (live preview)" aria-describedby="example-kanban"></iframe>
+        <iframe class="demo-frame" data-autosize scrolling="no" style="min-height:755px" src="examples/kanban.html" loading="lazy" title="Kanban board (live preview)" aria-describedby="example-kanban"></iframe>
       </div>
     </div>
 
@@ -291,7 +301,7 @@
       <p class="blurb">Attributes down, events up: the page owns the list, components are dumb renderers,
         and interpolation is escaped by default.</p>
       <div class="breakout">
-        <iframe class="demo-frame" data-autosize src="examples/todo_app.html" loading="lazy" title="Todo app (live preview)" aria-describedby="example-todo"></iframe>
+        <iframe class="demo-frame" data-autosize scrolling="no" style="min-height:700px" src="examples/todo_app.html" loading="lazy" title="Todo app (live preview)" aria-describedby="example-todo"></iframe>
       </div>
     </div>
 
@@ -304,27 +314,35 @@
       </div>
       <p class="blurb">A CSS-first component set: layout primitives, a stack of everyday
         patterns that are mostly just platform HTML + tokens, and a handful of real JST
-        custom elements where the platform has no equivalent. A few live below; the full
-        gallery re-skins every one to another framework's look from a single dropdown.</p>
-      <div class="mini-grid" aria-describedby="example-components">
-        <div class="mini">
-          <div class="mini-head"><h4>Tabs</h4><a href="examples/components/tabs.html" target="_blank" rel="noopener">Open ↗</a></div>
-          <iframe src="examples/components/tabs.html" loading="lazy" scrolling="no" style="height:260px" title="Tabs (live preview)"></iframe>
-          <p class="mini-note">A real custom element with roving tabindex and arrow-key navigation — one <code>tabs</code> attribute configures it.</p>
-        </div>
-        <div class="mini">
-          <div class="mini-head"><h4>Modal</h4><a href="examples/components/modal.html" target="_blank" rel="noopener">Open ↗</a></div>
-          <iframe src="examples/components/modal.html" loading="lazy" scrolling="no" style="height:260px" title="Modal (live preview)"></iframe>
-          <p class="mini-note">Native <code>&lt;dialog&gt;</code> wired by <code>command</code>/<code>commandfor</code> — the platform does modals without JST.</p>
-        </div>
-        <div class="mini">
-          <div class="mini-head"><h4>Combobox</h4><a href="examples/components/combobox.html" target="_blank" rel="noopener">Open ↗</a></div>
-          <iframe src="examples/components/combobox.html" loading="lazy" scrolling="no" style="height:420px" title="Combobox (live preview)"></iframe>
-          <p class="mini-note">Filter-as-you-type with full keyboard support — static options or an async lookup, same element.</p>
+        custom elements where the platform has no equivalent. Every one is live below in
+        its own frame — open it standalone, read its source, interact with it — and the
+        whole gallery re-skins to another framework's look from the single dropdown.</p>
+      <div class="gallery-mount" id="landing-gallery" aria-describedby="example-components">
+        <div class="reskin-bar">
+          <label for="landing-theme">Re-skin as:</label>
+          <select id="landing-theme">
+            <option value="jst">JST (default)</option>
+            <option value="bootstrap">Bootstrap</option>
+            <option value="shadcn">shadcn/ui</option>
+            <option value="shoelace">Shoelace / Web Awesome</option>
+            <option value="pico">Pico CSS</option>
+            <option value="w3css">W3.CSS (W3Schools)</option>
+            <option value="bulma">Bulma</option>
+            <option value="material">Material Design 3</option>
+            <option value="antd">Ant Design</option>
+            <option value="tailwind">Tailwind UI</option>
+            <option value="daisy">DaisyUI</option>
+          </select>
+          <span class="reskin-note">Same markup in every frame. Only the theme tokens change.</span>
+          <div class="legend" aria-label="Badge legend">
+            <span><span class="dot" data-tech="none"></span> green = the platform already does this, no JST needed</span>
+            <span><span class="dot" data-tech="jst"></span> red = a JST component — the template you see is the implementation</span>
+            <span><span class="dot" data-tech="layout"></span> purple = JST's CSS-only layout hooks</span>
+          </div>
         </div>
       </div>
-      <p class="gallery-link">See every component re-skinnable to ten framework looks →
-        <a href="examples/components_cross_section.html">the full component gallery</a>.
+      <p class="gallery-link">The same grid lives on its own at
+        <a href="examples/components_cross_section.html">the full component gallery page</a>.
         The <a href="examples/layout_primitives.html">layout primitives page</a> runs with zero JavaScript.</p>
     </div>
 
@@ -338,7 +356,7 @@
       <p class="blurb">Light-DOM slots: a component projects the author's children via
         <code>$(slot())</code> and named <code>$(slot('name', 'fallback'))</code>.</p>
       <div class="breakout">
-        <iframe class="demo-frame" data-autosize src="examples/slots.html" loading="lazy" title="Slots and composition (live preview)" aria-describedby="example-slots"></iframe>
+        <iframe class="demo-frame" data-autosize scrolling="no" style="min-height:651px" src="examples/slots.html" loading="lazy" title="Slots and composition (live preview)" aria-describedby="example-slots"></iframe>
       </div>
     </div>
   </div>
@@ -380,13 +398,18 @@
 
 <script>
   // The hero demo holds its own state; the whole-page app frames (kanban, todo,
-  // slots) are sized to their content so each shows in full. The component
-  // mini-frames use fixed heights and scrolling="no", so they need no sizing.
+  // slots) are sized to their content so each shows in full. They carry both a
+  // reserved min-height and scrolling="no" so lazy-load never passes through a
+  // scrollable phase (which would let a trackpad gesture latch onto the frame).
+  // The component gallery frames below are rendered by the shared module, which
+  // gives each a fixed height and scrolling="no", so they need no sizing here.
   document.querySelectorAll('iframe[data-autosize]').forEach(ifr => {
     const size = () => {
       try {
         const h = ifr.contentDocument.documentElement.scrollHeight;
-        if (h) ifr.style.height = h + 'px';
+        // +2px swallows sub-pixel rounding so the frame never becomes 1px
+        // scrollable (which would let a trackpad gesture latch onto it).
+        if (h) ifr.style.height = (h + 2) + 'px';
       } catch {}
     };
     ifr.addEventListener('load', () => {
@@ -417,6 +440,19 @@
     example.addEventListener('mouseleave', reset);
   });
   window.__exampleReady = true;
+</script>
+
+<script type="module">
+  // Render the full component gallery into #landing-gallery from the shared
+  // module — the same manifest and card renderer the standalone gallery page
+  // uses, so both stay in lockstep. Every card is its own <iframe scrolling="no">
+  // (open standalone, view source), and the dropdown re-skins every frame.
+  import { renderGallery } from './examples/components/gallery-manifest.js';
+  renderGallery({
+    container: document.getElementById('landing-gallery'),
+    basePath: 'examples/components/',
+    themeSelect: document.getElementById('landing-theme'),
+  });
 </script>
 </body>
 </html>
