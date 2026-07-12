@@ -5,6 +5,26 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.7.10 - 2026-07-12
+
+Landing-page regressions from the 0.7.9 gallery overhaul, reported from real
+browsing. Docs/examples only; no runtime changes.
+
+### Fixed
+- All 26 examples are back on the landing page — 0.7.9 wrongly reduced it to
+  three. The card manifest and renderer now live in one shared module
+  (`examples/components/gallery-manifest.js`) consumed by both the landing and
+  the gallery page, so the two can't drift; the landing grid keeps the re-skin
+  dropdown, per-example standalone links and view-source panels.
+- Scroll-stealing eliminated at the root: the three whole-app frames (kanban,
+  todo, slots) now carry `scrolling="no"` plus a reserved height close to
+  their settled size, and autosize adds 2px of rounding slack — a trackpad
+  gesture can never latch onto a transiently-scrollable frame again (this
+  latch was also the "janky scrolling" feel).
+- The hero counter button appears much sooner: `modulepreload` links flatten
+  jst.js's four-hop import waterfall (compiler → parser → lexer/tokens/
+  input_reader) into one round-trip, on both the landing and the docs page.
+
 ## 0.7.9 - 2026-07-11
 
 Example-gallery overhaul from a full read-through of the live docs: per-example

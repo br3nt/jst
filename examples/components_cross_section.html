@@ -7,6 +7,10 @@
   <link rel="stylesheet" href="../jst-layout.css">
   <link rel="stylesheet" href="../jst-components.css">
   <style>
+    /* Page chrome only. The card grid, badge and legend styles ship with the
+       shared gallery module (examples/components/gallery-manifest.js), scoped
+       under `.jst-gallery` (this page's <body>), so this page and the landing
+       render the cards identically. */
     .toolbar {
       position: sticky; top: 0; z-index: 10;
       display: flex; flex-wrap: wrap; align-items: center; gap: var(--jst-space-m);
@@ -14,41 +18,9 @@
       background: var(--jst-surface); border-block-end: var(--jst-border-width) solid var(--jst-border);
     }
     .toolbar label { font-weight: 600; }
-    .legend { display: flex; flex-wrap: wrap; gap: var(--jst-space-s) var(--jst-space-l); font-size: var(--jst-font-small); color: var(--jst-muted); }
-    .legend > span { display: inline-flex; align-items: baseline; gap: var(--jst-space-2xs); }
-    .legend .dot { inline-size: 0.7em; block-size: 0.7em; border-radius: 50%; translate: 0 0.05em; }
-    .legend .dot[data-tech="none"]   { background: oklch(0.55 0.14 150); }
-    .legend .dot[data-tech="jst"]    { background: oklch(0.58 0.18 30); }
-    .legend .dot[data-tech="layout"] { background: oklch(0.55 0.14 300); }
-
-    .stage { margin-block-start: var(--jst-space-xl); }
-    .stage > h2 { margin: 0 0 var(--jst-space-2xs); }
-    .stage > p { margin: 0 0 var(--jst-space-m); color: var(--jst-muted); max-inline-size: 60ch; }
-
-    .grid {
-      display: grid; gap: var(--jst-space-l);
-      grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr));
-    }
-    .card {
-      border: var(--jst-border-width) solid var(--jst-border); border-radius: var(--jst-radius);
-      background: var(--jst-bg); overflow: clip;
-      display: flex; flex-direction: column;
-    }
-    .card > header { display: flex; align-items: center; justify-content: space-between; gap: var(--jst-space-s); padding: var(--jst-space-s) var(--jst-space-m); }
-    .card h3 { margin: 0; font-size: var(--jst-font-h3, 1.05rem); }
-    .card .frame-wrap { border-block: var(--jst-border-width) solid var(--jst-border); background: var(--jst-surface); }
-    .card iframe { display: block; inline-size: 100%; border: 0; background: var(--jst-bg); }
-    .card .desc { margin: 0; padding: var(--jst-space-s) var(--jst-space-m); color: var(--jst-muted); font-size: var(--jst-font-small); }
-    .card .desc code { color: var(--jst-fg); }
-    .card > footer { margin-block-start: auto; display: flex; align-items: center; justify-content: space-between; gap: var(--jst-space-s); flex-wrap: wrap; padding: var(--jst-space-s) var(--jst-space-m); border-block-start: var(--jst-border-width) solid var(--jst-border); font-size: var(--jst-font-small); }
-    .card > footer a { white-space: nowrap; }
-    .card details { min-inline-size: 0; }
-    .card details > summary { cursor: pointer; color: var(--jst-accent-600, var(--jst-accent)); }
-    .card details pre { margin: var(--jst-space-xs) 0 0; max-block-size: 22rem; overflow: auto; background: var(--jst-surface); border: var(--jst-border-width) solid var(--jst-border); border-radius: var(--jst-radius); padding: var(--jst-space-s); font-size: 0.78rem; line-height: 1.5; }
-    .card details pre code { white-space: pre; }
   </style>
 </head>
-<body data-theme="jst">
+<body data-theme="jst" class="jst-gallery">
 
   <div class="toolbar">
     <label for="theme">Re-skin as:</label>
@@ -90,202 +62,16 @@
     </jst-stack>
   </jst-center>
 
-  <script>
-    // The gallery is plain HTML + CSS + vanilla JS: no jst.js on the shell. Each
-    // example is a separate mini page loaded in its own <iframe>, so nothing here
-    // depends on the framework it is showing off.
-    const GROUPS = [
-      {
-        heading: 'Native-first: the platform already does it',
-        blurb: 'These need no framework. Modern HTML and CSS ship the behaviour; JST just gives them a consistent, themeable skin.',
-        items: [
-          { name: 'modal', title: 'Modal / Dialog', tech: 'none', badge: 'HTML + CSS', height: 420,
-            desc: 'Open, close, focus-trap and backdrop dismiss for a real overlay, driven declaratively. Built on <code>&lt;dialog&gt;</code> with <code>command</code>/<code>commandfor</code> invokers and <code>closedby="any"</code> &mdash; no script wiring.' },
-          { name: 'drawer', title: 'Drawer / offcanvas', tech: 'none', badge: 'HTML + CSS + JS', height: 420,
-            desc: 'An edge-docked panel for filters and navigation. The same native <code>&lt;dialog&gt;</code> as the modal; <code>data-side="start | end | top | bottom"</code> picks the edge it slides in from.' },
-          { name: 'dropdown', title: 'Dropdown menu', tech: 'none', badge: 'HTML + CSS', height: 300,
-            desc: 'An anchored menu with outside-click and <kbd>Esc</kbd> dismissal for free. Uses the <code>[popover]</code> attribute, <code>command="toggle-popover"</code>, and CSS anchor positioning.' },
-          { name: 'accordion', title: 'Accordion', tech: 'none', badge: 'HTML + CSS', height: 300,
-            desc: 'A single-open disclosure group. Three <code>&lt;details name="acc"&gt;</code> sharing a <code>name</code> become mutually exclusive &mdash; a Baseline platform feature, no component.' },
-          { name: 'switch', title: 'Switch', tech: 'none', badge: 'HTML + CSS', height: 150,
-            desc: 'A toggle that is a real form control. It is a styled <code>&lt;input type="checkbox"&gt;</code>, so keyboard, focus and form submission all work with zero extra code.' },
-          { name: 'tooltip', title: 'Tooltip', tech: 'none', badge: 'HTML + CSS', height: 180,
-            desc: 'A hover/focus hint on any element, with no positioning library. Rendered from a <code>data-tip</code> attribute via a CSS <code>::after</code> pseudo-element.' },
-          { name: 'alert', title: 'Alert / Callout', tech: 'none', badge: 'HTML + CSS + JS', height: 340,
-            desc: 'Status messaging in success, warning and error tones. One class plus <code>data-variant</code> re-colours the callout from the theme tokens. The dismissable pair adds a × button that animates the alert away on <code>transitionend</code>, and removes it instantly under <code>prefers-reduced-motion</code>.' },
-          { name: 'progress', title: 'Progress &amp; Spinner', tech: 'none', badge: 'HTML + CSS', height: 170,
-            desc: 'Determinate and indeterminate loading feedback. A native <code>&lt;progress&gt;</code> element plus a CSS keyframe spinner &mdash; accessible by default.' },
-          { name: 'validation', title: 'Validation states', tech: 'none', badge: 'HTML + CSS', height: 360,
-            desc: 'Inline field validation that does not nag you while typing: the field turns invalid only after you interact, via the platform pseudo-class <code>:user-invalid</code>. Note <code>type="email"</code> accepts a TLD-less address like <code>a@b</code> (intranet hosts are legal email) &mdash; add a <code>pattern</code> when you want to require a dot-TLD.' },
-          { name: 'reveal-on-scroll', title: 'Reveal on scroll', tech: 'none', badge: 'HTML + CSS', height: 360,
-            desc: 'Scroll-linked entrance animation with no IntersectionObserver. <code>animation-timeline: view()</code> ties the effect to the scroll box, and it is disabled for reduced-motion users.' },
-        ],
-      },
-      {
-        heading: 'JST components: real custom elements',
-        blurb: 'Where the platform has no built-in element, JST ships a genuine custom element. The template you see in "View source" is the whole implementation &mdash; there is no compiled black box.',
-        items: [
-          { name: 'tabs', title: 'Tabs', tech: 'jst', badge: '<jst-tabs>', height: 260,
-            desc: 'A tabbed panel with roving <code>tabindex</code>, <code>aria-selected</code> and arrow-key navigation. There is no native tabs element, so this is a real JST custom element you configure with one <code>tabs</code> attribute.' },
-          { name: 'combobox', title: 'Combobox / Autocomplete', tech: 'jst', badge: '<jst-combobox>', height: 420,
-            desc: 'A filter-as-you-type picker with full keyboard support and correct <code>combobox</code>/<code>listbox</code> ARIA roles. Static options come from a JSON attribute; async is the same element &mdash; a handler debounces the input, fetches, and assigns <code>el.options</code>. There is no separate remote API.' },
-          { name: 'table', title: 'Data table (sortable)', tech: 'jst', badge: '<jst-table>', height: 300,
-            desc: 'A column-sortable table driven by data. Click a header to sort, again to reverse; <code>aria-sort</code> reflects the state. Columns and rows are plain JSON attributes.' },
-          { name: 'toaster', title: 'Toast notifications', tech: 'jst', badge: '<jst-toaster>', height: 420,
-            desc: 'A transient notification stack that auto-dismisses. Buttons raise a custom <code>--toast</code> command carrying the message on their <code>data-*</code>; the toaster reads it and renders.' },
-          { name: 'command-palette', title: 'Command palette', tech: 'jst', badge: '<jst-palette>', height: 440,
-            desc: 'A searchable action launcher on <kbd>&#8984;K</kbd> / <kbd>Ctrl+K</kbd> &mdash; the pattern React apps reach for a library to get. The page owns the command list; the palette filters, and emits a <code>run</code> event the page executes.' },
-          { name: 'lazy-region', title: 'Lazy region', tech: 'jst', badge: '<jst-include>', height: 200,
-            desc: 'A region whose content lives at a URL and arrives on demand. <code>&lt;jst-include&gt;</code> fetches the fragment; the fragment can even carry its own component definition, which auto-registers on arrival.' },
-          { name: 'lazy-accordion', title: 'Lazy accordion', tech: 'jst', badge: '<jst-include>', height: 300,
-            desc: 'Fetch a panel body only when it is opened. A <code>&lt;jst-include when="visible"&gt;</code> inside a closed <code>&lt;details&gt;</code> is not rendered, so the request fires the moment you expand it.' },
-        ],
-      },
-      {
-        heading: "Layout: JST's CSS-only layout hooks",
-        blurb: 'Structural primitives you drop into markup and tune with a custom property. No JavaScript &mdash; these are pure CSS selectors on <code>&lt;jst-*&gt;</code> elements and <code>data-</code> hooks.',
-        items: [
-          { name: 'carousel', title: 'Carousel', tech: 'layout', badge: '<jst-reel>', height: 260,
-            desc: 'A horizontally scrolling, snap-stopping slide track. <code>&lt;jst-reel&gt;</code> lays out the slides; CSS scroll-snap does the paging, with arrows and dots where the engine supports CSS carousels.' },
-          { name: 'container-query', title: 'Container queries', tech: 'layout', badge: '[data-container]', height: 300,
-            desc: 'A component that reflows to the space it is given, not the viewport. Drag the handle: <code>[data-container]</code> makes the box a query container, so the stats stack when it is narrow.' },
-        ],
-      },
-      {
-        heading: 'Patterns: the everyday building blocks',
-        blurb: 'The small, repetitive pieces every app ships. Plain HTML and a handful of classes, themed from the same tokens as everything else.',
-        items: [
-          { name: 'button-variants', title: 'Button variants', tech: 'none', badge: 'HTML + CSS', height: 150,
-            desc: 'One button element, re-roled by attribute: accent by default, <code>data-variant="quiet | ghost | danger"</code> for the rest.' },
-          { name: 'badge', title: 'Badge &amp; Avatar', tech: 'none', badge: 'HTML + CSS', height: 200,
-            desc: 'Status pills and initial avatars for lists and tables. Colour comes from <code>data-variant</code>; avatar size from a <code>--size</code> custom property.' },
-          { name: 'page-header', title: 'Page header &amp; Stats', tech: 'none', badge: 'HTML + CSS', height: 300,
-            desc: 'A titled page header with actions and a row of key figures &mdash; the top of almost every dashboard screen. Trend arrows come from <code>data-trend</code>.' },
-          { name: 'empty-state', title: 'List &amp; Empty state', tech: 'none', badge: 'HTML + CSS + JS', height: 380,
-            desc: 'A live member list with the designed empty state it falls back to &mdash; the placeholder every dashboard needs. Removing rows with the × eventually empties the list and reveals the empty block; "Invite someone" adds a member back.' },
-          { name: 'skeleton', title: 'Skeleton', tech: 'jst', badge: '<jst-include>', height: 560,
-            desc: 'Shimmering placeholder shapes &mdash; text lines, avatar-and-lines, and a card &mdash; for content that has not loaded (the shapes themselves are pure CSS). Dropped inside a <code>&lt;jst-include&gt;</code> as its pre-fetch content, the fetched fragment swaps them out; "Replay" re-runs that swap so you can watch it.' },
-          { name: 'breadcrumb', title: 'Breadcrumb &amp; Pagination', tech: 'none', badge: 'HTML + CSS', height: 240,
-            desc: 'The navigation trail and page controls every server-rendered app emits. Plain <code>&lt;nav&gt;</code> markup; <code>aria-current</code> carries the state.' },
-          { name: 'input-group', title: 'Input group / Join', tech: 'none', badge: 'HTML + CSS', height: 240,
-            desc: 'Inputs, addons and buttons welded into one control. One rule set joins both text-field addons and segmented button groups.' },
-        ],
-      },
-    ];
-
-    const themeSelect = document.getElementById('theme');
-    const gallery = document.getElementById('gallery');
-    const validTheme = (t) => typeof t === 'string' && /^[a-z][a-z0-9]*$/.test(t);
-    const frames = [];
-    const links = [];
-
-    function currentTheme() {
-      return validTheme(themeSelect.value) ? themeSelect.value : 'jst';
-    }
-
-    // Honour a ?theme= on the gallery URL itself (a themed standalone link back
-    // to the gallery keeps its look) BEFORE building cards, so each iframe src
-    // starts on the right theme with no reload.
-    const initial = new URLSearchParams(location.search).get('theme');
-    if (validTheme(initial)) themeSelect.value = initial;
-    document.body.dataset.theme = currentTheme();
-
-    function buildCard(item) {
-      const theme = currentTheme();
-      const card = document.createElement('div');
-      card.className = 'card';
-
-      const header = document.createElement('header');
-      const h3 = document.createElement('h3');
-      h3.innerHTML = item.title;
-      const badge = document.createElement('span');
-      badge.className = 'jst-tag';
-      badge.dataset.tech = item.tech;
-      badge.textContent = item.badge; // literal text, so <jst-tabs> shows as written
-      header.append(h3, badge);
-
-      const frameWrap = document.createElement('div');
-      frameWrap.className = 'frame-wrap';
-      const iframe = document.createElement('iframe');
-      iframe.src = `components/${item.name}.html?theme=${theme}`;
-      iframe.loading = 'lazy';
-      iframe.setAttribute('scrolling', 'no');
-      iframe.style.height = item.height + 'px';
-      iframe.title = `${item.title} (live preview)`;
-      // Lazy frames may load AFTER a theme change: the src carries the theme that
-      // was current when the card was built, so re-send the live theme on load.
-      // The mini page installs its message listener in its body's first script,
-      // before load fires, so this always lands.
-      iframe.addEventListener('load', () => {
-        iframe.contentWindow?.postMessage({ type: 'jst-theme', theme: currentTheme() }, '*');
-      });
-      frameWrap.append(iframe);
-      frames.push(iframe);
-
-      const desc = document.createElement('p');
-      desc.className = 'desc';
-      desc.innerHTML = item.desc;
-
-      const footer = document.createElement('footer');
-      const open = document.createElement('a');
-      open.href = `components/${item.name}.html?theme=${theme}`;
-      open.target = '_blank';
-      open.rel = 'noopener';
-      open.textContent = 'Open standalone ↗';
-      links.push(open);
-
-      const details = document.createElement('details');
-      const summary = document.createElement('summary');
-      summary.textContent = 'View source';
-      const pre = document.createElement('pre');
-      const code = document.createElement('code');
-      pre.append(code);
-      details.append(summary, pre);
-      let loaded = false;
-      details.addEventListener('toggle', async () => {
-        if (!details.open || loaded) return;
-        loaded = true;
-        code.textContent = 'Loading…';
-        try {
-          const res = await fetch(`components/${item.name}.html`);
-          if (!res.ok) throw new Error(`HTTP ${res.status}`);
-          const html = await res.text();
-          const match = html.match(/<!--\s*example:start\s*-->([\s\S]*?)<!--\s*example:end\s*-->/);
-          const raw = match ? match[1].replace(/^\n+|\s+$/g, '') : '(source markers not found)';
-          // Strip the common leading indentation for a tidy snippet.
-          const lines = raw.split('\n');
-          const widths = lines.filter(l => l.trim()).map(l => l.match(/^\s*/)[0].length);
-          const indent = widths.length ? Math.min(...widths) : 0;
-          code.textContent = lines.map(l => l.slice(indent)).join('\n');
-        } catch (e) {
-          code.textContent = 'Could not load source.';
-        }
-      });
-
-      footer.append(open, details);
-      card.append(header, frameWrap, desc, footer);
-      return card;
-    }
-
-    for (const group of GROUPS) {
-      const stage = document.createElement('section');
-      stage.className = 'stage';
-      const h2 = document.createElement('h2');
-      h2.innerHTML = group.heading;
-      const blurb = document.createElement('p');
-      blurb.innerHTML = group.blurb;
-      const grid = document.createElement('div');
-      grid.className = 'grid';
-      group.items.forEach(item => grid.append(buildCard(item)));
-      stage.append(h2, blurb, grid);
-      gallery.append(stage);
-    }
-
-    themeSelect.addEventListener('change', () => {
-      const theme = currentTheme();
-      document.body.dataset.theme = theme;
-      frames.forEach(f => f.contentWindow?.postMessage({ type: 'jst-theme', theme }, '*'));
-      links.forEach(a => { a.href = a.href.replace(/\?theme=[a-z][a-z0-9]*/, `?theme=${theme}`); });
+  <script type="module">
+    // The gallery shell is plain HTML + CSS + vanilla JS: no jst.js. The manifest
+    // and card renderer live in a shared module so the landing page renders the
+    // exact same grid. Each example is a separate mini page in its own <iframe>.
+    import { renderGallery } from './components/gallery-manifest.js';
+    renderGallery({
+      container: document.getElementById('gallery'),
+      basePath: 'components/',
+      themeSelect: document.getElementById('theme'),
+      themeTarget: document.body,
     });
   </script>
 </body>
