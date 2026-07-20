@@ -1,0 +1,957 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Server-driven interactions — the HATEOAS way</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="../jst-layout.css">
+
+  <style>
+    /* ---- Badge convention (see docs/design/component-library.md) ----
+       Every recipe on this page is wired the same way: a link or form describes
+       a state transition, the server answers with a rendered HTML fragment, and
+       jst-nav swaps or morphs it in. So the one badge each recipe carries names
+       that mechanism — jst-nav — and a mono chip beside it names the HTTP verb
+       and the swap mode used, because those are the load-bearing detail. */
+    .layer {
+      display: inline-block; font-size: 0.7rem; font-weight: 700;
+      padding: 0.15em 0.55em; border-radius: 999px; vertical-align: middle;
+      border: 1px solid transparent; white-space: nowrap; font-family: var(--jst-font-mono, monospace);
+    }
+    .layer[data-layer="jst"]      { background: oklch(0.93 0.05 25);  color: oklch(0.44 0.16 25);  border-color: oklch(0.82 0.10 25); }
+    .layer[data-layer="platform"] { background: oklch(0.93 0.06 155); color: oklch(0.38 0.11 155); border-color: oklch(0.80 0.09 155); }
+    .swatch { display: inline-block; inline-size: 0.95em; block-size: 0.95em; border-radius: 4px; border: 1px solid transparent; flex: none; }
+    .swatch[data-layer="jst"]      { background: oklch(0.93 0.05 25);  border-color: oklch(0.82 0.10 25); }
+    .swatch[data-layer="platform"] { background: oklch(0.93 0.06 155); border-color: oklch(0.80 0.09 155); }
+
+    .chip {
+      display: inline-block; font-size: 0.68rem; font-weight: 600;
+      padding: 0.1em 0.5em; border-radius: 999px; vertical-align: middle;
+      font-family: var(--jst-font-mono, monospace);
+      background: var(--jst-surface); color: var(--jst-muted);
+      border: var(--jst-border-width) solid var(--jst-border);
+    }
+
+    .legend { display: flex; flex-wrap: wrap; gap: var(--jst-space-s) var(--jst-space-m); align-items: center; }
+    .legend-item { display: inline-flex; align-items: center; gap: 0.45em; font-size: var(--jst-font-small); color: var(--jst-muted); }
+
+    /* JSON-reflex table */
+    .reflex-table { inline-size: 100%; border-collapse: collapse; font-size: var(--jst-font-small); }
+    .reflex-table th, .reflex-table td { text-align: start; vertical-align: top; padding: var(--jst-space-xs) var(--jst-space-s); border-block-end: var(--jst-border-width) solid var(--jst-border); }
+    .reflex-table thead th { color: var(--jst-muted); text-transform: uppercase; letter-spacing: 0.04em; font-size: 0.68rem; }
+    .reflex-table .habit { color: var(--jst-muted); }
+    .reflex-table code { font-size: 0.82em; }
+
+    /* Recipe frame (mirrors examples/platform_recipes.html) */
+    .recipe { border: var(--jst-border-width) solid var(--jst-border); border-radius: var(--jst-radius); padding: var(--jst-space-l); background: var(--jst-bg); }
+    .recipe > header { display: flex; align-items: center; flex-wrap: wrap; gap: var(--jst-space-s); margin-block-end: var(--jst-space-xs); }
+    .recipe > header h3 { margin: 0; margin-inline-end: auto; }
+    .recipe .lead { color: var(--jst-muted); margin-block: 0 var(--jst-space-m); }
+    .recipe .demo { padding: var(--jst-space-m); border: var(--jst-border-width) dashed var(--jst-border); border-radius: var(--jst-radius); }
+    .recipe details { margin-block-start: var(--jst-space-m); }
+    .recipe summary { cursor: pointer; color: var(--jst-accent-700, var(--jst-accent)); font-weight: 600; font-size: var(--jst-font-small); }
+    .recipe pre { margin-block-start: var(--jst-space-s); overflow-x: auto; background: var(--jst-surface); padding: var(--jst-space-s) var(--jst-space-m); border-radius: var(--jst-radius); border: var(--jst-border-width) solid var(--jst-border); }
+    .recipe pre code { font-family: var(--jst-font-mono); font-size: 0.8rem; line-height: 1.55; white-space: pre; }
+    .reflex { margin-block-start: var(--jst-space-m); font-size: var(--jst-font-small); color: var(--jst-muted); border-inline-start: 3px solid var(--jst-accent); padding-inline-start: var(--jst-space-s); }
+    .reflex strong { color: var(--jst-fg); }
+    .muted { color: var(--jst-muted); }
+
+    /* Wire log panel — the teaching core */
+    details.wire { margin-block-start: var(--jst-space-m); border: var(--jst-border-width) solid var(--jst-border); border-radius: var(--jst-radius); background: var(--jst-surface); }
+    details.wire > summary { padding: var(--jst-space-xs) var(--jst-space-s); font-family: var(--jst-font-mono); color: var(--jst-fg); }
+    details.wire .wire-count { display: inline-block; min-inline-size: 1.4em; text-align: center; margin-inline-start: 0.4em; padding: 0 0.4em; border-radius: 999px; background: var(--jst-bg); border: var(--jst-border-width) solid var(--jst-border); font-size: 0.72em; }
+    .wire-body { padding: var(--jst-space-s); display: grid; gap: var(--jst-space-s); }
+    .wire-row { border: var(--jst-border-width) solid var(--jst-border); border-radius: var(--jst-radius); background: var(--jst-bg); overflow: hidden; }
+    .wire-line { display: flex; flex-wrap: wrap; gap: 0.5em; align-items: baseline; padding: var(--jst-space-2xs) var(--jst-space-s); font-family: var(--jst-font-mono); font-size: 0.78rem; }
+    .wire-verb { font-weight: 700; }
+    .wire-verb.get { color: oklch(0.5 0.13 155); }
+    .wire-verb.post { color: oklch(0.5 0.16 25); }
+    .wire-url { color: var(--jst-fg); }
+    .wire-ct { color: var(--jst-muted); }
+    .wire-kv { padding: var(--jst-space-2xs) var(--jst-space-s); font-family: var(--jst-font-mono); font-size: 0.76rem; border-block-start: var(--jst-border-width) dashed var(--jst-border); }
+    .wire-kv .k { color: var(--jst-muted); }
+    .wire-kv pre { margin: 0.25em 0 0; padding: var(--jst-space-2xs) var(--jst-space-s); background: var(--jst-surface); border-radius: calc(var(--jst-radius) / 1.5); overflow-x: auto; font-size: 0.75rem; line-height: 1.5; white-space: pre; }
+
+    /* R1 task list */
+    ol.tasks, ul.notes, ul.contacts { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--jst-space-2xs); }
+    .task { display: flex; align-items: center; gap: var(--jst-space-s); padding: var(--jst-space-xs) var(--jst-space-s); border: var(--jst-border-width) solid var(--jst-border); border-radius: var(--jst-radius); background: var(--jst-surface); cursor: grab; }
+    .task .grip { color: var(--jst-muted); cursor: grab; }
+    .task.dragging { opacity: 0.4; }
+    .task.dropbefore { box-shadow: 0 -2px 0 0 var(--jst-accent); }
+
+    /* R2 kanban */
+    .board { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--jst-space-s); }
+    .col { border: var(--jst-border-width) solid var(--jst-border); border-radius: var(--jst-radius); background: var(--jst-surface); padding: var(--jst-space-xs); display: flex; flex-direction: column; gap: var(--jst-space-2xs); min-block-size: 6rem; }
+    .col h3 { margin: 0; font-size: var(--jst-font-small); display: flex; justify-content: space-between; }
+    .col .count { color: var(--jst-muted); font-weight: 400; }
+    .col .drop { display: grid; gap: var(--jst-space-2xs); flex: 1; align-content: start; padding: var(--jst-space-3xs); border-radius: calc(var(--jst-radius) / 1.5); }
+    .col.over .drop { background: color-mix(in oklch, var(--jst-accent) 12%, transparent); }
+    .kcard { padding: var(--jst-space-2xs) var(--jst-space-s); border: var(--jst-border-width) solid var(--jst-border); border-radius: calc(var(--jst-radius) / 1.5); background: var(--jst-bg); cursor: grab; font-size: var(--jst-font-small); }
+
+    /* R3 contacts */
+    .contact { display: flex; align-items: center; gap: var(--jst-space-s); padding: var(--jst-space-xs) var(--jst-space-s); border: var(--jst-border-width) solid var(--jst-border); border-radius: var(--jst-radius); background: var(--jst-surface); }
+    .contact .cname { font-weight: 600; }
+    .contact .cemail { color: var(--jst-muted); font-size: var(--jst-font-small); margin-inline-end: auto; }
+    .contact .edit { font-size: var(--jst-font-small); }
+    .contact form { display: flex; gap: var(--jst-space-xs); align-items: center; flex-wrap: wrap; inline-size: 100%; }
+    .contact form .err { color: var(--jst-error); font-size: var(--jst-font-small); inline-size: 100%; margin: 0; }
+
+    /* R4 stars */
+    .stars { display: grid; gap: var(--jst-space-2xs); }
+    .starform { display: flex; align-items: center; gap: var(--jst-space-s); margin: 0; }
+    .star { font-size: 1.1rem; line-height: 1; background: none; border: 0; cursor: pointer; padding: 0.1em 0.2em; color: var(--jst-muted); }
+    .star[aria-pressed="true"] { color: oklch(0.72 0.16 80); }
+    .starcount { margin: var(--jst-space-xs) 0 0; font-weight: 600; }
+
+    /* R5 validation */
+    #r5-field { display: grid; gap: var(--jst-space-2xs); max-inline-size: 24rem; }
+    #r5-field small.ok { color: var(--jst-ok); }
+    #r5-field small.bad { color: var(--jst-error); }
+    #r5-field input[aria-invalid="true"] { border-color: var(--jst-error); }
+
+    /* R6 bulk table */
+    .r6 table { inline-size: 100%; border-collapse: collapse; margin-block-start: var(--jst-space-xs); }
+    .r6 th, .r6 td { text-align: start; padding: var(--jst-space-2xs) var(--jst-space-s); border-block-end: var(--jst-border-width) solid var(--jst-border); }
+    .r6 .toolbar { display: flex; align-items: center; gap: var(--jst-space-s); flex-wrap: wrap; }
+    .r6 .archived-note { color: var(--jst-ok); font-size: var(--jst-font-small); }
+
+    /* R7 notes + toast */
+    .note { display: flex; align-items: center; gap: var(--jst-space-s); padding: var(--jst-space-xs) var(--jst-space-s); border: var(--jst-border-width) solid var(--jst-border); border-radius: var(--jst-radius); background: var(--jst-surface); }
+    .note span { margin-inline-end: auto; }
+    .note form, .toast form { margin: 0; }
+    .toast { margin-block-start: var(--jst-space-s); display: flex; align-items: center; gap: var(--jst-space-s); padding: var(--jst-space-xs) var(--jst-space-s); border-radius: var(--jst-radius); background: var(--jst-fg); color: var(--jst-bg); }
+    .toast span { margin-inline-end: auto; }
+    .toast button { background: var(--jst-bg); color: var(--jst-fg); }
+
+    /* R8 autosave */
+    #r8-input { inline-size: 100%; min-block-size: 4rem; }
+    #r8-status { margin-block-start: var(--jst-space-xs); font-size: var(--jst-font-small); color: var(--jst-muted); font-family: var(--jst-font-mono); }
+
+    /* R9 job */
+    .job { display: flex; align-items: center; gap: var(--jst-space-s); flex-wrap: wrap; }
+    .job progress { inline-size: 12rem; }
+    .job.done strong { color: var(--jst-ok); }
+  </style>
+
+  <!-- ============================================================= MOCK BACKEND
+       This stands in for a real server so the page runs on static hosting
+       (GitHub Pages). It intercepts window.fetch and answers each route with a
+       rendered HTML fragment — never JSON. Each route reads like a small Rails
+       action; the in-memory `db` is the server's state, so re-requesting always
+       re-renders the true current state. The render helpers below are the view
+       partials the Rails sketch in each recipe would render.
+
+       It also records every round-trip into WIRE and paints it into the visible
+       wire-log panels, so the reader can watch the wire and confirm: forms and
+       query strings in, rendered HTML out, no JSON at any point.
+  ============================================================================ -->
+  <script>
+    (() => {
+      const esc = (s) => String(s).replace(/[&<>"']/g, (c) =>
+        ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+      // ---- server state (the DB the fragments are rendered from) ----
+      const db = {
+        tasks: [
+          { id: 1, text: 'Draft the release notes' },
+          { id: 2, text: 'Review the pull request' },
+          { id: 3, text: 'Deploy to staging' },
+          { id: 4, text: 'Email the changelog' },
+        ],
+        board: {
+          todo:  [{ id: 11, title: 'Spec the API' }, { id: 12, title: 'Sketch the UI' }],
+          doing: [{ id: 13, title: 'Wire the mock' }],
+          done:  [{ id: 14, title: 'Pick the palette' }],
+        },
+        contacts: [
+          { id: 1, name: 'Ada Lovelace', email: 'ada@analytical.engine' },
+          { id: 2, name: 'Alan Turing', email: 'alan@bletchley.uk' },
+          { id: 3, name: 'Grace Hopper', email: 'grace@navy.mil' },
+        ],
+        stars: [
+          { id: 1, label: 'Quarterly report', starred: true },
+          { id: 2, label: 'Onboarding doc', starred: false },
+          { id: 3, label: 'Roadmap', starred: true },
+        ],
+        taken: ['ada', 'root', 'admin'],
+        rows: [
+          { id: 1, name: 'invoice-0912.pdf', archived: false },
+          { id: 2, name: 'invoice-0913.pdf', archived: false },
+          { id: 3, name: 'invoice-0914.pdf', archived: false },
+          { id: 4, name: 'receipt-0410.pdf', archived: false },
+        ],
+        rowsArchivedLast: 0,
+        notes: [
+          { id: 1, text: 'Buy milk' },
+          { id: 2, text: 'Call the plumber' },
+          { id: 3, text: 'Renew the domain' },
+        ],
+        draftSaves: 0,
+        job: null,
+      };
+
+      const COLS = [['todo', 'To do'], ['doing', 'In progress'], ['done', 'Done']];
+
+      // ---- view partials (mirror the render partial: … in each Rails sketch) ---
+      const taskItem = (t) =>
+        `<li class="task" draggable="true" data-id="${t.id}" jst-key="${t.id}">` +
+        `<span class="grip" aria-hidden="true">⠿</span> ${esc(t.text)}</li>`;
+      const taskList = () => db.tasks.map(taskItem).join('');
+
+      const card = (c) =>
+        `<div class="kcard" draggable="true" data-id="${c.id}" jst-key="card-${c.id}">${esc(c.title)}</div>`;
+      const column = ([key, title]) =>
+        `<div class="col" data-col="${key}" jst-key="col-${key}">` +
+        `<h3>${title} <span class="count">${db.board[key].length}</span></h3>` +
+        `<div class="drop" data-col="${key}">${db.board[key].map(card).join('')}</div></div>`;
+      const boardRegion = () => COLS.map(column).join('');
+
+      const contactDisplay = (c) =>
+        `<li class="contact" id="c-${c.id}" jst-key="c-${c.id}">` +
+        `<span class="cname">${esc(c.name)}</span>` +
+        `<span class="cemail">${esc(c.email)}</span>` +
+        `<a class="edit" href="/contacts/${c.id}/edit" jst-target="#c-${c.id}" jst-swap="outerHTML">Edit</a></li>`;
+      const contactForm = (c, error) =>
+        `<li class="contact editing" id="c-${c.id}" jst-key="c-${c.id}">` +
+        `<form action="/contacts/${c.id}" method="post" jst-target="#c-${c.id}" jst-swap="outerHTML">` +
+        (error ? `<p class="err">${esc(error)}</p>` : '') +
+        `<input name="name" value="${esc(c.name)}" aria-label="Name">` +
+        `<button type="submit">Save</button> ` +
+        `<a href="/contacts/${c.id}" jst-target="#c-${c.id}" jst-swap="outerHTML">Cancel</a></form></li>`;
+
+      const starForm = (s) =>
+        `<form class="starform" action="/stars/${s.id}/toggle" method="post" jst-target="#r4-panel" jst-swap="morph" jst-key="star-${s.id}">` +
+        `<button type="submit" class="star" aria-pressed="${s.starred}" aria-label="Star ${esc(s.label)}">${s.starred ? '★' : '☆'}</button>` +
+        `<span>${esc(s.label)}</span></form>`;
+      const starPanel = () => {
+        const n = db.stars.filter((s) => s.starred).length;
+        return `<div class="stars">${db.stars.map(starForm).join('')}</div>` +
+          `<p class="starcount" aria-live="polite">${n} starred</p>`;
+      };
+
+      const validateField = (value) => {
+        const v = String(value || '');
+        const trimmed = v.trim().toLowerCase();
+        let invalid = false, msg = 'Looks good.', cls = 'ok';
+        if (trimmed.length < 3) { invalid = true; msg = 'At least 3 characters.'; cls = 'bad'; }
+        else if (db.taken.includes(trimmed)) { invalid = true; msg = `“${esc(v)}” is taken.`; cls = 'bad'; }
+        return `<label for="uname">Choose a username</label>` +
+          `<input id="uname" name="username" value="${esc(v)}" aria-invalid="${invalid}" aria-describedby="uname-msg" autocomplete="off">` +
+          `<small id="uname-msg" class="${cls}">${msg}</small>`;
+      };
+
+      const rowsRegion = () => {
+        const active = db.rows.filter((r) => !r.archived);
+        const note = db.rowsArchivedLast
+          ? `<span class="archived-note">Archived ${db.rowsArchivedLast}.</span>` : '';
+        return `<form action="/rows/archive" method="post" jst-target="#r6-region" jst-swap="morph">` +
+          `<div class="toolbar"><strong>${active.length}</strong> active ` +
+          `<button type="submit">Archive selected</button>${note}</div>` +
+          `<table><thead><tr><th></th><th>File</th></tr></thead><tbody>` +
+          active.map((r) =>
+            `<tr jst-key="row-${r.id}"><td><input type="checkbox" name="id" value="${r.id}" aria-label="Select ${esc(r.name)}"></td>` +
+            `<td>${esc(r.name)}</td></tr>`).join('') +
+          `</tbody></table></form>`;
+      };
+
+      const noteItem = (n) =>
+        `<li class="note" jst-key="n-${n.id}"><span>${esc(n.text)}</span>` +
+        `<form class="delete" action="/notes/${n.id}/delete" method="post" jst-target="#r7-region" jst-swap="morph" jst-transition>` +
+        `<button type="submit" aria-label="Delete ${esc(n.text)}">Delete</button></form></li>`;
+      const notesRegion = (toast) =>
+        `<ul class="notes">${db.notes.map(noteItem).join('')}</ul>` + (toast || '');
+      const undoToast = (note, pos) =>
+        `<div class="toast" role="status"><span>Deleted “${esc(note.text)}”.</span>` +
+        `<form action="/notes/restore" method="post" jst-target="#r7-region" jst-swap="morph">` +
+        `<input type="hidden" name="id" value="${note.id}">` +
+        `<input type="hidden" name="text" value="${esc(note.text)}">` +
+        `<input type="hidden" name="position" value="${pos}">` +
+        `<button type="submit">Undo</button></form></div>`;
+
+      const draftStatus = () =>
+        db.draftSaves === 0 ? 'No draft saved yet.' : `Saved · save #${db.draftSaves}`;
+
+      const jobFragment = () => {
+        const j = db.job;
+        if (!j) return '<p class="muted">No report yet.</p>';
+        if (j.progress >= 100)
+          return `<div class="job done"><strong>Report ready.</strong> ` +
+            `<a href="/report/${j.id}.pdf">Download report.pdf</a></div>`;
+        return `<div class="job" data-poll="/report/${j.id}">` +
+          `<progress max="100" value="${j.progress}"></progress>` +
+          `<span>${j.progress}% — generating…</span></div>`;
+      };
+
+      // ---- wire log ----
+      const WIRE = [];
+      window.__wire = WIRE;
+      const rowHTML = (w) => {
+        const verb = w.method.toLowerCase();
+        const req = w.method === 'GET'
+          ? '<span class="k">query:</span> ' + (w.query ? esc(w.query) : '(none)')
+          : `<span class="k">Content-Type:</span> ${w.reqType}<br><span class="k">body:</span> ${w.reqBody ? esc(w.reqBody) : '(empty)'}`;
+        return `<div class="wire-row">` +
+          `<div class="wire-line"><span class="wire-verb ${verb}">${w.method}</span>` +
+          `<span class="wire-url">${esc(w.url)}</span>` +
+          `<span class="wire-ct">→ 200 text/html</span></div>` +
+          `<div class="wire-kv">${req}</div>` +
+          `<div class="wire-kv"><span class="k">response:</span><pre>${esc(w.res)}</pre></div>` +
+          `</div>`;
+      };
+      const renderWire = () => {
+        document.querySelectorAll('[data-wire]').forEach((panel) => {
+          const key = panel.dataset.wire;
+          const rows = WIRE.filter((w) => w.recipe === key);
+          const body = panel.querySelector('.wire-body');
+          if (body) body.innerHTML = rows.length ? rows.map(rowHTML).join('') : '<p class="muted">No requests yet — try the demo above.</p>';
+          const count = panel.querySelector('.wire-count');
+          if (count) count.textContent = String(rows.length);
+        });
+      };
+      window.__renderWire = renderWire;
+
+      // ---- routes (RESTful; each maps to the Rails sketch in its recipe) ----
+      const routes = [
+        // R1 — POST /tasks/reorder { id, before }
+        { method: 'POST', re: /^\/tasks\/reorder$/, recipe: 'r1', handler: (p) => {
+          const id = Number(p.get('id'));
+          const before = p.get('before');
+          const idx = db.tasks.findIndex((t) => t.id === id);
+          if (idx > -1) {
+            const [moved] = db.tasks.splice(idx, 1);
+            const at = before === 'end' ? db.tasks.length : db.tasks.findIndex((t) => t.id === Number(before));
+            db.tasks.splice(at < 0 ? db.tasks.length : at, 0, moved);
+          }
+          return taskList();
+        } },
+        // R2 — POST /cards/:id/move { to, position }
+        { method: 'POST', re: /^\/cards\/(\d+)\/move$/, recipe: 'r2', handler: (p, q, m) => {
+          const id = Number(m[1]);
+          const to = p.get('to');
+          for (const key of Object.keys(db.board)) {
+            const i = db.board[key].findIndex((c) => c.id === id);
+            if (i > -1) {
+              const [moved] = db.board[key].splice(i, 1);
+              (db.board[to] || db.board[key]).push(moved);
+              break;
+            }
+          }
+          return boardRegion();
+        } },
+        // R3 — GET /contacts/:id/edit  ·  GET /contacts/:id  ·  POST /contacts/:id { name }
+        { method: 'GET', re: /^\/contacts\/(\d+)\/edit$/, recipe: 'r3', handler: (p, q, m) =>
+          contactForm(db.contacts.find((c) => c.id === Number(m[1]))) },
+        { method: 'GET', re: /^\/contacts\/(\d+)$/, recipe: 'r3', handler: (p, q, m) =>
+          contactDisplay(db.contacts.find((c) => c.id === Number(m[1]))) },
+        { method: 'POST', re: /^\/contacts\/(\d+)$/, recipe: 'r3', handler: (p, q, m) => {
+          const c = db.contacts.find((x) => x.id === Number(m[1]));
+          const name = (p.get('name') || '').trim();
+          if (!name) return contactForm({ ...c, name: '' }, 'Name can’t be blank.');
+          c.name = name;
+          return contactDisplay(c);
+        } },
+        // R4 — POST /stars/:id/toggle
+        { method: 'POST', re: /^\/stars\/(\d+)\/toggle$/, recipe: 'r4', handler: (p, q, m) => {
+          const s = db.stars.find((x) => x.id === Number(m[1]));
+          if (s) s.starred = !s.starred;
+          return starPanel();
+        } },
+        // R5 — POST /signup/validate { username }
+        { method: 'POST', re: /^\/signup\/validate$/, recipe: 'r5', handler: (p) =>
+          validateField(p.get('username')) },
+        // R6 — POST /rows/archive { id[] }
+        { method: 'POST', re: /^\/rows\/archive$/, recipe: 'r6', handler: (p) => {
+          const ids = p.getAll('id').map(Number);
+          db.rows.forEach((r) => { if (ids.includes(r.id)) r.archived = true; });
+          db.rowsArchivedLast = ids.length;
+          return rowsRegion();
+        } },
+        // R7 — POST /notes/:id/delete  ·  POST /notes/restore { id, text, position }
+        { method: 'POST', re: /^\/notes\/(\d+)\/delete$/, recipe: 'r7', handler: (p, q, m) => {
+          const id = Number(m[1]);
+          const pos = db.notes.findIndex((n) => n.id === id);
+          const [removed] = db.notes.splice(pos, 1);
+          return notesRegion(removed ? undoToast(removed, pos) : '');
+        } },
+        { method: 'POST', re: /^\/notes\/restore$/, recipe: 'r7', handler: (p) => {
+          const id = Number(p.get('id'));
+          if (!db.notes.some((n) => n.id === id)) {
+            const pos = Math.min(Number(p.get('position')) || 0, db.notes.length);
+            db.notes.splice(pos, 0, { id, text: p.get('text') || '' });
+          }
+          return notesRegion('');
+        } },
+        // R8 — POST /drafts { text }
+        { method: 'POST', re: /^\/drafts$/, recipe: 'r8', handler: () => {
+          db.draftSaves += 1;
+          return draftStatus();
+        } },
+        // R9 — POST /report  ·  GET /report/:id
+        { method: 'POST', re: /^\/report$/, recipe: 'r9', handler: () => {
+          db.job = { id: 42, progress: 0 };
+          return jobFragment();
+        } },
+        { method: 'GET', re: /^\/report\/(\d+)$/, recipe: 'r9', handler: () => {
+          if (db.job) db.job.progress = Math.min(100, db.job.progress + 25);
+          return jobFragment();
+        } },
+      ];
+
+      const origFetch = window.fetch.bind(window);
+      window.fetch = async (input, opts = {}) => {
+        const u = new URL(typeof input === 'string' ? input : input.url, location.origin);
+        const method = (opts.method || 'GET').toUpperCase();
+        const route = routes.find((r) => r.method === method && r.re.test(u.pathname));
+        if (!route) return origFetch(input, opts);
+
+        // Read the request body exactly as sent — a form body, never JSON.
+        let reqBody = '', reqType = 'application/x-www-form-urlencoded', params;
+        if (opts.body instanceof URLSearchParams) {
+          reqBody = opts.body.toString();
+          params = new URLSearchParams(reqBody);
+        } else if (opts.body instanceof FormData) {
+          reqType = 'multipart/form-data';
+          const pairs = [...opts.body];
+          reqBody = pairs.map(([k, v]) => `${k}=${v}`).join('&');
+          params = new URLSearchParams(pairs);
+        } else {
+          params = new URLSearchParams(typeof opts.body === 'string' ? opts.body : '');
+          reqBody = params.toString();
+        }
+
+        const m = u.pathname.match(route.re);
+        const res = route.handler(params, u.searchParams, m);
+        WIRE.push({
+          recipe: route.recipe, method, url: u.pathname + (u.search || ''),
+          reqType, reqBody, query: u.searchParams.toString(), res,
+        });
+        renderWire();
+        return new Response(res, { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+      };
+
+      // Expose the partials the bootstrap uses to paint initial (server-rendered) state.
+      window.__render = { taskList, boardRegion, contacts: () => db.contacts.map(contactDisplay).join(''), starPanel, validateField, rowsRegion, notesRegion, draftStatus, jobFragment };
+    })();
+  </script>
+
+  <script type="module" src="../jst.js"></script>
+  <script type="module" src="../jst-nav.js"></script>
+  <script type="module">
+    import { swap } from '../jst-nav.js';
+
+    // The DOM is the state: paint each region from the server's partials so the
+    // markup you see is exactly what the server sends. jst-nav's observer (already
+    // running) enhances every link/form we inject.
+    const R = window.__render;
+    const set = (sel, html) => { const el = document.querySelector(sel); if (el) el.innerHTML = html; };
+    set('#r1-list', R.taskList());
+    set('#r2-board', R.boardRegion());
+    set('#r3-list', R.contacts());
+    set('#r4-panel', R.starPanel());
+    set('#r5-field', R.validateField(''));
+    set('#r6-region', R.rowsRegion());
+    set('#r7-region', R.notesRegion());
+    set('#r8-status', R.draftStatus());
+    set('#r9-region', R.jobFragment());
+    window.__renderWire();
+
+    // ---- R1: drag to reorder. The drop handler's ONLY job is to describe the
+    // transition to the server (id + where it lands); the server reorders its
+    // state and returns the whole list, which we morph in. No array splicing here.
+    window.__reorder = (id, before) =>
+      swap('#r1-list', '/tasks/reorder', {
+        method: 'POST', swap: 'morph',
+        body: new URLSearchParams({ id: String(id), before: String(before) }),
+      });
+    (() => {
+      const list = document.querySelector('#r1-list');
+      let dragId = null;
+      list.addEventListener('dragstart', (e) => {
+        const li = e.target.closest('.task'); if (!li) return;
+        dragId = Number(li.dataset.id); li.classList.add('dragging');
+      });
+      list.addEventListener('dragend', (e) => {
+        e.target.closest('.task')?.classList.remove('dragging');
+        list.querySelectorAll('.dropbefore').forEach((n) => n.classList.remove('dropbefore'));
+      });
+      list.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        const over = e.target.closest('.task');
+        list.querySelectorAll('.dropbefore').forEach((n) => n.classList.remove('dropbefore'));
+        if (over) over.classList.add('dropbefore');
+      });
+      list.addEventListener('drop', (e) => {
+        e.preventDefault();
+        const over = e.target.closest('.task');
+        const before = over ? Number(over.dataset.id) : 'end';
+        if (dragId != null && before !== dragId) window.__reorder(dragId, before);
+        dragId = null;
+      });
+    })();
+
+    // ---- R2: drag a card across columns. Same shape: describe the move, the
+    // server returns BOTH affected columns (in fact the whole board region — the
+    // smallest common ancestor of the change) and we morph it, in a transition.
+    window.__moveCard = (id, to, position = 'end') =>
+      swap('#r2-board', `/cards/${id}/move`, {
+        method: 'POST', swap: 'morph', transition: true,
+        body: new URLSearchParams({ to, position }),
+      });
+    (() => {
+      const board = document.querySelector('#r2-board');
+      let dragId = null;
+      board.addEventListener('dragstart', (e) => {
+        const c = e.target.closest('.kcard'); if (!c) return; dragId = Number(c.dataset.id);
+      });
+      board.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        board.querySelectorAll('.col.over').forEach((n) => n.classList.remove('over'));
+        e.target.closest('.col')?.classList.add('over');
+      });
+      board.addEventListener('dragleave', (e) => {
+        if (!e.target.closest('.col')?.contains(e.relatedTarget)) e.target.closest('.col')?.classList.remove('over');
+      });
+      board.addEventListener('drop', (e) => {
+        e.preventDefault();
+        board.querySelectorAll('.col.over').forEach((n) => n.classList.remove('over'));
+        const col = e.target.closest('.col');
+        if (dragId != null && col) window.__moveCard(dragId, col.dataset.col);
+        dragId = null;
+      });
+    })();
+
+    // ---- R5: validate a single field on blur (a keystroke/blur cause, so it
+    // calls swap() rather than submitting a form). The server owns the rules and
+    // returns the field re-rendered valid/invalid — no rule is duplicated here.
+    (() => {
+      const field = document.querySelector('#r5-field');
+      field.addEventListener('focusout', (e) => {
+        if (e.target.name !== 'username') return;
+        swap('#r5-field', '/signup/validate', {
+          method: 'POST', swap: 'morph',
+          body: new URLSearchParams({ username: e.target.value }),
+        });
+      });
+    })();
+
+    // ---- R8: autosave a textarea, debounced. Fire-and-forget, but the response
+    // is still renderable state — a tiny status fragment — not a silent 204.
+    (() => {
+      const ta = document.querySelector('#r8-input');
+      let timer = null;
+      ta.addEventListener('input', () => {
+        clearTimeout(timer);
+        timer = setTimeout(() => {
+          swap('#r8-status', '/drafts', {
+            method: 'POST', swap: 'morph',
+            body: new URLSearchParams({ text: ta.value }),
+          });
+        }, 400);
+      });
+    })();
+
+    // ---- R9: start a job, then poll. The poll trigger travels IN the returned
+    // HTML: each progress fragment carries a [data-poll] URL, so the client keeps
+    // asking; the final fragment omits it, so polling stops on its own.
+    async function pump(sel) {
+      const node = document.querySelector(`${sel} [data-poll]`);
+      if (!node) return;                       // the hypermedia stopped asking
+      const url = node.getAttribute('data-poll');
+      await new Promise((r) => setTimeout(r, 150));
+      await swap(sel, url, { swap: 'innerHTML' });
+      pump(sel);
+    }
+    window.__generate = async () => {
+      await swap('#r9-region', '/report', { method: 'POST', swap: 'innerHTML', body: new URLSearchParams() });
+      pump('#r9-region');
+    };
+    document.querySelector('#r9-generate').addEventListener('click', window.__generate);
+  </script>
+</head>
+
+<body data-scheme="light">
+  <jst-center style="--measure: 78ch; --gutters: var(--jst-space-l)">
+    <jst-stack style="--space: var(--jst-space-xl); padding-block: var(--jst-space-xl)">
+
+      <jst-stack>
+        <h1>Server-driven interactions — the HATEOAS way</h1>
+        <p>Ask a coding agent for a drag-to-reorder list, an inline edit, or a
+           progress bar and it will reach, by reflex, for a JSON endpoint and a
+           pile of client-side re-rendering. This page is the other habit. The
+           server renders application state as HTML; the browser asks for a state
+           transition through a link or a form; the response is a rendered HTML
+           fragment that replaces the stale region. That is <strong>HTML over the
+           wire</strong>, and it is what <em>HATEOAS</em> — hypermedia as the engine
+           of application state — feels like in practice.</p>
+        <p>The request is a form body or a query string. The response is markup a
+           partial produced. <code>jst-nav</code> swaps or morphs it into the page.
+           There is no client model to keep in sync, because <strong>the DOM is the
+           state</strong>: re-request a region and you get the true current state,
+           rendered. Every demo below is a real link or form — with JavaScript off
+           it would still describe the same request; with it on, <code>jst-nav</code>
+           fetches the fragment and lands it in place instead of reloading the page.</p>
+        <p>Each recipe carries a live <strong>wire log</strong>. Open it and watch
+           what actually crosses the wire: a form body or a query string going out,
+           a rendered HTML fragment coming back. No JSON, anywhere. That is the whole
+           lesson — most of the interactions an agent builds with a JSON API and a
+           client renderer are a form and a fragment.</p>
+
+        <div class="legend">
+          <span class="legend-item"><span class="swatch" data-layer="jst"></span>red <code>jst-nav</code> — the response is an HTML fragment, swapped or morphed into the page</span>
+          <span class="legend-item"><span class="swatch" data-layer="platform"></span>green — the browser does the rest (native drag events, form encoding, history)</span>
+          <span class="legend-item"><span class="chip">POST · morph</span>the verb and swap mode the recipe uses</span>
+        </div>
+
+        <p class="muted" style="font-size: var(--jst-font-small)">
+          The whole page is hermetic: a fetch interceptor plays the server, holding
+          its state in memory. Serve the repo root and open this file; every demo
+          runs with no network.</p>
+      </jst-stack>
+
+      <!-- ============ THE JSON REFLEX ============ -->
+      <section class="recipe">
+        <header><h3>The JSON reflex, and the HTML answer</h3></header>
+        <p class="lead">A quick map from the habit to the hypermedia move. Read it
+           top to bottom before the recipes: nearly every row an agent would build
+           as a JSON endpoint is a form and a rendered fragment.</p>
+        <div style="overflow-x:auto">
+          <table class="reflex-table">
+            <thead><tr><th>The JSON reflex</th><th>The HTML answer</th></tr></thead>
+            <tbody>
+              <tr><td class="habit">POST JSON, then re-render the list in JS</td><td>POST a form; the server returns the list fragment; <code>morph</code> it in</td></tr>
+              <tr><td class="habit"><code>GET /api/items?q=</code> returns a JSON array</td><td>GET returns rendered <code>&lt;li&gt;</code>s; swap them into the list</td></tr>
+              <tr><td class="habit">A WebSocket pushes JSON patches</td><td>Poll or reveal-trigger a swap; the fragment carries — or drops — its own next trigger</td></tr>
+              <tr><td class="habit">Client validation mirrors the server rules</td><td>The server returns the field re-rendered with its error</td></tr>
+              <tr><td class="habit">Keep an in-memory model in sync with the DOM</td><td>The DOM <em>is</em> the model; re-request the region to re-render true state</td></tr>
+              <tr><td class="habit">Serialize the form to JSON, fetch, patch the DOM</td><td>Let the form submit; the response fragment replaces the stale region</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ============ R1. DRAG-AND-DROP LIST REORDER ============ -->
+      <section class="recipe" id="r1">
+        <header>
+          <h3>1. Drag-and-drop list reorder</h3>
+          <span class="layer" data-layer="jst">jst-nav</span>
+          <span class="chip">POST · morph</span>
+        </header>
+        <p class="lead">Drag a task to a new spot. On drop, the handler POSTs a form
+           body — which task moved, and which task it should land before — and the
+           server reorders <em>its</em> list and returns the whole re-rendered list.
+           <code>morph</code> reconciles it by <code>jst-key</code>, so the drag
+           focus and scroll survive. The client never splices an array; its only job
+           is to <em>describe the transition</em>.</p>
+        <div class="demo">
+          <ol class="tasks" id="r1-list"></ol>
+        </div>
+        <details class="wire" data-wire="r1"><summary>Wire log <span class="wire-count">0</span></summary><div class="wire-body"></div></details>
+        <details>
+          <summary>Server sketch (Rails)</summary>
+          <pre><code># config/routes.rb
+post "/tasks/reorder", to: "tasks#reorder"
+
+# app/controllers/tasks_controller.rb
+def reorder
+  task = Task.find(params[:id])
+  task.insert_before(params[:before])   # reorder server state
+  render partial: "tasks/task", collection: Task.ordered
+end</code></pre>
+        </details>
+        <p class="reflex"><strong>The JSON reflex:</strong> POST <code>{id, index}</code> as JSON and re-sort a client array, then re-render every row by hand. Here the server sorts and renders; the browser just morphs.</p>
+      </section>
+
+      <!-- ============ R2. KANBAN CARD MOVE ============ -->
+      <section class="recipe" id="r2">
+        <header>
+          <h3>2. Kanban card move across columns</h3>
+          <span class="layer" data-layer="jst">jst-nav</span>
+          <span class="chip">POST · morph · transition</span>
+        </header>
+        <p class="lead">Drag a card into another column. The drop POSTs the card, the
+           destination column, and a position. The move touches two regions — the
+           source and the destination column — so the server answers with their
+           <em>smallest common ancestor</em>: the whole board fragment, re-rendered.
+           <code>morph</code> keeps every untouched card in place (keyed), and the
+           bare <code>jst-transition</code> wraps the swap in a View Transition.</p>
+        <div class="demo">
+          <div class="board" id="r2-board"></div>
+          <p class="muted" style="font-size: var(--jst-font-small); margin-block-end: 0">Rule of thumb: when a transition changes more than one region, respond with the smallest fragment that contains all of them, and morph it.</p>
+        </div>
+        <details class="wire" data-wire="r2"><summary>Wire log <span class="wire-count">0</span></summary><div class="wire-body"></div></details>
+        <details>
+          <summary>Server sketch (Rails)</summary>
+          <pre><code>post "/cards/:id/move", to: "cards#move"
+
+def move
+  card = Card.find(params[:id])
+  card.move_to(params[:to], params[:position])
+  render partial: "board/board", locals: { board: current_board }
+end</code></pre>
+        </details>
+        <p class="reflex"><strong>The JSON reflex:</strong> PATCH the card as JSON, then mutate two client column arrays and re-render both. Here one fragment — the board — carries both changes.</p>
+      </section>
+
+      <!-- ============ R3. CLICK TO EDIT ============ -->
+      <section class="recipe" id="r3">
+        <header>
+          <h3>3. Click to edit (inline edit)</h3>
+          <span class="layer" data-layer="jst">jst-nav</span>
+          <span class="chip">GET / POST · outerHTML</span>
+        </header>
+        <p class="lead">Click <em>Edit</em>: a GET fetches the edit-form fragment for
+           that row and replaces the display fragment (<code>outerHTML</code>). Submit
+           POSTs the field; the server returns the display fragment, updated — or the
+           form re-rendered with a validation error. Clear the name and save to see
+           the error come back as HTML.</p>
+        <div class="demo">
+          <ul class="contacts" id="r3-list"></ul>
+        </div>
+        <details class="wire" data-wire="r3"><summary>Wire log <span class="wire-count">0</span></summary><div class="wire-body"></div></details>
+        <details>
+          <summary>Server sketch (Rails)</summary>
+          <pre><code>get  "/contacts/:id/edit", to: "contacts#edit"
+get  "/contacts/:id",      to: "contacts#show"
+post "/contacts/:id",      to: "contacts#update"
+
+def edit;   render partial: "contacts/form",    locals: { contact: @contact }; end
+def show;   render partial: "contacts/contact", locals: { contact: @contact }; end
+def update
+  if @contact.update(name: params[:name])
+    render partial: "contacts/contact", locals: { contact: @contact }
+  else
+    render partial: "contacts/form", locals: { contact: @contact }  # with errors
+  end
+end</code></pre>
+        </details>
+        <p class="reflex"><strong>The JSON reflex:</strong> a client-side edit state flag, a JSON PATCH, and a hand-built error object mirrored into the DOM. Here the two states — display and form — are just two fragments the server swaps between.</p>
+      </section>
+
+      <!-- ============ R4. TOGGLE ============ -->
+      <section class="recipe" id="r4">
+        <header>
+          <h3>4. Toggle (star), with a dependent counter</h3>
+          <span class="layer" data-layer="jst">jst-nav</span>
+          <span class="chip">POST · morph</span>
+        </header>
+        <p class="lead">Click a star: the form submits immediately, the server flips
+           the state, and it returns the re-rendered control <em>and</em> the
+           dependent region in the same fragment — the <q>N starred</q> counter. The
+           counter updates for free, because the server rendered it alongside the
+           control. No client subscription wires one to the other.</p>
+        <div class="demo">
+          <div id="r4-panel"></div>
+        </div>
+        <details class="wire" data-wire="r4"><summary>Wire log <span class="wire-count">0</span></summary><div class="wire-body"></div></details>
+        <details>
+          <summary>Server sketch (Rails)</summary>
+          <pre><code>post "/stars/:id/toggle", to: "stars#toggle"
+
+def toggle
+  doc = Document.find(params[:id])
+  doc.update!(starred: !doc.starred)
+  render partial: "stars/panel", locals: { docs: Document.all }  # control + counter
+end</code></pre>
+        </details>
+        <p class="reflex"><strong>The JSON reflex:</strong> toggle via JSON, then remember to also recompute and re-render the counter in client code. Here they arrive together; nothing to forget.</p>
+      </section>
+
+      <!-- ============ R5. SERVER-SIDE VALIDATION ON BLUR ============ -->
+      <section class="recipe" id="r5">
+        <header>
+          <h3>5. Server-side validation on blur</h3>
+          <span class="layer" data-layer="jst">jst-nav</span>
+          <span class="chip">POST · morph</span>
+        </header>
+        <p class="lead">Type a username and tab away. The blur POSTs the single field;
+           the server applies its real rules and returns the field's wrapper fragment
+           re-rendered valid or invalid, with the message. Try <code>ada</code> or a
+           two-letter name. The rule lives once, on the server.</p>
+        <div class="demo">
+          <div id="r5-field"></div>
+        </div>
+        <details class="wire" data-wire="r5"><summary>Wire log <span class="wire-count">0</span></summary><div class="wire-body"></div></details>
+        <details>
+          <summary>Server sketch (Rails)</summary>
+          <pre><code>post "/signup/validate", to: "signups#validate"
+
+def validate
+  user = User.new(username: params[:username])
+  user.valid?   # runs the real model validations
+  render partial: "signups/username_field", locals: { user: user }
+end</code></pre>
+        </details>
+        <p class="reflex"><strong>The JSON reflex:</strong> re-implement the uniqueness and length rules in client JavaScript so they can drift from the model. Here the server is the only place the rule exists.</p>
+      </section>
+
+      <!-- ============ R6. BULK ACTIONS ============ -->
+      <section class="recipe" id="r6">
+        <header>
+          <h3>6. Bulk actions</h3>
+          <span class="layer" data-layer="jst">jst-nav</span>
+          <span class="chip">POST · morph</span>
+        </header>
+        <p class="lead">A checkbox per row, all inside one form. <em>Archive selected</em>
+           submits every checked id at once; the server archives them and returns the
+           re-rendered table and toolbar, count badge included. The form scales to any
+           number of selections with zero client bookkeeping — the checked boxes
+           <em>are</em> the selection.</p>
+        <div class="demo r6">
+          <div id="r6-region"></div>
+        </div>
+        <details class="wire" data-wire="r6"><summary>Wire log <span class="wire-count">0</span></summary><div class="wire-body"></div></details>
+        <details>
+          <summary>Server sketch (Rails)</summary>
+          <pre><code>post "/rows/archive", to: "rows#archive"
+
+def archive
+  Row.where(id: params[:id]).update_all(archived: true)  # params[:id] is an array
+  render partial: "rows/region", locals: { rows: Row.active }
+end</code></pre>
+        </details>
+        <p class="reflex"><strong>The JSON reflex:</strong> track a <code>Set</code> of selected ids in client state, POST it as a JSON array, then splice the archived rows out by hand. Here the form carries the set and the server returns the new table.</p>
+      </section>
+
+      <!-- ============ R7. DELETE WITH UNDO ============ -->
+      <section class="recipe" id="r7">
+        <header>
+          <h3>7. Delete, with undo carried in the HTML</h3>
+          <span class="layer" data-layer="jst">jst-nav</span>
+          <span class="chip">POST · morph</span>
+        </header>
+        <p class="lead">Delete a note. The response fragment carries two things: the
+           updated list, and a toast whose form's hidden fields <em>describe the
+           inverse action</em> — the id, text and position needed to put the note
+           back. The undo affordance travels inside the returned HTML. This is the
+           most literally HATEOAS recipe: the available next transition arrives as
+           hypermedia, and clicking <em>Undo</em> POSTs it.</p>
+        <div class="demo">
+          <div id="r7-region"></div>
+        </div>
+        <details class="wire" data-wire="r7"><summary>Wire log <span class="wire-count">0</span></summary><div class="wire-body"></div></details>
+        <details>
+          <summary>Server sketch (Rails)</summary>
+          <pre><code>post "/notes/:id/delete", to: "notes#destroy"
+post "/notes/restore",    to: "notes#restore"
+
+def destroy
+  @note = Note.find(params[:id]); pos = @note.position; @note.destroy
+  render partial: "notes/region",
+    locals: { notes: Note.all, undo: { id: @note.id, text: @note.text, position: pos } }
+end
+
+def restore
+  Note.create!(id: params[:id], text: params[:text], position: params[:position])
+  render partial: "notes/region", locals: { notes: Note.all, undo: nil }
+end</code></pre>
+        </details>
+        <p class="reflex"><strong>The JSON reflex:</strong> stash the deleted record in client memory to power an undo button wired up in JS. Here the inverse action ships inside the toast — the server told the client what it may do next.</p>
+      </section>
+
+      <!-- ============ R8. AUTOSAVE ============ -->
+      <section class="recipe" id="r8">
+        <header>
+          <h3>8. Autosave</h3>
+          <span class="layer" data-layer="jst">jst-nav</span>
+          <span class="chip">POST · morph</span>
+        </header>
+        <p class="lead">Type in the textarea. Input is debounced, then POSTs the draft.
+           The response is a tiny status fragment — <q>Saved · save #3</q> — so even a
+           fire-and-forget mutation answers with renderable state, not a silent
+           <code>204</code>. Keep the message server-rendered and it stays the single
+           source of truth for <q>did it save?</q>.</p>
+        <div class="demo">
+          <textarea id="r8-input" aria-label="Draft" placeholder="Start typing to autosave…"></textarea>
+          <div id="r8-status"></div>
+        </div>
+        <details class="wire" data-wire="r8"><summary>Wire log <span class="wire-count">0</span></summary><div class="wire-body"></div></details>
+        <details>
+          <summary>Server sketch (Rails)</summary>
+          <pre><code>post "/drafts", to: "drafts#save"
+
+def save
+  @draft = current_user.draft.update!(body: params[:text])
+  render partial: "drafts/status", locals: { draft: @draft }
+end</code></pre>
+        </details>
+        <p class="reflex"><strong>The JSON reflex:</strong> POST JSON and interpret a status code in client code to flip a <q>saved</q> flag. Here the status text is the response body.</p>
+      </section>
+
+      <!-- ============ R9. LONG JOB WITH PROGRESS ============ -->
+      <section class="recipe" id="r9">
+        <header>
+          <h3>9. Long job with progress (polling that stops itself)</h3>
+          <span class="layer" data-layer="jst">jst-nav</span>
+          <span class="chip">POST / GET · innerHTML</span>
+        </header>
+        <p class="lead"><em>Generate report</em> POSTs to start a job. The response is a
+           progress fragment that carries its own re-poll trigger — a
+           <code>data-poll</code> URL. The client keeps hitting
+           <code>GET /report/:id</code>, swapping the fresh progress fragment in, until
+           the final response is the finished result <em>without</em> the trigger.
+           Polling stops because the hypermedia stopped asking for it.</p>
+        <div class="demo">
+          <p><button type="button" id="r9-generate">Generate report</button></p>
+          <div id="r9-region"></div>
+        </div>
+        <details class="wire" data-wire="r9"><summary>Wire log <span class="wire-count">0</span></summary><div class="wire-body"></div></details>
+        <details>
+          <summary>Server sketch (Rails)</summary>
+          <pre><code>post "/report",     to: "reports#create"
+get  "/report/:id", to: "reports#show"
+
+def create; job = ReportJob.start; render partial: "reports/progress", locals: { job: job }; end
+def show
+  job = ReportJob.find(params[:id])
+  # the progress partial renders data-poll="/report/#{job.id}" only while running;
+  # the done partial omits it, so the client stops polling on its own.
+  render partial: (job.done? ? "reports/done" : "reports/progress"), locals: { job: job }
+end</code></pre>
+        </details>
+        <p class="reflex"><strong>The JSON reflex:</strong> open a WebSocket and stream JSON progress patches, plus the client logic to apply them and to know when to stop. Here a poll that the fragment itself turns off replaces it, for the common case.</p>
+      </section>
+
+      <!-- ============ R10. SEARCH AS YOU TYPE ============ -->
+      <section class="recipe" id="r10">
+        <header>
+          <h3>10. Search as you type</h3>
+          <span class="layer" data-layer="jst">jst-nav</span>
+          <span class="chip">GET · innerHTML</span>
+        </header>
+        <p class="lead">Same pattern, already demonstrated elsewhere: a keystroke, a
+           debounced GET with the query in the URL, and rendered
+           <code>&lt;li&gt;</code>s or <code>&lt;option&gt;</code>s back — never a JSON
+           array the client turns into DOM. See the
+           <a href="jst_nav.html">active search in the jst-nav demo</a> and the async
+           <a href="components_cross_section.html">combobox in the component gallery</a>.
+           Both are this recipe: GET, HTML options back, swapped in.</p>
+        <details>
+          <summary>Server sketch (Rails)</summary>
+          <pre><code>get "/people", to: "people#index"
+
+def index
+  @people = Person.where("name ILIKE ?", "%#{params[:q]}%")
+  render partial: "people/option", collection: @people   # rendered &lt;li&gt;/&lt;option&gt;
+end</code></pre>
+        </details>
+        <p class="reflex"><strong>The JSON reflex:</strong> <code>GET /api/people?q=</code> returns JSON, and the client maps it to option elements. Here the server renders the options.</p>
+      </section>
+
+      <jst-box>
+        <jst-stack style="--space: var(--jst-space-xs)">
+          <h2>Takeaway</h2>
+          <p>Ten interactions an agent would reach for a JSON API to build, and not
+             one of them needed JSON. A link or a form describes the transition, the
+             server renders the new state as HTML, and <code>jst-nav</code> swaps or
+             morphs it into place. The affordances that would live in client state —
+             an undo action, the next poll, a validation message — travel inside the
+             returned markup instead. Before you write an endpoint that returns JSON
+             for the browser to re-render, ask whether a fragment already says it.</p>
+        </jst-stack>
+      </jst-box>
+
+    </jst-stack>
+  </jst-center>
+</body>
+</html>

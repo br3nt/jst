@@ -954,6 +954,93 @@ const checks = [
       && result.markdownContainer === true
       && result.qrContainer === true,
   },
+  /* --- hateoas_recipes checks --- */
+  {
+    // Server-driven interactions page. The whole point is that nothing on the
+    // wire is JSON: a form body or query string goes out, a rendered HTML
+    // fragment comes back. Drive the four load-bearing recipes end to end and
+    // read the visible wire log to prove the contract.
+    page: '/examples/hateoas_recipes.html',
+    script: `(async () => {
+      ${flushSnippet}
+      // Wait for the module to bootstrap the regions and expose its helpers.
+      const t0 = Date.now();
+      while ((typeof window.__reorder !== 'function'
+              || !document.querySelector('#r1-list .task')) && Date.now() - t0 < 4000) await flush();
+
+      // R1 — drag-drop reorder: move the first task to the end via the same
+      // function the drop handler calls. DOM order must change, and the wire log
+      // must show a form-encoded POST with an HTML response.
+      const orderBefore = [...document.querySelectorAll('#r1-list .task')].map(t => t.dataset.id).join(',');
+      const firstId = document.querySelector('#r1-list .task').dataset.id;
+      await window.__reorder(Number(firstId), 'end');
+      let orderAfter = orderBefore, t1 = Date.now();
+      while (orderAfter === orderBefore && Date.now() - t1 < 2000) {
+        await flush();
+        orderAfter = [...document.querySelectorAll('#r1-list .task')].map(t => t.dataset.id).join(',');
+      }
+      const r1Changed = orderAfter !== orderBefore;
+      const r1Wire = document.querySelector('[data-wire="r1"]').textContent;
+
+      // R3 — click to edit: open the edit form for contact 1, rename, save.
+      // Re-query #c-1 each time because outerHTML swaps replace the node.
+      document.querySelector('#c-1 .edit').click();
+      let t2 = Date.now();
+      while (!document.querySelector('#c-1 form') && Date.now() - t2 < 2000) await flush();
+      const inp = document.querySelector('#c-1 input[name="name"]');
+      inp.value = 'Renamed Person';
+      document.querySelector('#c-1 form').requestSubmit();
+      t2 = Date.now();
+      const renamed = () => (document.querySelector('#c-1') || {}).textContent || '';
+      while ((!renamed().includes('Renamed Person') || document.querySelector('#c-1 form')) && Date.now() - t2 < 2000) await flush();
+      const r3Renamed = renamed().includes('Renamed Person');
+      const r3FormGone = !document.querySelector('#c-1 form');
+
+      // R7 — delete then undo: the undo affordance rides in the returned HTML.
+      const r7NotesBefore = document.querySelectorAll('#r7-region .note').length;
+      document.querySelector('#r7-region .note form.delete').requestSubmit();
+      let t3 = Date.now();
+      while (document.querySelectorAll('#r7-region .note').length === r7NotesBefore && Date.now() - t3 < 2000) await flush();
+      const r7AfterDelete = document.querySelectorAll('#r7-region .note').length;
+      t3 = Date.now();
+      while (!document.querySelector('#r7-region .toast form') && Date.now() - t3 < 2000) await flush();
+      document.querySelector('#r7-region .toast form').requestSubmit();
+      t3 = Date.now();
+      while (document.querySelectorAll('#r7-region .note').length === r7AfterDelete && Date.now() - t3 < 2000) await flush();
+      const r7AfterUndo = document.querySelectorAll('#r7-region .note').length;
+      const r7ToastGone = !document.querySelector('#r7-region .toast');
+
+      // R9 — job with self-terminating polling: run to the finished fragment and
+      // confirm no further requests land after the hypermedia drops the trigger.
+      document.querySelector('#r9-generate').click();
+      let t4 = Date.now();
+      const region = () => document.querySelector('#r9-region');
+      while ((document.querySelector('#r9-region [data-poll]')
+              || !region().textContent.includes('Report ready')) && Date.now() - t4 < 5000) await flush();
+      const r9Done = !document.querySelector('#r9-region [data-poll]') && region().textContent.includes('Report ready');
+      const r9WireAtDone = document.querySelectorAll('[data-wire="r9"] .wire-row').length;
+      await new Promise(r => setTimeout(r, 700));
+      const r9WireLater = document.querySelectorAll('[data-wire="r9"] .wire-row').length;
+
+      // No JSON anywhere on the wire — scan every wire panel.
+      const panels = [...document.querySelectorAll('[data-wire]')];
+      const noJson = !panels.some(p => p.textContent.includes('application/json'));
+      const anyWire = panels.some(p => p.querySelector('.wire-row'));
+
+      return { r1Changed, r1Wire, r3Renamed, r3FormGone,
+               r7NotesBefore, r7AfterDelete, r7AfterUndo, r7ToastGone,
+               r9Done, r9WireAtDone, r9WireLater, noJson, anyWire };
+    })()`,
+    assert: r => r.r1Changed === true
+      && r.r1Wire.includes('POST') && r.r1Wire.includes('/tasks/reorder')
+      && r.r1Wire.includes('application/x-www-form-urlencoded') && r.r1Wire.includes('id=')
+      && r.r1Wire.includes('text/html') && r.r1Wire.includes('<li')
+      && r.r3Renamed === true && r.r3FormGone === true
+      && r.r7AfterDelete === r.r7NotesBefore - 1
+      && r.r7AfterUndo === r.r7NotesBefore && r.r7ToastGone === true
+      && r.r9Done === true && r.r9WireAtDone >= 4 && r.r9WireLater === r.r9WireAtDone
+      && r.noJson === true && r.anyWire === true,
+  },
 ];
 
 async function waitForJson(baseUrl, pathName, timeoutMs = 10000) {
