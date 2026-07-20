@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>JST is a layer: three chart libraries, one data flow</title>
 
-  <!-- JST's own CSS (tokens + layout primitives + component skins). -->
+  <!-- JST's own CSS (theme variables + layout primitives + component skins). -->
   <link rel="stylesheet" href="../jst-layout.css">
   <link rel="stylesheet" href="../jst-components.css">
 
@@ -69,7 +69,7 @@
   <!-- One JST component per library. Each receives the dataset as a property
        (attributes down), builds its chart once in once('chart', ...) with a
        returned cleanup, re-renders when the data property is republished, and
-       reads its palette from the JST theme tokens at render time. -->
+       reads its palette from the JST theme variables at render time. -->
 
   <script type="jst" name="chart-js-panel" attributes="data">
     <figure class="chart-frame" jst-preserve jst-key="cjs">
@@ -175,10 +175,10 @@
              be reconciled away on every republish (the same reason it matters under a
              <code>jst-nav</code> morph swap). Registered custom elements are already
              preservation boundaries, so the JST wrappers compose without extra ceremony.</p>
-          <p>Colours are read from the JST theme tokens
+          <p>Colours are read from the JST theme variables
              (<code>--jst-accent</code>, <code>--jst-ok</code>, <code>--jst-fg</code>,
              <code>--jst-muted</code>, <code>--jst-border</code>) <em>at render time</em>.
-             Hit <strong>Toggle light / dark</strong> and every chart re-reads the tokens
+             Hit <strong>Toggle light / dark</strong> and every chart re-reads the variables
              and re-themes: the charts are wired into the same theming story as the rest
              of JST.</p>
           <p>The <strong>Randomize data</strong> button is
@@ -210,9 +210,9 @@
   <!-- Classic (non-module) script so these are globals reachable from JST
        template bodies. No JST here: just library glue and the sample data. -->
   <script>
-    // Resolve a JST theme token to a concrete color (rgb(...)) usable by canvas
+    // Resolve a JST theme variable to a concrete color (rgb(...)) usable by canvas
     // and SVG. Reads at call time, so a theme change re-colors on the next build.
-    function readToken(name) {
+    function readVar(name) {
       const probe = document.createElement('span');
       probe.style.cssText = 'position:absolute;visibility:hidden;pointer-events:none';
       probe.style.color = `var(${name})`;
@@ -221,7 +221,7 @@
       probe.remove();
       return value;
     }
-    function seriesColor(i) { return readToken(i === 0 ? '--jst-accent' : '--jst-ok'); }
+    function seriesColor(i) { return readVar(i === 0 ? '--jst-accent' : '--jst-ok'); }
     function emptyDataset() { return { labels: [], series: [{ name: 'A', values: [] }, { name: 'B', values: [] }] }; }
 
     // Poll for a library global; reject after a timeout so a blocked CDN turns
@@ -254,7 +254,7 @@
       };
     }
     function chartJsOptions() {
-      const fg = readToken('--jst-fg'), muted = readToken('--jst-muted'), border = readToken('--jst-border');
+      const fg = readVar('--jst-fg'), muted = readVar('--jst-muted'), border = readVar('--jst-border');
       return {
         responsive: true, maintainAspectRatio: false,
         interaction: { mode: 'index', intersect: false },
@@ -287,7 +287,7 @@
     function uplotOpts(el) {
       const mount = el.querySelector('.chart-frame');
       const data = el.data || emptyDataset();
-      const muted = readToken('--jst-muted'), border = readToken('--jst-border');
+      const muted = readVar('--jst-muted'), border = readVar('--jst-border');
       return {
         width: Math.max(160, mount.clientWidth || 300), height: 188,
         legend: { show: true },
@@ -322,11 +322,11 @@
       const rows = data.series.flatMap(s => s.values.map((v, i) => ({ month: data.labels[i], value: v, series: s.name })));
       return {
         height: 224, marginLeft: 44,
-        style: { background: 'transparent', color: readToken('--jst-fg'), fontFamily: 'inherit' },
+        style: { background: 'transparent', color: readVar('--jst-fg'), fontFamily: 'inherit' },
         x: { label: null, domain: data.labels }, y: { grid: true, label: null },
         color: { domain: data.series.map(s => s.name), range: [seriesColor(0), seriesColor(1)] },
         marks: [
-          Plot.ruleY([0], { stroke: readToken('--jst-border') }),
+          Plot.ruleY([0], { stroke: readVar('--jst-border') }),
           Plot.line(rows, { x: 'month', y: 'value', stroke: 'series', strokeWidth: 2, curve: 'catmull-rom' }),
           Plot.dot(rows, { x: 'month', y: 'value', stroke: 'series', fill: 'series', r: 3 }),
         ],
@@ -376,7 +376,7 @@
     dashboard.addEventListener('toggle-scheme', () => {
       const root = document.body;
       root.dataset.scheme = root.dataset.scheme === 'dark' ? 'light' : 'dark';
-      // Republish the same data so every chart re-reads the theme tokens.
+      // Republish the same data so every chart re-reads the theme variables.
       dashboard.data = { labels: dashboard.data.labels, series: dashboard.data.series };
     });
   </script>

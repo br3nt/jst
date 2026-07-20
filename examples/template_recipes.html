@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>JST template recipes: the custom element falls out of source you can read</title>
 
-  <!-- JST's own CSS (tokens + layout primitives + component skins) and runtime.
+  <!-- JST's own CSS (theme variables + layout primitives + component skins) and runtime.
        Local files, never a CDN, so every JST recipe on this page works even when
        the two CDN-backed recipes (Markdown, QR) cannot reach their libraries. -->
   <link rel="stylesheet" href="../jst-layout.css">
@@ -122,7 +122,7 @@
   <!-- ============================================================= -->
 
   <!-- 1. RATING. Stars driven by a declared `value` (halves supported), keyboard
-       accessible via a slider role, emits a 'change' event up. Token-coloured. -->
+       accessible via a slider role, emits a 'change' event up. Coloured by CSS variable. -->
   <script type="jst" name="jst-rating" attributes="value max label">
     ${ const cap = Math.max(1, Number(max) || 5); el._max = cap; }
     ${ const cur = Math.max(0, Math.min(cap, Number(value) || 0)); }
@@ -313,7 +313,7 @@
           <span class="readout">event caught by the page: <strong><output id="rating-readout">3 / 5</output></strong></span>
         </div>
         <p class="note">Restyle it by editing the template: the glyph, the half-star
-           precision and the accent token are all right here, with no Shadow DOM parts
+           precision and the accent variable are all right here, with no Shadow DOM parts
            to fight.</p>
         <details class="src"><summary>Show the template source</summary><pre><code data-source-for="jst-rating"></code></pre></details>
       </div>

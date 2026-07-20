@@ -1,6 +1,6 @@
 ---
 name: jst
-description: Author and edit JST components - reactive web components written in plain HTML with JavaScript as the templating language, no build step. Use when writing or changing a `<script type="jst">` component, wiring server-driven navigation with jst-nav (jst-target/jst-swap/jst-select/morph), styling a page with the jst-layout tokens or layout primitives (jst-stack, jst-cluster, jst-grid, ...) and jst-components patterns, or debugging why a JST page renders wrong, loses focus/state across a swap, or fails to escape output.
+description: Author and edit JST components - reactive web components written in plain HTML with JavaScript as the templating language, no build step. Use when writing or changing a `<script type="jst">` component, wiring server-driven navigation with jst-nav (jst-target/jst-swap/jst-select/morph), styling a page with the jst-layout theme variables or layout primitives (jst-stack, jst-cluster, jst-grid, ...) and jst-components patterns, or debugging why a JST page renders wrong, loses focus/state across a swap, or fails to escape output.
 ---
 
 # JST - authoring and editing components
@@ -31,7 +31,7 @@ from npm. Name each distributable by its job:
   act so their action fetches a fragment. Exports `swap`, `navigate`, `configure`.
 - `jst-behaviors.js` - `<jst-include src=...>` (fetch a fragment, eager or
   `when="visible"`) and the `onreveal` synthetic event plumbing.
-- `jst-layout.css` - tokens, classless base, layout primitives (zero JavaScript).
+- `jst-layout.css` - theme variables, classless base, layout primitives (zero JavaScript).
 - `jst-components.css` + `jst-components.html` - component skins and the JST
   component definitions (`jst-palette`, `jst-tabs`, `jst-toaster`, `jst-combobox`,
   `jst-table`).
@@ -245,11 +245,11 @@ crosses the wire, and a plain Rails `render partial:` sketch — are in
 on blur, (6) bulk actions, (7) delete with undo carried in the HTML, (8) autosave,
 (9) long job with self-terminating progress polling, (10) search as you type.
 
-## jst-layout: the token contract and primitives
+## jst-layout: the theme-variable contract and primitives
 
 Everything in the JST CSS lives in the `jst` cascade layer, so any unlayered app
 stylesheet outranks it with a plain selector, no specificity games. Theme by
-overriding `--jst-*` tokens at `:root`; structure stays put, the look re-themes.
+overriding `--jst-*` variables at `:root`; structure stays put, the look re-themes.
 
 - Spacing is one modular scale: `--jst-space` (base) and `--jst-ratio` derive
   `--jst-space-3xs ... --jst-space-2xl`. Loosen a whole app by raising `--jst-space`.
@@ -273,7 +273,7 @@ Each component is plain HTML on a native primitive (`<dialog>` + Invoker Command
 modal/drawer, `[popover]` for menus, `<details>`/`<summary>` for accordion,
 `<progress>`, styled native checkbox for switches) plus a few genuine JST components
 (tabs, toaster, combobox, sortable table, command palette). Theme skins
-(`[data-theme="bootstrap|shadcn|shoelace|pico|..."]`) override only tokens, so the
+(`[data-theme="bootstrap|shadcn|shoelace|pico|..."]`) override only the theme variables, so the
 same markup re-skins to any framework's look. Buttons re-role via `data-variant`
 (`quiet`, `ghost`, `danger`); badges and alerts likewise.
 

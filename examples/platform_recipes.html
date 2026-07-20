@@ -6,7 +6,7 @@
   <title>Platform recipes: what JST leaves to the platform</title>
   <link rel="icon" href="data:,">
 
-  <!-- JST's own CSS (tokens + classless base + layout primitives) and the
+  <!-- JST's own CSS (theme variables + classless base + layout primitives) and the
        component skins. Local files, zero network. jst.js is loaded because
        one recipe (scrollspy) is a genuine JST component; every other recipe
        on this page is plain HTML and CSS, with a couple adding a little vanilla
@@ -234,7 +234,7 @@
            <code>input[type=date]</code>, <code>input[type=time]</code> and
            <code>input[type=number]</code> give you a picker, keyboard entry and
            locale-aware formatting in every browser, and the classless base already
-           token-styles them.</p>
+           styles them with the theme variables.</p>
         <div class="demo">
           <jst-form-row>
             <jst-field><label for="r1-date">Date</label><input id="r1-date" type="date" value="2026-07-10"></jst-field>
@@ -728,9 +728,9 @@
             </nav>
             <div class="sidenav-content" tabindex="0" aria-label="Documentation content">
               <section id="sn-install"><h4>Install</h4><p>Copy the JST files into your app, or load them from a pinned CDN tag. There is no build step and nothing to configure to get the first component rendering on the page.</p></section>
-              <section id="sn-configure"><h4>Configure</h4><p>Override <code>--jst-*</code> tokens at <code>:root</code> to theme, and call <code>configure({ dev: true })</code> while developing so render errors surface as visible boxes instead of stale DOM.</p></section>
+              <section id="sn-configure"><h4>Configure</h4><p>Override <code>--jst-*</code> variables at <code>:root</code> to theme, and call <code>configure({ dev: true })</code> while developing so render errors surface as visible boxes instead of stale DOM.</p></section>
               <section id="sn-layout"><h4>Layout</h4><p>Compose pages from the layout primitives - <code>jst-stack</code>, <code>jst-grid</code>, <code>jst-sidebar</code> - styled by element with zero JavaScript required.</p></section>
-              <section id="sn-theming"><h4>Theming</h4><p>One accent token drives a derived ramp, and <code>[data-scheme]</code> flips light and dark. Skins override only tokens, so the same markup re-skins to another framework's look.</p></section>
+              <section id="sn-theming"><h4>Theming</h4><p>One accent variable drives a derived ramp, and <code>[data-scheme]</code> flips light and dark. Skins override only the theme variables, so the same markup re-skins to another framework's look.</p></section>
             </div>
           </div>
         </div>

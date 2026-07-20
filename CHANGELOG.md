@@ -5,6 +5,17 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.7.13 - 2026-07-21
+
+### Changed
+- Vocabulary sweep completing the 0.7.11 `jst.theme` rename: all remaining
+  design-system "token" phrasing in example prose, comments, the jst skill and
+  `llms.txt` now uses CSS's own names — CSS variables / custom properties /
+  theme variables. The chart interop helper `readToken()` is now `readVar()`.
+  Untouched, deliberately: the compiler's lexer tokens (`tokens.js` and the
+  parser), CSRF and signed-URL tokens, the VS Code grammar's TextMate tokens,
+  and historical changelog entries.
+
 ## 0.7.12 - 2026-07-21
 
 ### Added

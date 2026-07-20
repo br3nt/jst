@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>JST interop: Web Awesome components inside JST</title>
 
-  <!-- JST's own CSS (tokens + layout + component skins) and runtime. Local
-       files, so JST works even if the Web Awesome CDN is unreachable. -->
+  <!-- JST's own CSS (theme variables + layout + component skins) and runtime.
+       Local files, so JST works even if the Web Awesome CDN is unreachable. -->
   <link rel="stylesheet" href="../jst-layout.css">
   <link rel="stylesheet" href="../jst-components.css">
   <script type="module" src="../jst.js"></script>
@@ -53,10 +53,10 @@
     .readout strong { color: var(--jst-accent-700, var(--jst-accent)); }
 
     /* =====================================================================
-       DEMO 3, the theming bridge  (THIRD-PARTY tokens mapped FROM JST tokens)
-       Web Awesome reads its own --wa-* design tokens. Point a handful of them
-       at the --jst-* tokens and re-theming JST re-themes the wa components too.
-       These are the real Web Awesome token names (see their theming docs).
+       DEMO 3, the theming bridge  (THIRD-PARTY variables mapped FROM JST variables)
+       Web Awesome reads its own --wa-* custom properties. Point a handful of them
+       at the --jst-* variables and re-theming JST re-themes the wa components too.
+       These are the real Web Awesome variable names (see their theming docs).
        Declared on `body` (not :root) so the body-level accent override below
        re-resolves them: a custom property's var() is substituted against the
        same element, so the mapping and the override must live on one element.
@@ -73,7 +73,7 @@
     /* wa-rating exposes its own custom property for the active symbol color. */
     wa-rating { --symbol-color-active: var(--jst-accent); }
 
-    /* The "re-theme JST" button just overrides ONE JST token; the bridge above
+    /* The "re-theme JST" button just overrides ONE JST variable; the bridge above
        carries it into every wa component. */
     body.accent-alt { --jst-accent: oklch(0.62 0.19 28); }
 
@@ -183,14 +183,14 @@
           <span class="layer" data-layer="native">Native</span>
           <span class="layer" data-layer="third-party">Third-party</span>
         </header>
-        <p>A few Web Awesome <code>--wa-*</code> tokens are mapped
-           <em>from</em> the <code>--jst-*</code> tokens in CSS (see the
+        <p>A few Web Awesome <code>--wa-*</code> custom properties are mapped
+           <em>from</em> the <code>--jst-*</code> variables in CSS (see the
            <code>body</code> block in this page's styles). They live on
            <code>body</code>, not <code>:root</code>, because a custom property's
            <code>var()</code> is substituted against the same element: the mapping and
            the accent override both sit on <code>body</code> so re-theming re-resolves
            them. Re-theme JST and the wa components re-theme with it. The button below
-           overrides a single JST token, <code>--jst-accent</code>; watch the rating,
+           overrides a single JST variable, <code>--jst-accent</code>; watch the rating,
            switch, and badge all recolor.</p>
         <jst-stack style="--space: var(--jst-space-m)">
           <button type="button" id="reTheme" onclick="document.body.classList.toggle('accent-alt')">
@@ -206,7 +206,7 @@
           <wa-callout variant="brand">
             This <code>wa-callout</code> also picks up <code>--jst-accent</code> through
             the bridge. Same technique works for typography and every other
-            <code>--wa-*</code> token.
+            Web Awesome <code>--wa-*</code> custom property.
           </wa-callout>
         </jst-stack>
       </div>
@@ -214,7 +214,7 @@
       <jst-box>
         <jst-stack style="--space: var(--jst-space-xs)">
           <h2>Takeaway <span class="layer" data-layer="native">Native</span></h2>
-          <p>Attributes down, events up, and a token bridge for theming: three small
+          <p>Attributes down, events up, and a variable bridge for theming: three small
              seams, no wrapper, no adapter. JST stayed a thin layer over the light DOM
              and Web Awesome's custom elements just composed. Registered custom elements
              are preservation boundaries, so it holds up under morph swaps too.</p>
