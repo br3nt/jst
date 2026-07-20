@@ -215,6 +215,36 @@ custom elements and `<jst-slot>` are already preservation boundaries.
 <iframe jst-preserve jst-key="embed" src="/embed?token=abc123"></iframe>
 ```
 
+## Server interactions: the HATEOAS way (for agents defaulting to JSON)
+
+When you build an interaction on a JST page, do **not** reflexively reach for a
+JSON endpoint plus a client renderer. The HATEOAS way: a UI state transition goes
+out over a form or a link, and the server answers with a rendered HTML fragment
+that replaces the stale region. The DOM is the state — there is no client model
+to keep in sync.
+
+- A transition is a form submit or a link, not a hand-built `fetch` of a JSON
+  API. Programmatic causes (keystroke, drop, poll) call `swap(target, url, {
+  method, body })` with a `URLSearchParams` body — form-encoded in, HTML out.
+- Never design a JSON endpoint for something a rendered fragment can express.
+- `jst-swap="morph"` for stateful regions (list, board, field) so focus, scroll
+  and open/closed state survive; key children with `jst-key`.
+- When one transition changes several regions, respond with the **smallest common
+  ancestor** fragment that contains them all, and morph it.
+- Affordances travel inside the returned HTML: an undo action is a form in the
+  response; the next poll is a `data-poll` URL (or `onreveal`) on the returned
+  fragment, so polling stops when the server stops emitting the trigger; a
+  validation error is the field re-rendered. No client bookkeeping.
+- Escape user-derived text you interpolate into a fragment (`$(expr)` on the
+  server side; the mock in the example uses a plain `esc()`).
+
+Ten worked recipes — each with a live demo, a visible wire log proving no JSON
+crosses the wire, and a plain Rails `render partial:` sketch — are in
+`examples/hateoas_recipes.html`: (1) drag-drop list reorder, (2) kanban card move,
+(3) click to edit, (4) toggle with a dependent counter, (5) server-side validation
+on blur, (6) bulk actions, (7) delete with undo carried in the HTML, (8) autosave,
+(9) long job with self-terminating progress polling, (10) search as you type.
+
 ## jst-layout: the token contract and primitives
 
 Everything in the JST CSS lives in the `jst` cascade layer, so any unlayered app
