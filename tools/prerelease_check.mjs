@@ -48,9 +48,45 @@ for (const f of docFiles) {
   }
 }
 
+// 3. Skin parity. The theme skins are duplicated across four places: the two
+//    stylesheets that define them and the two <select>s that offer them. They
+//    drift silently, so extract each set and require all four to agree.
+const themesFrom = (text) => new Set([...text.matchAll(/\[data-theme="([a-z0-9-]+)"\]/g)].map((m) => m[1]));
+// Scope the option scan to the re-skin <select> itself, so an unrelated future
+// <select> in either page can't pollute the set.
+const optionsFrom = (text) => {
+  const select = text.match(/<select id="(?:theme|landing-theme)">[\s\S]*?<\/select>/);
+  if (!select) return new Set();
+  return new Set([...select[0].matchAll(/<option value="([a-z0-9-]+)"/g)].map((m) => m[1]));
+};
+const eq = (a, b) => a.size === b.size && [...a].every((x) => b.has(x));
+const show = (s) => [...s].sort().join(', ');
+const skinSets = {
+  'jst-components.css': themesFrom(read('jst-components.css')),
+  'examples/components/gallery-manifest.js': themesFrom(read('examples/components/gallery-manifest.js')),
+  'index.html #landing-theme': optionsFrom(read('index.html')),
+  'examples/components_cross_section.html #theme': optionsFrom(read('examples/components_cross_section.html')),
+};
+{
+  const entries = Object.entries(skinSets);
+  const [refName, refSet] = entries[0];
+  for (const [name, set] of entries.slice(1)) {
+    if (!eq(refSet, set)) {
+      const missing = [...refSet].filter((t) => !set.has(t));
+      const extra = [...set].filter((t) => !refSet.has(t));
+      problems.push(
+        `skin set in ${name} differs from ${refName}: ` +
+        `${missing.length ? `missing [${missing.join(', ')}] ` : ''}` +
+        `${extra.length ? `extra [${extra.join(', ')}]` : ''}`.trim() +
+        ` — ${name} has {${show(set)}}, ${refName} has {${show(refSet)}}`
+      );
+    }
+  }
+}
+
 if (problems.length) {
   console.error('prerelease check FAILED:');
   for (const p of problems) console.error(`  ✗ ${p}`);
   process.exit(1);
 }
-console.log(`prerelease check: OK — ${version} consistent across package.json / jst.js / CHANGELOG; no stale doc pins.`);
+console.log(`prerelease check: OK — ${version} consistent across package.json / jst.js / CHANGELOG; no stale doc pins; ${skinSets['jst-components.css'].size} theme skins in sync across both stylesheets and both selects.`);

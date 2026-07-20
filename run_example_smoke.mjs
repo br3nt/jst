@@ -353,7 +353,18 @@ const checks = [
       const t2 = Date.now();
       while (lastFrame.contentDocument?.body?.dataset.theme !== 'w3css' && Date.now() - t2 < 3000) await flush();
       const lazyFrameThemed = lastFrame.contentDocument?.body?.dataset.theme === 'w3css';
-      return { stages, cards, iframes, scrollingNo, themedSrc, hasTagBadge, bodyThemed, linkThemed, lazyFrameThemed, sourceLen: source.length, sourceHasMarkers: source.includes('example:') };
+      // Re-skin to astryx (the 12th skin) and confirm it propagates a distinct
+      // variable value into a card frame — not just the [data-theme] flag but the
+      // resolved --jst-radius the skin overrides (0.625rem, vs 0.1875rem default).
+      sel.value = 'astryx';
+      sel.dispatchEvent(new Event('change'));
+      const firstFrame = document.querySelector('.card iframe');
+      const t3 = Date.now();
+      while (firstFrame.contentDocument?.body?.dataset.theme !== 'astryx' && Date.now() - t3 < 3000) await flush();
+      const astryxThemed = firstFrame.contentDocument?.body?.dataset.theme === 'astryx';
+      const astryxRadius = firstFrame.contentDocument
+        ? getComputedStyle(firstFrame.contentDocument.body).getPropertyValue('--jst-radius').trim() : '';
+      return { stages, cards, iframes, scrollingNo, themedSrc, hasTagBadge, bodyThemed, linkThemed, lazyFrameThemed, astryxThemed, astryxRadius, sourceLen: source.length, sourceHasMarkers: source.includes('example:') };
     })()`,
     assert: result => result.stages === 4
       && result.cards === 26
@@ -364,6 +375,8 @@ const checks = [
       && result.bodyThemed === true
       && result.linkThemed === true
       && result.lazyFrameThemed === true
+      && result.astryxThemed === true
+      && result.astryxRadius === '0.625rem'
       && result.sourceLen > 20
       && result.sourceHasMarkers === false,
   },
@@ -400,14 +413,24 @@ const checks = [
       const t1 = Date.now();
       while (frame.contentDocument?.body?.dataset.theme !== 'w3css' && Date.now() - t1 < 4000) await flush();
       const frameThemed = frame.contentDocument?.body?.dataset.theme === 'w3css';
-      return { counterButton, cards, iframeCount, scrollingNo, preloadOk, frameThemed };
+      // Then astryx: the re-skin propagates the astryx radius variable into the frame.
+      sel.value = 'astryx';
+      sel.dispatchEvent(new Event('change'));
+      const t2 = Date.now();
+      while (frame.contentDocument?.body?.dataset.theme !== 'astryx' && Date.now() - t2 < 4000) await flush();
+      const astryxThemed = frame.contentDocument?.body?.dataset.theme === 'astryx';
+      const astryxRadius = frame.contentDocument
+        ? getComputedStyle(frame.contentDocument.body).getPropertyValue('--jst-radius').trim() : '';
+      return { counterButton, cards, iframeCount, scrollingNo, preloadOk, frameThemed, astryxThemed, astryxRadius };
     })()`,
     assert: result => result.counterButton === true
       && result.cards === 26
       && result.iframeCount === 29
       && result.scrollingNo === true
       && result.preloadOk === true
-      && result.frameThemed === true,
+      && result.frameThemed === true
+      && result.astryxThemed === true
+      && result.astryxRadius === '0.625rem',
   },
   {
     page: '/examples/components/modal.html',
@@ -785,7 +808,7 @@ const checks = [
   },
   {
     // Web Awesome interop: wa-* components inside JST, both data directions plus
-    // the theming bridge. Every ASSERTED fact is JST-owned DOM or a CSS token
+    // the theming bridge. Every ASSERTED fact is JST-owned DOM or a CSS variable
     // mapping, so it passes even if the Web Awesome CDN is blocked. The one
     // wa-specific check is guarded on the component having actually upgraded.
     page: '/examples/webawesome_interop.html',
@@ -810,7 +833,7 @@ const checks = [
       await flush(); await flush();
       const caught = document.querySelector('[data-testid="catcher-rated"]')?.textContent;
 
-      // Demo 3, theming bridge: the wa token is mapped from the jst token in CSS.
+      // Demo 3, theming bridge: the wa variable is mapped from the jst variable in CSS.
       const jstAccent = getComputedStyle(document.body).getPropertyValue('--jst-accent').trim();
       const waBrand = getComputedStyle(document.body).getPropertyValue('--wa-color-brand-fill-loud').trim();
 

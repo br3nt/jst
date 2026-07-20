@@ -10,18 +10,18 @@
  *   - index.html (the landing, basePath "examples/components/"), which has its
  *     OWN bespoke palette and does NOT load the jst stylesheets.
  *
- * So this module is self-contained: it injects the design tokens, the theme
+ * So this module is self-contained: it injects the theme variables, the theme
  * skins, the .jst-tag badge and the card chrome as one stylesheet, scoped so it
  * cannot leak into a host page's own elements:
- *   - tokens/skins live in @layer jst.tokens / jst.components. They are pure
+ *   - the variables/skins live in @layer jst.theme / jst.components. They are pure
  *     custom-property definitions, so they never restyle a host element by
  *     themselves. NOTE: on the gallery page (which also loads the global
  *     jst-layout.css / jst-components.css) the injected copy sits in the SAME
  *     layers but later in source order, so THIS copy wins for the host chrome —
- *     it is the source of truth there. Keep the token/skin blocks below in sync
- *     with jst-layout.css / jst-components.css when a skin changes, or the card
- *     chrome will silently diverge from the mini-page iframes (which load the
- *     global sheets). The element rules those sheets add for material/daisy
+ *     it is the source of truth there. Keep the variable/skin blocks below in
+ *     sync with jst-layout.css / jst-components.css when a skin changes, or the
+ *     card chrome will silently diverge from the mini-page iframes (which load
+ *     the global sheets). The element rules those sheets add for material/daisy
  *     (filled inputs, borderless jst-box) are intentionally omitted: the host
  *     chrome renders no such elements, only the iframes do.
  *   - the card chrome, badge and legend are all scoped under `.jst-gallery`, so
@@ -51,7 +51,7 @@ export const GROUPS = [
       { name: 'tooltip', title: 'Tooltip', tech: 'none', badge: 'HTML + CSS', height: 180,
         desc: 'A hover/focus hint on any element, with no positioning library. Rendered from a <code>data-tip</code> attribute via a CSS <code>::after</code> pseudo-element.' },
       { name: 'alert', title: 'Alert / Callout', tech: 'none', badge: 'HTML + CSS + JS', height: 340,
-        desc: 'Status messaging in success, warning and error tones. One class plus <code>data-variant</code> re-colours the callout from the theme tokens. The dismissable pair adds a × button that animates the alert away on <code>transitionend</code>, and removes it instantly under <code>prefers-reduced-motion</code>.' },
+        desc: 'Status messaging in success, warning and error tones. One class plus <code>data-variant</code> re-colours the callout from the theme variables. The dismissable pair adds a × button that animates the alert away on <code>transitionend</code>, and removes it instantly under <code>prefers-reduced-motion</code>.' },
       { name: 'progress', title: 'Progress &amp; Spinner', tech: 'none', badge: 'HTML + CSS', height: 170,
         desc: 'Determinate and indeterminate loading feedback. A native <code>&lt;progress&gt;</code> element plus a CSS keyframe spinner &mdash; accessible by default.' },
       { name: 'validation', title: 'Validation states', tech: 'none', badge: 'HTML + CSS', height: 360,
@@ -92,7 +92,7 @@ export const GROUPS = [
   },
   {
     heading: 'Patterns: the everyday building blocks',
-    blurb: 'The small, repetitive pieces every app ships. Plain HTML and a handful of classes, themed from the same tokens as everything else.',
+    blurb: 'The small, repetitive pieces every app ships. Plain HTML and a handful of classes, themed from the same variables as everything else.',
     items: [
       { name: 'button-variants', title: 'Button variants', tech: 'none', badge: 'HTML + CSS', height: 150,
         desc: 'One button element, re-roled by attribute: accent by default, <code>data-variant="quiet | ghost | danger"</code> for the rest.' },
@@ -118,11 +118,11 @@ export const GROUPS = [
 export const validTheme = (t) => typeof t === 'string' && /^[a-z][a-z0-9]*$/.test(t);
 
 // Self-contained gallery stylesheet. Injected once. See the module header for
-// why tokens/skins are layered and the chrome is scoped under `.jst-gallery`.
+// why the variables/skins are layered and the chrome is scoped under `.jst-gallery`.
 const GALLERY_CSS = `
-@layer jst.tokens, jst.base, jst.primitives, jst.components;
+@layer jst.theme, jst.base, jst.primitives, jst.components;
 
-@layer jst.tokens {
+@layer jst.theme {
 :root {
   --jst-space: 0.625rem;
   --jst-ratio: 1.5;
@@ -136,17 +136,25 @@ const GALLERY_CSS = `
   --jst-space-2xl: calc(var(--jst-space) * var(--jst-ratio) * var(--jst-ratio) * var(--jst-ratio));
   --jst-measure: 60ch;
   --jst-radius: 0.1875rem;
+  --jst-radius-s: calc(var(--jst-radius) * 0.6);
+  --jst-radius-l: calc(var(--jst-radius) * 1.6);
   --jst-border-width: 1px;
   --jst-font: system-ui, sans-serif;
   --jst-font-mono: ui-monospace, monospace;
   --jst-font-size: 0.875rem;
   --jst-line: 1.45;
   --jst-control-size: 0.8rem;
-  --jst-bg:      light-dark(oklch(0.99 0 0), oklch(0.18 0.01 250));
-  --jst-surface: light-dark(oklch(0.96 0 0), oklch(0.23 0.01 250));
-  --jst-fg:      light-dark(oklch(0.22 0.01 250), oklch(0.93 0.01 250));
-  --jst-muted:   light-dark(oklch(0.50 0.01 250), oklch(0.70 0.01 250));
-  --jst-border:  light-dark(oklch(0.87 0.01 250), oklch(0.35 0.01 250));
+  --jst-motion-fast: 125ms;
+  --jst-motion: 250ms;
+  --jst-motion-slow: 500ms;
+  --jst-ease: ease;
+  --jst-neutral-h: 250;
+  --jst-neutral-c: 0.01;
+  --jst-bg:      light-dark(oklch(0.99 calc(var(--jst-neutral-c) - 0.01) var(--jst-neutral-h)), oklch(0.18 var(--jst-neutral-c) var(--jst-neutral-h)));
+  --jst-surface: light-dark(oklch(0.96 calc(var(--jst-neutral-c) - 0.01) var(--jst-neutral-h)), oklch(0.23 var(--jst-neutral-c) var(--jst-neutral-h)));
+  --jst-fg:      light-dark(oklch(0.22 var(--jst-neutral-c) var(--jst-neutral-h)), oklch(0.93 var(--jst-neutral-c) var(--jst-neutral-h)));
+  --jst-muted:   light-dark(oklch(0.50 var(--jst-neutral-c) var(--jst-neutral-h)), oklch(0.70 var(--jst-neutral-c) var(--jst-neutral-h)));
+  --jst-border:  light-dark(oklch(0.87 var(--jst-neutral-c) var(--jst-neutral-h)), oklch(0.35 var(--jst-neutral-c) var(--jst-neutral-h)));
   --jst-accent:     oklch(0.55 0.18 255);
   --jst-accent-400: oklch(from var(--jst-accent) calc(l + 0.10) c h);
   --jst-accent-600: oklch(from var(--jst-accent) calc(l - 0.08) c h);
@@ -167,19 +175,19 @@ const GALLERY_CSS = `
 [data-scheme="dark"]  { color-scheme: dark; }
 @supports not (color: light-dark(white, black)) {
   :root {
-    --jst-bg: oklch(0.99 0 0); --jst-surface: oklch(0.96 0 0);
-    --jst-fg: oklch(0.22 0.01 250); --jst-muted: oklch(0.50 0.01 250);
-    --jst-border: oklch(0.87 0.01 250);
+    --jst-bg: oklch(0.99 calc(var(--jst-neutral-c) - 0.01) var(--jst-neutral-h)); --jst-surface: oklch(0.96 calc(var(--jst-neutral-c) - 0.01) var(--jst-neutral-h));
+    --jst-fg: oklch(0.22 var(--jst-neutral-c) var(--jst-neutral-h)); --jst-muted: oklch(0.50 var(--jst-neutral-c) var(--jst-neutral-h));
+    --jst-border: oklch(0.87 var(--jst-neutral-c) var(--jst-neutral-h));
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --jst-bg: oklch(0.18 0.01 250); --jst-surface: oklch(0.23 0.01 250);
-      --jst-fg: oklch(0.93 0.01 250); --jst-muted: oklch(0.70 0.01 250);
-      --jst-border: oklch(0.35 0.01 250);
+      --jst-bg: oklch(0.18 var(--jst-neutral-c) var(--jst-neutral-h)); --jst-surface: oklch(0.23 var(--jst-neutral-c) var(--jst-neutral-h));
+      --jst-fg: oklch(0.93 var(--jst-neutral-c) var(--jst-neutral-h)); --jst-muted: oklch(0.70 var(--jst-neutral-c) var(--jst-neutral-h));
+      --jst-border: oklch(0.35 var(--jst-neutral-c) var(--jst-neutral-h));
     }
   }
 }
-} /* @layer jst.tokens */
+} /* @layer jst.theme */
 
 @layer jst.components {
 [data-theme="jst"]       { --jst-ring: 0 0 0 2px oklch(from var(--jst-accent) l c h / 0.45); }
@@ -256,11 +264,27 @@ const GALLERY_CSS = `
   --jst-shadow: 0 4px 12px oklch(0 0 0 / 0.12);
   --jst-ring: 0 0 0 2px oklch(0.49 0.24 277 / 0.4);
 }
+[data-theme="astryx"] {
+  --jst-neutral-c: 0;
+  --jst-bg:      light-dark(oklch(0.958 var(--jst-neutral-c) var(--jst-neutral-h)), oklch(0.222 var(--jst-neutral-c) var(--jst-neutral-h)));
+  --jst-surface: light-dark(oklch(1 var(--jst-neutral-c) var(--jst-neutral-h)), oklch(0.269 var(--jst-neutral-c) var(--jst-neutral-h)));
+  --jst-fg:      light-dark(oklch(0.205 var(--jst-neutral-c) var(--jst-neutral-h)), oklch(0.985 var(--jst-neutral-c) var(--jst-neutral-h)));
+  --jst-muted:   light-dark(oklch(0.556 var(--jst-neutral-c) var(--jst-neutral-h)), oklch(0.715 var(--jst-neutral-c) var(--jst-neutral-h)));
+  --jst-border:  light-dark(oklch(0.940 var(--jst-neutral-c) var(--jst-neutral-h)), oklch(1 0 0 / 0.10));
+  --jst-accent:    light-dark(oklch(0.269 var(--jst-neutral-c) var(--jst-neutral-h)), oklch(0.940 var(--jst-neutral-c) var(--jst-neutral-h)));
+  --jst-accent-fg: light-dark(oklch(0.985 0 0), oklch(0.269 0 0));
+  --jst-radius: 0.625rem; --jst-radius-l: 0.75rem;
+  --jst-font: Figtree, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --jst-motion-fast: 125ms; --jst-motion: 300ms;
+  --jst-shadow-surface: 0 2px 4px oklch(0 0 0 / 0.05), 0 4px 8px oklch(0 0 0 / 0.10), inset 0 0 0 1px light-dark(oklch(1 0 0 / 0), oklch(1 0 0 / 0.08));
+  --jst-shadow: 0 2px 4px light-dark(oklch(0 0 0 / 0.05), oklch(0 0 0 / 0.30)), 0 4px 12px light-dark(oklch(0 0 0 / 0.10), oklch(0 0 0 / 0.40)), inset 0 0 0 1px light-dark(oklch(1 0 0 / 0), oklch(1 0 0 / 0.12));
+  --jst-ring: 0 0 0 2px oklch(0.57 0.19 255 / 0.5);
+}
 } /* @layer jst.components */
 
 /* Card chrome, badge and legend — scoped to the gallery subtree so they cannot
    touch a host page's own elements. Unlayered so they reliably style the cards.
-   color-scheme lives on the container (not :root) so light-dark() tokens
+   color-scheme lives on the container (not :root) so light-dark() variables
    follow the OS inside the gallery without flipping a host page's own scheme. */
 .jst-gallery { color-scheme: light dark; }
 
@@ -336,7 +360,7 @@ function injectStyles() {
  * @param {string}     [opts.basePath]   path prefix to the mini pages (trailing slash).
  * @param {HTMLSelectElement} [opts.themeSelect]  the "Re-skin as:" <select>.
  * @param {HTMLElement} [opts.themeTarget] element that carries [data-theme]; its
- *   subtree (the cards) inherits the skin tokens. Defaults to `container`.
+ *   subtree (the cards) inherits the skin variables. Defaults to `container`.
  * @returns {{ frames: HTMLIFrameElement[], links: HTMLAnchorElement[], currentTheme: () => string }}
  */
 export function renderGallery({ container, basePath = 'components/', themeSelect, themeTarget } = {}) {
