@@ -198,7 +198,8 @@ prove "a layer, not a walled garden" with real third-party libraries.
   oklch-to-hex sync, since computed styles serialize oklch as oklch),
   space/ratio/radius/font-size sliders, system/light/dark scheme, localStorage
   persistence reapplied before first paint, reset. Inline styles beating the
-  `jst.theme` layer is the cascade-layer story demonstrating itself. Plus a
+  `jst.tokens` layer (renamed `jst.theme` in 0.7.11) is the cascade-layer story
+  demonstrating itself. Plus a
   "Theming JST" docs section: the token contract, how to theme, the layer model.
 - **Third-party interop examples.** `examples/third_party_charts.html`: one
   dataset through Chart.js 4.5.0, uPlot 1.6.32, and Observable Plot 0.6.17, each
@@ -232,7 +233,8 @@ JST should too, done the JST way.
 ### Changed
 
 - **All CSS now lives in the `jst` cascade layer (#77).** `jst-layout.css`
-  declares `@layer jst.theme, jst.base, jst.primitives, jst.components` and
+  declares `@layer jst.tokens, jst.base, jst.primitives, jst.components` (the
+  first since renamed `jst.theme` in 0.7.11) and
   fills the first three; `jst-components.css` fills the last. Consequence: any
   unlayered app stylesheet outranks jst styles regardless of specificity, so
   overriding a jst default needs a plain selector, never a specificity fight,
