@@ -34,7 +34,7 @@ cleanly onto two mental models JST users already have: client behaviors
 
 ```
 jst.js          core: compile <script type="jst"> → custom elements + morph
-jst-layout      CSS base + design tokens + layout primitives + components   (runtime-OPTIONAL)
+jst-layout      CSS base + theme variables + layout primitives + components   (runtime-OPTIONAL)
 jst-behaviors   <jst-include> / jst-teleport: client components the platform lacks
 jst-nav         boost / target / swap / push-url / select + error handling   (server, HTMX-shaped, #3)
 ```
@@ -49,11 +49,11 @@ but not on nav, so they should be separately includable.
 ### Layer 0 - Base (classless, Pico/Zen-Garden style)
 
 A reset + element styling driven entirely by CSS custom properties. The
-deliverable is a **theming contract**: a documented `--jst-*` token set the user
+deliverable is a **theming contract**: a documented `--jst-*` variable set the user
 overrides at `:root`, and everything re-themes.
 
 Two Every Layout rules govern everything here. **Style globally**: size,
-density, and color live in tokens and element rules, never in per-instance
+density, and color live in variables and element rules, never in per-instance
 utility classes; changing `--jst-space` or `--jst-control-size` once re-tunes
 the whole app. **Style composition**: rules describe how elements behave
 *next to each other* (controls inside a `.jst-join` collapse their borders, a
@@ -67,14 +67,31 @@ One **modular space scale** (one ratio → derived steps), a **measure** (line
 length), **radius**, **border**, a **font scale**, and **color roles**. Dark mode
 falls out of `light-dark()` for free.
 
+**Theme knobs (single-line levers).** Beyond the roles, a handful of variables each
+re-tune a whole family at once, so a skin moves one line and the rest follows:
+
+- **Radius scale** — `--jst-radius` derives `--jst-radius-s` (chips, badges,
+  small inner elements) and `--jst-radius-l` (containers: cards, dialogs,
+  popovers, toasts). Override the base and all three scale coherently; a skin
+  overrides `-s`/`-l` individually only when it must fight the ratio.
+- **Motion** — `--jst-motion-fast` / `--jst-motion` / `--jst-motion-slow` plus
+  `--jst-ease` give one motion personality: fast for hovers and toggles, the
+  base step for dismissals/drawers/accordions, slow for page-level movement.
+  Continuous loops (spinner, skeleton shimmer) keep literal periods — they are
+  not motion *personality*.
+- **Neutral temperature** — `--jst-neutral-h` (hue) and `--jst-neutral-c`
+  (chroma) drive the warmth of all five neutral roles at once, in both schemes.
+  The default is a whisper-cool grey; a skin like `astryx` sets chroma `0` for a
+  pure grey family.
+
 Modern CSS we lean on, each tagged with its [Baseline](https://web.dev/baseline)
 status and a fallback so we degrade gracefully (drop the fallback once the
 feature is Baseline-wide):
 
 | Feature | Used for | Baseline | Fallback |
 | --- | --- | --- | --- |
-| `light-dark()` | auto light/dark token values | Baseline 2024 | explicit `@media (prefers-color-scheme)` |
-| Relative color syntax `oklch(from … )` | derive a shade ramp from one accent token | Baseline 2024 | hand-authored shade tokens |
+| `light-dark()` | auto light/dark variable values | Baseline 2024 | explicit `@media (prefers-color-scheme)` |
+| Relative color syntax `oklch(from … )` | derive a shade ramp from one accent variable | Baseline 2024 | hand-authored shade variables |
 | `contrast-color()` | auto-pick accessible foreground on a color | **not** Baseline (limited) | static `--jst-accent-fg` default, upgraded under `@supports` |
 | `oklch()` | perceptually-even color + shades | Baseline 2023 | `hsl()` |
 | Container queries | component-level responsiveness | Baseline 2023 | media queries |
@@ -83,7 +100,7 @@ feature is Baseline-wide):
 | `:has()` | imposter's parent becomes its positioning container | Baseline 2023 | author sets `position: relative` |
 | `cap` unit | icon sized to the text's capital height | Baseline 2024 | `0.75em` |
 | Scroll snap | opt-in reel snapping via `--snap` | Baseline 2022 | plain scrolling |
-| `color-mix()` | tinted status surfaces, table stripes, selection color, all mixed from tokens | Baseline 2023 | (used only for enhancement colors) |
+| `color-mix()` | tinted status surfaces, table stripes, selection color, all mixed from variables | Baseline 2023 | (used only for enhancement colors) |
 
 Audited against 2026 CSS: `aspect-ratio` replaced the padded-box hack (frame),
 `gap` replaced owl selectors (stack/cluster), logical properties are used
@@ -94,7 +111,7 @@ per-instance custom property, and the **imposter** keeps inset + transform
 centering because anchor positioning only reached Baseline Newly in 2026.
 Revisit both as Baseline moves.
 
-> **Gotcha (verified in the prototype):** relative-color shade tokens declared at
+> **Gotcha (verified in the prototype):** relative-color shade variables declared at
 > `:root` - `--jst-accent-600: oklch(from var(--jst-accent) …)` - are computed
 > once **at `:root` scope** and inherit as that absolute color. Overriding
 > `--jst-accent` in a *descendant* subtree does **not** re-derive them, so the
@@ -172,8 +189,8 @@ HTML + CSS" note.
 
 What Bootstrap 5.3, Web Awesome (Shoelace successor; P = Pro tier), Pico CSS v2,
 daisyUI 5, Open Props, and Radix primitives ship, against what the platform now
-does and what JST has. Open Props ships tokens only; its analogue is JST's
-Layer 0 token contract. Baseline statuses verified 2026-07.
+does and what JST has. Open Props ships variables only; its analogue is JST's
+Layer 0 variable contract. Baseline statuses verified 2026-07.
 
 Legend: BS = Bootstrap, WA = Web Awesome, Pico = Pico CSS, dUI = daisyUI,
 OP = Open Props, Rx = Radix (behavioral spec only).
@@ -193,10 +210,10 @@ OP = Open Props, Rx = Radix (behavioral spec only).
 | Styled `<select>` | BS, WA, Pico, dUI, Rx | `appearance: base-select` still Chromium-only, NOT Baseline | base select styling in classless layer | have it; progressive `@supports` block later |
 | Data table (styles) | BS, Pico, dUI | `<table>` + CSS | classless + `jst-table` | have it |
 | Sortable data table | none of the six | none native | `jst-table` component | have it (differentiator) |
-| Form validation states | BS, Pico, dUI | `:user-valid` / `:user-invalid` (Baseline Newly 2023) | `:user-invalid` border + `jst-field:has(:user-invalid)` label, `--jst-error` token | have it |
+| Form validation states | BS, Pico, dUI | `:user-valid` / `:user-invalid` (Baseline Newly 2023) | `:user-invalid` border + `jst-field:has(:user-invalid)` label, `--jst-error` variable | have it |
 | Input group / addons | BS, Pico, dUI | flex + border collapse, no element | `.jst-join` + `.jst-addon` | have it |
 | Floating labels | BS, dUI | `:placeholder-shown` + CSS | [recipe shown](../examples/platform_recipes.html#recipe-floating-label) | recipe shown (label-above is still clearer) |
-| Switch / checkbox / radio | BS, WA, Pico, dUI, Rx | `accent-color` (Baseline 2022); switch via styled checkbox | `accent-color` token + `.jst-switch` | have it |
+| Switch / checkbox / radio | BS, WA, Pico, dUI, Rx | `accent-color` (Baseline 2022); switch via styled checkbox | `accent-color` variable + `.jst-switch` | have it |
 | Range / slider | BS, WA, Pico, dUI, Rx | `input[type=range]` + `accent-color`; multi-thumb not native | accent-color pickup | have it; multi-thumb: skip |
 | File input | BS, dUI, WA (P) | `::file-selector-button` (widely available) | classless `::file-selector-button` rules; also [recipe shown](../examples/platform_recipes.html#recipe-file-input) | have it |
 | Number / time / date inputs | WA, dUI | native inputs widely; styling limited | classless input styling; [recipe shown](../examples/platform_recipes.html#recipe-datetime-number) | platform; date-picker component: skip |
@@ -207,7 +224,7 @@ OP = Open Props, Rx = Radix (behavioral spec only).
 | Skeleton / placeholder | BS, WA, dUI | trivial CSS animation | `.jst-skeleton` (pairs with `jst-include` loading) | have it |
 | Badge / tag / chip | BS, WA, dUI | trivial CSS | `.jst-badge` variants (+ the specialized `.jst-tag`) | have it |
 | Avatar | WA, dUI, Rx | `img` + `border-radius` | `.jst-avatar` (image or initials, `--size`) | have it |
-| Card | BS, WA, Pico, dUI | `<article>` + box CSS | `<jst-box>` + tokens | have it |
+| Card | BS, WA, Pico, dUI | `<article>` + box CSS | `<jst-box>` + variables | have it |
 | Alert / callout | BS, WA, dUI | static CSS | `.jst-alert` | have it |
 | Breadcrumb | BS, WA, dUI | `nav > ol` + CSS separators | `.jst-breadcrumb` | have it |
 | Pagination | BS, dUI | `nav` + CSS | `.jst-pagination` (`aria-current` carries state) | have it |
@@ -224,8 +241,8 @@ OP = Open Props, Rx = Radix (behavioral spec only).
 | Sidebar navigation (nested, active bar) | WA (docs chrome / tree) | IntersectionObserver rooted at the scroll pane + CSS active bar | [recipe shown](../examples/platform_recipes.html#recipe-sidebar-nav) | recipe shown (docs-style nested sidebar; the scrollspy idea in a real layout) |
 | Custom scrollbars | Rx | `scrollbar-color`/`scrollbar-width` (Baseline 2024) | reel uses it | platform |
 | Divider / kbd / visually-hidden | BS, WA, dUI | `<hr>`, `<kbd>`, clip utility | classless `kbd` + `.jst-visually-hidden` | have it |
-| Theme switching | dUI | `light-dark()` + `color-scheme` | `--jst-*` tokens + `data-theme` skins | have it |
-| Design tokens | OP | CSS custom properties | Layer 0 `--jst-*` contract | have it |
+| Theme switching | dUI | `light-dark()` + `color-scheme` | `--jst-*` variables + `data-theme` skins | have it |
+| Theme variables | OP | CSS custom properties | Layer 0 `--jst-*` contract | have it |
 | Include / lazy fragment | WA | none | `jst-include` (+ `when="visible"`) | have it |
 | Copy button | WA | `navigator.clipboard` | [recipe shown](../examples/template_recipes.html#recipe-copy) | recipe shown |
 | Relative time | WA | `Intl.RelativeTimeFormat` | [recipe shown](../examples/template_recipes.html#recipe-relative-time) | recipe shown |
@@ -530,9 +547,9 @@ Rules:
 
 ## Current state
 
-Layer 0 (tokens + classless base) and all twelve Layer 1 primitives are in
+Layer 0 (variables + classless base) and all twelve Layer 1 primitives are in
 `jst-layout.css`: stack, cluster, grid, sidebar, center, box, switcher, cover,
 frame, reel, imposter, icon. `examples/layout_primitives.html` demonstrates each
-one plus the one-token re-theme, with zero JavaScript on the page. Next: settle
+one plus the one-variable re-theme, with zero JavaScript on the page. Next: settle
 the open questions above, then run Layer 2 candidates (tabs, toast, combobox)
 through the "does this beat raw HTML + CSS?" filter.

@@ -16,6 +16,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   truth (#49). Bare only, since `jst-transition="name"` is already jst.js's
   own morph enter/leave/move CSS-transition attribute. `swapContent()` is
   now exported from `jst-nav.js` for direct testing.
+- **Astryx skin** (`data-theme="astryx"`), a twelfth theme skin modelled on
+  Meta's Astryx neutral theme: a grey page with white raised cards in light mode
+  — inverted from JST's own look, where the surface sits a shade darker than the
+  page — a near-black accent that flips to near-white in dark mode, a blue focus
+  ring, generous radius and whisper-faint borders, with an inset light ring
+  lifting elevated surfaces in dark mode. Offered in both re-skin pickers (the
+  landing page and the component gallery). (Ideas adapted from Meta's Astryx
+  design system, MIT.)
+- **Motion variables** — `--jst-motion-fast` (125ms), `--jst-motion` (250ms),
+  `--jst-motion-slow` (500ms) and `--jst-ease`. Component transitions read from
+  them, so a skin re-times the whole UI in one place; the Astryx skin slows
+  `--jst-motion` to 300ms to show motion is a theme variable too. Continuous
+  loops (spinner, skeleton shimmer) keep their literal periods.
+- **Neutral temperature variables** — `--jst-neutral-h` and `--jst-neutral-c`
+  drive the hue and chroma of all five neutral roles (`--jst-bg`, `--jst-surface`,
+  `--jst-fg`, `--jst-muted`, `--jst-border`) at once, in both light and dark, so
+  one line shifts the whole grey family cool→warm.
+- **Radius scale** — `--jst-radius` now derives `--jst-radius-s` (chips, badges,
+  small inner elements) and `--jst-radius-l` (containers: cards, dialogs,
+  popovers, toasts). A skin that overrides `--jst-radius` scales all three
+  coherently (w3css's `0` still squares everything).
+- A **skin-parity guard** in `tools/prerelease_check.mjs`: it extracts the skin
+  set from `jst-components.css`, `examples/components/gallery-manifest.js` and
+  both re-skin `<select>`s, and fails if any of the four drift apart — the
+  duplication the shared gallery module can't fully eliminate.
+
+### Changed
+- **Breaking (pre-1.0): the `jst.theme` cascade layer.** The first sub-layer,
+  which holds the `--jst-*` custom properties, is renamed from `jst.tokens` to
+  `jst.theme` across `jst-layout.css`, `jst-components.css` and the shared
+  gallery module. An app that layers overrides against `@layer jst.tokens` must
+  retarget them at `@layer jst.theme`.
+- The dismissable alert example computes its removal-timeout fallback from the
+  live transition duration, so a skin that slows `--jst-motion` no longer cuts
+  the collapse animation off early.
 
 ## 0.7.10 - 2026-07-12
 
@@ -163,7 +198,7 @@ prove "a layer, not a walled garden" with real third-party libraries.
   oklch-to-hex sync, since computed styles serialize oklch as oklch),
   space/ratio/radius/font-size sliders, system/light/dark scheme, localStorage
   persistence reapplied before first paint, reset. Inline styles beating the
-  `jst.tokens` layer is the cascade-layer story demonstrating itself. Plus a
+  `jst.theme` layer is the cascade-layer story demonstrating itself. Plus a
   "Theming JST" docs section: the token contract, how to theme, the layer model.
 - **Third-party interop examples.** `examples/third_party_charts.html`: one
   dataset through Chart.js 4.5.0, uPlot 1.6.32, and Observable Plot 0.6.17, each
@@ -197,7 +232,7 @@ JST should too, done the JST way.
 ### Changed
 
 - **All CSS now lives in the `jst` cascade layer (#77).** `jst-layout.css`
-  declares `@layer jst.tokens, jst.base, jst.primitives, jst.components` and
+  declares `@layer jst.theme, jst.base, jst.primitives, jst.components` and
   fills the first three; `jst-components.css` fills the last. Consequence: any
   unlayered app stylesheet outranks jst styles regardless of specificity, so
   overriding a jst default needs a plain selector, never a specificity fight,

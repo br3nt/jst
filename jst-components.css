@@ -1,20 +1,21 @@
 /*!
  * jst-components - component styles on top of jst-layout, CSS-first.
  * Loads after jst-layout.css. Each component is plain HTML + native platform
- * primitives (dialog, popover, details, Invoker Commands) styled by tokens, so
- * the SAME markup re-skins to any framework's look by swapping a theme that
- * overrides the --jst-* tokens. Demonstrated in examples/components_cross_section.html.
+ * primitives (dialog, popover, details, Invoker Commands) styled by custom
+ * properties, so the SAME markup re-skins to any framework's look by swapping a
+ * theme that overrides the --jst-* variables. Demonstrated in
+ * examples/components_cross_section.html.
  *
  * Everything here fills the jst.components sub-layer, so unlayered app CSS
  * outranks any of it without specificity games. The order declaration repeats
  * jst-layout.css's so the sub-layer order holds whichever file loads first.
  */
-@layer jst.tokens, jst.base, jst.primitives, jst.components;
+@layer jst.theme, jst.base, jst.primitives, jst.components;
 
 @layer jst.components {
 
 /* ============================================================================
- * Theme skins - each overrides only tokens. Same components, different look.
+ * Theme skins - each overrides only variables. Same components, different look.
  * (The CSS Zen Garden bet, applied to component frameworks.)
  *
  * The differentiators are border treatment, resting elevation and surface
@@ -130,7 +131,7 @@ jst-box { box-shadow: var(--jst-shadow-surface); }
 .jst-tag::before { content: "●"; font-size: 0.8em; }
 /* No JST at all - the best outcome. */
 .jst-tag[data-tech="none"]     { background: oklch(0.95 0.05 150); color: oklch(0.40 0.12 150); border-color: oklch(0.85 0.08 150); }
-/* A jst-layout primitive or token. */
+/* A jst-layout primitive or variable. */
 .jst-tag[data-tech="layout"]   { background: oklch(0.95 0.04 300); color: oklch(0.45 0.12 300); border-color: oklch(0.87 0.06 300); }
 /* A genuine JST custom-element component. */
 .jst-tag[data-tech="jst"]      { background: oklch(0.93 0.06 30);  color: oklch(0.48 0.16 30);  border-color: oklch(0.85 0.09 30); }
@@ -140,7 +141,7 @@ jst-box { box-shadow: var(--jst-shadow-surface); }
   .jst-tag[data-tech="jst"]      { background: oklch(0.32 0.08 30);  color: oklch(0.86 0.10 30);  border-color: oklch(0.42 0.10 30); }
 }
 
-/* Focus-visible ring driven by the theme token. */
+/* Focus-visible ring driven by the theme variable. */
 :where([data-theme]) :where(button, a, summary, input, [tabindex]):focus-visible {
   outline: none;
   box-shadow: var(--jst-ring, 0 0 0 3px oklch(0.6 0.1 262 / 0.5));
@@ -154,7 +155,7 @@ jst-box { box-shadow: var(--jst-shadow-surface); }
   inline-size: min(32rem, calc(100vw - 2rem));
   padding: 0;
   border: var(--jst-border-width) solid var(--jst-border);
-  border-radius: var(--jst-radius);
+  border-radius: var(--jst-radius-l);
   background: var(--jst-bg);
   color: var(--jst-fg);
   box-shadow: var(--jst-shadow);
@@ -186,7 +187,7 @@ jst-box { box-shadow: var(--jst-shadow-surface); }
 @supports (transition-behavior: allow-discrete) {
   .jst-modal {
     opacity: 0; transform: translateY(-0.5rem) scale(0.98);
-    transition: opacity 0.18s, transform 0.18s, overlay 0.18s allow-discrete, display 0.18s allow-discrete;
+    transition: opacity var(--jst-motion) var(--jst-ease), transform var(--jst-motion) var(--jst-ease), overlay var(--jst-motion) var(--jst-ease) allow-discrete, display var(--jst-motion) var(--jst-ease) allow-discrete;
   }
   .jst-modal:popover-open, .jst-modal[open] { opacity: 1; transform: none; }
   @starting-style { .jst-modal[open] { opacity: 0; transform: translateY(-0.5rem) scale(0.98); } }
@@ -203,7 +204,7 @@ jst-box { box-shadow: var(--jst-shadow-surface); }
   display: flex; align-items: center; justify-content: space-between;
 }
 .jst-accordion summary::-webkit-details-marker { display: none; }
-.jst-accordion summary::after { content: "▾"; color: var(--jst-muted); transition: transform 0.15s; }
+.jst-accordion summary::after { content: "▾"; color: var(--jst-muted); transition: transform var(--jst-motion-fast) var(--jst-ease); }
 .jst-accordion details[open] summary::after { transform: rotate(180deg); }
 .jst-accordion summary:hover { background: var(--jst-surface); }
 .jst-accordion .jst-accordion-body { padding: 0 var(--jst-space-s) var(--jst-space-s); color: var(--jst-muted); }
@@ -217,7 +218,7 @@ jst-box { box-shadow: var(--jst-shadow-surface); }
 .jst-menu[popover], jst-combobox [role="listbox"], .jst-palette {
   padding: var(--jst-space-2xs);
   border: var(--jst-border-width) solid var(--jst-border);
-  border-radius: var(--jst-radius);
+  border-radius: var(--jst-radius-l);
   background: var(--jst-bg); color: var(--jst-fg);
   box-shadow: var(--jst-shadow);
 }
@@ -227,7 +228,7 @@ jst-box { box-shadow: var(--jst-shadow-surface); }
   display: flex; align-items: center; gap: var(--jst-space-xs);
   inline-size: 100%; text-align: start;
   padding: var(--jst-space-2xs) var(--jst-space-s);
-  background: none; border: none; border-radius: calc(var(--jst-radius) - 2px);
+  background: none; border: none; border-radius: var(--jst-radius-s);
   color: var(--jst-fg); font: inherit; text-decoration: none; cursor: pointer;
 }
 .jst-menu[popover] {
@@ -252,7 +253,7 @@ jst-box { box-shadow: var(--jst-shadow-surface); }
 @supports (transition-behavior: allow-discrete) {
   .jst-menu[popover] {
     opacity: 0; transform: translateY(-0.25rem);
-    transition: opacity 0.12s, transform 0.12s, overlay 0.12s allow-discrete, display 0.12s allow-discrete;
+    transition: opacity var(--jst-motion-fast) var(--jst-ease), transform var(--jst-motion-fast) var(--jst-ease), overlay var(--jst-motion-fast) var(--jst-ease) allow-discrete, display var(--jst-motion-fast) var(--jst-ease) allow-discrete;
   }
   .jst-menu[popover]:popover-open { opacity: 1; transform: none; }
   @starting-style { .jst-menu[popover]:popover-open { opacity: 0; transform: translateY(-0.25rem); } }
@@ -289,7 +290,8 @@ jst-toaster .jst-toast {
   pointer-events: auto;
   box-shadow: var(--jst-shadow);
   min-inline-size: 11rem;
-  animation: jst-toast-in 0.18s ease-out;
+  border-radius: var(--jst-radius-l);
+  animation: jst-toast-in var(--jst-motion-fast) ease-out;
 }
 jst-toaster .jst-toast > button { margin-inline-start: auto; }
 @keyframes jst-toast-in { from { opacity: 0; transform: translateY(0.5rem); } }
@@ -313,12 +315,12 @@ jst-combobox .jst-empty { padding: var(--jst-space-s); color: var(--jst-muted); 
 .jst-switch input { position: absolute; opacity: 0; inline-size: 0; block-size: 0; }
 .jst-switch > .track {
   inline-size: 2.1em; block-size: 1.2em; padding: 0.15em; border-radius: 99px;
-  background: var(--jst-border); transition: background 0.15s;
+  background: var(--jst-border); transition: background var(--jst-motion-fast) var(--jst-ease);
   display: inline-flex; align-items: center;
 }
 .jst-switch > .track::before {
   content: ""; inline-size: 0.95em; block-size: 0.95em; border-radius: 50%;
-  background: var(--jst-bg); transition: transform 0.15s; box-shadow: 0 1px 2px oklch(0 0 0 / 0.3);
+  background: var(--jst-bg); transition: transform var(--jst-motion-fast) var(--jst-ease); box-shadow: 0 1px 2px oklch(0 0 0 / 0.3);
 }
 .jst-switch input:checked + .track { background: var(--jst-accent); }
 .jst-switch input:checked + .track::before { transform: translateX(0.9em); }
@@ -333,7 +335,7 @@ jst-combobox .jst-empty { padding: var(--jst-space-s); color: var(--jst-muted); 
   translate: -50% 0; inline-size: max-content; max-inline-size: 16rem;
   padding: var(--jst-space-2xs) var(--jst-space-s); border-radius: var(--jst-radius);
   background: var(--jst-fg); color: var(--jst-bg); font-size: 0.8rem;
-  opacity: 0; transition: opacity 0.12s; pointer-events: none;
+  opacity: 0; transition: opacity var(--jst-motion-fast) var(--jst-ease); pointer-events: none;
 }
 .jst-tooltip:hover::after, .jst-tooltip:focus-visible::after { opacity: 1; }
 
@@ -342,7 +344,7 @@ jst-combobox .jst-empty { padding: var(--jst-space-s); color: var(--jst-muted); 
  * ==========================================================================*/
 /* One rule set for the alert (in flow) and the toast (floating): the same
    status surface, so they can only ever match. data-variant drives the edge
-   color from the status tokens; the toast merely adds float-ness below. */
+   color from the status variables; the toast merely adds float-ness below. */
 .jst-alert, jst-toaster .jst-toast {
   display: flex; align-items: flex-start; gap: var(--jst-space-xs);
   font-size: var(--jst-control-size);
@@ -390,7 +392,7 @@ jst-table tbody tr:hover { background: var(--jst-surface); }
 .jst-skeleton {
   display: block;
   block-size: 1em;
-  border-radius: calc(var(--jst-radius) / 2);
+  border-radius: var(--jst-radius-s);
   background: linear-gradient(90deg, var(--jst-surface) 25%, var(--jst-border) 37%, var(--jst-surface) 63%);
   background-size: 400% 100%;
   animation: jst-skeleton 1.4s ease infinite;
@@ -497,7 +499,7 @@ jst-table tbody tr:hover { background: var(--jst-surface); }
 @supports (transition-behavior: allow-discrete) {
   .jst-drawer {
     opacity: 0;
-    transition: opacity 0.2s, transform 0.2s, overlay 0.2s allow-discrete, display 0.2s allow-discrete;
+    transition: opacity var(--jst-motion) var(--jst-ease), transform var(--jst-motion) var(--jst-ease), overlay var(--jst-motion) var(--jst-ease) allow-discrete, display var(--jst-motion) var(--jst-ease) allow-discrete;
   }
   .jst-drawer:not([data-side]), .jst-drawer[data-side="end"] { transform: translateX(100%); }
   .jst-drawer[data-side="start"]  { transform: translateX(-100%); }
@@ -540,7 +542,7 @@ jst-table tbody tr:hover { background: var(--jst-surface); }
 @supports (interpolate-size: allow-keywords) {
   .jst-accordion details::details-content {
     block-size: 0; overflow: clip;
-    transition: block-size 0.2s, content-visibility 0.2s allow-discrete;
+    transition: block-size var(--jst-motion) var(--jst-ease), content-visibility var(--jst-motion) var(--jst-ease) allow-discrete;
   }
   .jst-accordion details[open]::details-content { block-size: auto; }
 }
@@ -623,7 +625,7 @@ jst-palette .jst-palette [role="option"][data-active="true"] { background: var(-
 jst-palette .jst-palette [role="option"][data-active="true"] kbd { border-color: transparent; background: oklch(from var(--jst-accent) calc(l - 0.1) c h); color: var(--jst-accent-fg); }
 jst-palette .jst-empty-line { padding: var(--jst-space-s); color: var(--jst-muted); }
 
-/* ---- More framework skins (#1): one token-block each. ---------------------- */
+/* ---- More framework skins (#1): one variable-block each. ------------------- */
 
 /* Material Design 3-like: purple primary, large radius, BORDERLESS surfaces with
    layered elevation, and filled inputs. Card depth is carried by shadow (light)
@@ -693,6 +695,45 @@ jst-palette .jst-empty-line { padding: var(--jst-space-s); color: var(--jst-mute
    --jst-border above keeps dividers alive in tables, lists and accordions. */
 :where([data-theme="material"], [data-theme="daisy"]) jst-box {
   border-color: transparent;
+}
+
+/* Astryx (Meta)-like: the @astryxdesign/theme-neutral default. A GREY page with
+   WHITE raised cards in light mode - inverted from JST's own look, where the
+   surface sits a shade DARKER than the page - with a near-black accent, a blue
+   focus ring, generous radius and whisper-faint borders. Dark mode flips to a
+   near-white accent and lifts elevated surfaces with an inset light ring instead
+   of a heavier drop shadow. Neutrals are pure grey (--jst-neutral-c: 0), and it
+   slows --jst-motion to 300ms to show motion is a theme knob too. Ideas adapted
+   from Meta's Astryx design system (MIT). */
+[data-theme="astryx"] {
+  --jst-neutral-c: 0;
+  --jst-bg:      light-dark(oklch(0.958 var(--jst-neutral-c) var(--jst-neutral-h)), oklch(0.222 var(--jst-neutral-c) var(--jst-neutral-h)));
+  --jst-surface: light-dark(oklch(1 var(--jst-neutral-c) var(--jst-neutral-h)),     oklch(0.269 var(--jst-neutral-c) var(--jst-neutral-h)));
+  --jst-fg:      light-dark(oklch(0.205 var(--jst-neutral-c) var(--jst-neutral-h)), oklch(0.985 var(--jst-neutral-c) var(--jst-neutral-h)));
+  --jst-muted:   light-dark(oklch(0.556 var(--jst-neutral-c) var(--jst-neutral-h)), oklch(0.715 var(--jst-neutral-c) var(--jst-neutral-h)));
+  --jst-border:  light-dark(oklch(0.940 var(--jst-neutral-c) var(--jst-neutral-h)), oklch(1 0 0 / 0.10));
+  /* Same-polarity accent (near-black in light, near-white in dark): the fg must
+     flip the OTHER way so text on the accent stays legible - like shadcn's
+     near-black accent, but scheme-aware since ours inverts. */
+  --jst-accent:    light-dark(oklch(0.269 var(--jst-neutral-c) var(--jst-neutral-h)), oklch(0.940 var(--jst-neutral-c) var(--jst-neutral-h)));
+  --jst-accent-fg: light-dark(oklch(0.985 0 0), oklch(0.269 0 0));
+  --jst-radius: 0.625rem;
+  --jst-radius-l: 0.75rem;   /* Astryx's real container radius, below the *1.6 default */
+  --jst-font: Figtree, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --jst-motion-fast: 125ms;
+  --jst-motion: 300ms;
+  /* Resting cards: two soft drops, always present; the inset light ring only
+     materialises in dark mode (transparent in light). */
+  --jst-shadow-surface:
+    0 2px 4px oklch(0 0 0 / 0.05),
+    0 4px 8px oklch(0 0 0 / 0.10),
+    inset 0 0 0 1px light-dark(oklch(1 0 0 / 0), oklch(1 0 0 / 0.08));
+  /* Floating surfaces: stronger drops in dark, plus a brighter inset ring. */
+  --jst-shadow:
+    0 2px 4px light-dark(oklch(0 0 0 / 0.05), oklch(0 0 0 / 0.30)),
+    0 4px 12px light-dark(oklch(0 0 0 / 0.10), oklch(0 0 0 / 0.40)),
+    inset 0 0 0 1px light-dark(oklch(1 0 0 / 0), oklch(1 0 0 / 0.12));
+  --jst-ring: 0 0 0 2px oklch(0.57 0.19 255 / 0.5);   /* Astryx focus blue #0074e2 */
 }
 
 } /* @layer jst.components */

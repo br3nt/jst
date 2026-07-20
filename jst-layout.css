@@ -3,13 +3,13 @@
  * © Brent Jacobs · https://github.com/br3nt/jst · MIT
  *
  * Loads with no JavaScript: the <jst-*> primitives are styled purely as CSS
- * selectors. Tokens + classless base + the full Every Layout primitive set;
+ * selectors. Custom properties + classless base + the full Every Layout primitive set;
  * component patterns live in jst-components.css. Design rationale and the
  * coverage audit: docs/design/component-library.md.
  *
  *   <link rel="stylesheet" href="jst-layout.css">
  *
- * Theme by overriding the --jst-* tokens at :root. Structure stays put, the look
+ * Theme by overriding the --jst-* custom properties at :root. Structure stays put, the look
  * re-themes (the CSS Zen Garden bet).
  *
  * Everything lives in the `jst` cascade layer, so ANY unlayered app stylesheet
@@ -18,12 +18,12 @@
  * `property: revert-layer`. Sub-layer order (weakest first) is declared here
  * once, and jst.components is filled by jst-components.css.
  */
-@layer jst.tokens, jst.base, jst.primitives, jst.components;
+@layer jst.theme, jst.base, jst.primitives, jst.components;
 
 /* ============================================================================
- * jst.tokens - design tokens (the theming contract)
+ * jst.theme - theme variables (the theming contract)
  * ==========================================================================*/
-@layer jst.tokens {
+@layer jst.theme {
 
 :root {
   color-scheme: light dark;
@@ -47,6 +47,11 @@
      framework looks live in the theme skins, not the defaults. */
   --jst-measure: 60ch;
   --jst-radius: 0.1875rem;
+  /* One radius knob drives three steps: -s for chips, badges and small inner
+     elements, -l for containers (cards, dialogs, popovers, toasts). A skin that
+     overrides --jst-radius scales all three coherently. */
+  --jst-radius-s: calc(var(--jst-radius) * 0.6);
+  --jst-radius-l: calc(var(--jst-radius) * 1.6);
   --jst-border-width: 1px;
   --jst-font: system-ui, sans-serif;
   --jst-font-mono: ui-monospace, monospace;
@@ -54,13 +59,29 @@
   --jst-line: 1.45;
   --jst-control-size: 0.8rem;
 
+  /* Motion: three durations for a coherent motion personality, plus one easing.
+     fast = micro-interactions (hovers, toggles, fades); the base step = standard
+     dismissals, drawers and accordions; slow = large, page-level movement. A
+     skin re-times the whole UI by overriding these. */
+  --jst-motion-fast: 125ms;
+  --jst-motion: 250ms;
+  --jst-motion-slow: 500ms;
+  --jst-ease: ease;
+
   /* Color roles. light-dark() (Baseline 2024) gives free dark mode; the
-     @media fallback below covers older engines. */
-  --jst-bg:      light-dark(oklch(0.99 0 0), oklch(0.18 0.01 250));
-  --jst-surface: light-dark(oklch(0.96 0 0), oklch(0.23 0.01 250));
-  --jst-fg:      light-dark(oklch(0.22 0.01 250), oklch(0.93 0.01 250));
-  --jst-muted:   light-dark(oklch(0.50 0.01 250), oklch(0.70 0.01 250));
-  --jst-border:  light-dark(oklch(0.87 0.01 250), oklch(0.35 0.01 250));
+     @media fallback below covers older engines. The neutral family's warmth is
+     one knob: --jst-neutral-h (hue) and --jst-neutral-c (chroma) temperature all
+     five greys at once, so one skin line shifts the whole grey family cool→warm.
+     The two light values that ship pure (bg, surface) carry a -0.01 offset so at
+     the default chroma they cancel to exactly 0 (unchanged white/grey), yet still
+     warm once the knob is raised; a negative result clamps to 0 harmlessly. */
+  --jst-neutral-h: 250;
+  --jst-neutral-c: 0.01;
+  --jst-bg:      light-dark(oklch(0.99 calc(var(--jst-neutral-c) - 0.01) var(--jst-neutral-h)), oklch(0.18 var(--jst-neutral-c) var(--jst-neutral-h)));
+  --jst-surface: light-dark(oklch(0.96 calc(var(--jst-neutral-c) - 0.01) var(--jst-neutral-h)), oklch(0.23 var(--jst-neutral-c) var(--jst-neutral-h)));
+  --jst-fg:      light-dark(oklch(0.22 var(--jst-neutral-c) var(--jst-neutral-h)), oklch(0.93 var(--jst-neutral-c) var(--jst-neutral-h)));
+  --jst-muted:   light-dark(oklch(0.50 var(--jst-neutral-c) var(--jst-neutral-h)), oklch(0.70 var(--jst-neutral-c) var(--jst-neutral-h)));
+  --jst-border:  light-dark(oklch(0.87 var(--jst-neutral-c) var(--jst-neutral-h)), oklch(0.35 var(--jst-neutral-c) var(--jst-neutral-h)));
 
   /* One accent → a derived shade ramp via relative color syntax (Baseline 2024).
      Override --jst-accent alone and the ramp follows. */
@@ -90,7 +111,7 @@
   /* Resting elevation for static surfaces (cards / boxes), distinct from the
      floating --jst-shadow used by dialogs, popovers and toasts. Default is flat:
      JST's own look separates surfaces by tone and border, not elevation. A skin
-     that wants raised cards (material, daisy, bootstrap…) overrides this token. */
+     that wants raised cards (material, daisy, bootstrap…) overrides this variable. */
   --jst-shadow-surface: none;
 
   /* Support text: hints, sublines, metadata under a control or heading. */
@@ -98,7 +119,7 @@
 }
 
 /* Manual scheme override: set data-scheme on <html> (or any subtree) and the
-   light-dark() tokens follow. This is the whole dark-mode toggle. */
+   light-dark() variables follow. This is the whole dark-mode toggle. */
 [data-scheme="light"] { color-scheme: light; }
 [data-scheme="dark"]  { color-scheme: dark; }
 
@@ -111,23 +132,23 @@
   }
 }
 
-/* Fallback for engines without light-dark(): swap the role tokens by scheme. */
+/* Fallback for engines without light-dark(): swap the role variables by scheme. */
 @supports not (color: light-dark(white, black)) {
   :root {
-    --jst-bg: oklch(0.99 0 0); --jst-surface: oklch(0.96 0 0);
-    --jst-fg: oklch(0.22 0.01 250); --jst-muted: oklch(0.50 0.01 250);
-    --jst-border: oklch(0.87 0.01 250);
+    --jst-bg: oklch(0.99 calc(var(--jst-neutral-c) - 0.01) var(--jst-neutral-h)); --jst-surface: oklch(0.96 calc(var(--jst-neutral-c) - 0.01) var(--jst-neutral-h));
+    --jst-fg: oklch(0.22 var(--jst-neutral-c) var(--jst-neutral-h)); --jst-muted: oklch(0.50 var(--jst-neutral-c) var(--jst-neutral-h));
+    --jst-border: oklch(0.87 var(--jst-neutral-c) var(--jst-neutral-h));
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --jst-bg: oklch(0.18 0.01 250); --jst-surface: oklch(0.23 0.01 250);
-      --jst-fg: oklch(0.93 0.01 250); --jst-muted: oklch(0.70 0.01 250);
-      --jst-border: oklch(0.35 0.01 250);
+      --jst-bg: oklch(0.18 var(--jst-neutral-c) var(--jst-neutral-h)); --jst-surface: oklch(0.23 var(--jst-neutral-c) var(--jst-neutral-h));
+      --jst-fg: oklch(0.93 var(--jst-neutral-c) var(--jst-neutral-h)); --jst-muted: oklch(0.70 var(--jst-neutral-c) var(--jst-neutral-h));
+      --jst-border: oklch(0.35 var(--jst-neutral-c) var(--jst-neutral-h));
     }
   }
 }
 
-} /* @layer jst.tokens */
+} /* @layer jst.theme */
 
 /* ============================================================================
  * jst.base - classless base (style elements directly, Pico-style)
@@ -147,7 +168,7 @@ body {
   -webkit-text-size-adjust: 100%;
   /* Native checkboxes, radios, ranges, and progress bars pick up the accent
      (Baseline 2022): themed form controls with zero component CSS. The caret
-     and text selection derive from the same token. */
+     and text selection derive from the same variable. */
   accent-color: var(--jst-accent);
   caret-color: var(--jst-accent);
 }
@@ -175,7 +196,7 @@ a { color: var(--jst-accent-600); }
   color: var(--jst-accent-fg);
   cursor: pointer;
 }
-/* Derive the hover shade at use-site (not from the :root --jst-accent-600 token)
+/* Derive the hover shade at use-site (not from the :root --jst-accent-600 custom property)
    so a button inside a re-themed subtree hovers to the right shade. See the
    relative-color gotcha in docs/design/component-library.md. */
 :where(button, .jst-button):hover { background: oklch(from var(--jst-accent) calc(l - 0.08) c h); }
@@ -252,7 +273,7 @@ kbd {
   padding: 0.1em 0.4em;
   border: var(--jst-border-width) solid var(--jst-border);
   border-block-end-width: 2px;
-  border-radius: calc(var(--jst-radius) / 2);
+  border-radius: var(--jst-radius-s);
   background: var(--jst-surface);
 }
 
@@ -382,12 +403,13 @@ jst-center {
   padding-inline: var(--gutters, 0);
 }
 
-/* Box: a padded surface with a border and matching radius. */
+/* Box: a padded surface with a border and matching radius. A container, so it
+   takes the larger container radius. */
 jst-box {
   display: block;
   padding: var(--space, var(--jst-space-m));
   border: var(--jst-border-width) solid var(--jst-border);
-  border-radius: var(--jst-radius);
+  border-radius: var(--jst-radius-l);
   background: var(--surface, var(--jst-surface));
 }
 

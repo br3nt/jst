@@ -54,9 +54,9 @@
   #dismissable .jst-alert {
     justify-content: space-between;
     overflow: clip; max-block-size: 8rem;
-    transition: opacity .25s ease, transform .25s ease,
-                max-block-size .25s ease, margin-block .25s ease,
-                padding-block .25s ease, border-width .25s ease;
+    transition: opacity var(--jst-motion) ease, transform var(--jst-motion) ease,
+                max-block-size var(--jst-motion) ease, margin-block var(--jst-motion) ease,
+                padding-block var(--jst-motion) ease, border-width var(--jst-motion) ease;
   }
   #dismissable .jst-alert.is-dismissing {
     opacity: 0; transform: translateX(1rem);
@@ -80,12 +80,15 @@
     // No motion for users who asked for none: just remove it.
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) { alert.remove(); return; }
     // Otherwise animate the collapse, then remove the node. Every property
-    // transitions for the same .25s, so the first transitionend marks the end;
-    // the timeout covers transitions that never fire (e.g. the alert was
-    // hidden mid-animation), and remove() is safe to call twice.
+    // transitions for the same duration (--jst-motion), so the first
+    // transitionend marks the end; the timeout covers transitions that never
+    // fire (e.g. the alert was hidden mid-animation), and remove() is safe to
+    // call twice. The fallback is read from the live transition duration so a
+    // skin that slows --jst-motion is not cut off early.
     const remove = () => alert.remove();
     alert.addEventListener('transitionend', remove, { once: true });
-    setTimeout(remove, 400);
+    const ms = (parseFloat(getComputedStyle(alert).transitionDuration) || 0.25) * 1000;
+    setTimeout(remove, ms + 150);
     alert.classList.add('is-dismissing');
   });
 </script>
