@@ -329,11 +329,14 @@
         { method: 'POST', re: /^\/cards\/(\d+)\/move$/, recipe: 'r2', handler: (p, q, m) => {
           const id = Number(m[1]);
           const to = p.get('to');
+          const position = p.get('position');
           for (const key of Object.keys(db.board)) {
             const i = db.board[key].findIndex((c) => c.id === id);
             if (i > -1) {
               const [moved] = db.board[key].splice(i, 1);
-              (db.board[to] || db.board[key]).push(moved);
+              const dest = db.board[to] || db.board[key];
+              const at = position === 'end' ? dest.length : Math.min(Number(position), dest.length);
+              dest.splice(at, 0, moved);
               break;
             }
           }
@@ -516,7 +519,13 @@
         e.preventDefault();
         board.querySelectorAll('.col.over').forEach((n) => n.classList.remove('over'));
         const col = e.target.closest('.col');
-        if (dragId != null && col) window.__moveCard(dragId, col.dataset.col);
+        if (dragId != null && col) {
+          // Land before the card under the pointer, else at the column's end.
+          const overCard = e.target.closest('.kcard');
+          const cards = [...col.querySelectorAll('.kcard')];
+          const position = overCard ? cards.indexOf(overCard) : 'end';
+          window.__moveCard(dragId, col.dataset.col, position);
+        }
         dragId = null;
       });
     })();
@@ -554,17 +563,21 @@
     // ---- R9: start a job, then poll. The poll trigger travels IN the returned
     // HTML: each progress fragment carries a [data-poll] URL, so the client keeps
     // asking; the final fragment omits it, so polling stops on its own.
+    let pumping = false;
     async function pump(sel) {
       const node = document.querySelector(`${sel} [data-poll]`);
       if (!node) return;                       // the hypermedia stopped asking
       const url = node.getAttribute('data-poll');
       await new Promise((r) => setTimeout(r, 150));
       await swap(sel, url, { swap: 'innerHTML' });
-      pump(sel);
+      await pump(sel);
     }
     window.__generate = async () => {
+      if (pumping) return;                     // one job at a time; don't double-poll
+      pumping = true;
       await swap('#r9-region', '/report', { method: 'POST', swap: 'innerHTML', body: new URLSearchParams() });
-      pump('#r9-region');
+      await pump('#r9-region');
+      pumping = false;
     };
     document.querySelector('#r9-generate').addEventListener('click', window.__generate);
   </script>
