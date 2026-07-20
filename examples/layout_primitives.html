@@ -8,7 +8,7 @@
        pure CSS selectors, so this runs with zero JavaScript, even from file://. -->
   <link rel="stylesheet" href="../jst-layout.css">
   <style>
-    /* Demo-only: a second region re-themed by overriding ONE token. Structure
+    /* Demo-only: a second region re-themed by overriding ONE variable. Structure
        below is identical to the first region - only --jst-accent changes. */
     .reskin { --jst-accent: oklch(0.62 0.17 25); }
     .swatch { inline-size: var(--jst-space-l); aspect-ratio: 1; border-radius: var(--jst-radius); }
@@ -219,14 +219,14 @@
         </jst-stack>
       </jst-box>
 
-      <!-- Theming: identical markup, one token overridden -->
+      <!-- Theming: identical markup, one variable overridden -->
       <jst-box class="reskin">
         <jst-stack>
-          <h2>Re-themed by one token</h2>
+          <h2>Re-themed by one variable</h2>
           <p>This box only sets <code>--jst-accent</code>. The shade ramp and accessible
              foreground re-derive automatically.</p>
           <!-- Shades derived at use-site from --jst-accent, so they re-theme with
-               the subtree override. (The :root --jst-accent-NNN tokens would stay
+               the subtree override. (The :root --jst-accent-NNN variables would stay
                frozen to the root accent - see the gotcha in the design doc.) -->
           <jst-cluster>
             <div class="swatch" style="background: oklch(from var(--jst-accent) calc(l + 0.10) c h)"></div>

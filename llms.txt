@@ -6,7 +6,7 @@
 
 If you are an AI agent working on a page or app that uses JST, read the JST
 skill first. It is the canonical agent-facing instruction set: component
-authoring, jst-nav, the token/theming contract, and the known gotchas.
+authoring, jst-nav, the theme-variable contract, and the known gotchas.
 
 ## Agent instructions
 
