@@ -5,6 +5,29 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.7.12 - 2026-07-21
+
+### Added
+- **Server-driven interactions — the HATEOAS way** (`examples/hateoas_recipes.html`):
+  ten recipes for the interactions that tempt a JSON endpoint — drag-and-drop
+  list reorder, kanban card move, click-to-edit, instant toggle, blur-time
+  server validation, bulk actions, delete with the undo affordance travelling
+  IN the returned HTML, autosave, self-terminating job polling, and
+  search-as-you-type — each done as forms and links in, rendered HTML fragments
+  out. Every recipe shows the live demo, a wire log of the exact round-trip
+  (form-encoded request, HTML response, no JSON anywhere), a plain-Rails
+  `render partial:` server sketch, and the JSON reflex it replaces. The page's
+  mock backend intercepts `fetch` and answers like a small RESTful server, so
+  the demos run on static hosting with real request/response mechanics.
+- A matching **"Server interactions: the HATEOAS way" section in `llms.txt` and
+  the in-repo jst skill**, aimed at coding agents that default to JSON APIs:
+  state transitions go over forms/links; never a JSON endpoint for what a
+  fragment can express; morph stateful regions; respond with the smallest
+  common ancestor when several regions change; affordances (undo, next actions,
+  poll triggers) arrive as hypermedia.
+- Smoke coverage driving the drag-reorder, edit, delete/undo and job-polling
+  round-trips, and asserting `application/json` never appears on the wire.
+
 ## 0.7.11 - 2026-07-21
 
 ### Added

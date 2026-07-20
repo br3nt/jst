@@ -17,6 +17,49 @@ authoring, jst-nav, the token/theming contract, and the known gotchas.
   the skill that matches it:
   `https://raw.githubusercontent.com/br3nt/jst/v<version>/.claude/skills/jst/SKILL.md`
 
+## Server interactions: the HATEOAS way
+
+Aimed at coding agents that default to JSON. When you build an interaction on a
+JST page, the reflex to reach for a JSON endpoint plus a client-side renderer is
+almost always wrong. The HATEOAS way: a UI state transition goes out over a form
+or a link (form-encoded body or query string), and the server answers with a
+rendered HTML fragment that replaces the stale region. There is no client model
+to keep in sync — the DOM is the state.
+
+Rules to follow:
+
+- A state transition is a form submit or a link, never a hand-built `fetch` of a
+  JSON API. Programmatic causes (a keystroke, a drop, a poll) call
+  `swap(target, url, { method, body })` with a `URLSearchParams` body — still
+  form-encoded, still HTML back.
+- Form-encoded in, rendered HTML fragment out. Never design a JSON endpoint for
+  something a rendered fragment can express.
+- Use `jst-swap="morph"` for stateful regions (a list, a board, a field) so
+  focus, scroll and open/closed state survive; key children with `jst-key`.
+- When one transition changes several regions, respond with the **smallest
+  common ancestor** fragment that contains them all, and morph it — not several
+  out-of-band pieces.
+- Affordances travel inside the returned HTML: an undo action is a form in the
+  response, the next poll is a `data-poll` URL (or `onreveal`) on the returned
+  fragment, a validation message is the field re-rendered. When the server stops
+  emitting the trigger, the behaviour stops — no client bookkeeping.
+- Escape any user-derived text you interpolate into a fragment.
+
+The ten worked recipes (live demos, a visible wire log proving no JSON crosses
+the wire, and a plain Rails `render partial:` sketch each) are at
+[examples/hateoas_recipes.html](https://br3nt.github.io/jst/examples/hateoas_recipes.html):
+
+1. Drag-and-drop list reorder — drop POSTs the move; server returns the whole re-rendered list; morph.
+2. Kanban card move — drop POSTs card+column; server returns the board fragment (smallest common ancestor); morph.
+3. Click to edit — GET swaps in the edit form; POST returns the display fragment, or the form re-rendered with an error.
+4. Toggle with dependent counter — POST flips state; the fragment re-renders the control and the "N starred" counter together.
+5. Server-side validation on blur — blur POSTs the field; server returns it re-rendered valid/invalid; the rule lives once.
+6. Bulk actions — one form of checkboxes POSTs every checked id; server returns the re-rendered table + toolbar.
+7. Delete with undo — the response carries the updated list and a toast whose form describes the inverse action.
+8. Autosave — debounced POST of the draft; response is a tiny rendered status fragment, not a silent 204.
+9. Long job with progress — progress fragment carries its own re-poll trigger; the finished fragment omits it, so polling stops.
+10. Search as you type — GET with the query in the URL, rendered `<li>`/`<option>` back (cross-links the jst-nav and combobox demos).
+
 ## Docs
 
 - [README](https://raw.githubusercontent.com/br3nt/jst/main/README.md): what
