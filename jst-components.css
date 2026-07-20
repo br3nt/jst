@@ -285,7 +285,9 @@ jst-toaster {
 jst-toaster[data-position~="start"]  { inset-inline: var(--jst-space-l) auto; }
 jst-toaster[data-position~="top"]    { inset-block: var(--jst-space-l) auto; }
 jst-toaster[data-position~="center"] { inset-inline: 50% auto; translate: -50% 0; align-items: center; }
-/* What only the toast adds to the shared status surface: it floats. */
+/* What only the toast adds to the shared status surface: it floats — and as a
+   floating container it takes --jst-radius-l, deliberately rounder than the
+   in-flow alert's --jst-radius. */
 jst-toaster .jst-toast {
   pointer-events: auto;
   box-shadow: var(--jst-shadow);
@@ -704,7 +706,11 @@ jst-palette .jst-empty-line { padding: var(--jst-space-s); color: var(--jst-mute
    near-white accent and lifts elevated surfaces with an inset light ring instead
    of a heavier drop shadow. Neutrals are pure grey (--jst-neutral-c: 0), and it
    slows --jst-motion to 300ms to show motion is a theme knob too. Ideas adapted
-   from Meta's Astryx design system (MIT). */
+   from Meta's Astryx design system (MIT). Figtree is Astryx's face; it isn't
+   loaded here, so the stack falls back to system-ui. Caveat for surface-inverting
+   skins like this one: hover/stripe fills use --jst-surface, so inside a white
+   jst-box card those affordances lose contrast (white-on-white); on the page
+   background they read correctly. */
 [data-theme="astryx"] {
   --jst-neutral-c: 0;
   --jst-bg:      light-dark(oklch(0.958 var(--jst-neutral-c) var(--jst-neutral-h)), oklch(0.222 var(--jst-neutral-c) var(--jst-neutral-h)));

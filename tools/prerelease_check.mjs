@@ -51,8 +51,14 @@ for (const f of docFiles) {
 // 3. Skin parity. The theme skins are duplicated across four places: the two
 //    stylesheets that define them and the two <select>s that offer them. They
 //    drift silently, so extract each set and require all four to agree.
-const themesFrom = (text) => new Set([...text.matchAll(/\[data-theme="([a-z0-9]+)"\]/g)].map((m) => m[1]));
-const optionsFrom = (text) => new Set([...text.matchAll(/<option value="([a-z0-9]+)"/g)].map((m) => m[1]));
+const themesFrom = (text) => new Set([...text.matchAll(/\[data-theme="([a-z0-9-]+)"\]/g)].map((m) => m[1]));
+// Scope the option scan to the re-skin <select> itself, so an unrelated future
+// <select> in either page can't pollute the set.
+const optionsFrom = (text) => {
+  const select = text.match(/<select id="(?:theme|landing-theme)">[\s\S]*?<\/select>/);
+  if (!select) return new Set();
+  return new Set([...select[0].matchAll(/<option value="([a-z0-9-]+)"/g)].map((m) => m[1]));
+};
 const eq = (a, b) => a.size === b.size && [...a].every((x) => b.has(x));
 const show = (s) => [...s].sort().join(', ');
 const skinSets = {
