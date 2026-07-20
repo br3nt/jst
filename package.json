@@ -66,9 +66,9 @@
     "jst-lint": "./tools/lint.mjs"
   },
   "scripts": {
-    "test": "node --test runtime_tests.mjs regression_tests.mjs tools_tests.mjs && npm run test:lint && npm run build:check && node run_browser_tests.mjs && node run_example_smoke.mjs && npm run test:parity && npm run test:agentic && npm --prefix tooling/vscode-jst test && npm run check:release",
+    "test": "node --test runtime_tests.mjs regression_tests.mjs tools_tests.mjs nav_tests.mjs && npm run test:lint && npm run build:check && node run_browser_tests.mjs && node run_example_smoke.mjs && npm run test:parity && npm run test:agentic && npm --prefix tooling/vscode-jst test && npm run check:release",
     "check:release": "node tools/prerelease_check.mjs",
-    "test:runtime": "node --test runtime_tests.mjs regression_tests.mjs tools_tests.mjs",
+    "test:runtime": "node --test runtime_tests.mjs regression_tests.mjs tools_tests.mjs nav_tests.mjs",
     "test:lint": "node tools/lint.mjs --runtime jst.js index.html concerns.html concerns-standalone.html run_tests.html docs/index.html demo/hateoas/index.html agentic_feed/index.html agentic_feed/fragments/*.html examples/*.html examples/components/*.html",
     "build": "node tools/build_global.mjs",
     "build:check": "node tools/build_global.mjs --check",

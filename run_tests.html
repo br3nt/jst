@@ -2205,6 +2205,100 @@
             });
         });
 
+        // Spies on document.startViewTransition (deleting the own-property override
+        // afterwards, not reassigning, so a real native implementation shows back
+        // through the prototype instead of getting shadowed by a bare function
+        // reference that would throw "Illegal invocation" if ever called again).
+        const withTransitionSpy = async (testFn) => {
+            const hadOwn = Object.prototype.hasOwnProperty.call(document, 'startViewTransition');
+            const originalDescriptor = hadOwn ? Object.getOwnPropertyDescriptor(document, 'startViewTransition') : null;
+            let calls = 0;
+            document.startViewTransition = (update) => {
+                calls++;
+                update();
+                return { ready: Promise.resolve(), finished: Promise.resolve(), updateCallbackDone: Promise.resolve() };
+            };
+            try {
+                await testFn(() => calls);
+            } finally {
+                if (hadOwn) Object.defineProperty(document, 'startViewTransition', originalDescriptor);
+                else delete document.startViewTransition;
+            }
+        };
+
+        await suite.testAsync("JST Nav: jst-transition opts ANY swap mode into a View Transition", async () => {
+            await withTransitionSpy(async (transitionCalls) => {
+                await withNavZone(`
+                    <div id="nav-notrans"></div>
+                    <a id="link-notrans" href="/page/3" jst-target="#nav-notrans">plain</a>
+                    <div id="trans-wrap"><div id="nav-trans"></div></div>
+                    <a id="link-trans" href="/page/4" jst-target="#nav-trans" jst-swap="outerHTML" jst-transition>transitioned</a>
+                `, async (zone) => {
+                    zone.querySelector('#link-notrans').click();
+                    await sleep(30);
+                    isEqual(0, transitionCalls(), 'Expected a plain swap to skip startViewTransition');
+                    isEqual('hit', zone.querySelector('#nav-notrans .hit')?.textContent, 'Expected the plain swap to still land');
+
+                    zone.querySelector('#link-trans').click();
+                    await sleep(30);
+                    isEqual(1, transitionCalls(), 'Expected jst-transition to route an outerHTML swap through startViewTransition');
+                    isEqual('hit', zone.querySelector('#trans-wrap .hit')?.textContent, 'Expected the transitioned outerHTML swap to still land');
+                });
+            });
+        });
+
+        await suite.testAsync("JST Nav: a valued jst-transition=\"name\" (jst.js's own morph CSS-transition attribute) does not force a View Transition on an otherwise-enhanced link", async () => {
+            await withTransitionSpy(async (transitionCalls) => {
+                await withNavZone(`
+                    <div id="nav-morph-name"></div>
+                    <a id="link-morph-name" href="/page/5" jst-target="#nav-morph-name" jst-transition="fade">list item</a>
+                `, async (zone, requests) => {
+                    zone.querySelector('#link-morph-name').click();
+                    await sleep(30);
+                    isEqual(1, requests.length, 'Expected jst-target to still enhance the link');
+                    isEqual('hit', zone.querySelector('#nav-morph-name .hit')?.textContent, 'Expected the swap to still land');
+                    isEqual(0, transitionCalls(), 'Expected a valued jst-transition to NOT force a View Transition (that value is jst.js\'s own morph attribute)');
+                });
+            });
+        });
+
+        await suite.testAsync("JST Nav: a link with ONLY a valued jst-transition (no other effect attribute) stays unenhanced", async () => {
+            const urlBefore = location.href;
+            const zone = document.createElement('div');
+            zone.innerHTML = `<a id="link-morph-only" href="#nav-morph-only-mark" jst-transition="fade">bare morph link</a>`;
+            document.body.appendChild(zone);
+            await sleep(30);
+            try {
+                zone.querySelector('#link-morph-only').click();
+                await sleep(10);
+                isEqual('#nav-morph-only-mark', location.hash, 'Expected native anchor navigation (no jst-nav preventDefault) since jst-transition="fade" alone is not an enhancement attribute');
+            } finally {
+                history.replaceState({}, '', urlBefore);
+                zone.remove();
+            }
+        });
+
+        await suite.testAsync("JST Nav: navigate({ transition: true }) sets jst-transition on the driver and routes through a View Transition", async () => {
+            await withTransitionSpy(async (transitionCalls) => {
+                await withNavZone(`
+                    <div id="nav-prog-trans"></div>
+                `, async (zone) => {
+                    const urlBefore = location.href;
+                    try {
+                        const res = await window.JST.nav.navigate('/orders?tag=y', {
+                            target: '#nav-prog-trans', transition: true, replaceUrl: true,
+                        });
+                        isEqual(200, res?.status, 'Expected navigate() to return the Response');
+                        isEqual(1, transitionCalls(), 'Expected navigate({ transition: true }) to route through startViewTransition');
+                        isEqual('hit', zone.querySelector('#nav-prog-trans .hit')?.textContent, 'Expected the swap to land');
+                        isEqual(null, document.querySelector('a[href="/orders?tag=y"]'), 'Expected the driver element to be removed');
+                    } finally {
+                        history.replaceState({}, '', urlBefore);
+                    }
+                });
+            });
+        });
+
         await suite.testAsync("JST Nav: jst:response-error carries the response body text", async () => {
             const originalFetch = window.fetch;
             window.fetch = async () => new Response('Could not delete expense: still has line items', { status: 422, headers: { 'Content-Type': 'text/plain' } });
