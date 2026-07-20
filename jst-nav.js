@@ -28,6 +28,10 @@
  *   jst-replace-url[="/url"]  replace the current history entry (filters/in-place)
  *   jst-confirm="msg"         gate the request behind a confirm (pluggable:
  *                             JST.nav.confirm = (msg, el) => boolean|Promise<boolean>)
+ *   jst-transition (bare)     wrap the swap (whatever jst-swap mode) in a
+ *                             View Transition, instead of only jst-swap="transition".
+ *                             Bare only: jst-transition="name" is jst.js's own
+ *                             morph enter/leave/move CSS-transition attribute.
  *   jst-target-4xx/5xx/error  route error responses elsewhere
  *   jst-swap-4xx/5xx/error    how the routed error response lands (default innerHTML)
  *   jst-boost                 on a container: boost every descendant <a>/<form>
@@ -50,7 +54,14 @@ const WIRED = Symbol('jstNavWired');
 
 // Enhancement is opt-in per element: any effect attribute on a link or form.
 const NAV_ATTRS = ['jst-target', 'jst-swap', 'jst-select', 'jst-push-url', 'jst-replace-url', 'jst-confirm'];
-const ENHANCEABLE = NAV_ATTRS.flatMap(attr => [`a[${attr}]`, `form[${attr}]`]).join(',');
+// jst-transition is bare-only here ([jst-transition=""] matches a valueless or
+// explicitly empty attribute): jst.js already owns jst-transition="name" for
+// morph's enter/leave/move CSS classes, so a valued jst-transition on a keyed
+// list item must NOT also opt the element into jst-nav enhancement.
+const ENHANCEABLE = [
+  ...NAV_ATTRS.flatMap(attr => [`a[${attr}]`, `form[${attr}]`]),
+  'a[jst-transition=""]', 'form[jst-transition=""]',
+].join(',');
 // Removed-in-v0.6.0 attributes: detected only to fail loud with the rewrite.
 const LEGACY = '[jst-get],[jst-action],[jst-trigger],[jst-load],[jst-poll]';
 
@@ -85,9 +96,9 @@ function reducedMotion() {
 // Returns a promise resolving to true once the DOM is updated (NOT once the
 // animation finishes) — or FALSE when the write found no target, so the caller
 // can report the miss instead of silently succeeding (#57).
-function swapContent(target, html, how, reresolve, fromSelect) {
+function swapContent(target, html, how, reresolve, fromSelect, forceTransition) {
   how = (how || 'innerHTML').trim();
-  let transition = false;
+  let transition = !!forceTransition;
   if (how === 'transition') { transition = true; how = 'innerHTML'; }   // legacy alias
 
   // The target is re-resolved at WRITE time: with a View Transition the write
@@ -141,6 +152,10 @@ function swapContent(target, html, how, reresolve, fromSelect) {
   run();
   return Promise.resolve(swapped);
 }
+
+// Exported for direct testing of the transition path (nav_tests.mjs); not
+// part of window.JST.nav, which stays configure/swap/navigate/csrf.
+export { swapContent };
 
 // jst-swap="morph" delegates to jst.js's morph engine (JST.morph). Without
 // jst.js loaded the fallback is innerHTML — say so once instead of silently
@@ -315,6 +330,9 @@ async function performRequest(el, sourceEvent) {
     // natural mode when a form re-renders itself on validation failure.
     const errHow = el.getAttribute(`jst-swap-${band}`) || el.getAttribute('jst-swap-error') || 'innerHTML';
     const errParent = errTarget ? errTarget.parentNode : null;
+    // jst-transition intentionally doesn't reach the error-routed swap: an
+    // error response re-rendering a form (#64) should snap into place, not
+    // animate as if the request had succeeded.
     await swapContent(errTarget, html, errHow, () => resolveTarget(el, errSel));
     scan((errTarget && errTarget.parentNode) || errParent || document);
     return res;
@@ -348,7 +366,10 @@ async function performRequest(el, sourceEvent) {
       const prevTop = scroller ? scroller.scrollTop : 0;
       // Re-resolve at write time (#57): an overlapping swap can detach the
       // node captured above before a View Transition's update callback runs.
-      const wrote = await swapContent(target, html, how, () => resolveTarget(el, targetSel), !!select);
+      // Bare-only ('' value): jst-transition="name" is jst.js's own morph
+      // enter/leave/move CSS-transition attribute, so a valued jst-transition
+      // must not also force a View Transition on the nav swap.
+      const wrote = await swapContent(target, html, how, () => resolveTarget(el, targetSel), !!select, el.getAttribute('jst-transition') === '');
       missed = !wrote;
       if (scroller) scroller.scrollTop = prevTop + (scroller.scrollHeight - prevHeight);
     } else {
@@ -490,12 +511,12 @@ function onPopState() {
  * jst-select via options.select, out-of-band swaps, re-scan) minus the
  * element-centric parts (events, history) — you're in JS; compose those
  * yourself. `target` is an Element or CSS selector; `options` is fetch init
- * plus { swap: '<how>', select: '<css>' }. Returns the Response.
+ * plus { swap: '<how>', select: '<css>', transition: true }. Returns the Response.
  *
  *   oninput="if (changed(event)) debounce(event, 300, () => swap('#results', '/search?q=' + this.value))"
  */
 export async function swap(target, url, options = {}) {
-  const { swap: how = 'innerHTML', select = null, ...init } = options;
+  const { swap: how = 'innerHTML', select = null, transition = false, ...init } = options;
   const method = (init.method || 'GET').toUpperCase();
   const headers = { ...buildHeaders(method, url), ...(init.headers || {}) };
   const res = await fetch(url, { ...init, method, headers });
@@ -509,7 +530,7 @@ export async function swap(target, url, options = {}) {
   // String targets re-resolve at write time (#57); a miss emits a bubbling
   // jst:swap-missed from document instead of succeeding silently.
   const reresolve = typeof target === 'string' ? () => document.querySelector(target) : null;
-  const wrote = await swapContent(element, html, how, reresolve, !!select);
+  const wrote = await swapContent(element, html, how, reresolve, !!select, !!transition);
   if (!wrote && how !== 'none') {
     emit(document, 'swap-missed', { url, target: typeof target === 'string' ? target : null });
     return res;
@@ -530,6 +551,8 @@ export async function swap(target, url, options = {}) {
  *   navigate('/orders?tag=x', { target: '#mainview', swap: 'outerHTML', replaceUrl: true });
  *
  * options: target (CSS selector), swap, select, confirm, method,
+ * transition (wrap the swap in a View Transition — sets jst-transition on the
+ * driver, the same one source of truth a declarative jst-transition reads),
  * pushUrl / replaceUrl (true = the request URL, or an explicit URL string),
  * dataset ({ navMode: 'push', … } → data-* on the driver for listeners to read).
  */
@@ -540,6 +563,7 @@ export async function navigate(url, options = {}) {
   if (options.swap) driver.setAttribute('jst-swap', options.swap);
   if (options.select) driver.setAttribute('jst-select', options.select);
   if (options.confirm) driver.setAttribute('jst-confirm', options.confirm);
+  if (options.transition) driver.setAttribute('jst-transition', '');
   if (options.method) driver.setAttribute('method', options.method);
   if (options.pushUrl) driver.setAttribute('jst-push-url', options.pushUrl === true ? '' : options.pushUrl);
   if (options.replaceUrl) driver.setAttribute('jst-replace-url', options.replaceUrl === true ? '' : options.replaceUrl);

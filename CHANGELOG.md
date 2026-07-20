@@ -5,6 +5,18 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Added
+- A bare `jst-transition` attribute opts ANY swap mode (not just the
+  `jst-swap="transition"` innerHTML alias) into a View Transition, wherever
+  it's set: declaratively on a jst-nav element, or programmatically via
+  `navigate(url, { transition: true })`, which sets `jst-transition` on its
+  synthesised driver element so the enhancement pipeline has one source of
+  truth (#49). Bare only, since `jst-transition="name"` is already jst.js's
+  own morph enter/leave/move CSS-transition attribute. `swapContent()` is
+  now exported from `jst-nav.js` for direct testing.
+
 ## 0.7.10 - 2026-07-12
 
 Landing-page regressions from the 0.7.9 gallery overhaul, reported from real

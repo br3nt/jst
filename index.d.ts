@@ -82,6 +82,8 @@ export interface JSTNavSwapOptions extends RequestInit {
   swap?: string;
   /** CSS selector to pull a subtree out of the response. */
   select?: string;
+  /** Wrap the swap (whatever `swap` mode) in a View Transition when the API is available. */
+  transition?: boolean;
 }
 
 export interface JSTNavNavigateOptions {
@@ -91,6 +93,8 @@ export interface JSTNavNavigateOptions {
   select?: string;
   confirm?: string;
   method?: string;
+  /** Wrap the swap in a View Transition; sets `jst-transition` on the synthesised driver element. */
+  transition?: boolean;
   /** true = the request URL; a string = an explicit URL. */
   pushUrl?: boolean | string;
   replaceUrl?: boolean | string;
